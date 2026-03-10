@@ -1,13 +1,19 @@
-name: Deploy Frontend to S3 + CloudFront
+name: Deploy Admin Frontend to S3 + CloudFront
 
 on:
   push:
     branches:
       - main
+    paths:
+      - "Front_end/admin-app/**"
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    
+    defaults:
+      run:
+        working-directory: Front_end/admin-app
 
     steps:
       - name: Checkout code
