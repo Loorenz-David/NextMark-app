@@ -7,7 +7,7 @@ import { useListOrderMapMarkers } from '../api/orderApi'
 import type { Order } from '../types/order'
 import type { OrderQueryStoreFilters } from '../types/orderMeta'
 import { orderStringFilters } from '../domain/orderFilterConfig'
-import { normalizeQuery } from '@/shared/utils/queryNormalization'
+import { normalizeQuery } from '@shared-utils'
 import { buildOrderMarkers } from './orderMapMarkers.flow'
 import {
   resolveOrderGroupOperationBadgeDirections,

@@ -1,5 +1,5 @@
 import { useInputWarning } from '@/shared/inputs/useInputWarning.hook'
-import { validateString } from '@/shared/data-validation/stringValidation'
+import { validateString } from '@shared-domain'
 
 export const useInternationalShippingWarnings = () => {
     const carrierNameWarning = useInputWarning(

@@ -2,7 +2,11 @@
   "compilerOptions": {
     "baseUrl":".",
     "paths":{
-      "@/*": ["src/*"]
+      "@/*": ["src/*"],
+      "@shared-utils": ["../packages/shared-utils/src/index.ts"],
+      "@shared-utils/*": ["../packages/shared-utils/src/*"],
+      "@shared-domain": ["../packages/shared-domain/index.ts"],
+      "@shared-domain/*": ["../packages/shared-domain/*"]
     },
     "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.app.tsbuildinfo",
     "target": "ES2022",

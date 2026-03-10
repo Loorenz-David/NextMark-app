@@ -1,8 +1,8 @@
 import { useCallback } from 'react'
 
 import { useMessageHandler } from '@/shared/message-handler'
-import { getObjectDiff } from '@/shared/utils/getObjectDiff'
-import { hasFormChanges } from '@/shared/data-validation/compareChanges'
+import { getObjectDiff } from '@shared-utils'
+import { hasFormChanges } from '@shared-domain'
 import { buildClientId } from '@/lib/utils/clientId'
 
 import { useCreateVehicle, useUpdateVehicle } from '../../api/vehicleApi'

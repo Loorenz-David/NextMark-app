@@ -1,4 +1,4 @@
-import { validateString } from '@/shared/data-validation/stringValidation'
+import { validateString } from '@shared-domain'
 
 import type { Item } from '../types'
 

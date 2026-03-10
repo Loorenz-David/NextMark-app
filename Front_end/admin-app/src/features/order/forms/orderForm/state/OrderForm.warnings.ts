@@ -1,6 +1,6 @@
 import { useInputWarning } from '@/shared/inputs/useInputWarning.hook'
 import { validateAddress } from '@/shared/data-validation/addressValidation'
-import { validateString } from '@/shared/data-validation/stringValidation'
+import { validateString } from '@shared-domain'
 import { validateDateComparison, validateDateTimeComparison, toDateOnly } from '@/shared/data-validation/timeValidation'
 import { formatDateOnlyInTimeZone } from '@/shared/utils/formatIsoDate'
 import type { address } from '@/types/address'

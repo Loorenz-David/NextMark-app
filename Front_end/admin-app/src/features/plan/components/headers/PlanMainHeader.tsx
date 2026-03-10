@@ -2,7 +2,7 @@ import { ChevronDownIcon, OrderIcon, PlanIcon, PlusIcon } from '@/assets/icons'
 import { BasicButton } from '@/shared/buttons/BasicButton'
 import type { PlanQueryFilters, PlanStats } from '../../types/planMeta'
 import { CalendarIcon } from '@mui/x-date-pickers'
-import { pluralLabel } from '@/shared/utils/formatStrings'
+import { pluralLabel } from '@shared-utils'
 import { InfoHover } from '@/shared/layout/InfoHover'
 import { PLAN_MAIN_HEADER_INFO } from '../../info/planMainHeader.info'
 

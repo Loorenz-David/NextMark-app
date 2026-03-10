@@ -1,7 +1,7 @@
 import type { TeamInviteReceived, TeamInviteSent } from '@/features/team/invitations/types/teamInvitation'
 import { BasicButton } from '@/shared/buttons/BasicButton'
 import { formatIsoDate } from '@/shared/utils/formatIsoDate'
-import { capitalize } from '@/shared/utils/capitalizeString'
+import { capitalize } from '@shared-utils'
 
 type TeamInvitationCardProps =
   | {

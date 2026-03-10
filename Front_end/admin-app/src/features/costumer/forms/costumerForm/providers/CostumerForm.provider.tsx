@@ -2,7 +2,7 @@ import type { ReactNode } from 'react'
 import { useMemo } from 'react'
 
 import { useMobile } from '@/app/contexts/MobileContext'
-import { hasFormChanges } from '@/shared/data-validation/compareChanges'
+import { hasFormChanges } from '@shared-domain'
 
 import { useCostumerByClientId } from '../../../store/costumer.selectors'
 import { useCostumerFormActions } from '../controllers/useCostumerFormSubmit.controller'

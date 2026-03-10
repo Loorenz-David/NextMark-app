@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 
-import { makeInitialFormCopy } from '@/shared/data-validation/initialFormSnapshot'
+import { makeInitialFormCopy } from '@shared-domain'
 
 import { useItemPropertyByClientId } from '../../hooks/useItemSelectors'
 import { useItemTypeFlow } from '../../hooks/useItemTypeFlow'

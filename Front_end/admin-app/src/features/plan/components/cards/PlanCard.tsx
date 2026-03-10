@@ -1,7 +1,7 @@
 
 import type { ReactNode  } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
-import { formatMetric } from '@/shared/utils/formatMetrics'
+import { formatMetric } from '@shared-utils'
 import { StateCard } from '@/shared/layout/StateCard'
 import { useBaseControlls } from '@/shared/resource-manager/useResourceManager'
 import type { DeliveryPlan } from '../../types/plan'

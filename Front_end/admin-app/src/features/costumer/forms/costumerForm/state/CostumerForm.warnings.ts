@@ -1,5 +1,5 @@
 import { useInputWarning } from '@/shared/inputs/useInputWarning.hook'
-import { validateEmail, validateString } from '@/shared/data-validation/stringValidation'
+import { validateEmail, validateString } from '@shared-domain'
 import type { CostumerOperatingHours } from '../../../dto/costumer.dto'
 import { validateOperatingHours } from '../flows/costumerOperatingHours.flow'
 

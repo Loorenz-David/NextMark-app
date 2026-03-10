@@ -1,7 +1,7 @@
 import { MemberAvatar } from '@/shared/layout/MemberAvatar'
 import { BasicButton } from '@/shared/buttons/BasicButton'
 import { formatPhone } from '@/shared/data-validation/phoneValidation'
-import { capitalize } from '@/shared/utils/capitalizeString'
+import { capitalize } from '@shared-utils'
 import type { User } from '../types/user'
 
 type UserProfileCardProps = {

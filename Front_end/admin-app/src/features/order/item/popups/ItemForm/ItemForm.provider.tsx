@@ -1,8 +1,7 @@
 import type { ReactNode } from 'react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 
-import { hasFormChanges } from '@/shared/data-validation/compareChanges'
-import { makeInitialFormCopy } from '@/shared/data-validation/initialFormSnapshot'
+import { hasFormChanges, makeInitialFormCopy } from '@shared-domain'
 
 import { useItemFlow } from '../../hooks/useItemFlow'
 import type { Item, ItemPopupPayload } from '../../types'

@@ -1,5 +1,5 @@
 import type { OrderQueryFilters } from '../types/orderMeta'
-import { normalizeQuery } from '@/shared/utils/queryNormalization'
+import { normalizeQuery } from '@shared-utils'
 import { orderStringFilters } from './orderFilterConfig'
 
 const sortObjectDeep = (value: unknown): unknown => {

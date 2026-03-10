@@ -1,6 +1,6 @@
 import type { RefObject } from 'react'
 
-import { getObjectDiff } from '@/shared/utils/getObjectDiff'
+import { getObjectDiff } from '@shared-utils'
 
 import type { useOrderItemDraftController } from '../../../item'
 import type { Item, ItemUpdateFields } from '../../../item'

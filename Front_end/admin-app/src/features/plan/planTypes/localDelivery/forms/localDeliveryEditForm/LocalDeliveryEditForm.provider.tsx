@@ -1,8 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 
-import { hasFormChanges } from '@/shared/data-validation/compareChanges'
-import { makeInitialFormCopy } from '@/shared/data-validation/initialFormSnapshot'
+import { hasFormChanges, makeInitialFormCopy } from '@shared-domain'
 
 import { LocalDeliveryEditFormContextProvider } from './LocalDeliveryEditForm.context'
 import { useLocalDeliveryEditFormContextData } from './LocalDeliveryEditFormContextData'

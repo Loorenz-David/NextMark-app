@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
-    "lint": "eslint .",
+    "lint": "eslint . && eslint --no-warn-ignored $(find ../packages/shared-domain ../packages/shared-utils/src -name '*.ts' -print)",
+    "lint:packages": "eslint --no-warn-ignored $(find ../packages/shared-domain ../packages/shared-utils/src -name '*.ts' -print)",
     "check:popup-contract": "node scripts/check-feature-popup-architecture.mjs",
     "preview": "vite preview"
   },
@@ -48,6 +49,8 @@
     "@vitejs/plugin-react": "^5.0.4",
     "autoprefixer": "^10.4.21",
     "eslint": "^9.36.0",
+    "eslint-import-resolver-typescript": "^4.4.4",
+    "eslint-plugin-import": "^2.32.0",
     "eslint-plugin-react-hooks": "^5.2.0",
     "eslint-plugin-react-refresh": "^0.4.22",
     "globals": "^16.4.0",

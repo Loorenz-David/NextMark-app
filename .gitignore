@@ -10,6 +10,7 @@ Thumbs.db
 pycache/
 *.py[cod]
 $py.class
+.flaskenv
 
 # virtual environments
 .venv/

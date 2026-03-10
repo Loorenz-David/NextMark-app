@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 
-import { makeInitialFormCopy } from '@/shared/data-validation/initialFormSnapshot'
+import { makeInitialFormCopy } from '@shared-domain'
 
 import { useIntegrationsController } from '../../hooks/useIntegrationsController'
 import type { InitialFormState, IntegrationConfigPayload } from './IntegrationConfig.types'

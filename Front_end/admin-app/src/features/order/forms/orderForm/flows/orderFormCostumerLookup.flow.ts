@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef } from 'react'
 
 import type { Costumer } from '@/features/costumer'
 import { useCostumerQueries } from '@/features/costumer/controllers/costumerQueries.controller'
-import { validateEmail } from '@/shared/data-validation/stringValidation'
+import { validateEmail } from '@shared-domain'
 
 export const normalizeEmail = (value: string | null | undefined) => value?.trim().toLowerCase() ?? ''
 

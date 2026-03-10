@@ -6,7 +6,7 @@ import { formatPhone } from '@/shared/data-validation/phoneValidation'
 import { MemberAvatar } from '@/shared/layout/MemberAvatar'
 
 import type { TeamMember } from '@/features/team/members/types/teamMember'
-import { capitalize } from '@/shared/utils/capitalizeString'
+import { capitalize } from '@shared-utils'
 
 type TeamMemberCardProps = {
   member: TeamMember

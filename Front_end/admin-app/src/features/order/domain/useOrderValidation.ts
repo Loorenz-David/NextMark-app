@@ -6,7 +6,7 @@ import {
   validateDateTimeComparison,
   toDateOnly,
 } from '@/shared/data-validation/timeValidation'
-import { validateEmail, validateString } from '@/shared/data-validation/stringValidation'
+import { validateEmail, validateString } from '@shared-domain'
 import type { address } from '@/types/address'
 import type { Phone } from '@/types/phone'
 

@@ -10,7 +10,7 @@ import { setOrderListError, setOrderListResult } from '../store/orderList.store'
 import { useUpsertOrdersStore } from '../store/orderHooks.store'
 import { setVisibleOrders } from '../store/order.store'
 import type {  OrderQueryStoreFilters } from '../types/orderMeta'
-import { normalizeQuery } from '../../../shared/utils/queryNormalization'
+import { normalizeQuery } from '@shared-utils'
 import { orderStringFilters } from '../domain/orderFilterConfig'
 
 

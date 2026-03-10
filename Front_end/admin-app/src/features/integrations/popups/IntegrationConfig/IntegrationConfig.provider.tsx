@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 
-import { makeInitialFormCopy } from '@/shared/data-validation/initialFormSnapshot'
+import { makeInitialFormCopy } from '@shared-domain'
 
 import { IntegrationConfigContextProvider } from './IntegrationConfig.context'
 import type { InitialFormState, IntegrationConfigPayload } from './IntegrationConfig.types'

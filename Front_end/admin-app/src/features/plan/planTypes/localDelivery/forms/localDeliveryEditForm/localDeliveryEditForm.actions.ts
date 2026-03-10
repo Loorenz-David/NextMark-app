@@ -2,7 +2,7 @@ import { useCallback } from 'react'
 import type { RefObject } from 'react'
 
 import { useMessageHandler } from '@/shared/message-handler'
-import { makeInitialFormCopy } from '@/shared/data-validation/initialFormSnapshot'
+import { makeInitialFormCopy } from '@shared-domain'
 import { useLocalDeliveryPlanSettingsMutations } from '@/features/plan/planTypes/localDelivery/controllers/localDeliveryPlanSettings.controller'
 import { usePlanController } from '@/features/plan/controllers/plan.controller'
 import { useBaseControlls, useSectionManager } from '@/shared/resource-manager/useResourceManager'

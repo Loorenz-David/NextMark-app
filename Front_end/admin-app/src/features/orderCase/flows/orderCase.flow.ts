@@ -10,7 +10,7 @@ import { useOrderCaseModel } from '../domain/orderCase.model'
 import { setVisibleOrderCases, upsertOrderCase, upsertOrderCases } from '../store/orderCaseStore'
 import type { OrderCaseQueryStoreFilters } from '../types'
 import { orderCaseStringFilters } from '../domain/orderCaseFilter.config'
-import { normalizeQuery } from '@/shared/utils/queryNormalization'
+import { normalizeQuery } from '@shared-utils'
 import { setOrderCaseListResult } from '../store/orderCaseList.store'
 
 const buildQueryKey = (query?: OrderCaseQueryStoreFilters) => JSON.stringify(query ?? {})

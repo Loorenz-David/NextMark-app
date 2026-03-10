@@ -1,4 +1,4 @@
-import { validateString } from './stringValidation'
+import { validateString } from '@shared-domain'
 import { formatDateOnlyInTimeZone } from '@/shared/utils/formatIsoDate'
 import { getTeamTimeZone } from '@/shared/utils/teamTimeZone'
 

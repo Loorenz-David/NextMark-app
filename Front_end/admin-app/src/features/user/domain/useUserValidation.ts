@@ -1,4 +1,4 @@
-import { validateEmail, validateString } from '@/shared/data-validation/stringValidation'
+import { validateEmail, validateString } from '@shared-domain'
 
 export const useUserValidation = () => {
   const validateUsername = (value: string) => validateString(value)

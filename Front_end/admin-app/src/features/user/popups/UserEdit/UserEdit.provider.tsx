@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 
-import { makeInitialFormCopy } from '@/shared/data-validation/initialFormSnapshot'
+import { makeInitialFormCopy } from '@shared-domain'
 
 import { useCurrentUser } from '../../store/user.store'
 import type { User } from '../../types/user'

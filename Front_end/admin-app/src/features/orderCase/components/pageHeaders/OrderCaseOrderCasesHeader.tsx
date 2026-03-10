@@ -1,7 +1,7 @@
 import { ArchiveIcon, PlusIcon } from '@/assets/icons'
 import { BasicButton } from '@/shared/buttons/BasicButton'
 import type { OrderCaseStats } from '../../types/orderCaseMeta'
-import { pluralLabel } from '@/shared/utils/formatStrings'
+import { pluralLabel } from '@shared-utils'
 
 type OrderCaseOrderCasesHeaderProps = {
   onCreateCase: () => void

@@ -1,6 +1,6 @@
 import type { RefObject } from 'react'
 
-import { hasFormChanges } from '@/shared/data-validation/compareChanges'
+import { hasFormChanges } from '@shared-domain'
 import { isDateOnOrAfterToday } from '@/shared/data-validation/timeValidation'
 
 import type { LocalDeliveryEditFormState } from './LocalDeliveryEditForm.types'

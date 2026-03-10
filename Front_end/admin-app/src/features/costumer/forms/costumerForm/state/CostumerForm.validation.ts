@@ -1,4 +1,4 @@
-import { validateEmail, validateString } from '@/shared/data-validation/stringValidation'
+import { validateEmail, validateString } from '@shared-domain'
 
 import type { CostumerFormState, CostumerFormWarnings } from './CostumerForm.types'
 import { validateOperatingHours } from '../flows/costumerOperatingHours.flow'

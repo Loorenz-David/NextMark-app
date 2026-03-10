@@ -22,16 +22,14 @@ export const normalizeQuery = (
     if (typeof entry !== 'string') continue
 
     if (entry.includes('/')) {
-      const parts = entry.split('/').map((p) => p.trim())
+      const parts = entry.split('/').map((part) => part.trim())
       for (const part of parts) {
         if (stringSet.has(part)) {
           expandedStringFilters.push(part)
         }
       }
-    } else {
-      if (stringSet.has(entry)) {
-        expandedStringFilters.push(entry)
-      }
+    } else if (stringSet.has(entry)) {
+      expandedStringFilters.push(entry)
     }
   }
 
@@ -52,15 +50,14 @@ export const normalizeQuery = (
     if (key === 's') continue
     if (value === undefined || value === null || value === '') continue
 
-    // Support nested keys like: "article_number-in-items"
     if (key.includes('-in-')) {
-      const [field, scope] = key.split('-in-').map((k) => k.trim())
+      const [field, scope] = key.split('-in-').map((part) => part.trim())
       if (!field || !scope) continue
 
       if (
-        !normalized[scope] ||
-        typeof normalized[scope] !== 'object' ||
-        Array.isArray(normalized[scope])
+        !normalized[scope]
+        || typeof normalized[scope] !== 'object'
+        || Array.isArray(normalized[scope])
       ) {
         normalized[scope] = {}
       }

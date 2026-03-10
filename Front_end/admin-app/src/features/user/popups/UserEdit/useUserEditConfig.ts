@@ -1,7 +1,7 @@
 import type { RefObject } from 'react'
 import { useEffect } from 'react'
 
-import { hasFormChanges } from '@/shared/data-validation/compareChanges'
+import { hasFormChanges } from '@shared-domain'
 import { usePopupContext } from '@/shared/popups/MainPopup/PopupContext'
 
 import type { UserEditFormState } from './UserEdit.types'

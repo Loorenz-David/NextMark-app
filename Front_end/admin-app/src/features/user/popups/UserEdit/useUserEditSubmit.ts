@@ -2,8 +2,8 @@ import type { RefObject } from 'react'
 import { useCallback } from 'react'
 
 import { useMessageHandler } from '@/shared/message-handler'
-import { getObjectDiff } from '@/shared/utils/getObjectDiff'
-import { hasFormChanges } from '@/shared/data-validation/compareChanges'
+import { getObjectDiff } from '@shared-utils'
+import { hasFormChanges } from '@shared-domain'
 
 import { useUserController } from '../../hooks/useUserController'
 import type { User, UserUpdateFields } from '../../types/user'

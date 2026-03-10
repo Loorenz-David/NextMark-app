@@ -7,7 +7,7 @@ import { ActiveFilterPills, SearchFilterBar } from '@/shared/searchBars'
 import { filterConfig } from '../../domain/orderCaseFilter.config'
 import type { OrderCaseQueryFilters } from '../../types'
 import type { OrderCaseStats } from '../../types/orderCaseMeta'
-import { pluralLabel } from '@/shared/utils/formatStrings'
+import { pluralLabel } from '@shared-utils'
 
 type OrderCaseMainHeaderProps = {
   applySearch: (input: string) => void
@@ -105,4 +105,3 @@ const HeaderTitle = ({orderCaseStats}:{orderCaseStats?:OrderCaseStats})=>{
     </div>
   )
 }
-

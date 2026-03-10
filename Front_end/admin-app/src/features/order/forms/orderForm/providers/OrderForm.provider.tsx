@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useMobile } from '@/app/contexts/MobileContext'
 import { useCostumerByServerId, type Costumer } from '@/features/costumer'
 import { useCostumerQueries } from '@/features/costumer/controllers/costumerQueries.controller'
-import { hasFormChanges } from '@/shared/data-validation/compareChanges'
+import { hasFormChanges } from '@shared-domain'
 import { formatIsoDate } from '@/shared/utils/formatIsoDate'
 
 import { useOrderItemDraftController } from '../../../item'

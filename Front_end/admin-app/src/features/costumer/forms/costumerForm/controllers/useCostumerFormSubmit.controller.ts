@@ -2,7 +2,7 @@ import { DEFAULT_PREFIX } from '@/constants/dropDownOptions'
 import type { RefObject } from 'react'
 import { useCallback } from 'react'
 
-import { hasFormChanges } from '@/shared/data-validation/compareChanges'
+import { hasFormChanges } from '@shared-domain'
 import { useMessageHandler } from '@/shared/message-handler'
 import { usePopupManager } from '@/shared/resource-manager/useResourceManager'
 
