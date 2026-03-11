@@ -6,7 +6,13 @@
       "@shared-utils": ["../packages/shared-utils/src/index.ts"],
       "@shared-utils/*": ["../packages/shared-utils/src/*"],
       "@shared-domain": ["../packages/shared-domain/index.ts"],
-      "@shared-domain/*": ["../packages/shared-domain/*"]
+      "@shared-domain/*": ["../packages/shared-domain/*"],
+      "@shared-api": ["../packages/shared-api/index.ts"],
+      "@shared-api/*": ["../packages/shared-api/*"],
+      "@shared-google-maps": ["../packages/shared-google-maps/index.ts"],
+      "@shared-google-maps/*": ["../packages/shared-google-maps/*"],
+      "@shared-icons": ["../packages/shared-icons/index.ts"],
+      "@shared-icons/*": ["../packages/shared-icons/*"]
     },
     "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.app.tsbuildinfo",
     "target": "ES2022",

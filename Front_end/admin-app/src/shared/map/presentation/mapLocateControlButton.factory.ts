@@ -1,4 +1,4 @@
-const CURRENT_LOCATION_ICON_SRC = new URL('../../../assets/icons/CurrentLocationIcon.svg', import.meta.url).href
+import { CurrentLocationIconSrc } from '@shared-icons'
 
 export function createLocateControlButton(onClick: () => void) {
   const button = document.createElement('button')
@@ -17,7 +17,7 @@ export function createLocateControlButton(onClick: () => void) {
   button.style.justifyContent = 'center'
 
   const icon = document.createElement('img')
-  icon.src = CURRENT_LOCATION_ICON_SRC
+  icon.src = CurrentLocationIconSrc
   icon.alt = 'Current location'
   icon.width = 20
   icon.height = 20

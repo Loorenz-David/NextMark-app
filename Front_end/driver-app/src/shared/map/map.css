@@ -1,0 +1,101 @@
+.driver-map {
+  width: 100%;
+  min-height: 280px;
+  border-radius: 20px;
+  overflow: hidden;
+  background:
+    linear-gradient(180deg, rgba(245, 247, 241, 0.95), rgba(229, 239, 231, 0.95));
+  border: 1px solid rgba(15, 23, 42, 0.08);
+}
+
+.map-marker {
+  --marker-bg: #0f766e;
+  display: grid;
+  place-items: center;
+  min-width: 30px;
+  min-height: 30px;
+  padding: 6px 8px;
+  border-radius: 999px;
+  background: var(--marker-bg);
+  color: #fff;
+  box-shadow: 0 10px 18px rgba(15, 23, 42, 0.18);
+  border: 2px solid rgba(255, 255, 255, 0.9);
+  transform: translateZ(0);
+  transition: transform 0.18s ease, box-shadow 0.18s ease, opacity 0.18s ease;
+}
+
+.map-marker__content {
+  font-size: 0.8rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.map-marker__dot {
+  width: 8px;
+  height: 8px;
+  display: block;
+  border-radius: 999px;
+  background: currentColor;
+}
+
+.map-marker--variant-stop {
+  min-width: 34px;
+  min-height: 34px;
+}
+
+.map-marker--variant-current-location {
+  min-width: 18px;
+  min-height: 18px;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+}
+
+.driver-current-location-marker {
+  position: relative;
+  box-shadow:
+    0 0 0 16px rgba(37, 99, 235, 0.18),
+    0 10px 18px rgba(15, 23, 42, 0.18);
+}
+
+.driver-current-location-marker .map-marker__content {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+}
+
+.driver-current-location-marker .map-marker__dot {
+  width: 6px;
+  height: 6px;
+  background: transparent;
+}
+
+.map-marker--hovered {
+  transform: scale(1.08);
+  box-shadow: 0 14px 24px rgba(15, 23, 42, 0.24);
+}
+
+.map-marker--selected,
+.map-marker--selected-default,
+.map-marker--selected-stop {
+  transform: scale(1.12);
+  box-shadow: 0 0 0 4px rgba(15, 118, 110, 0.2), 0 16px 28px rgba(15, 23, 42, 0.22);
+}
+
+.pending-marker {
+  --marker-bg: #2563eb;
+}
+
+.in_progress-marker {
+  --marker-bg: #0f766e;
+}
+
+.completed-marker {
+  --marker-bg: #475569;
+  opacity: 0.9;
+}
+
+.skipped-marker {
+  --marker-bg: #dc2626;
+}

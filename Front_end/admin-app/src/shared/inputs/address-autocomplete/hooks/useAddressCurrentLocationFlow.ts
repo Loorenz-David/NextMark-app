@@ -1,6 +1,6 @@
 import { useCallback, useRef } from 'react'
 
-import { useReverseGeocodeCall } from '@/shared/google-maps/hooks/useReverseGeocodeCall'
+import { reverseGeocodeQuery } from '@shared-google-maps'
 import type { address } from '@/types/address'
 import { saveCurrentLocation } from '../utils/currentLocationStorage'
 import { getStoredCurrentLocation } from '../utils/currentLocationStorage'
@@ -20,7 +20,6 @@ const mapGeolocationError = (error: GeolocationPositionError) => {
 }
 
 export const useAddressCurrentLocationFlow = () => {
-  const { reverseGeocode } = useReverseGeocodeCall()
   const pendingPromiseRef = useRef<Promise<address> | null>(null)
 
   const getCurrentLocationAddress = useCallback(async (): Promise<address> => {
@@ -50,7 +49,14 @@ export const useAddressCurrentLocationFlow = () => {
               }
             }
 
-            const address = await reverseGeocode(lat, lng)
+            const payload = await reverseGeocodeQuery(lat, lng)
+            const address: address = {
+              street_address: payload.raw_address,
+              city: payload.city,
+              postal_code: payload.postal_code,
+              country: payload.country,
+              coordinates: payload.coordinates,
+            }
             saveCurrentLocation(address)
             resolve(address)
           } catch (error) {
@@ -72,7 +78,7 @@ export const useAddressCurrentLocationFlow = () => {
 
     pendingPromiseRef.current = pending
     return pending
-  }, [reverseGeocode])
+  }, [])
 
   return {
     getCurrentLocationAddress,

@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react'
 import type { ReactNode } from 'react'
 import type{ address } from '@/types/address'
-import type { ComponentRestrictions } from '@/shared/google-maps/types'
+import type { ComponentRestrictions } from '@shared-google-maps'
 import { useGoogleAutoComplete } from './hooks/useGoogleAutoComplete'
 import { useControllers } from './hooks/useController'
 import { AddressAutocompleteContext } from './AddressAutocomplete.context'

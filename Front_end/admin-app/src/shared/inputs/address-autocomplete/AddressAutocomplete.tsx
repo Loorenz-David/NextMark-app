@@ -2,7 +2,7 @@ import { AddressAutocompleteProvider } from './AddressAutocomplete.provider'
 import { AddressAutocompleteLayout } from './AddressAutocomplete.layout'
 import type { CSSProperties } from 'react'
 import type{ address } from '@/types/address'
-import type { ComponentRestrictions } from '@/shared/google-maps/types'
+import type { ComponentRestrictions } from '@shared-google-maps'
 
 type PropsAddressAutocomplete = {
     onSelectedAddress: (value: address | null ) => void

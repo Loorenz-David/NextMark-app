@@ -1,4 +1,15 @@
 {
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@shared-domain": ["../packages/shared-domain/index.ts"],
+      "@shared-domain/*": ["../packages/shared-domain/*"],
+      "@shared-api": ["../packages/shared-api/index.ts"],
+      "@shared-api/*": ["../packages/shared-api/*"],
+      "@shared-google-maps": ["../packages/shared-google-maps/index.ts"],
+      "@shared-google-maps/*": ["../packages/shared-google-maps/*"]
+    }
+  },
   "files": [],
   "references": [
     { "path": "./tsconfig.app.json" },

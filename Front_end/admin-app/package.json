@@ -6,8 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
-    "lint": "eslint . && eslint --no-warn-ignored $(find ../packages/shared-domain ../packages/shared-utils/src -name '*.ts' -print)",
-    "lint:packages": "eslint --no-warn-ignored $(find ../packages/shared-domain ../packages/shared-utils/src -name '*.ts' -print)",
+    "lint": "eslint . && eslint --no-warn-ignored $(find ../packages/shared-domain ../packages/shared-utils/src ../packages/shared-api ../packages/shared-google-maps -name '*.ts' -print)",
+    "lint:packages": "eslint --no-warn-ignored $(find ../packages/shared-domain ../packages/shared-utils/src ../packages/shared-api ../packages/shared-google-maps -name '*.ts' -print)",
     "check:popup-contract": "node scripts/check-feature-popup-architecture.mjs",
     "preview": "vite preview"
   },

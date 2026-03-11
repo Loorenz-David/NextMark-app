@@ -1,4 +1,1 @@
-export type ServiceTime = {
-  time: number
-  per_item: number
-}
+export type { ServiceTime } from '@shared-domain'

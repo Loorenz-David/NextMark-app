@@ -1,4 +1,4 @@
-import { CurrentLocationIcon } from '@/assets/icons'
+import { CurrentLocationIconSrc } from '@/assets/icons'
 import { CURRENT_LOCATION_SUGGESTION } from '../constants/currentLocationSuggestion'
 
 type CurrentLocationCardProps = {
@@ -16,7 +16,11 @@ export const CurrentLocationCard = ({ onSelect }: CurrentLocationCardProps) => {
           onSelect()
         }}
       >
-        <CurrentLocationIcon className="h-4 w-4 text-[var(--color-dark-blue)]" />
+        <img
+          alt="Current location"
+          className="h-4 w-4"
+          src={CurrentLocationIconSrc}
+        />
         <span className="font-medium text-[var(--color-text)]">{CURRENT_LOCATION_SUGGESTION.label}</span>
       </button>
     </li>

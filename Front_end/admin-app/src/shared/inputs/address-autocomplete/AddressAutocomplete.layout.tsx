@@ -1,5 +1,5 @@
 import type { CSSProperties } from 'react'
-import { CurrentLocationIcon } from '@/assets/icons'
+import { CurrentLocationIconSrc } from '@/assets/icons'
 import { FloatingPopover }  from '@/shared/popups/FloatingPopover/FloatingPopover'
 import { InputField } from '@/shared/inputs/InputField'
 
@@ -47,7 +47,11 @@ export const AddressAutocompleteLayout = ({
                 <div className={`relative flex items-center ${containerClassName}`}>
                     {isCurrentLocationMode ? (
                       <span className="pointer-events-none text-[var(--color-primary)]">
-                        <CurrentLocationIcon className="h-4 w-4 text-[var(--color-dark-blue)]" />
+                        <img
+                          alt="Current location"
+                          className="h-4 w-4"
+                          src={CurrentLocationIconSrc}
+                        />
                       </span>
                     ) : null}
                     <InputField

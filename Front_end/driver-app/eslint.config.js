@@ -19,5 +19,19 @@ export default defineConfig([
       ecmaVersion: 2020,
       globals: globals.browser,
     },
+    rules: {
+      'no-restricted-imports': ['error', {
+        patterns: [
+          {
+            group: ['@shared-domain/*', '@shared-api/*', '@shared-google-maps/*', '@packages/*'],
+            message: 'Import shared packages from their root barrel only.',
+          },
+          {
+            group: ['@/app/storage/*', '@/app/services/client'],
+            message: 'Feature code must consume app services through providers and hooks.',
+          },
+        ],
+      }],
+    },
   },
 ])

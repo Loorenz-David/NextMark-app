@@ -1,11 +1,10 @@
 import { useState, useCallback } from 'react'
-import type { EnsureServiceReturn } from '@/shared/google-maps/hooks/usePlacesAPIServices'
-
 import type {
-  AutocompletePrediction,
   ComponentRestrictions,
+  EnsureGooglePlacesServicesResult,
   PlacesServiceStatus,
-} from '@/shared/google-maps/types'
+} from '@shared-google-maps'
+import { getPlacePredictionsQuery } from '@shared-google-maps'
 import type { PlaceSuggestion } from '../types'
 
 type PredictionsState = {
@@ -26,7 +25,7 @@ const initialPredictionState: PredictionsState = {
 
 type PropsUsePredictionCall = {
     componentRestrictions?: ComponentRestrictions
-    ensureServices: ()=> Promise<EnsureServiceReturn>
+    ensureServices: ()=> Promise<EnsureGooglePlacesServicesResult>
 }
 
 export const usePredictionCall = ({
@@ -40,17 +39,6 @@ export const usePredictionCall = ({
     const resetPredictions = useCallback(() => {
         setPredictions(initialPredictionState)
       }, [])
-
-    function mapSuggestion(suggestion: AutocompletePrediction): PlaceSuggestion {
-        return {
-            type: 'place',
-            description: suggestion.description,
-            placeId: suggestion.place_id,
-            mainText: suggestion.structured_formatting?.main_text,
-            secondaryText: suggestion.structured_formatting?.secondary_text,
-        }
-    }
-
     const fetchPredictions = useCallback(
         async (input: string) => {
 
@@ -62,38 +50,30 @@ export const usePredictionCall = ({
           setPredictions((prev) => ({ ...prev, isLoading: true }))
     
           try {
-            const { autocompleteService, sessionToken } = await ensureServices()
-            if (!autocompleteService) {
-              resetPredictions()
-              return
-            }
-    
-            autocompleteService.getPlacePredictions(
+            const result = await getPlacePredictionsQuery(
+              {
+                ensureServices,
+              },
               {
                 input,
-                sessionToken: sessionToken ?? undefined,
                 componentRestrictions,
               },
-              (suggestions, status) => {
-                if (status !== 'OK' || !suggestions) {
-                  setPredictions({
-                    suggestions: [],
-                    status,
-                    isLoading: false,
-                    error: status === 'ZERO_RESULTS' ? undefined : status,
-                  })
-                  return
-                }
-    
-                const mapped = suggestions.map((suggestion) => mapSuggestion(suggestion))
-
-                setPredictions({
-                  suggestions: mapped,
-                  status,
-                  isLoading: false,
-                })
-              },
             )
+
+            const mappedSuggestions: PlaceSuggestion[] = result.suggestions.map((suggestion) => ({
+              type: 'place',
+              description: suggestion.description,
+              placeId: suggestion.placeId,
+              mainText: suggestion.mainText,
+              secondaryText: suggestion.secondaryText,
+            }))
+
+            setPredictions({
+              suggestions: mappedSuggestions,
+              status: result.status,
+              isLoading: false,
+              error: result.error,
+            })
           } catch (error) {
             setPredictions({
               suggestions: [],

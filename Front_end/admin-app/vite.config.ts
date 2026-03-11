@@ -15,6 +15,9 @@ export default defineConfig({
       '@packages':path.resolve(__dirname, "../packages"),
       '@shared-utils': path.resolve(__dirname, '../packages/shared-utils/src'),
       '@shared-domain': path.resolve(__dirname, '../packages/shared-domain'),
+      '@shared-api': path.resolve(__dirname, '../packages/shared-api'),
+      '@shared-google-maps': path.resolve(__dirname, '../packages/shared-google-maps'),
+      '@shared-icons': path.resolve(__dirname, '../packages/shared-icons'),
     }
   }
 })

@@ -1,34 +1,6 @@
-export interface SessionUser {
-  id?: string | number
-  client_id?: string
-  email?: string
-  teamId?: string | number | null
-  username?: string
-  phone_number?: string | null
-  profile_picture?: string | null
-  user_role_id?: number | null
-  base_role_id?: number | null
-  show_app_tutorial?: boolean
-  [key: string]: unknown
-}
+import type { SessionIdentity, SessionSnapshot, SessionUser } from '@shared-api'
 
-export interface SessionIdentity {
-  user_id?: string | number
-  team_id?: string | number | null
-  user_role_id?: number | null
-  base_role_id?: number | null
-  time_zone?: string | null
-  [key: string]: unknown
-}
-
-export interface SessionSnapshot {
-  accessToken: string
-  refreshToken: string
-  socketToken?: string
-  user?: SessionUser | null
-  identity?: SessionIdentity | null
-  updatedAt: number
-}
+export type { SessionIdentity, SessionSnapshot, SessionUser } from '@shared-api'
 
 type SessionListener = (session: SessionSnapshot | null) => void
 

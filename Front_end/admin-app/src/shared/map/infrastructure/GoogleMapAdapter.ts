@@ -1,4 +1,4 @@
-import { loadGoogleMaps } from '@/shared/google-maps/api/loadGoogleMaps'
+import { loadGoogleMaps } from '@shared-google-maps'
 
 import { MAP_MARKER_LAYERS } from '../domain/constants/markerLayers'
 import type { MapOrder } from '../domain/entities/MapOrder'

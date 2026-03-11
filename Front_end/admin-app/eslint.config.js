@@ -35,8 +35,47 @@ export default defineConfig([
       'no-restricted-imports': ['error', {
         patterns: [
           {
-            group: ['@shared-utils/*', '@shared-domain/*', '@packages/*'],
+            group: ['@shared-utils/*', '@shared-domain/*', '@shared-api/*', '@shared-google-maps/*', '@packages/*'],
             message: 'Import shared packages from their root barrel only.',
+          },
+        ],
+      }],
+    },
+  },
+  {
+    files: ['../packages/shared-domain/core/**/*.{ts,tsx}'],
+    rules: {
+      'no-restricted-imports': ['error', {
+        patterns: [
+          {
+            group: ['../delivery-planning/*', '../items/*', '../orders/*'],
+            message: 'shared-domain/core cannot depend on higher-level domains.',
+          },
+        ],
+      }],
+    },
+  },
+  {
+    files: ['../packages/shared-domain/delivery-planning/**/*.{ts,tsx}'],
+    rules: {
+      'no-restricted-imports': ['error', {
+        patterns: [
+          {
+            group: ['../items/*', '../orders/*'],
+            message: 'shared-domain/delivery-planning cannot depend on higher-level domains.',
+          },
+        ],
+      }],
+    },
+  },
+  {
+    files: ['../packages/shared-domain/items/**/*.{ts,tsx}'],
+    rules: {
+      'no-restricted-imports': ['error', {
+        patterns: [
+          {
+            group: ['../orders/*'],
+            message: 'shared-domain/items cannot depend on higher-level domains.',
           },
         ],
       }],
@@ -64,6 +103,10 @@ export default defineConfig([
           {
             group: ['@/*', '@app', '@app/*', '@features', '@features/*'],
             message: 'Shared packages cannot import admin-app code.',
+          },
+          {
+            group: ['@shared-utils/*', '@shared-domain/*', '@shared-api/*', '@shared-google-maps/*'],
+            message: 'Shared packages must be imported from their root barrel only.',
           },
           {
             group: ['../admin-app/*', '../../admin-app/*', '../../../admin-app/*'],

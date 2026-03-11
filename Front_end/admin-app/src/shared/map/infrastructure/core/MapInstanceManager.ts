@@ -1,4 +1,4 @@
-import { loadGoogleMaps } from '@/shared/google-maps/api/loadGoogleMaps'
+import { loadGoogleMaps } from '@shared-google-maps'
 
 import type { MapConfig } from '../../domain/types'
 

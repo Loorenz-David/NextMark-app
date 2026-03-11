@@ -1,11 +1,11 @@
+import { useRef } from 'react'
 
-
-import { usePlacesAPIServices } from '@/shared/google-maps/hooks/usePlacesAPIServices'
+import { createGooglePlacesServiceAccess } from '@shared-google-maps'
 import { usePredictionCall } from './usePredictionCall'
 import { usePlacesCall } from './usePlacesCall'
 import { useAddressCurrentLocationFlow } from './useAddressCurrentLocationFlow'
 
-import type { ComponentRestrictions } from '@/shared/google-maps/types'
+import type { ComponentRestrictions, GooglePlacesServiceAccess } from '@shared-google-maps'
 
 type PropsUsePlacesAutoComplete = {
     componentRestrictions?: ComponentRestrictions
@@ -14,9 +14,20 @@ type PropsUsePlacesAutoComplete = {
 export const useGoogleAutoComplete = ({
     componentRestrictions
 }: PropsUsePlacesAutoComplete)=>{
-    const { ensureServices } = usePlacesAPIServices()
-    const { fetchPredictions, resetPredictions, predictions } = usePredictionCall({ ensureServices, componentRestrictions })
-    const { getPlaceDetails } = usePlacesCall({ ensureServices })
+    const servicesRef = useRef<GooglePlacesServiceAccess | null>(null)
+
+    if (!servicesRef.current) {
+      servicesRef.current = createGooglePlacesServiceAccess()
+    }
+
+    const { fetchPredictions, resetPredictions, predictions } = usePredictionCall({
+      ensureServices: servicesRef.current.ensureServices,
+      componentRestrictions,
+    })
+    const { getPlaceDetails } = usePlacesCall({
+      ensureServices: servicesRef.current.ensureServices,
+      resetSessionToken: servicesRef.current.resetSessionToken,
+    })
     const { getCurrentLocationAddress } = useAddressCurrentLocationFlow()
    
     return {

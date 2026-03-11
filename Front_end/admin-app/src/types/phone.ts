@@ -1,4 +1,1 @@
-export type Phone = {
-    prefix: string
-    number: string
-}
+export type { Phone } from '@shared-domain'
