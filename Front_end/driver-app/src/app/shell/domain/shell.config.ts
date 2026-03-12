@@ -2,7 +2,7 @@ export const DRIVER_SHELL_CONFIG = {
   bottomSheet: {
     snapHeights: {
       collapsed: 10,
-      workspace: 25,
+      workspace: 45,
       expanded: 98,
     },
     interactionButtonsFadeOffsetPercent: 5,

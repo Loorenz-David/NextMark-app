@@ -1,6 +1,6 @@
-import { createEntityStore } from '@/shared/store/StoreFactory'
-import type { EntityTable } from '@/shared/store/StoreFactory'
-import { selectAll, selectByClientId, selectByServerId, selectVisible } from '@/shared/store/entitySelectors'
+import { createEntityStore } from "@shared-store"
+import type { EntityTable } from "@shared-store"
+import { selectAll, selectByClientId, selectByServerId, selectVisible } from "@shared-store"
 
 import type { Order, OrderMap } from '../types/order'
 

@@ -1,8 +1,8 @@
-import type { EntityTable } from '@/shared/store/StoreFactory'
+import type { EntityTable } from "@shared-store"
 import type { UserRole } from '@/features/role/userRole/types/userRole'
 
-import { createEntityStore } from '@/shared/store/StoreFactory'
-import { selectAll, selectByClientId, selectByServerId } from '@/shared/store/entitySelectors'
+import { createEntityStore } from "@shared-store"
+import { selectAll, selectByClientId, selectByServerId } from "@shared-store"
 
 export const useUserRoleStore = createEntityStore<UserRole>()
 

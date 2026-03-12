@@ -7,14 +7,14 @@ import { BottomSheetInteractionButtons } from './BottomSheetInteractionButtons'
 export function BottomSheetSurface() {
   const controller = useBottomSheetSurfaceController()
   const chromeController = useDriverAppShellChromeController()
-  const { pushBottomSheet, handleSurfaceBack } = useDriverAppShell()
+  const { handleSurfaceBack } = useDriverAppShell()
 
   const currentPage = controller.currentPage
 
   return (
     <section
       aria-label="Bottom sheet workspace"
-      className={`driver-bottom-sheet driver-bottom-sheet--${controller.snap}${controller.motionState === 'snapping' ? ' is-snapping' : ''}`}
+      className={`map-glass-fake-bg driver-bottom-sheet driver-bottom-sheet--${controller.snap}${controller.motionState === 'snapping' ? ' is-snapping' : ''}`}
       style={{ height: `${controller.heightPercent}%` }}
     >
       <BottomSheetInteractionButtons
@@ -39,7 +39,7 @@ export function BottomSheetSurface() {
 
       <div className="driver-bottom-sheet__content">
         {currentPage?.page === 'route-workspace' ? (
-          <AssignedRoutePage onOpenStopDetail={(stopClientId) => pushBottomSheet('route-stop-detail', { stopClientId })} />
+          <AssignedRoutePage />
         ) : null}
 
         {currentPage?.page === 'route-stop-detail' ? (

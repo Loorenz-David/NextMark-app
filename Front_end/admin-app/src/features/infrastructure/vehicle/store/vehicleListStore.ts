@@ -1,7 +1,7 @@
-import type { ListState } from '@/shared/store/ListStoreFactory'
+import type { ListState } from "@shared-store"
 import type { VehiclePagination, VehicleQueryFilters } from '@/features/infrastructure/vehicle/types/vehicleMeta'
 
-import { createListStore } from '@/shared/store/ListStoreFactory'
+import { createListStore } from "@shared-store"
 
 export const useVehicleListStore = createListStore<Record<string, never>, VehicleQueryFilters, VehiclePagination>()
 

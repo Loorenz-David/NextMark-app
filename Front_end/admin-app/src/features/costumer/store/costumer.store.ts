@@ -1,4 +1,4 @@
-import { createEntityStore } from '@/shared/store/StoreFactory'
+import { createEntityStore } from "@shared-store"
 
 import type { Costumer } from '../dto/costumer.dto'
 

@@ -4,6 +4,7 @@ import type {
   BottomSheetStackEntry,
   OverlayStackEntry,
   ShellStoreState,
+  SlidingPageStackEntry,
   SideMenuStackEntry,
 } from '../domain/shell.types'
 import type { Coordinates } from '@/shared/map'
@@ -13,6 +14,10 @@ import { BOTTOM_SHEET_HEIGHTS } from '../domain/shell.types'
 function resolveSurfaceFocus(state: ShellStoreState): ShellStoreState['surfaceFocus'] {
   if (state.overlayStack.length > 0) {
     return 'overlay'
+  }
+
+  if (state.slidingPageStack.length > 0) {
+    return 'sliding-page'
   }
 
   if (state.sideMenuStack.length > 0) {
@@ -59,6 +64,21 @@ export function replaceSideMenuStack(
   const nextState = {
     ...state,
     sideMenuStack: stack,
+  }
+
+  return {
+    ...nextState,
+    surfaceFocus: resolveSurfaceFocus(nextState),
+  }
+}
+
+export function replaceSlidingPageStack(
+  state: ShellStoreState,
+  stack: SlidingPageStackEntry[],
+): ShellStoreState {
+  const nextState = {
+    ...state,
+    slidingPageStack: stack,
   }
 
   return {

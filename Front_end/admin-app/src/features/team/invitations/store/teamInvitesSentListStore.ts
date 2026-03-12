@@ -1,7 +1,7 @@
-import type { ListState } from '@/shared/store/ListStoreFactory'
+import type { ListState } from "@shared-store"
 import type { TeamInvitePagination, TeamInviteSentQueryFilters } from '@/features/team/invitations/types/teamInvitationMeta'
 
-import { createListStore } from '@/shared/store/ListStoreFactory'
+import { createListStore } from "@shared-store"
 
 export const useTeamInvitesSentListStore = createListStore<Record<string, never>, TeamInviteSentQueryFilters, TeamInvitePagination>()
 

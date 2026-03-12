@@ -1,0 +1,19 @@
+.route-toolbar-layout {
+  display: grid;
+  grid-template-columns: 1rem minmax(0, 1fr) 2.5rem;
+  align-items: center;
+  transition: grid-template-columns 600ms cubic-bezier(0.22, 1.2, 0.36, 1);
+}
+
+.route-toolbar-layout.is-menu-visible {
+  grid-template-columns: 4rem minmax(0, 1fr) 2.5rem;
+}
+
+.route-toolbar-menu-slot {
+  overflow: hidden;
+  width: 1rem;
+}
+
+.route-toolbar-menu-slot.is-visible {
+  width: 4rem;
+}

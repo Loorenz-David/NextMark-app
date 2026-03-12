@@ -21,6 +21,7 @@ Allowed package imports:
 
 - `@shared-domain`
 - `@shared-api`
+- `@shared-store`
 - `@shared-utils`
 
 Disallowed examples:
@@ -51,6 +52,11 @@ Shared packages may contain:
 - transport-safe API wrappers
 - deterministic utilities
 
+Exception:
+
+- `@shared-store` is an allowed shared runtime utility package for cross-app store factories built on Zustand
+- `@shared-store` must remain app-independent and must not import app code, feature code, or React UI
+
 Utilities in shared packages must be pure:
 
 - no side effects
@@ -62,12 +68,13 @@ Utilities in shared packages must be pure:
 
 Frontend code should follow this dependency direction:
 
-`packages -> app/services -> features/actions -> features/flows -> features/controllers -> pages/components`
+`packages -> app/services -> features/api -> features/actions -> features/flows -> features/controllers -> pages/components`
 
 Additional rules:
 
 - lower layers must not import higher layers
 - components and pages must not reach directly into `app/services`
+- actions should consume feature `api/` when the feature owns a backend contract
 - flows may compose actions
 - controllers may compose flows and actions
 - providers may wire scope and dependencies, but must not become alternate flow layers
@@ -151,6 +158,7 @@ This keeps features portable and testable.
 Each feature should be organized with these folders when applicable:
 
 - `domain/`
+- `api/`
 - `actions/`
 - `flows/`
 - `controllers/`
@@ -176,13 +184,41 @@ Feature-local language only:
 
 `domain/` must not contain transport code, React components, or page orchestration.
 
+### `api/`
+
+Feature API modules own feature-scoped backend contracts.
+
+Use `api/` for:
+
+- feature-specific endpoint wrappers
+- feature-specific request and response contracts
+- backend-to-feature DTO mappers when they are specific to that feature
+- thin adapters over `app/services` transport or shared API clients
+
+`api/` may depend on:
+
+- `app/services`
+- `packages`
+- feature `domain/`
+
+`api/` must not contain:
+
+- UI logic
+- React components
+- multi-step workflow orchestration
+- store mutations
+
+If a backend integration is specific to one feature, it belongs in that feature's `api/`.
+
+If the integration is app-wide infrastructure or shared across multiple features, it belongs in `app/services` or `packages`, not feature `api/`.
+
 ### `actions/`
 
 Single operations only:
 
 - one intent per file
 - one business operation per action
-- may call services or shared API modules
+- may call feature `api/`, app services, or shared API modules
 
 `actions/` must not contain page layout logic or multi-step orchestration.
 

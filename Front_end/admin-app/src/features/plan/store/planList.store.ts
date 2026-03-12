@@ -1,7 +1,7 @@
-import type { ListState } from '@/shared/store/ListStoreFactory'
+import type { ListState } from "@shared-store"
 import type { PlanPagination, PlanQueryFilters, PlanStats } from '@/features/plan/types/planMeta'
 
-import { createListStore } from '@/shared/store/ListStoreFactory'
+import { createListStore } from "@shared-store"
 
 export const usePlanListStore = createListStore<PlanStats, PlanQueryFilters, PlanPagination>()
 

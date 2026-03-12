@@ -1,9 +1,9 @@
 import type { Coordinates } from '@/shared/map'
 import { DRIVER_SHELL_CONFIG } from './shell.config'
 
-export type ShellSurface = 'bottom-sheet' | 'side-menu' | 'overlay'
+export type ShellSurface = 'bottom-sheet' | 'side-menu' | 'sliding-page' | 'overlay'
 export type BottomSheetSnap = 'collapsed' | 'workspace' | 'expanded'
-export type ShellSurfaceFocus = 'bottom-sheet' | 'side-menu' | 'overlay'
+export type ShellSurfaceFocus = 'bottom-sheet' | 'side-menu' | 'sliding-page' | 'overlay'
 export type BottomSheetMotionState = 'idle' | 'dragging' | 'snapping'
 
 export type BottomSheetPageId =
@@ -11,6 +11,8 @@ export type BottomSheetPageId =
   | 'route-stop-detail'
 
 export type SideMenuPageId = 'menu-home'
+
+export type SlidingPagePageId = 'test-sliding-page'
 
 export type OverlayPageId = 'shell-overlay-placeholder'
 
@@ -21,6 +23,10 @@ export type BottomSheetPageParamsMap = {
 
 export type SideMenuPageParamsMap = {
   'menu-home': undefined
+}
+
+export type SlidingPagePageParamsMap = {
+  'test-sliding-page': { title: string }
 }
 
 export type OverlayPageParamsMap = {
@@ -41,6 +47,10 @@ export type SideMenuStackEntry = {
   [PageId in SideMenuPageId]: StackEntryBase<PageId, SideMenuPageParamsMap[PageId]>
 }[SideMenuPageId]
 
+export type SlidingPageStackEntry = {
+  [PageId in SlidingPagePageId]: StackEntryBase<PageId, SlidingPagePageParamsMap[PageId]>
+}[SlidingPagePageId]
+
 export type OverlayStackEntry = {
   [PageId in OverlayPageId]: StackEntryBase<PageId, OverlayPageParamsMap[PageId]>
 }[OverlayPageId]
@@ -48,6 +58,7 @@ export type OverlayStackEntry = {
 export type ShellStoreState = {
   bottomSheetStack: BottomSheetStackEntry[]
   sideMenuStack: SideMenuStackEntry[]
+  slidingPageStack: SlidingPageStackEntry[]
   overlayStack: OverlayStackEntry[]
   bottomSheetSnap: BottomSheetSnap
   bottomSheetHeightPercent: number

@@ -1,6 +1,6 @@
-import type { EntityTable } from '@/shared/store/StoreFactory'
-import { createEntityStore } from '@/shared/store/StoreFactory'
-import { selectAll, selectByClientId, selectByServerId } from '@/shared/store/entitySelectors'
+import type { EntityTable } from "@shared-store"
+import { createEntityStore } from "@shared-store"
+import { selectAll, selectByClientId, selectByServerId } from "@shared-store"
 
 import type { SmsMessageTemplate } from '../types/smsMessage'
 

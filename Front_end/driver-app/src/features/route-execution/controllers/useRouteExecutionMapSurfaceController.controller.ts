@@ -1,7 +1,5 @@
-import { useSyncExternalStore } from 'react'
-import { useRouteExecutionShell } from '../providers/routeExecutionShell.context'
-import { selectAssignedRoute } from '../stores/routeExecution.selectors'
 import { useAssignedRouteMapController } from './useAssignedRouteMapController.controller'
+import { useSelectedAssignedRoute } from './useSelectedAssignedRoute.controller'
 
 type UseRouteExecutionMapSurfaceControllerDependencies = {
   selectedStopClientId?: string | null
@@ -11,13 +9,7 @@ type UseRouteExecutionMapSurfaceControllerDependencies = {
 export function useRouteExecutionMapSurfaceController(
   dependencies: UseRouteExecutionMapSurfaceControllerDependencies,
 ) {
-  const { store } = useRouteExecutionShell()
-
-  const route = useSyncExternalStore(
-    store.subscribe,
-    () => selectAssignedRoute(store.getState()),
-    () => selectAssignedRoute(store.getState()),
-  )
+  const route = useSelectedAssignedRoute()
 
   return useAssignedRouteMapController(route, dependencies)
 }

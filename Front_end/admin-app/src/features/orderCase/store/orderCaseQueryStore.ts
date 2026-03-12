@@ -1,6 +1,6 @@
 import { useShallow } from 'zustand/react/shallow'
 
-import { createQueryStore } from '@/shared/store/QueryStoreFactory'
+import { createQueryStore } from "@shared-store"
 
 import type { OrderCaseQueryFilters } from '../types'
 

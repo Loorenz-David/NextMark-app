@@ -12,6 +12,7 @@ export function createInitialShellStoreState(): ShellStoreState {
   return {
     bottomSheetStack: [],
     sideMenuStack: [],
+    slidingPageStack: [],
     overlayStack: [],
     bottomSheetSnap: initialSnap,
     bottomSheetHeightPercent: BOTTOM_SHEET_HEIGHTS[initialSnap],

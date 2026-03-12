@@ -1,8 +1,8 @@
-import type { EntityTable } from '@/shared/store/StoreFactory'
+import type { EntityTable } from "@shared-store"
 import type { LocalDeliveryPlan } from '@/features/plan/planTypes/localDelivery/types/localDeliveryPlan'
 
-import { createEntityStore } from '@/shared/store/StoreFactory'
-import { selectAll, selectByClientId, selectByServerId } from '@/shared/store/entitySelectors'
+import { createEntityStore } from "@shared-store"
+import { selectAll, selectByClientId, selectByServerId } from "@shared-store"
 import { selectPlanByServerId, usePlanStore } from '@/features/plan/store/plan.slice'
 
 export const useLocalDeliveryPlanStore = createEntityStore<LocalDeliveryPlan>()

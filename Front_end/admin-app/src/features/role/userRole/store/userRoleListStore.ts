@@ -1,7 +1,7 @@
-import type { ListState } from '@/shared/store/ListStoreFactory'
+import type { ListState } from "@shared-store"
 import type { UserRolePagination, UserRoleQueryFilters } from '@/features/role/userRole/types/userRoleMeta'
 
-import { createListStore } from '@/shared/store/ListStoreFactory'
+import { createListStore } from "@shared-store"
 
 export const useUserRoleListStore = createListStore<Record<string, never>, UserRoleQueryFilters, UserRolePagination>()
 

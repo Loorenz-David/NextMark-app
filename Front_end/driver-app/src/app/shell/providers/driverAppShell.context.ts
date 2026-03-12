@@ -7,6 +7,8 @@ import type {
   OverlayPageId,
   OverlayPageParamsMap,
   ShellStore,
+  SlidingPagePageId,
+  SlidingPagePageParamsMap,
   SideMenuPageId,
   SideMenuPageParamsMap,
 } from '../domain/shell.types'
@@ -26,6 +28,11 @@ export type DriverAppShellContextValue = {
     params: SideMenuPageParamsMap[PageId],
   ) => void
   closeSideMenu: () => void
+  openSlidingPage: <PageId extends SlidingPagePageId>(
+    page: PageId,
+    params: SlidingPagePageParamsMap[PageId],
+  ) => void
+  closeSlidingPage: () => void
   openOverlay: <PageId extends OverlayPageId>(
     page: PageId,
     params: OverlayPageParamsMap[PageId],

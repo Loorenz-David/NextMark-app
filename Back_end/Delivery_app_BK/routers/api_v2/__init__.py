@@ -26,6 +26,7 @@ from .plan_overviews import plan_overviews_bp
 from .item_position import item_position_bp
 from .item_state import item_state_bp
 from .costumer import costumer_bp
+from .drivers import drivers_bp
 
 
 
@@ -63,3 +64,4 @@ def register_v2_blueprints(app):
     app.register_blueprint(route_solution_bp, url_prefix="/api_v2/route_solutions")
     app.register_blueprint(plan_overviews_bp, url_prefix="/api_v2/plan_overviews")
     app.register_blueprint(costumer_bp, url_prefix="/api_v2/costumers")
+    app.register_blueprint(drivers_bp, url_prefix="/api_v2/drivers")

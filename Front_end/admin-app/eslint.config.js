@@ -35,8 +35,39 @@ export default defineConfig([
       'no-restricted-imports': ['error', {
         patterns: [
           {
-            group: ['@shared-utils/*', '@shared-domain/*', '@shared-api/*', '@shared-google-maps/*', '@packages/*'],
+            group: ['@shared-utils/*', '@shared-domain/*', '@shared-api/*', '@shared-store/*', '@shared-google-maps/*', '@packages/*'],
             message: 'Import shared packages from their root barrel only.',
+          },
+        ],
+      }],
+    },
+  },
+  {
+    files: ['../packages/shared-store/**/*.{ts,tsx}'],
+    rules: {
+      'no-restricted-imports': ['error', {
+        paths: [
+          {
+            name: 'react',
+            message: 'shared-store must remain app-independent.',
+          },
+        ],
+        patterns: [
+          {
+            group: ['react/*', '@tanstack/*'],
+            message: 'shared-store must remain app-independent.',
+          },
+          {
+            group: ['@/*', '@app', '@app/*', '@features', '@features/*'],
+            message: 'Shared packages cannot import admin-app code.',
+          },
+          {
+            group: ['@shared-utils/*', '@shared-domain/*', '@shared-api/*', '@shared-store/*', '@shared-google-maps/*'],
+            message: 'Shared packages must be imported from their root barrel only.',
+          },
+          {
+            group: ['../admin-app/*', '../../admin-app/*', '../../../admin-app/*'],
+            message: 'Shared packages cannot import app code via relative paths.',
           },
         ],
       }],
@@ -90,14 +121,10 @@ export default defineConfig([
             name: 'react',
             message: 'Shared packages must remain framework-agnostic.',
           },
-          {
-            name: 'zustand',
-            message: 'Shared packages must remain framework-agnostic.',
-          },
         ],
         patterns: [
           {
-            group: ['react/*', 'zustand/*', '@tanstack/*'],
+            group: ['react/*', '@tanstack/*'],
             message: 'Shared packages must remain framework-agnostic.',
           },
           {
@@ -105,7 +132,7 @@ export default defineConfig([
             message: 'Shared packages cannot import admin-app code.',
           },
           {
-            group: ['@shared-utils/*', '@shared-domain/*', '@shared-api/*', '@shared-google-maps/*'],
+            group: ['@shared-utils/*', '@shared-domain/*', '@shared-api/*', '@shared-store/*', '@shared-google-maps/*'],
             message: 'Shared packages must be imported from their root barrel only.',
           },
           {

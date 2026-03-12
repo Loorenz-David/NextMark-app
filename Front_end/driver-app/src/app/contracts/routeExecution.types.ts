@@ -43,6 +43,12 @@ export type AssignedStopViewModel = {
   expectedArrivalTime: string | null
   expectedDepartureTime: string | null
   serviceLabel: string
+  serviceDurationLabel: string | null
+  title: string
+  secondaryAddressLine: string | null
+  itemSummary: string | null
+  phoneLine: string | null
+  badgeLabel: string | null
   order: Order | null
   address: address | null
   isActive: boolean

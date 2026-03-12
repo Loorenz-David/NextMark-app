@@ -1,23 +1,16 @@
-import { useCallback, useMemo, useSyncExternalStore } from 'react'
+import { useCallback, useMemo } from 'react'
+import { useDriverAppShell } from '@/app/shell/providers/driverAppShell.context'
 import { useRouteExecutionShell } from '../providers/routeExecutionShell.context'
-import {
-  selectAssignedRoute,
-  selectAssignedStopByClientId,
-} from '../stores/routeExecution.selectors'
+import { mapStopDetailToPageDisplay } from '../domain/mapStopDetailToPageDisplay'
+import { useSelectedAssignedRoute } from './useSelectedAssignedRoute.controller'
 
 export function useStopDetailController(stopClientId?: string) {
-  const { store, submitRouteAction } = useRouteExecutionShell()
-
-  const route = useSyncExternalStore(
-    store.subscribe,
-    () => selectAssignedRoute(store.getState()),
-    () => selectAssignedRoute(store.getState()),
-  )
-
-  const stop = useSyncExternalStore(
-    store.subscribe,
-    () => selectAssignedStopByClientId(store.getState(), stopClientId),
-    () => selectAssignedStopByClientId(store.getState(), stopClientId),
+  const { submitRouteAction } = useRouteExecutionShell()
+  const { openSlidingPage } = useDriverAppShell()
+  const route = useSelectedAssignedRoute()
+  const stop = useMemo(
+    () => route?.stops.find((candidate) => candidate.stopClientId === stopClientId) ?? null,
+    [route, stopClientId],
   )
 
   const sendAction = useCallback(async (type: 'arrive-stop' | 'complete-stop' | 'skip-stop') => {
@@ -32,9 +25,20 @@ export function useStopDetailController(stopClientId?: string) {
     })
   }, [route, stop, submitRouteAction])
 
+  const pageDisplay = useMemo(() => {
+    if (!route || !stop) {
+      return null
+    }
+
+    return mapStopDetailToPageDisplay(route, stop, {
+      openTestSlidingPage: (title) => openSlidingPage('test-sliding-page', { title }),
+    })
+  }, [openSlidingPage, route, stop])
+
   return useMemo(() => ({
     route,
     stop,
     sendAction,
-  }), [route, sendAction, stop])
+    pageDisplay,
+  }), [pageDisplay, route, sendAction, stop])
 }

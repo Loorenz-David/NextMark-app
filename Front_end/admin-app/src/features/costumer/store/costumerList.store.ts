@@ -1,5 +1,5 @@
-import { createListStore } from '@/shared/store/ListStoreFactory'
-import type { ListState } from '@/shared/store/ListStoreFactory'
+import { createListStore } from "@shared-store"
+import type { ListState } from "@shared-store"
 
 import type { CostumerPagination, CostumerQueryFilters, CostumerStats } from '../dto/costumer.dto'
 

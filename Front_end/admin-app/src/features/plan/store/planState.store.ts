@@ -1,8 +1,8 @@
-import type { EntityTable } from '@/shared/store/StoreFactory'
+import type { EntityTable } from "@shared-store"
 import type { DeliveryPlanState } from '@/features/plan/types/planState'
 
-import { createEntityStore } from '@/shared/store/StoreFactory'
-import { selectAll, selectByClientId, selectByServerId } from '@/shared/store/entitySelectors'
+import { createEntityStore } from "@shared-store"
+import { selectAll, selectByClientId, selectByServerId } from "@shared-store"
 import { useShallow } from 'zustand/react/shallow'
 
 export const PLAN_STATE_TRANSITIONS: Record<string, string[]> = {

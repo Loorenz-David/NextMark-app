@@ -1,4 +1,4 @@
-import { CurrentLocationIconSrc } from '@shared-icons'
+import { CurrentLocationIcon } from '@/assets/icons'
 
 type BottomSheetInteractionButtonsProps = {
   isVisible: boolean
@@ -19,9 +19,10 @@ export function BottomSheetInteractionButtons({
         onClick={onLocateCurrentLocation}
         type="button"
       >
-       
-        
-      <img alt="" aria-hidden="true" className="h-4 w-4 shrink-0" src={CurrentLocationIconSrc} />
+        <CurrentLocationIcon
+          aria-hidden="true"
+          className="h-4 w-4 shrink-0 text-[rgb(var(--bg-app-color))]"
+        />
 
       </button>
     </div>

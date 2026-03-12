@@ -1,7 +1,7 @@
-import type { ListState } from '@/shared/store/ListStoreFactory'
+import type { ListState } from "@shared-store"
 import type { DateRangeAccessRulePagination, DateRangeAccessRuleQueryFilters } from '@/features/role/roleRules/types/roleRuleMeta'
 
-import { createListStore } from '@/shared/store/ListStoreFactory'
+import { createListStore } from "@shared-store"
 
 export const useDateRangeAccessRuleListStore =
   createListStore<Record<string, never>, DateRangeAccessRuleQueryFilters, DateRangeAccessRulePagination>()

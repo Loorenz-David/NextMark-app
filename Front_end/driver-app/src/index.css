@@ -15,6 +15,15 @@
   --danger: #b24c36;
   --border: rgba(31, 26, 19, 0.12);
   --shadow: 0 12px 40px rgba(31, 26, 19, 0.08);
+  
+  --bg-app-color: 28, 40, 40;
+  --bg-soft-light: 190, 190, 190;
+  --bg-fade-gray:rgba(177, 177, 177, 0.2);
+  --bg-soft-gray:rgb(165, 165, 165);
+  --timeline-accent: #80aaff;
+  
+  --bg-strong-light:255, 255, 255;
+  --test-pallet: rgb(169, 169, 169);
   background: linear-gradient(180deg, #f3ede2 0%, #efe7d7 100%);
   color: var(--text);
 }
@@ -43,4 +52,66 @@ button {
 a {
   color: inherit;
   text-decoration: none;
+}
+
+
+
+/* ================================
+   App Page Background System
+   ================================ */
+
+/* Base page background used by driver screens */
+.app-page-bg {
+
+  background-color: #1f2a2a;
+  overflow: hidden;
+}
+
+/* =========================================
+   Map Dark Glass Background
+   ========================================= */
+
+.map-glass-fake-bg {
+  /* base dark glass color */
+  background-color: rgba(var(--bg-app-color), 0.70);
+  /* frosted glass effect */
+  backdrop-filter: blur(18px) saturate(115%) contrast(92%);
+  -webkit-backdrop-filter: blur(18px) saturate(115%) contrast(92%);
+}
+
+.map-glass-fake-strong-bg {
+  /* base dark glass color */
+  background-color: rgba(var(--bg-app-color), 0.90);
+  /* frosted glass effect */
+  backdrop-filter: blur(40px) saturate(115%) contrast(92%);
+  -webkit-backdrop-filter: blur(40px) saturate(115%) contrast(92%);
+}
+
+/* subtle glass texture */
+.map-glass-fake-bg::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+
+  /* subtle diffusion layer (no tiling artifacts) */
+  background: rgba(var(--bg-app-color),0.02);
+}
+
+/* Background surface used behind UI panels and sheets */
+.surface-glass-bg {
+  background: rgba(35, 48, 48, 0.65);
+  backdrop-filter: saturate(120%);
+}
+
+/* Subtle edge highlight for glass surfaces */
+.surface-glass-bg::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 1px;
+
+  background: rgba(255, 255, 255, 0.18);
 }

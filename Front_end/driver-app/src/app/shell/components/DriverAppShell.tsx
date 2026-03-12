@@ -4,6 +4,7 @@ import { BottomSheetSurface } from './BottomSheetSurface'
 import { MapSurface } from './MapSurface'
 import { OverlaySurface } from './OverlaySurface'
 import { SideMenuSurface } from './SideMenuSurface'
+import { SlidingPageSurface } from './SlidingPageSurface'
 import { MenuButton } from './MenuButton'
 import { DRIVER_SHELL_CONFIG } from '../domain/shell.config'
 import { useDriverAppShellChromeController } from '../controllers/useDriverAppShellChrome.controller'
@@ -37,14 +38,18 @@ export function DriverAppShell() {
       <MapSurface />
 
       <header className="driver-shell__topbar">
-        <MenuButton
-          isOpen={controller.isSideMenuOpen}
-          onClick={controller.isSideMenuOpen ? controller.closeMenu : controller.openMenu}
-        />
+        {controller.showHeaderMenuButton ? (
+          <MenuButton
+            isOpen={controller.isSideMenuOpen}
+            onClick={controller.isSideMenuOpen ? controller.closeMenu : controller.openMenu}
+            mode={'onMap'}
+          />
+        ) : null}
       </header>
 
       <BottomSheetSurface />
       <SideMenuSurface />
+      <SlidingPageSurface />
       <OverlaySurface />
     </div>
   )

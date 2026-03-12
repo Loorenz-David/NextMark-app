@@ -8,6 +8,8 @@ import type {
   BottomSheetSnap,
   OverlayPageId,
   OverlayPageParamsMap,
+  SlidingPagePageId,
+  SlidingPagePageParamsMap,
   SideMenuPageId,
   SideMenuPageParamsMap,
 } from '../domain/shell.types'
@@ -15,6 +17,8 @@ import { openBottomSheet as openBottomSheetAction } from '../actions/openBottomS
 import { pushBottomSheet as pushBottomSheetAction } from '../actions/pushBottomSheet.action'
 import { openSideMenu as openSideMenuAction } from '../actions/openSideMenu.action'
 import { closeSideMenu as closeSideMenuAction } from '../actions/closeSideMenu.action'
+import { openSlidingPage as openSlidingPageAction } from '../actions/openSlidingPage.action'
+import { closeSlidingPage as closeSlidingPageAction } from '../actions/closeSlidingPage.action'
 import { openOverlay as openOverlayAction } from '../actions/openOverlay.action'
 import { closeOverlay as closeOverlayAction } from '../actions/closeOverlay.action'
 import { setBottomSheetSnap as setBottomSheetSnapAction } from '../actions/setBottomSheetSnap.action'
@@ -52,6 +56,17 @@ export function DriverAppShellProvider({ children }: PropsWithChildren) {
 
   const closeSideMenu = useCallback(() => {
     closeSideMenuAction(store)
+  }, [store])
+
+  const openSlidingPage = useCallback(<PageId extends SlidingPagePageId>(
+    page: PageId,
+    params: SlidingPagePageParamsMap[PageId],
+  ) => {
+    openSlidingPageAction(store, page, params)
+  }, [store])
+
+  const closeSlidingPage = useCallback(() => {
+    closeSlidingPageAction(store)
   }, [store])
 
   const openOverlay = useCallback(<PageId extends OverlayPageId>(
@@ -92,6 +107,8 @@ export function DriverAppShellProvider({ children }: PropsWithChildren) {
     pushBottomSheet,
     openSideMenu,
     closeSideMenu,
+    openSlidingPage,
+    closeSlidingPage,
     openOverlay,
     closeOverlay,
     setBottomSheetSnap,
@@ -100,11 +117,13 @@ export function DriverAppShellProvider({ children }: PropsWithChildren) {
     handleSurfaceBack,
   }), [
     closeOverlay,
+    closeSlidingPage,
     closeSideMenu,
     handleSurfaceBack,
     openBottomSheet,
     openOverlay,
     openSideMenu,
+    openSlidingPage,
     pushBottomSheet,
     setBottomSheetHeight,
     setBottomSheetMotionState,

@@ -1,5 +1,5 @@
-import { createListStore } from '@/shared/store/ListStoreFactory'
-import type { ListState } from '@/shared/store/ListStoreFactory'
+import { createListStore } from "@shared-store"
+import type { ListState } from "@shared-store"
 
 import type { OrderPagination, OrderQueryStoreFilters, OrderStats } from '../types/orderMeta'
 

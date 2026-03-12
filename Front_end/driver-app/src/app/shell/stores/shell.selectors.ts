@@ -20,6 +20,14 @@ export function selectSideMenuState(state: ShellStoreState) {
   }
 }
 
+export function selectSlidingPageState(state: ShellStoreState) {
+  return {
+    stack: state.slidingPageStack,
+    currentPage: state.slidingPageStack.at(-1) ?? null,
+    isOpen: state.slidingPageStack.length > 0,
+  }
+}
+
 export function selectOverlayState(state: ShellStoreState) {
   return {
     stack: state.overlayStack,

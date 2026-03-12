@@ -1,4 +1,4 @@
-import { createQueryStore } from "@/shared/store/QueryStoreFactory";
+import { createQueryStore } from "@shared-store";
 import type { OrderQueryFilters } from "../types/orderMeta";
 import { useShallow } from "zustand/react/shallow";
 

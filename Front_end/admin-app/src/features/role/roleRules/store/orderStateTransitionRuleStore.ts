@@ -1,8 +1,8 @@
-import type { EntityTable } from '@/shared/store/StoreFactory'
+import type { EntityTable } from "@shared-store"
 import type { OrderStateTransitionRule } from '@/features/role/roleRules/types/roleRule'
 
-import { createEntityStore } from '@/shared/store/StoreFactory'
-import { selectAll, selectByClientId, selectByServerId } from '@/shared/store/entitySelectors'
+import { createEntityStore } from "@shared-store"
+import { selectAll, selectByClientId, selectByServerId } from "@shared-store"
 
 export const useOrderStateTransitionRuleStore = createEntityStore<OrderStateTransitionRule>()
 

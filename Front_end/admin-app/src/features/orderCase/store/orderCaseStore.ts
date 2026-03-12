@@ -1,9 +1,9 @@
 import { useCallback } from 'react'
 import { useShallow } from 'zustand/react/shallow'
 
-import { createEntityStore } from '@/shared/store/StoreFactory'
-import type { EntityTable } from '@/shared/store/StoreFactory'
-import { selectAll, selectByClientId, selectByServerId, selectVisible } from '@/shared/store/entitySelectors'
+import { createEntityStore } from "@shared-store"
+import type { EntityTable } from "@shared-store"
+import { selectAll, selectByClientId, selectByServerId, selectVisible } from "@shared-store"
 
 import type { CaseChat, OrderCase, OrderCaseMap, OrderCaseState } from '../types'
 

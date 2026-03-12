@@ -1,10 +1,10 @@
-import type { EntityTable } from '@/shared/store/StoreFactory'
+import type { EntityTable } from "@shared-store"
 import type { DeliveryPlan } from '@/features/plan/types/plan'
 import type { DeliveryPlanState } from '@/features/plan/types/planState'
 
 
-import { createEntityStore } from '@/shared/store/StoreFactory'
-import { selectAll, selectByClientId, selectByServerId, selectVisible } from '@/shared/store/entitySelectors'
+import { createEntityStore } from "@shared-store"
+import { selectAll, selectByClientId, selectByServerId, selectVisible } from "@shared-store"
 import { useDeliveryPlanStateStore } from '@/features/plan/store/planState.store'
 
 export const usePlanStore = createEntityStore<DeliveryPlan>()

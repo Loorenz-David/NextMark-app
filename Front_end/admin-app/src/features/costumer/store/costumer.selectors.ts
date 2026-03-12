@@ -1,7 +1,7 @@
 import { useShallow } from 'zustand/react/shallow'
 
-import type { EntityTable } from '@/shared/store/StoreFactory'
-import { selectAll, selectByClientId, selectByServerId, selectVisible } from '@/shared/store/entitySelectors'
+import type { EntityTable } from "@shared-store"
+import { selectAll, selectByClientId, selectByServerId, selectVisible } from "@shared-store"
 
 import type { Costumer } from '../dto/costumer.dto'
 import { useCostumerStore } from './costumer.store'

@@ -1,4 +1,5 @@
 import { useStopDetailController } from '../controllers/useStopDetailController.controller'
+import { StopDetailBody, StopDetailHeader } from '../components/stop-detail'
 
 type StopDetailPageProps = {
   stopClientId?: string
@@ -8,13 +9,13 @@ type StopDetailPageProps = {
 export function StopDetailPage({ stopClientId, onBack }: StopDetailPageProps) {
   const controller = useStopDetailController(stopClientId)
 
-  if (!controller.route || !controller.stop) {
+  if (!controller.route || !controller.stop || !controller.pageDisplay) {
     return (
-      <section className="driver-page">
-        <div className="empty-panel">
+      <section className="px-5 py-6">
+        <div className="rounded-3xl border border-white/12 bg-white/6 px-4 py-5 text-sm text-white/70">
           Stop not found for the current workspace.
-          <div className="panel-actions">
-            <button className="ghost-button" onClick={onBack} type="button">Back to route</button>
+          <div className="mt-4">
+            <button className="rounded-xl border border-white/20 px-4 py-2 text-white" onClick={onBack} type="button">Back to route</button>
           </div>
         </div>
       </section>
@@ -22,26 +23,13 @@ export function StopDetailPage({ stopClientId, onBack }: StopDetailPageProps) {
   }
 
   return (
-    <section className="driver-page">
-      <div className="page-header">
-        <div>
-          <div className="driver-kicker">Stop detail</div>
-          <h2>{controller.stop.order?.reference_number ?? controller.stop.stopClientId}</h2>
-        </div>
-        <button className="ghost-button" onClick={onBack} type="button">Back</button>
-      </div>
-
-      <article className="route-card">
-        <p><strong>Address:</strong> {controller.stop.address?.street_address ?? 'Not set'}</p>
-        <p><strong>ETA:</strong> {controller.stop.expectedArrivalTime ?? 'Unknown'}</p>
-        <p><strong>Service:</strong> {controller.stop.serviceLabel}</p>
-      </article>
-
-      <div className="panel-actions">
-        <button className="ghost-button" onClick={() => void controller.sendAction('arrive-stop')}>Arrive</button>
-        <button className="primary-button" onClick={() => void controller.sendAction('complete-stop')}>Complete</button>
-        <button className="danger-button" onClick={() => void controller.sendAction('skip-stop')}>Skip</button>
-      </div>
+    <section className="flex h-full min-h-0 flex-col ">
+      <StopDetailHeader
+        header={controller.pageDisplay.header}
+        onClose={onBack}
+        primaryActions={controller.pageDisplay.primaryActions}
+      />
+      <StopDetailBody rows={controller.pageDisplay.infoRows} />
     </section>
   )
 }
