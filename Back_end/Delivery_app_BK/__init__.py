@@ -49,19 +49,19 @@ def create_app(config_name="development"):
     jwt.init_app(app)
     Migrate(app, db)
 
-    redis_uri = app.config.get("REDIS_URI")
-    if redis_uri:
-        socketio.init_app(
-                app,
-                cors_allowed_origins=frontend_origins,
-                message_queue= redis_uri or None,
-                channel="nextmark-socketio",
-            )
-    else:
-          socketio.init_app(
-                app,
-                cors_allowed_origins=frontend_origins,
-            )
+    # redis_uri = app.config.get("REDIS_URI")
+    # if redis_uri:
+    #     socketio.init_app(
+    #             app,
+    #             cors_allowed_origins=frontend_origins,
+    #             message_queue= redis_uri or None,
+    #             channel="nextmark-socketio",
+    #         )
+    # else:
+    #       socketio.init_app(
+    #             app,
+    #             cors_allowed_origins=frontend_origins,
+    #         )
 
 
     from .routers.api_v2 import register_v2_blueprints
