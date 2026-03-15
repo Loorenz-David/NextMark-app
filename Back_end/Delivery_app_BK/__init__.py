@@ -40,7 +40,7 @@ def create_app(config_name="development"):
     # app configuration
     app.config.from_object(config_map.get(config_name))
 
-    frontend_origins = os.environ.get("FRONTEND_ORIGIN", "http://localhost:5173").split(',')
+    frontend_origins = os.environ.get("FRONTEND_ORIGINS", "http://localhost:5173").split(',')
 
     CORS(app, resources={r"/*": {"origins": frontend_origins}}, supports_credentials=True)
 
@@ -48,12 +48,20 @@ def create_app(config_name="development"):
     db.init_app(app)
     jwt.init_app(app)
     Migrate(app, db)
-    socketio.init_app(
-        app,
-        cors_allowed_origins=frontend_origins,
-        message_queue=app.config.get("REDIS_URI") or None,
-        channel="nextmark-socketio",
-    )
+
+    redis_uri = app.config.get("REDIS_URI")
+    if redis_uri:
+        socketio.init_app(
+                app,
+                cors_allowed_origins=frontend_origins,
+                message_queue= redis_uri or None,
+                channel="nextmark-socketio",
+            )
+    else:
+          socketio.init_app(
+                app,
+                cors_allowed_origins=frontend_origins,
+            )
 
 
     from .routers.api_v2 import register_v2_blueprints
