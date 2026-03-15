@@ -10,6 +10,10 @@ from Delivery_app_BK.directions.providers.google.mapper import (
     GoogleDirectionsRequestMapper,
     GoogleDirectionsResponseMapper,
 )
+import json
+import os
+from google.oauth2 import service_account
+from google.maps import routing_v2
 
 
 class GoogleDirectionsProvider(DirectionsProvider):
@@ -26,8 +30,18 @@ class GoogleDirectionsProvider(DirectionsProvider):
             from google.maps import routing_v2
         except Exception as exc:  # pragma: no cover - runtime dependency
             raise ValidationFailed("google.maps.routing_v2 is not available.") from exc
+            
+        credentials_json = os.environ.get("GOOGLE_SERVICE_ACCOUNT_JSON")
 
-        client = routing_v2.RoutesClient()
+        if not credentials_json:
+            raise ValidationFailed("GOOGLE_SERVICE_ACCOUNT_JSON is not configured.")
+
+        credentials = service_account.Credentials.from_service_account_info(
+            json.loads(credentials_json)
+        )
+
+        client = routing_v2.RoutesClient(credentials=credentials)
+
         payload, field_mask = GoogleDirectionsRequestMapper.build_request(request)
 
         try:
