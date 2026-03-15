@@ -1,6 +1,6 @@
 branch-defaults:
   main:
-    environment: null
+    environment: deliveryapp-prod
     group_suffix: null
 environment-defaults:
   delivery-env:
