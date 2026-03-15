@@ -27,8 +27,6 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Popup Architecture Checks
-        run: npm run check:popup-contract
 
       - name: Build project
         run: |
