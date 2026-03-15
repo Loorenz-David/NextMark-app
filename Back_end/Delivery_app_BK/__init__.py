@@ -40,8 +40,9 @@ def create_app(config_name="development"):
     # app configuration
     app.config.from_object(config_map.get(config_name))
 
-    frontend_origin = os.environ.get("FRONTEND_ORIGIN", "http://localhost:5173")
-    CORS(app, resources={r"/*": {"origins": frontend_origin}}, supports_credentials=True)
+    frontend_origins = os.environ.get("FRONTEND_ORIGIN", "http://localhost:5173").split(',')
+
+    CORS(app, resources={r"/*": {"origins": frontend_origins}}, supports_credentials=True)
 
     # init app object
     db.init_app(app)
@@ -49,7 +50,7 @@ def create_app(config_name="development"):
     Migrate(app, db)
     socketio.init_app(
         app,
-        cors_allowed_origins=frontend_origin,
+        cors_allowed_origins=frontend_origins,
         message_queue=app.config.get("REDIS_URI") or None,
         channel="nextmark-socketio",
     )
