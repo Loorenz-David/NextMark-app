@@ -2,7 +2,7 @@ import { useCallback, useMemo } from 'react'
 
 import { arrayMove } from '@dnd-kit/sortable'
 
-import { useMessageHandler } from '@/shared/message-handler'
+import { useMessageHandler } from '@shared-message-handler'
 
 import { useUpdateItemStateIndex } from '../api/itemStateApi'
 import { useItemStateFlow } from './useItemStateFlow'

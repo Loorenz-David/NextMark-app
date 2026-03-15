@@ -2,7 +2,7 @@ import { useCallback } from 'react'
 
 import { normalizeEntityMap } from '@/lib/utils/entities/normalizeEntityMap'
 import { ApiError } from '@/lib/api/ApiClient'
-import { useMessageHandler } from '@/shared/message-handler'
+import { useMessageHandler } from '@shared-message-handler'
 
 import { roleRuleApi } from '@/features/role/roleRules/api/roleRuleApi'
 import type { DateRangeAccessRule, DateRangeAccessRuleMap } from '@/features/role/roleRules/types/roleRule'

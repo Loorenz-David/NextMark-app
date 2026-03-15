@@ -1,17 +1,26 @@
 import { CloseIcon } from '@/assets/icons'
-import type { StopDetailHeaderDisplay, StopDetailPrimaryActionDisplay } from '../../domain/stopDetailDisplay.types'
+import type {
+  StopDetailHeaderDisplay,
+  StopDetailPrimaryActionDisplay,
+  StopDetailTerminalStatusDisplay,
+} from '../../domain/stopDetailDisplay.types'
 import { StopDetailHeaderTitle } from './StopDetailHeaderTitle'
 import { StopDetailPrimaryActions } from './StopDetailPrimaryActions'
+import { StopDetailTerminalStatus } from './StopDetailTerminalStatus'
 
 type StopDetailHeaderProps = {
   header: StopDetailHeaderDisplay
+  headerMode: 'primary-actions' | 'terminal-status'
   primaryActions: StopDetailPrimaryActionDisplay[]
+  terminalStatus: StopDetailTerminalStatusDisplay | null
   onClose: () => void
 }
 
 export function StopDetailHeader({
   header,
+  headerMode,
   primaryActions,
+  terminalStatus,
   onClose,
 }: StopDetailHeaderProps) {
   return (
@@ -32,7 +41,11 @@ export function StopDetailHeader({
         </button>
       </div>
 
-      <StopDetailPrimaryActions actions={primaryActions} />
+      {headerMode === 'terminal-status' && terminalStatus ? (
+        <StopDetailTerminalStatus status={terminalStatus} />
+      ) : (
+        <StopDetailPrimaryActions actions={primaryActions} />
+      )}
     </header>
   )
 }

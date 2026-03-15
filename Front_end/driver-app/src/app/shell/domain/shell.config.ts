@@ -7,12 +7,14 @@ export const DRIVER_SHELL_CONFIG = {
     },
     interactionButtonsFadeOffsetPercent: 5,
     directionLockThresholdPx: 10,
+    contentDragActivationThresholdPx: 10,
+    contentDragDirectionBiasPx: 4,
     snapAnimationMs: 220,
     topRadiusPx: 28,
   },
   map: {
     overlapBehindSheetPx: 32,
-    responsiveResizeThresholdPercent: 25,
+    responsiveResizeThresholdPercent: 45,
   },
   sideMenu: {
     widthViewportPercent: 93,

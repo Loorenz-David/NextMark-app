@@ -1,10 +1,12 @@
+import { useCallback, useMemo } from 'react'
+
 import type { Item, ItemMap } from '../types'
 
 const isItemMap = (value: ItemMap | Item): value is ItemMap =>
   Boolean((value as ItemMap).byClientId && (value as ItemMap).allIds)
 
 export const useItemModel = () => {
-  const normalizeItemPayload = (payload: ItemMap | Item): ItemMap => {
+  const normalizeItemPayload = useCallback((payload: ItemMap | Item): ItemMap => {
     if (isItemMap(payload)) {
       return payload
     }
@@ -13,9 +15,9 @@ export const useItemModel = () => {
       byClientId: { [payload.client_id]: payload },
       allIds: [payload.client_id],
     }
-  }
+  }, [])
 
-  const normalizeItemsForOrder = (payload: ItemMap, orderId: number): ItemMap => {
+  const normalizeItemsForOrder = useCallback((payload: ItemMap, orderId: number): ItemMap => {
     const byClientId: Record<string, Item> = {}
     const allIds: string[] = []
 
@@ -38,10 +40,13 @@ export const useItemModel = () => {
       byClientId,
       allIds,
     }
-  }
+  }, [])
 
-  return {
-    normalizeItemPayload,
-    normalizeItemsForOrder,
-  }
+  return useMemo(
+    () => ({
+      normalizeItemPayload,
+      normalizeItemsForOrder,
+    }),
+    [normalizeItemPayload, normalizeItemsForOrder],
+  )
 }

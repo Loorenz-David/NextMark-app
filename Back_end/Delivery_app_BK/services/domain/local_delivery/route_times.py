@@ -44,12 +44,15 @@ def combine_plan_date_and_local_hhmm(
     if base_date is None or parsed_time is None:
         return None
 
-    # Use the stored plan calendar date as the anchor day, but interpret the
-    # wall-clock time in the team timezone.
+    # Anchor the wall-clock time to the plan's calendar day in the requested
+    # local timezone, not the raw UTC calendar date. This preserves the
+    # intended local day when a midnight-local plan date is stored as the
+    # previous UTC day for positive-offset timezones.
+    local_anchor = base_date.astimezone(tz)
     return datetime(
-        year=base_date.year,
-        month=base_date.month,
-        day=base_date.day,
+        year=local_anchor.year,
+        month=local_anchor.month,
+        day=local_anchor.day,
         hour=parsed_time.hour,
         minute=parsed_time.minute,
         second=parsed_time.second,

@@ -14,6 +14,7 @@ class DeliveryPlanEventAction(db.Model, TeamScopedMixin):
     STATUS_PENDING = "PENDING"
     STATUS_SUCCESS = "SUCCESS"
     STATUS_FAILED = "FAILED"
+    STATUS_SKIPPED = "SKIPPED"
 
     id = Column(Integer, primary_key=True)
     
@@ -22,6 +23,11 @@ class DeliveryPlanEventAction(db.Model, TeamScopedMixin):
     status = Column(String, nullable=False, index=True, default=STATUS_PENDING)
     attempts = Column(Integer, nullable=False, default=0)
     last_error = Column(Text, nullable=True)
+    scheduled_for = Column(UTCDateTime, nullable=True, index=True)
+    enqueued_at = Column(UTCDateTime, nullable=True, index=True)
+    processed_at = Column(UTCDateTime, nullable=True, index=True)
+    schedule_anchor_type = Column(String, nullable=True, index=True)
+    schedule_anchor_at = Column(UTCDateTime, nullable=True)
     created_at = Column(UTCDateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
     updated_at = Column(
         UTCDateTime,

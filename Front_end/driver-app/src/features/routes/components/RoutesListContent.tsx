@@ -29,7 +29,7 @@ export function RoutesListContent() {
 
   if (controller.routeCards.length === 0) {
     return (
-      <div className="rounded-3xl border border-slate-200/70 bg-white/85 px-4 py-6 text-sm text-slate-500 shadow-sm">
+      <div className=" px-4 py-6 text-sm text-[rgb(var(--bg-soft-light))] ">
         No routes available.
       </div>
     )

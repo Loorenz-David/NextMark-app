@@ -1,5 +1,10 @@
-import type { Coordinates } from '../types'
+export type MapRouteSegmentState = 'completed' | 'pending'
+
+export type MapRouteSegment = {
+  path: string
+  state: MapRouteSegmentState
+}
 
 export type MapRoute = {
-  path: string | Coordinates[] | string[]
+  segments: MapRouteSegment[]
 }

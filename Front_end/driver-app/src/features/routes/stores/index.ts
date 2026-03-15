@@ -8,6 +8,7 @@ export {
 
 export {
   clearRoutes,
+  patchRouteTimingByClientId,
   setRoutes,
 } from './routes.mutations'
 

@@ -1,5 +1,5 @@
 import { useCallback } from 'react'
-import { useMessageHandler } from '@/shared/message-handler/MessageHandlerContext'
+import { useMessageHandler } from '@shared-message-handler'
 import type { DeliveryPlan } from '../../types/plan'
 import { usePlanController } from '../../controllers/plan.controller'
 import { useBaseControlls } from '@/shared/resource-manager/useResourceManager'

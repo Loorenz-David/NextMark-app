@@ -32,7 +32,7 @@ item_property_bp = Blueprint("api_v2_item_property_bp", __name__)
 
 @item_property_bp.route("/", methods=["GET"])
 @jwt_required()
-@role_required([ADMIN, ASSISTANT, DRIVER])
+@role_required([ADMIN, ASSISTANT])
 def list_item_properties():
     identity = get_jwt()
     ctx = ServiceContext(
@@ -53,7 +53,7 @@ def list_item_properties():
 
 @item_property_bp.route("/", methods=["POST"])
 @jwt_required()
-@role_required([ADMIN, ASSISTANT, DRIVER])
+@role_required([ADMIN, ASSISTANT])
 def create_item_property():
     identity = get_jwt()
     incoming_data = request.get_json(silent=True) or {}
@@ -75,7 +75,7 @@ def create_item_property():
 
 @item_property_bp.route("/", methods=["PATCH"])
 @jwt_required()
-@role_required([ADMIN, ASSISTANT, DRIVER])
+@role_required([ADMIN, ASSISTANT])
 def update_item_property():
     identity = get_jwt()
     incoming_data = request.get_json(silent=True) or {}
@@ -97,7 +97,7 @@ def update_item_property():
 
 @item_property_bp.route("/", methods=["DELETE"])
 @jwt_required()
-@role_required([ADMIN, ASSISTANT, DRIVER])
+@role_required([ADMIN, ASSISTANT])
 def delete_item_property():
     identity = get_jwt()
     incoming_data = request.get_json(silent=True) or {}
@@ -119,7 +119,7 @@ def delete_item_property():
 
 @item_property_bp.route("/<int:property_id>", methods=["GET"])
 @jwt_required()
-@role_required([ADMIN, ASSISTANT, DRIVER])
+@role_required([ADMIN, ASSISTANT])
 def get_item_property(property_id: int):
     identity = get_jwt()
     ctx = ServiceContext(

@@ -1,7 +1,7 @@
 import { useCallback } from 'react'
 
 import { ApiError } from '@/lib/api/ApiClient'
-import { useMessageHandler } from '@/shared/message-handler'
+import { useMessageHandler } from '@shared-message-handler'
 
 import { authRegisterApi } from '@/features/auth/register/api/authRegisterApi'
 import type { RegisterFields } from '@/features/auth/register/types/authRegister'

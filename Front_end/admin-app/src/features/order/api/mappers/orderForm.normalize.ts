@@ -30,7 +30,7 @@ export const normalizeFormStateForSave = (state: OrderFormState): OrderUpdateFie
     operation_type: state.operation_type,
     order_plan_objective:
     state.delivery_plan_id == null ? toNullableString(state.order_plan_objective) : null,
-    reference_number: state.reference_number.trim(),
+    reference_number: state.reference_number != null ? state.reference_number.trim() : null,
     external_source: toNullableString(state.external_source),
     tracking_number: toNullableString(state.tracking_number),
     tracking_link: toNullableString(state.tracking_link),

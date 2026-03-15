@@ -79,6 +79,7 @@ export class MapInstanceManager {
       zoom: options?.zoom ?? 12,
       mapId: options?.mapId,
       disableDefaultUI: options?.disableDefaultUI ?? true,
+      gestureHandling: options?.gestureHandling ?? 'greedy',
     })
   }
 

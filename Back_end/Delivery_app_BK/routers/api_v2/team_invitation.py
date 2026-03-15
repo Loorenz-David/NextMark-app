@@ -38,7 +38,7 @@ team_invitation_bp = Blueprint("api_v2_team_invitation_bp", __name__)
 
 @team_invitation_bp.route("/sent/", methods=["GET"])
 @jwt_required()
-@role_required([ADMIN, ASSISTANT, DRIVER])
+@role_required([ADMIN, ASSISTANT])
 def list_team_invites_sent():
     identity = get_jwt()
     ctx = ServiceContext(
@@ -59,7 +59,7 @@ def list_team_invites_sent():
 
 @team_invitation_bp.route("/sent/<int:invite_id>", methods=["GET"])
 @jwt_required()
-@role_required([ADMIN, ASSISTANT, DRIVER])
+@role_required([ADMIN, ASSISTANT])
 def get_team_invite_sent(invite_id: int):
     identity = get_jwt()
     ctx = ServiceContext(
@@ -83,7 +83,7 @@ def get_team_invite_sent(invite_id: int):
 
 @team_invitation_bp.route("/received/", methods=["GET"])
 @jwt_required()
-@role_required([ADMIN, ASSISTANT, DRIVER])
+@role_required([ADMIN, ASSISTANT])
 def list_team_invites_received():
     identity = get_jwt()
     ctx = ServiceContext(
@@ -104,7 +104,7 @@ def list_team_invites_received():
 
 @team_invitation_bp.route("/received/<int:invite_id>", methods=["GET"])
 @jwt_required()
-@role_required([ADMIN, ASSISTANT, DRIVER])
+@role_required([ADMIN, ASSISTANT])
 def get_team_invite_received(invite_id: int):
     identity = get_jwt()
     ctx = ServiceContext(
@@ -128,7 +128,7 @@ def get_team_invite_received(invite_id: int):
 
 @team_invitation_bp.route("/", methods=["POST"])
 @jwt_required()
-@role_required([ADMIN, ASSISTANT, DRIVER])
+@role_required([ADMIN, ASSISTANT])
 def create_team_invitation():
     identity = get_jwt()
     incoming_data = request.get_json(silent=True) or {}
@@ -151,7 +151,7 @@ def create_team_invitation():
 
 @team_invitation_bp.route("/accept/<int:invite_id>", methods=["POST"])
 @jwt_required()
-@role_required([ADMIN, ASSISTANT, DRIVER])
+@role_required([ADMIN, ASSISTANT])
 def accept_team_invitation(invite_id: int):
     identity = get_jwt()
     ctx = ServiceContext(
@@ -175,7 +175,7 @@ def accept_team_invitation(invite_id: int):
 
 @team_invitation_bp.route("/<int:invite_id>", methods=["DELETE"])
 @jwt_required()
-@role_required([ADMIN, ASSISTANT, DRIVER])
+@role_required([ADMIN, ASSISTANT])
 def delete_team_invitation(invite_id: int):
     identity = get_jwt()
     ctx = ServiceContext(

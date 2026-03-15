@@ -1,9 +1,15 @@
 from __future__ import annotations
 
+from datetime import datetime, timezone
+from uuid import uuid4
+
 from Delivery_app_BK.models import DeliveryPlanEventAction, OrderEvent, OrderEventAction, db
+from Delivery_app_BK.services.domain.messaging import SCHEDULE_ANCHOR_FUTURE_BUSINESS_TIME
 from Delivery_app_BK.services.domain.order.order_events import OrderEvent as OrderDomainEvent
 
 from Delivery_app_BK.services.infra.messaging import MessageRenderContext
+from Delivery_app_BK.services.infra.messaging import resolve_email_template
+from Delivery_app_BK.services.infra.messaging.action_scheduling import resolve_current_delivery_plan_future_anchor
 from Delivery_app_BK.services.infra.messaging.email_service import send_email_batch
 
 
@@ -25,6 +31,14 @@ def _mark_action_failed(action: DeliveryPlanEventAction, error_message: str) -> 
 def _mark_action_success(action: DeliveryPlanEventAction) -> None:
     action.status = DeliveryPlanEventAction.STATUS_SUCCESS
     action.last_error = None
+    action.processed_at = datetime.now(timezone.utc)
+    db.session.commit()
+
+
+def _mark_action_skipped(action: DeliveryPlanEventAction, reason: str) -> None:
+    action.status = DeliveryPlanEventAction.STATUS_SKIPPED
+    action.last_error = _truncate_error(reason)
+    action.processed_at = datetime.now(timezone.utc)
     db.session.commit()
 
 
@@ -37,7 +51,6 @@ def _create_order_events_with_actions(
 ) -> None:
     if not orders:
         return
-    from Delivery_app_BK.services.infra.events import get_event_bus
     actor_id = getattr(action.event, "actor_id", None) if action.event is not None else None
     payload = {
         "source_delivery_plan_event_id": action.event_id,
@@ -50,11 +63,18 @@ def _create_order_events_with_actions(
         if order_id is None:
             continue
         row = OrderEvent(
+            event_id=str(uuid4()),
             order_id=order_id,
             event_name=OrderDomainEvent.DELIVERY_RESCHEDULED.value,
             payload=payload,
             actor_id=actor_id,
             team_id=team_id,
+            entity_type="order",
+            entity_id=str(order_id),
+            entity_version=None,
+            dispatch_status=OrderEvent.DISPATCH_STATUS_PENDING,
+            dispatch_attempts=0,
+            next_attempt_at=datetime.now(timezone.utc),
         )
         db.session.add(row)
         event_rows.append(row)
@@ -83,16 +103,14 @@ def _create_order_events_with_actions(
 
     db.session.commit()
 
-    event_bus = get_event_bus()
-    for row in event_rows:
-        event_bus.publish(row)
-
 
 def send_email(action_id: int) -> None:
     action = db.session.get(DeliveryPlanEventAction, action_id)
     if action is None:
         return
-    if action.status == DeliveryPlanEventAction.STATUS_SUCCESS:
+    if action.status in {DeliveryPlanEventAction.STATUS_SUCCESS, DeliveryPlanEventAction.STATUS_SKIPPED}:
+        return
+    if action.scheduled_for is not None and action.scheduled_for > datetime.now(timezone.utc):
         return
 
     action.attempts = (action.attempts or 0) + 1
@@ -112,6 +130,20 @@ def send_email(action_id: int) -> None:
         if team_id is None:
             _mark_action_failed(action, "Missing team context for delivery plan email send")
             return
+
+        template = resolve_email_template(team_id=team_id, channel="email", event_name=action.event.event_name)
+        if template is None or not bool(template.enable):
+            _mark_action_skipped(action, "Email template is missing or disabled at execution time")
+            return
+
+        if action.schedule_anchor_type == SCHEDULE_ANCHOR_FUTURE_BUSINESS_TIME:
+            current_anchor_at = resolve_current_delivery_plan_future_anchor(action.event)
+            if current_anchor_at is None:
+                _mark_action_skipped(action, "Future business anchor is no longer available at execution time")
+                return
+            if action.schedule_anchor_at != current_anchor_at:
+                _mark_action_skipped(action, "Future business anchor changed after the action was scheduled")
+                return
 
         orders = list(getattr(delivery_plan, "orders", None) or [])
         recipients: list[tuple[int, str, MessageRenderContext]] = []

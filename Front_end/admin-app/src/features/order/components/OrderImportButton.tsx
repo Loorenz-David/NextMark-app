@@ -1,7 +1,7 @@
 import type { ChangeEvent } from 'react'
 import { useCallback, useEffect, useRef } from 'react'
 
-import { useMessageHandler } from '@/shared/message-handler'
+import { useMessageHandler } from '@shared-message-handler'
 
 import { useOrderImport } from '../controllers/orderImport.controller'
 

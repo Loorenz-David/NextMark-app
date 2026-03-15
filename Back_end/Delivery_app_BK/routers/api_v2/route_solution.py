@@ -52,7 +52,7 @@ route_solution_bp = Blueprint("api_v2_route_solution_bp", __name__)
     methods=["PATCH"],
 )
 @jwt_required()
-@role_required([ADMIN, ASSISTANT, DRIVER])
+@role_required([ADMIN, ASSISTANT])
 def update_route_stop_position(
     route_stop_id: int,
     position: int,
@@ -84,7 +84,7 @@ def update_route_stop_position(
     methods=["PATCH"],
 )
 @jwt_required()
-@role_required([ADMIN, ASSISTANT, DRIVER])
+@role_required([ADMIN, ASSISTANT])
 def update_route_stop_group_position():
     identity = get_jwt()
     incoming_data = request.get_json(silent=True) or {}
@@ -116,7 +116,7 @@ def update_route_stop_group_position():
     methods=["PATCH"],
 )
 @jwt_required()
-@role_required([ADMIN, ASSISTANT, DRIVER])
+@role_required([ADMIN, ASSISTANT])
 def update_route_stop_service_time(route_stop_id: int):
     identity = get_jwt()
     incoming_data = request.get_json(silent=True) or {}
@@ -149,7 +149,7 @@ def update_route_stop_service_time(route_stop_id: int):
     methods=["PATCH"],
 )
 @jwt_required()
-@role_required([ADMIN, ASSISTANT, DRIVER])
+@role_required([ADMIN, ASSISTANT])
 def mark_route_stop_actual_arrival_time(route_stop_id: int):
     identity = get_jwt()
     incoming_data = request.get_json(silent=True) or {}
@@ -182,7 +182,7 @@ def mark_route_stop_actual_arrival_time(route_stop_id: int):
     methods=["PATCH"],
 )
 @jwt_required()
-@role_required([ADMIN, ASSISTANT, DRIVER])
+@role_required([ADMIN, ASSISTANT])
 def mark_route_stop_actual_departure_time(route_stop_id: int):
     identity = get_jwt()
     incoming_data = request.get_json(silent=True) or {}
@@ -217,7 +217,7 @@ def mark_route_stop_actual_departure_time(route_stop_id: int):
 
 @route_solution_bp.route("/<int:route_solution_id>/select", methods=["PATCH"])
 @jwt_required()
-@role_required([ADMIN, ASSISTANT, DRIVER])
+@role_required([ADMIN, ASSISTANT])
 def select_route_solution(route_solution_id: int):
     identity = get_jwt()
     ctx = ServiceContext(identity=identity)
@@ -238,7 +238,7 @@ def select_route_solution(route_solution_id: int):
 
 @route_solution_bp.route("/<int:route_solution_id>/actual-start-time", methods=["PATCH"])
 @jwt_required()
-@role_required([ADMIN, ASSISTANT, DRIVER])
+@role_required([ADMIN, ASSISTANT])
 def mark_route_solution_actual_start_time(route_solution_id: int):
     identity = get_jwt()
     incoming_data = request.get_json(silent=True) or {}
@@ -267,7 +267,7 @@ def mark_route_solution_actual_start_time(route_solution_id: int):
 
 @route_solution_bp.route("/<int:route_solution_id>/actual-end-time", methods=["PATCH"])
 @jwt_required()
-@role_required([ADMIN, ASSISTANT, DRIVER])
+@role_required([ADMIN, ASSISTANT])
 def mark_route_solution_actual_end_time(route_solution_id: int):
     identity = get_jwt()
     incoming_data = request.get_json(silent=True) or {}
@@ -296,7 +296,7 @@ def mark_route_solution_actual_end_time(route_solution_id: int):
 
 @route_solution_bp.route("/<int:route_solution_id>", methods=["GET"])
 @jwt_required()
-@role_required([ADMIN, ASSISTANT, DRIVER])
+@role_required([ADMIN, ASSISTANT])
 def get_route_solution(route_solution_id: int):
     identity = get_jwt()
     return_stops = request.args.get("return_stops", "false").lower() == "true"
@@ -318,7 +318,7 @@ def get_route_solution(route_solution_id: int):
 
 @route_solution_bp.route("/optimize", methods=["POST"])
 @jwt_required()
-@role_required([ADMIN, ASSISTANT, DRIVER])
+@role_required([ADMIN, ASSISTANT])
 def create_route_optimization():
     identity = get_jwt()
     incoming_data = request.get_json(silent=True) or {}
@@ -341,7 +341,7 @@ def create_route_optimization():
 
 @route_solution_bp.route("/optimize", methods=["PATCH"])
 @jwt_required()
-@role_required([ADMIN, ASSISTANT, DRIVER])
+@role_required([ADMIN, ASSISTANT])
 def update_route_optimization():
     identity = get_jwt()
     incoming_data = request.get_json(silent=True) or {}

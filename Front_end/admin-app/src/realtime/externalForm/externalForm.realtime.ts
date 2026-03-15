@@ -1,14 +1,6 @@
 import type { ExternalFormData } from '@/features/externalForm/domain/externalForm.types'
-
-import { connectSocket, getSocket } from '../core/socket.manager'
-import type { RoomJoinPayload } from '../core/socket.types'
-
-const JOIN_EXTERNAL_FORM_ROOM_EVENT = 'external_form:join_user'
-const LEAVE_EXTERNAL_FORM_ROOM_EVENT = 'external_form:leave_user'
-const SUBMIT_EXTERNAL_FORM_EVENT = 'external_form:submit_user'
-const REQUEST_EXTERNAL_FORM_EVENT = 'external_form:request_user'
-const EXTERNAL_FORM_RECEIVED_EVENT = 'external_form:received'
-const EXTERNAL_FORM_REQUESTED_EVENT = 'external_form:requested'
+import { createExternalFormChannel } from '@shared-realtime'
+import { adminRealtimeClient } from '../client'
 
 export type ExternalFormSubmitPayload = {
   user_id: number
@@ -30,60 +22,68 @@ export type ExternalFormRequestedPayload = {
   requested_by: number
 }
 
-export const joinExternalFormUserRoom = (userId: number) => {
-  if (!Number.isFinite(userId) || userId <= 0) {
-    return
-  }
+const externalFormChannel = createExternalFormChannel<ExternalFormData>(adminRealtimeClient)
+const receivedSubscriptions = new Map<
+  (payload: ExternalFormReceivedPayload) => void,
+  () => void
+>()
+const requestedSubscriptions = new Map<
+  (payload: ExternalFormRequestedPayload) => void,
+  () => void
+>()
 
-  const payload: RoomJoinPayload = { user_id: userId }
-  connectSocket().emit(JOIN_EXTERNAL_FORM_ROOM_EVENT, payload)
+export const joinExternalFormUserRoom = (userId: number) => {
+  externalFormChannel.joinUser(userId)
 }
 
 export const leaveExternalFormUserRoom = (userId: number) => {
-  if (!Number.isFinite(userId) || userId <= 0) {
-    return
-  }
-
-  const payload: RoomJoinPayload = { user_id: userId }
-  getSocket().emit(LEAVE_EXTERNAL_FORM_ROOM_EVENT, payload)
+  externalFormChannel.leaveUser(userId)
 }
 
 export const emitExternalFormSubmit = (payload: ExternalFormSubmitPayload) => {
-  if (!Number.isFinite(payload.user_id) || payload.user_id <= 0) {
-    return
-  }
-
-  connectSocket().emit(SUBMIT_EXTERNAL_FORM_EVENT, payload)
+  externalFormChannel.submitUser(payload)
 }
 
 export const emitExternalFormRequest = (payload: ExternalFormRequestPayload) => {
-  if (!Number.isFinite(payload.user_id) || payload.user_id <= 0) {
-    return
-  }
-
-  connectSocket().emit(REQUEST_EXTERNAL_FORM_EVENT, payload)
+  externalFormChannel.requestUser(payload)
 }
 
 export const subscribeToExternalFormReceived = (
   handler: (payload: ExternalFormReceivedPayload) => void,
 ) => {
-  getSocket().on(EXTERNAL_FORM_RECEIVED_EVENT, handler)
+  const release = externalFormChannel.onReceived(handler)
+  receivedSubscriptions.set(handler, release)
+  return release
 }
 
 export const unsubscribeFromExternalFormReceived = (
   handler: (payload: ExternalFormReceivedPayload) => void,
 ) => {
-  getSocket().off(EXTERNAL_FORM_RECEIVED_EVENT, handler)
+  const release = receivedSubscriptions.get(handler)
+  if (!release) {
+    return
+  }
+
+  receivedSubscriptions.delete(handler)
+  release()
 }
 
 export const subscribeToExternalFormRequested = (
   handler: (payload: ExternalFormRequestedPayload) => void,
 ) => {
-  getSocket().on(EXTERNAL_FORM_REQUESTED_EVENT, handler)
+  const release = externalFormChannel.onRequested(handler)
+  requestedSubscriptions.set(handler, release)
+  return release
 }
 
 export const unsubscribeFromExternalFormRequested = (
   handler: (payload: ExternalFormRequestedPayload) => void,
 ) => {
-  getSocket().off(EXTERNAL_FORM_REQUESTED_EVENT, handler)
+  const release = requestedSubscriptions.get(handler)
+  if (!release) {
+    return
+  }
+
+  requestedSubscriptions.delete(handler)
+  release()
 }

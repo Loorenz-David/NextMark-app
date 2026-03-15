@@ -1,6 +1,7 @@
 from sqlalchemy.exc import IntegrityError
 from Delivery_app_BK.errors import ValidationFailed
 from Delivery_app_BK.models import db, Team, MessageTemplate
+from Delivery_app_BK.services.domain.messaging import validate_schedule_configuration
 from ...context import ServiceContext
 from ..base.create_instance import create_instance
 from ..utils import extract_fields, build_create_result
@@ -18,6 +19,11 @@ def create_message_template(ctx: ServiceContext):
         try:
            
             instance = create_instance(ctx, MessageTemplate, dict(field_set))
+            validate_schedule_configuration(
+                event_name=instance.event,
+                offset_value=instance.schedule_offset_value,
+                offset_unit=instance.schedule_offset_unit,
+            )
         except IntegrityError as e:
             db.session.rollback()
             if "uq_message_template_team_event_channel" in str(e.orig):

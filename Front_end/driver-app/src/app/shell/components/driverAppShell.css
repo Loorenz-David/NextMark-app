@@ -166,7 +166,7 @@
   left: 0;
   width: var(--driver-side-menu-width);
   height: 100%;
-  padding: 6rem 1rem 1rem;
+
   border-right: 1px solid rgba(116, 116, 116, 0.08);
   box-shadow: 18px 0 40px rgba(31, 26, 19, 0.14);
   transform: translateX(-100%);
@@ -191,7 +191,10 @@
   left: 0;
   right: 0;
   bottom: 0;
+  display: flex;
   min-height: 20%;
+  max-height: calc(100dvh - 16px);
+  flex-direction: column;
   background: rgb(var(--bg-app-color));
   border-radius: var(--driver-bottom-sheet-radius) var(--driver-bottom-sheet-radius) 0 0;
   overflow: hidden;
@@ -210,15 +213,38 @@
 
 .driver-sliding-page-surface__panel-content {
   display: flex;
-  min-height: 20vh;
+  min-height: 0;
+  height: 100%;
   flex-direction: column;
+  flex: 1;
   background: rgb(var(--bg-app-color));
 }
 
 .driver-overlay-surface {
   display: grid;
-  place-items: center;
-  padding: 1rem;
+  grid-template-areas: "overlay";
+  padding: 0;
+}
+
+.driver-overlay-surface__backdrop {
+  grid-area: overlay;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  opacity: 0;
+  background: rgba(0, 0, 0, 0.54);
+  transition: opacity 0.24s ease;
+}
+
+.driver-overlay-surface.is-open .driver-overlay-surface__backdrop {
+  opacity: 1;
+}
+
+.driver-overlay-surface__panel {
+  grid-area: overlay;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
 }
 
 .shell-overlay-card,
@@ -336,6 +362,33 @@
 .driver-status-pill.is-muted {
   background: rgba(111, 98, 77, 0.12);
   color: var(--text-muted);
+}
+
+.route-date-adjust-overlay {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  padding: 1rem;
+}
+
+.route-date-adjust-overlay__card {
+  display: grid;
+  gap: 0.85rem;
+  background: var(--bg-soft-gray);
+
+}
+
+.route-date-adjust-overlay__icon {
+  width: 40px;
+  min-height: 40px;
+  padding: 0;
+  background: rgba(178, 76, 54, 0.14);
+  color: var(--danger);
+}
+
+.route-date-adjust-overlay__actions {
+  justify-content: flex-end;
 }
 
 .ghost-button,

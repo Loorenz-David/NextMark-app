@@ -2,10 +2,22 @@ import { createContext, useContext } from 'react'
 import type { DriverRouteActionCommand, DriverRouteActionResult } from '@/app/contracts/routeExecution.types'
 import type { RouteExecutionStore } from '../stores/routeExecution.store'
 
+export type StopDetailTransitionDirection = 'forward' | 'backward'
+
 type RouteExecutionShellContextValue = {
   store: RouteExecutionStore
   initializeRouteWorkspace: () => Promise<void>
   submitRouteAction: (command: DriverRouteActionCommand) => Promise<DriverRouteActionResult>
+  stopDetailTransitionDirection: StopDetailTransitionDirection
+  prepareRouteStopDetailTransition: (
+    stopClientId: string,
+  ) => boolean
+  routeViewMode: 'route' | 'search'
+  openRouteSearch: () => void
+  closeRouteSearch: () => void
+  routeSearchQuery: string
+  setRouteSearchQuery: (query: string) => void
+  resetRouteSearchQuery: () => void
 }
 
 export const RouteExecutionShellContext = createContext<RouteExecutionShellContextValue | null>(null)

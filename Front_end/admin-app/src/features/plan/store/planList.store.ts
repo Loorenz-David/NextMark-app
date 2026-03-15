@@ -29,5 +29,22 @@ export const setPlanListError = (error?: string) => usePlanListStore.getState().
 
 export const clearPlanList = () => usePlanListStore.getState().clear()
 
+export const incrementPlanListTotal = () =>
+  usePlanListStore.setState((state) => {
+    if (!state.stats) {
+      return state
+    }
+
+    return {
+      ...state,
+      stats: {
+        ...state.stats,
+        plans: {
+          ...state.stats.plans,
+          total: state.stats.plans.total + 1,
+        },
+      },
+    }
+  })
 
 

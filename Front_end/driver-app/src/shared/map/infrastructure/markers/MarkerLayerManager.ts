@@ -22,6 +22,21 @@ type MarkerLayer = {
 
 const getInteractionVariant = (mapMarker: MapMarker) => mapMarker.interactionVariant ?? 'default'
 
+const applyMarkerClasses = (el: HTMLElement, className?: string) => {
+    if (!className) {
+        return
+    }
+
+    const classNames = className
+        .split(/\s+/)
+        .map((value) => value.trim())
+        .filter(Boolean)
+
+    if (classNames.length > 0) {
+        el.classList.add(...classNames)
+    }
+}
+
 const applyBaseMarkerAppearance = (el: HTMLElement, mapMarker: MapMarker) => {
   const interactionVariant = getInteractionVariant(mapMarker)
   el.className = 'map-marker'
@@ -39,11 +54,9 @@ const applyBaseMarkerAppearance = (el: HTMLElement, mapMarker: MapMarker) => {
     el.classList.add(`${mapMarker.status}-marker`)
   }
 
-  if (mapMarker.className) {
-    el.classList.add(mapMarker.className)
-  }
+  applyMarkerClasses(el, mapMarker.className)
 
-  applyMarkerContent(el, mapMarker.label)
+  applyMarkerContent(el, mapMarker)
 }
 
 export class MarkerLayerManager {

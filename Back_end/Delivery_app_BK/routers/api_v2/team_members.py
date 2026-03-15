@@ -35,7 +35,7 @@ team_bp = Blueprint("api_v2_team_bp", __name__)
 
 @team_bp.route("/members/", methods=["GET"])
 @jwt_required()
-@role_required([ADMIN, ASSISTANT, DRIVER])
+@role_required([ADMIN, ASSISTANT])
 def list_team_members():
     identity = get_jwt()
     ctx = ServiceContext(
@@ -56,7 +56,7 @@ def list_team_members():
 
 @team_bp.route("/members/<int:user_id>", methods=["GET"])
 @jwt_required()
-@role_required([ADMIN, ASSISTANT, DRIVER])
+@role_required([ADMIN, ASSISTANT])
 def get_team_member(user_id: int):
     identity = get_jwt()
     ctx = ServiceContext(
@@ -77,7 +77,7 @@ def get_team_member(user_id: int):
 
 @team_bp.route("/members/leave/", methods=["POST"])
 @jwt_required()
-@role_required([ADMIN, ASSISTANT, DRIVER])
+@role_required([ADMIN, ASSISTANT])
 def leave_team():
     identity = get_jwt()
     ctx = ServiceContext(
@@ -97,7 +97,7 @@ def leave_team():
 
 @team_bp.route("/members/kick/<int:user_id>", methods=["POST"])
 @jwt_required()
-@role_required([ADMIN, ASSISTANT, DRIVER])
+@role_required([ADMIN, ASSISTANT])
 def kick_team_memember(user_id: int):
     identity = get_jwt()
     ctx = ServiceContext(
@@ -117,7 +117,7 @@ def kick_team_memember(user_id: int):
 
 @team_bp.route("/members/role/", methods=["POST"])
 @jwt_required()
-@role_required([ADMIN, ASSISTANT, DRIVER])
+@role_required([ADMIN, ASSISTANT])
 def change_memeber_user_role():
     identity = get_jwt()
     incoming_data = request.get_json(silent=True) or {}
@@ -139,7 +139,7 @@ def change_memeber_user_role():
 
 @team_bp.route("/change-name", methods=["POST"])
 @jwt_required()
-@role_required([ADMIN, ASSISTANT, DRIVER])
+@role_required([ADMIN, ASSISTANT])
 def change_team_name():
     identity = get_jwt()
     incoming_data = request.get_json(silent=True) or {}

@@ -20,7 +20,7 @@ bootstrap_bp = Blueprint("api_v2_bootstrap_bp", __name__)
 
 @bootstrap_bp.route("/", methods=["GET"])
 @jwt_required()
-@role_required([ADMIN, ASSISTANT, DRIVER])
+@role_required([ADMIN, ASSISTANT])
 def list_bootstrap():
     identity = get_jwt()
     ctx = ServiceContext(

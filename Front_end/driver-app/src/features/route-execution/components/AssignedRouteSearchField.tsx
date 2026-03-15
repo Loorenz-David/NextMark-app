@@ -1,11 +1,19 @@
 type AssignedRouteSearchFieldProps = {
   value: string
   onChange: (value: string) => void
+  onFocus?: () => void
+  placeholder?: string
+  autoFocus?: boolean
+  readOnly?: boolean
 }
 
 export function AssignedRouteSearchField({
   value,
   onChange,
+  onFocus,
+  placeholder = 'Search orders',
+  autoFocus = false,
+  readOnly = false,
 }: AssignedRouteSearchFieldProps) {
   return (
     <label
@@ -29,11 +37,14 @@ export function AssignedRouteSearchField({
       </svg>
 
       <input
+        autoFocus={autoFocus}
         className="min-w-0 flex-1 border-0 bg-transparent p-0 text-sm text-white outline-none placeholder:text-white/55"
         id="assigned-route-search"
         onChange={(event) => onChange(event.target.value)}
-        placeholder="Search orders"
-        type="search"
+        onFocus={onFocus}
+        placeholder={placeholder}
+        readOnly={readOnly}
+        type="text"
         value={value}
       />
     </label>

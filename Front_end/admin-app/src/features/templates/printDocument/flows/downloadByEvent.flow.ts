@@ -1,5 +1,5 @@
 import { ApiError } from '@/lib/api/ApiClient'
-import { useMessageHandler } from '@/shared/message-handler'
+import { useMessageHandler } from '@shared-message-handler'
 
 import { downloadBlob } from '../controllers/downloadBlob.controller'
 import { renderComponentToPdfBlob } from '../controllers/renderComponentToPdfBlob.controller'

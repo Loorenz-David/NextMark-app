@@ -1,5 +1,6 @@
 from typing import Dict, Any
 from sqlalchemy.orm import Query
+from sqlalchemy import or_
 
 from Delivery_app_BK.models import db, User
 from Delivery_app_BK.services.utils import inject_team_id, model_requires_team
@@ -19,7 +20,13 @@ def find_team_members(
         params = inject_team_id(params, ctx)
 
     if "team_id" in params:
-        query = query.filter(User.team_id == params.get("team_id"))
+        team_id = params.get("team_id")
+        query = query.filter(
+            or_(
+                User.team_id == team_id,
+                User.team_workspace_team_id == team_id,
+            )
+        )
 
     if "client_id" in params:
         query = query.filter(User.client_id == params.get("client_id"))

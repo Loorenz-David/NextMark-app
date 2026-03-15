@@ -1,6 +1,6 @@
 import { useCallback, useEffect } from 'react'
 
-import { useMessageHandler } from '@/shared/message-handler'
+import { useMessageHandler } from '@shared-message-handler'
 
 import { useGetItemStates } from '../api/itemStateApi'
 import { useItemModel } from '../domain/useItemModel'

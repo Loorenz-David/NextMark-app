@@ -72,6 +72,10 @@ def register_user(ctx: ServiceContext):
     db.session.add(team_instance)
     db.session.add(user_instance)
     db.session.flush()
+    user_instance.primals_team_id = team_instance.id
+    user_instance.primals_role_id = user_instance.user_role_id
+    user_instance.admin_app_current_workspace = "personal"
+    user_instance.driver_app_current_workspace = "personal"
     user_results = build_create_result(ctx, [ user_instance ] )
     team_results = build_create_result(ctx, [ team_instance ] )
     db.session.commit()

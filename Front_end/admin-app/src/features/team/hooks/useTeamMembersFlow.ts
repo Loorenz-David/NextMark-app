@@ -1,6 +1,6 @@
 import { useCallback } from 'react'
 
-import { useMessageHandler } from '@/shared/message-handler'
+import { useMessageHandler } from '@shared-message-handler'
 
 import { useGetTeamMembers } from '@/features/team/members/api/teamMemberApi'
 import type { TeamMemberQueryFilters } from '@/features/team/members/types/teamMemberMeta'

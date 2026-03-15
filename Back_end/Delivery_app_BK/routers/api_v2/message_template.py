@@ -32,7 +32,7 @@ message_template_bp = Blueprint("api_v2_message_template_bp", __name__)
 
 @message_template_bp.route("/", methods=["GET"])
 @jwt_required()
-@role_required([ADMIN, ASSISTANT, DRIVER])
+@role_required([ADMIN, ASSISTANT])
 def list_message_templates():
     identity = get_jwt()
     ctx = ServiceContext(
@@ -53,7 +53,7 @@ def list_message_templates():
 
 @message_template_bp.route("/", methods=["PUT"])
 @jwt_required()
-@role_required([ADMIN, ASSISTANT, DRIVER])
+@role_required([ADMIN, ASSISTANT])
 def create_message_template():
     identity = get_jwt()
     incoming_data = request.get_json(silent=True) or {}
@@ -75,7 +75,7 @@ def create_message_template():
 
 @message_template_bp.route("/", methods=["PATCH"])
 @jwt_required()
-@role_required([ADMIN, ASSISTANT, DRIVER])
+@role_required([ADMIN, ASSISTANT])
 def update_message_template():
     identity = get_jwt()
     incoming_data = request.get_json(silent=True) or {}
@@ -97,7 +97,7 @@ def update_message_template():
 
 @message_template_bp.route("/", methods=["DELETE"])
 @jwt_required()
-@role_required([ADMIN, ASSISTANT, DRIVER])
+@role_required([ADMIN, ASSISTANT])
 def delete_message_template():
     identity = get_jwt()
     incoming_data = request.get_json(silent=True) or {}
@@ -119,7 +119,7 @@ def delete_message_template():
 
 @message_template_bp.route("/<int:template_id>", methods=["GET"])
 @jwt_required()
-@role_required([ADMIN, ASSISTANT, DRIVER])
+@role_required([ADMIN, ASSISTANT])
 def get_message_template(template_id: int):
     identity = get_jwt()
     ctx = ServiceContext(

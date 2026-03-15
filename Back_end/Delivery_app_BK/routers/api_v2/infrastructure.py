@@ -47,7 +47,7 @@ infrastructure_bp = Blueprint("api_v2_infrastructure_bp", __name__)
 
 @infrastructure_bp.route("/vehicles/", methods=["GET"])
 @jwt_required()
-@role_required([ADMIN, ASSISTANT, DRIVER])
+@role_required([ADMIN, ASSISTANT])
 def list_vehicles():
     identity = get_jwt()
     ctx = ServiceContext(
@@ -68,7 +68,7 @@ def list_vehicles():
 
 @infrastructure_bp.route("/vehicles/", methods=["POST"])
 @jwt_required()
-@role_required([ADMIN, ASSISTANT, DRIVER])
+@role_required([ADMIN, ASSISTANT])
 def create_vehicle():
     identity = get_jwt()
     incoming_data = request.get_json(silent=True) or {}
@@ -90,7 +90,7 @@ def create_vehicle():
 
 @infrastructure_bp.route("/vehicles/", methods=["PATCH"])
 @jwt_required()
-@role_required([ADMIN, ASSISTANT, DRIVER])
+@role_required([ADMIN, ASSISTANT])
 def update_vehicle():
     identity = get_jwt()
     incoming_data = request.get_json(silent=True) or {}
@@ -112,7 +112,7 @@ def update_vehicle():
 
 @infrastructure_bp.route("/vehicles/", methods=["DELETE"])
 @jwt_required()
-@role_required([ADMIN, ASSISTANT, DRIVER])
+@role_required([ADMIN, ASSISTANT])
 def delete_vehicle():
     identity = get_jwt()
     incoming_data = request.get_json(silent=True) or {}
@@ -134,7 +134,7 @@ def delete_vehicle():
 
 @infrastructure_bp.route("/vehicles/<int:vehicle_id>", methods=["GET"])
 @jwt_required()
-@role_required([ADMIN, ASSISTANT, DRIVER])
+@role_required([ADMIN, ASSISTANT])
 def get_vehicle(vehicle_id: int):
     identity = get_jwt()
     ctx = ServiceContext(
@@ -155,7 +155,7 @@ def get_vehicle(vehicle_id: int):
 
 @infrastructure_bp.route("/warehouses/", methods=["GET"])
 @jwt_required()
-@role_required([ADMIN, ASSISTANT, DRIVER])
+@role_required([ADMIN, ASSISTANT])
 def list_warehouses():
     identity = get_jwt()
     ctx = ServiceContext(
@@ -176,7 +176,7 @@ def list_warehouses():
 
 @infrastructure_bp.route("/warehouses/", methods=["POST"])
 @jwt_required()
-@role_required([ADMIN, ASSISTANT, DRIVER])
+@role_required([ADMIN, ASSISTANT])
 def create_warehouse():
     identity = get_jwt()
     incoming_data = request.get_json(silent=True) or {}
@@ -198,7 +198,7 @@ def create_warehouse():
 
 @infrastructure_bp.route("/warehouses/", methods=["PATCH"])
 @jwt_required()
-@role_required([ADMIN, ASSISTANT, DRIVER])
+@role_required([ADMIN, ASSISTANT])
 def update_warehouse():
     identity = get_jwt()
     incoming_data = request.get_json(silent=True) or {}
@@ -220,7 +220,7 @@ def update_warehouse():
 
 @infrastructure_bp.route("/warehouses/", methods=["DELETE"])
 @jwt_required()
-@role_required([ADMIN, ASSISTANT, DRIVER])
+@role_required([ADMIN, ASSISTANT])
 def delete_warehouse():
     identity = get_jwt()
     incoming_data = request.get_json(silent=True) or {}
@@ -242,7 +242,7 @@ def delete_warehouse():
 
 @infrastructure_bp.route("/warehouses/<int:warehouse_id>", methods=["GET"])
 @jwt_required()
-@role_required([ADMIN, ASSISTANT, DRIVER])
+@role_required([ADMIN, ASSISTANT])
 def get_warehouse(warehouse_id: int):
     identity = get_jwt()
     ctx = ServiceContext(

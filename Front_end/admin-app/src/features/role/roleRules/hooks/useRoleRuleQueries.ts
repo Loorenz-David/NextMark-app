@@ -1,7 +1,7 @@
 import { useCallback } from 'react'
 
 import { ApiError } from '@/lib/api/ApiClient'
-import { useMessageHandler } from '@/shared/message-handler'
+import { useMessageHandler } from '@shared-message-handler'
 
 import { roleRuleApi } from '@/features/role/roleRules/api/roleRuleApi'
 import type { UserRoleRulesListResponse } from '@/features/role/roleRules/api/roleRuleApi'

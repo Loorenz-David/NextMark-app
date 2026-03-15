@@ -1,12 +1,14 @@
 import type { ApiResult } from '@shared-api'
-import type { ModeSwitchCommand, ModeSwitchResponse } from '../contracts/driverSession.types'
+import type { WorkspaceSwitchCommand, WorkspaceSwitchResponse } from '../contracts/driverSession.types'
 import { driverApiClient } from './client'
 
 export const driverModeApi = {
-  switchMode: (payload: ModeSwitchCommand): Promise<ApiResult<ModeSwitchResponse>> =>
-    driverApiClient.request<ModeSwitchResponse>({
-      path: '/drivers/context/switch',
+  switchWorkspace: (payload: WorkspaceSwitchCommand): Promise<ApiResult<WorkspaceSwitchResponse>> =>
+    driverApiClient.request<WorkspaceSwitchResponse>({
+      path: '/drivers/workspace/switch',
       method: 'POST',
-      data: payload,
+      data: {
+        target_workspace: payload.targetWorkspace,
+      },
     }),
 }

@@ -5,11 +5,12 @@ from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import relationship
 
 from Delivery_app_BK.models import db
+from Delivery_app_BK.models.mixins.events.dispatch_state import DispatchStateMixin
 from Delivery_app_BK.models.mixins.team_mixings.team_id import TeamScopedMixin
 from Delivery_app_BK.models.utils import UTCDateTime
 
 
-class DeliveryPlanEvent(db.Model, TeamScopedMixin):
+class DeliveryPlanEvent(db.Model, TeamScopedMixin, DispatchStateMixin):
     __tablename__ = "plan_event"
 
     id = Column(Integer, primary_key=True)

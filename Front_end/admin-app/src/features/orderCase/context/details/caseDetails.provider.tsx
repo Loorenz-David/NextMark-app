@@ -4,6 +4,7 @@ import { apiClient } from '@/lib/api/ApiClient'
 
 import { useOrderCaseDetailsFlow } from '../../flows/orderCasePages.flow'
 import { useDetailsActions } from '../../pages/details/details.actions'
+import { useOrderCaseChatRealtime } from '../../realtime/useOrderCaseChatRealtime'
 import { DetailsCaseContext } from './caseDetails.context'
 
 type CaseDetailsPageProviderProps = PropsWithChildren<{
@@ -19,6 +20,15 @@ export const CaseDetailsPageProvider = ({
   const { orderCase } = useOrderCaseDetailsFlow(orderCaseClientId)
 
   const detailsActions = useDetailsActions(orderCaseClientId, { onClose })
+
+  useOrderCaseChatRealtime({
+    orderId: orderCase?.order_id,
+    onMessageCreated: () => {
+      if (typeof orderCase?.id === 'number') {
+        void detailsActions.refreshCaseDetails(orderCase.id)
+      }
+    },
+  })
 
   const currentUserId = useMemo(() => {
     const userId = apiClient.getSessionUserId()

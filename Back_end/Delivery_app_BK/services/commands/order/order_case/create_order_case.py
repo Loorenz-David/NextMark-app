@@ -7,6 +7,8 @@ from Delivery_app_BK.services.commands.utils import (
     build_create_result,
 )
 from Delivery_app_BK.services.domain.order.order_case_states import OrderCaseState 
+from Delivery_app_BK.services.infra.events.emiters import emit_app_events
+from Delivery_app_BK.sockets.contracts.realtime import BUSINESS_EVENT_ORDER_CASE_CREATED
 
 
 def create_order_case(ctx: ServiceContext):
@@ -44,4 +46,20 @@ def create_order_case(ctx: ServiceContext):
     db.session.flush()
     result = build_create_result(ctx, instances, extract_fields=['id',"state"])
     db.session.commit()
+    emit_app_events(ctx, [
+        {
+            "event_name": BUSINESS_EVENT_ORDER_CASE_CREATED,
+            "team_id": instance.order.team_id if instance.order else ctx.team_id,
+            "entity_type": "order_case",
+            "entity_id": instance.id,
+            "payload": {
+                "order_case_id": instance.id,
+                "order_case_client_id": instance.client_id,
+                "order_id": instance.order_id,
+                "state": instance.state,
+            },
+            "occurred_at": instance.creation_date,
+        }
+        for instance in instances
+    ])
     return {"order_case": result}

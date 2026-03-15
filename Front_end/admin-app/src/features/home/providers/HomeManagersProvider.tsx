@@ -1,5 +1,5 @@
 import type { ComponentType, ReactNode } from 'react'
-import { useEffect, useMemo } from 'react'
+import { useCallback, useEffect, useMemo } from 'react'
 
 import { DndContext, DragOverlay } from '@dnd-kit/core'
 
@@ -8,14 +8,13 @@ import { usePlanOrderDndController } from '@/features/plan/hooks/usePlanOrderDnd
 import type { StackComponentProps } from '@/shared/stack-manager/types'
 
 import { ResourcesManagerProvider } from '@/shared/resource-manager/ResourceManagerContext'
+import { AdminNotificationsActiveViewBridge } from '@/realtime/notifications'
 
 import { useStackActionEntries } from '@/shared/stack-manager/useStackActionEntries'
 import { StackActionManager } from '@/shared/stack-manager/StackActionManager'
 
 import { useMap } from '@/shared/map'
 
-
-import { SectionPanel } from '@/shared/section-panel/SectionPanel'
 
 import { OrderCard } from '@/features/order/components/cards/OrderCard'
 import { OrderBatchDragOverlayCard } from '@/features/order/components/cards/OrderBatchDragOverlayCard'
@@ -70,12 +69,12 @@ export function HomeManagersProvider({children}: ManagerContextProps) {
     useStackActionEntries(popupManager)
     useStackActionEntries(sectionManager)
 
-    const handleKeyDown = (event:KeyboardEvent)=>{
+    const handleKeyDown = useCallback((event:KeyboardEvent)=>{
 
         if(popupManager.getOpenCount() > 0 ) return
 
         sectionManager.closeLastOnEsc(event)
-    }
+    }, [popupManager, sectionManager])
 
     useEffect(()=>{
         if(!isMobile){
@@ -84,7 +83,7 @@ export function HomeManagersProvider({children}: ManagerContextProps) {
         return () => {
             window.removeEventListener('keydown', handleKeyDown)
         }
-    },[isMobile])
+    },[handleKeyDown, isMobile])
 
     const {
         onDragStart,
@@ -106,6 +105,7 @@ export function HomeManagersProvider({children}: ManagerContextProps) {
             planDropFeedback,
             routeReorderPreview,
         }}>
+            <AdminNotificationsActiveViewBridge />
                 <DndContext
                     sensors={sensors}
                     collisionDetection={homeCollisionDetection}
@@ -162,7 +162,7 @@ export function HomeManagersProvider({children}: ManagerContextProps) {
                     ) : null}
                 </DragOverlay>
 
-            </DndContext>
+                </DndContext>
        </ResourcesManagerProvider>
     )
 

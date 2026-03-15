@@ -35,7 +35,7 @@ user_role_bp = Blueprint("api_v2_user_role_bp", __name__)
 
 @user_role_bp.route("/", methods=["GET"])
 @jwt_required()
-@role_required([ADMIN, ASSISTANT, DRIVER])
+@role_required([ADMIN, ASSISTANT])
 def list_user_roles():
     identity = get_jwt()
     ctx = ServiceContext(
@@ -56,7 +56,7 @@ def list_user_roles():
 
 @user_role_bp.route("/", methods=["PUT"])
 @jwt_required()
-@role_required([ADMIN, ASSISTANT, DRIVER])
+@role_required([ADMIN, ASSISTANT])
 def create_user_role():
     identity = get_jwt()
     incoming_data = request.get_json(silent=True) or {}
@@ -78,7 +78,7 @@ def create_user_role():
 
 @user_role_bp.route("/", methods=["PATCH"])
 @jwt_required()
-@role_required([ADMIN, ASSISTANT, DRIVER])
+@role_required([ADMIN, ASSISTANT])
 def update_user_role():
     identity = get_jwt()
     incoming_data = request.get_json(silent=True) or {}
@@ -100,7 +100,7 @@ def update_user_role():
 
 @user_role_bp.route("/", methods=["DELETE"])
 @jwt_required()
-@role_required([ADMIN, ASSISTANT, DRIVER])
+@role_required([ADMIN, ASSISTANT])
 def delete_user_role():
     identity = get_jwt()
     incoming_data = request.get_json(silent=True) or {}
@@ -122,7 +122,7 @@ def delete_user_role():
 
 @user_role_bp.route("/<int:role_id>", methods=["GET"])
 @jwt_required()
-@role_required([ADMIN, ASSISTANT, DRIVER])
+@role_required([ADMIN, ASSISTANT])
 def get_user_role(role_id: int):
     identity = get_jwt()
     ctx = ServiceContext(
@@ -143,7 +143,7 @@ def get_user_role(role_id: int):
 
 @user_role_bp.route("/<int:role_id>/rules/", methods=["GET"])
 @jwt_required()
-@role_required([ADMIN, ASSISTANT, DRIVER])
+@role_required([ADMIN, ASSISTANT])
 def list_user_role_rules(role_id: int):
     identity = get_jwt()
     ctx = ServiceContext(

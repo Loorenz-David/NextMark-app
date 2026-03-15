@@ -52,7 +52,7 @@ plan_bp = Blueprint("api_v2_plan_bp", __name__)
 
 @plan_bp.route("/", methods=["GET"])
 @jwt_required()
-@role_required([ADMIN, ASSISTANT, DRIVER])
+@role_required([ADMIN, ASSISTANT])
 def list_delivery_plans():
     identity = get_jwt()
     ctx = ServiceContext(
@@ -74,7 +74,7 @@ def list_delivery_plans():
 
 @plan_bp.route("/states/", methods=["GET"])
 @jwt_required()
-@role_required([ADMIN, ASSISTANT, DRIVER])
+@role_required([ADMIN, ASSISTANT])
 def list_plan_states():
     identity = get_jwt()
     ctx = ServiceContext(
@@ -96,7 +96,7 @@ def list_plan_states():
 
 @plan_bp.route("/", methods=["POST"])
 @jwt_required()
-@role_required([ADMIN, ASSISTANT, DRIVER])
+@role_required([ADMIN, ASSISTANT])
 def create_plan():
     identity = get_jwt()
     incoming_data = request.get_json(silent=True) or {}
@@ -118,7 +118,7 @@ def create_plan():
 
 @plan_bp.route("/", methods=["PATCH"])
 @jwt_required()
-@role_required([ADMIN, ASSISTANT, DRIVER])
+@role_required([ADMIN, ASSISTANT])
 def update_plan():
     identity = get_jwt()
     incoming_data = request.get_json(silent=True) or {}
@@ -142,7 +142,7 @@ def update_plan():
 
 @plan_bp.route("/local_delivery", methods=["PATCH"])
 @jwt_required()
-@role_required([ADMIN, ASSISTANT, DRIVER])
+@role_required([ADMIN, ASSISTANT])
 def update_local_delivery_plan_settings():
     identity = get_jwt()
     incoming_data = request.get_json(silent=True) or {}
@@ -169,7 +169,7 @@ def update_local_delivery_plan_settings():
 
 @plan_bp.route("/", methods=["DELETE"])
 @jwt_required()
-@role_required([ADMIN, ASSISTANT, DRIVER])
+@role_required([ADMIN, ASSISTANT])
 def delete_plan():
     identity = get_jwt()
     incoming_data = request.get_json(silent=True) or {}
@@ -191,7 +191,7 @@ def delete_plan():
 
 @plan_bp.route("/<int:plan_id>", methods=["GET"])
 @jwt_required()
-@role_required([ADMIN, ASSISTANT, DRIVER])
+@role_required([ADMIN, ASSISTANT])
 def get_plan(plan_id: int):
     identity = get_jwt()
     ctx = ServiceContext(
@@ -212,7 +212,7 @@ def get_plan(plan_id: int):
 
 @plan_bp.route("/<int:plan_id>/type/<string:plan_type>", methods=["GET"])
 @jwt_required()
-@role_required([ADMIN, ASSISTANT, DRIVER])
+@role_required([ADMIN, ASSISTANT])
 def get_plan_type(plan_id: int, plan_type: str):
     identity = get_jwt()
     ctx = ServiceContext(
@@ -236,7 +236,7 @@ def get_plan_type(plan_id: int, plan_type: str):
 
 @plan_bp.route("/<int:plan_id>/orders/", methods=["GET"])
 @jwt_required()
-@role_required([ADMIN, ASSISTANT, DRIVER])
+@role_required([ADMIN, ASSISTANT])
 def list_plan_orders(plan_id: int):
 
     identity = get_jwt()
@@ -258,7 +258,7 @@ def list_plan_orders(plan_id: int):
 
 @plan_bp.route("/<int:plan_id>/state/<int:state_id>", methods=["PATCH"])
 @jwt_required()
-@role_required([ADMIN, ASSISTANT, DRIVER])
+@role_required([ADMIN, ASSISTANT])
 def update_plan_state(plan_id: int, state_id: int):
     identity = get_jwt()
     incoming_data = request.get_json(silent=True) or {}
@@ -285,7 +285,7 @@ def update_plan_state(plan_id: int, state_id: int):
 
 @plan_bp.route("/<int:delivery_plan_id>/plan-is-ready", methods=["PATCH"])
 @jwt_required()
-@role_required([ADMIN, ASSISTANT, DRIVER])
+@role_required([ADMIN, ASSISTANT])
 def mark_plan_state(delivery_plan_id: int):
     identity = get_jwt()
     ctx = ServiceContext(

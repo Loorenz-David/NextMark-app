@@ -29,12 +29,13 @@ class GoogleDirectionsProvider(DirectionsProvider):
 
         client = routing_v2.RoutesClient()
         payload, field_mask = GoogleDirectionsRequestMapper.build_request(request)
-      
-        
-        response = client.compute_routes(
-            request=payload,
-            metadata=[("x-goog-fieldmask", field_mask)],
-        )
-     
+
+        try:
+            response = client.compute_routes(
+                request=payload,
+                metadata=[("x-goog-fieldmask", field_mask)],
+            )
+        except Exception as exc:
+            raise ValidationFailed(f"Google compute_routes failed: {exc}") from exc
 
         return GoogleDirectionsResponseMapper.parse_response(response, request)

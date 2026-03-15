@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@source "../../packages/shared-message-handler/src";
 @import './shared/map/map.css';
 
 

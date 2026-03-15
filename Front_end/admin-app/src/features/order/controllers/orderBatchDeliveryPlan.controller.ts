@@ -1,8 +1,8 @@
 import { useCallback } from 'react'
 
 import { ApiError } from '@/lib/api/ApiClient'
-import { useMessageHandler } from '@/shared/message-handler'
-import { optimisticTransaction } from '@/shared/optimistic'
+import { useMessageHandler } from '@shared-message-handler'
+import { optimisticTransaction } from '@shared-optimistic'
 
 import {
   removeRouteSolutionStopsByOrderId,

@@ -12,6 +12,7 @@ export type DriverRouteActionType =
   | 'start-route'
   | 'arrive-stop'
   | 'complete-stop'
+  | 'undo-stop-terminal'
   | 'skip-stop'
   | 'fail-stop'
   | 'update-stop-note'
@@ -20,7 +21,10 @@ export type DriverRouteActionCommand = {
   type: DriverRouteActionType
   routeClientId: string
   stopClientId?: string
+  orderId?: number
   note?: string
+  orderCaseClientId?: string
+  caseChatClientId?: string
 }
 
 export type DriverCommandEnvelope<TCommand> = {
@@ -36,6 +40,23 @@ export type DriverRouteActionResult = {
   message?: string
 }
 
+export type AssignedStopOrderItemPropertyViewModel = {
+  label: string
+  value: string
+}
+
+export type AssignedStopOrderItemViewModel = {
+  clientId: string
+  itemType: string | null
+  articleNumber: string | null
+  referenceNumber: string | null
+  quantity: number | null
+  weight: number | null
+  pageLink: string | null
+  dimensionsLabel: string | null
+  properties: AssignedStopOrderItemPropertyViewModel[]
+}
+
 export type AssignedStopViewModel = {
   stopClientId: string
   stopOrder: number | null
@@ -47,8 +68,10 @@ export type AssignedStopViewModel = {
   title: string
   secondaryAddressLine: string | null
   itemSummary: string | null
+  orderItems: AssignedStopOrderItemViewModel[]
   phoneLine: string | null
   badgeLabel: string | null
+  searchText: string
   order: Order | null
   address: address | null
   isActive: boolean
@@ -59,6 +82,8 @@ export type AssignedRouteViewModel = {
   routeClientId: string
   label: string
   score: number | null
+  deliveryPlanStartDate: string | null
+  deliveryPlanEndDate: string | null
   startLocation: address | null
   endLocation: address | null
   activeStopClientId: string | null

@@ -1,6 +1,5 @@
 import { useEffect, useRef } from 'react'
 
-import { connectSocket } from '../core/socket.manager'
 import {
   joinExternalFormUserRoom,
   leaveExternalFormUserRoom,
@@ -45,7 +44,6 @@ export const useExternalFormRealtime = ({
       onRequestedRef.current?.(payload)
     }
 
-    connectSocket()
     joinExternalFormUserRoom(userId)
     subscribeToExternalFormReceived(handleReceived)
     subscribeToExternalFormRequested(handleRequested)

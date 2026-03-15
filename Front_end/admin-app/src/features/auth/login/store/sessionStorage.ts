@@ -1,10 +1,10 @@
-import type { SessionIdentity, SessionSnapshot, SessionUser } from '@shared-api'
+import type { SessionSnapshot } from '@shared-api'
 
 export type { SessionIdentity, SessionSnapshot, SessionUser } from '@shared-api'
 
 type SessionListener = (session: SessionSnapshot | null) => void
 
-const STORAGE_KEY = 'beyo.delivery.session'
+const STORAGE_KEY = 'beyo.admin.session'
 const isBrowser = typeof window !== 'undefined'
 
 export class SessionStorage {

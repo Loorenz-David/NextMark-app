@@ -12,7 +12,7 @@ export function useAssignedRouteMapController(
   route: AssignedRouteViewModel | null,
   dependencies: UseAssignedRouteMapControllerDependencies,
 ) {
-
+  const { onOpenStopDetail, selectedStopClientId } = dependencies
   return useMemo(() => {
     if (!route) {
       return {
@@ -25,11 +25,11 @@ export function useAssignedRouteMapController(
     return {
       markers: mapAssignedRouteToMapMarkers(route, {
         onMarkerClick: (stopClientId) => {
-          dependencies.onOpenStopDetail(stopClientId)
+          onOpenStopDetail(stopClientId)
         },
       }),
       mapRoute: mapAssignedRouteToMapRoute(route),
-      selectedMarkerId: dependencies.selectedStopClientId ?? route.activeStopClientId ?? null,
+      selectedMarkerId: selectedStopClientId ?? route.activeStopClientId ?? null,
     }
-  }, [dependencies, route])
+  }, [onOpenStopDetail, route, selectedStopClientId])
 }

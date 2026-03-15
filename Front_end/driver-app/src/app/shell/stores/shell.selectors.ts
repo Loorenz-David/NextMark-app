@@ -33,6 +33,7 @@ export function selectOverlayState(state: ShellStoreState) {
     stack: state.overlayStack,
     currentPage: state.overlayStack.at(-1) ?? null,
     isOpen: state.overlayStack.length > 0,
+    canPop: state.overlayStack.length > 1,
   }
 }
 

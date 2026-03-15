@@ -26,7 +26,7 @@ costumer_bp = Blueprint("api_v2_costumer_bp", __name__)
 
 @costumer_bp.route("/", methods=["GET"])
 @jwt_required()
-@role_required([ADMIN, ASSISTANT, DRIVER])
+@role_required([ADMIN, ASSISTANT])
 def list_costumers():
     identity = get_jwt()
     ctx = ServiceContext(
@@ -45,7 +45,7 @@ def list_costumers():
 
 @costumer_bp.route("/<int:costumer_id>", methods=["GET"])
 @jwt_required()
-@role_required([ADMIN, ASSISTANT, DRIVER])
+@role_required([ADMIN, ASSISTANT])
 def get_costumer(costumer_id):
     identity = get_jwt()
     ctx = ServiceContext(
@@ -65,7 +65,7 @@ def get_costumer(costumer_id):
 
 @costumer_bp.route("/<int:costumer_id>/orders", methods=["GET"])
 @jwt_required()
-@role_required([ADMIN, ASSISTANT, DRIVER])
+@role_required([ADMIN, ASSISTANT])
 def list_costumer_orders(costumer_id):
     identity = get_jwt()
     ctx = ServiceContext(
@@ -85,7 +85,7 @@ def list_costumer_orders(costumer_id):
 
 @costumer_bp.route("/", methods=["POST"])
 @jwt_required()
-@role_required([ADMIN, ASSISTANT, DRIVER])
+@role_required([ADMIN, ASSISTANT])
 def create_costumer():
     identity = get_jwt()
     incoming_data = request.get_json(silent=True) or {}
@@ -106,7 +106,7 @@ def create_costumer():
 
 @costumer_bp.route("/", methods=["PUT"])
 @jwt_required()
-@role_required([ADMIN, ASSISTANT, DRIVER])
+@role_required([ADMIN, ASSISTANT])
 def update_costumer():
     identity = get_jwt()
     incoming_data = request.get_json(silent=True) or {}
@@ -127,7 +127,7 @@ def update_costumer():
 
 @costumer_bp.route("/", methods=["DELETE"])
 @jwt_required()
-@role_required([ADMIN, ASSISTANT, DRIVER])
+@role_required([ADMIN, ASSISTANT])
 def delete_costumer():
     identity = get_jwt()
     incoming_data = request.get_json(silent=True) or {}

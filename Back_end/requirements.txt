@@ -64,6 +64,9 @@ python-engineio==4.12.3
 python-socketio==5.15.0
 referencing==0.37.0
 requests==2.32.5
+redis==6.4.0
+rq==2.6.0
+rq-scheduler==0.14.0
 rpds-py==0.30.0
 rsa==4.9.1
 simple-websocket==1.1.0

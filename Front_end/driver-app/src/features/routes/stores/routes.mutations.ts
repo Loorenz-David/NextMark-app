@@ -5,3 +5,10 @@ export const setRoutes = (routes: { byClientId: Record<string, DriverRouteRecord
   useRoutesStore.getState().insertMany(routes)
 
 export const clearRoutes = () => useRoutesStore.getState().clear()
+
+export function patchRouteTimingByClientId(
+  clientId: string,
+  partial: Pick<DriverRouteRecord, 'actual_start_time' | 'actual_end_time'>,
+) {
+  useRoutesStore.getState().patch(clientId, partial)
+}

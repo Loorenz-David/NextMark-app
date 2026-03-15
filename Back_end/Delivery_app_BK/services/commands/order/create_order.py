@@ -152,6 +152,7 @@ def create_order(ctx: ServiceContext):
                 raise ValidationFailed("Order must belong to a costumer.")
             if resolved_delivery_plan_id is not None:
                 order_instance.delivery_plan_id = resolved_delivery_plan_id
+                order_instance.delivery_plan = delivery_plan
             order_instances.append(order_instance)
 
             if normalized_windows is not None:

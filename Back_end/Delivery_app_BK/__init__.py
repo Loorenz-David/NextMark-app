@@ -47,7 +47,12 @@ def create_app(config_name="development"):
     db.init_app(app)
     jwt.init_app(app)
     Migrate(app, db)
-    socketio.init_app(app, cors_allowed_origins=frontend_origin)
+    socketio.init_app(
+        app,
+        cors_allowed_origins=frontend_origin,
+        message_queue=app.config.get("REDIS_URI") or None,
+        channel="nextmark-socketio",
+    )
 
 
     from .routers.api_v2 import register_v2_blueprints
@@ -55,7 +60,8 @@ def create_app(config_name="development"):
     from .routers.webhooks import register_webhook_blueprints
     register_webhook_blueprints(app)
 
-    import Delivery_app_BK.sockets.signaling  
+    from Delivery_app_BK.sockets.register import register_socket_handlers
+    register_socket_handlers()
 
     with app.app_context():
 
@@ -94,4 +100,3 @@ def create_app(config_name="development"):
         return {"status": "ok"}, 200
 
     return app
-

@@ -1,4 +1,5 @@
 import type { DriverWorkspaceContext } from '@/app/contracts/driverSession.types'
+import type { DriverOrderStateIds } from '@/features/order-states'
 import { clearOrders, clearRoutes, initializeActiveRoutesFlow } from '@/features/routes'
 import {
   resetRouteExecutionStore,
@@ -12,11 +13,13 @@ import { mapActiveRoutesToAssignedRouteViewModel } from '../domain/mapActiveRout
 type InitializeRouteWorkspaceDependencies = {
   workspace: DriverWorkspaceContext | null
   store: RouteExecutionStore
+  orderStateIds: DriverOrderStateIds
 }
 
 export async function initializeRouteWorkspaceFlow({
   workspace,
   store,
+  orderStateIds,
 }: InitializeRouteWorkspaceDependencies) {
   if (!workspace?.capabilities.canExecuteRoutes) {
     clearRoutes()
@@ -31,7 +34,7 @@ export async function initializeRouteWorkspaceFlow({
     const payload = await initializeActiveRoutesFlow({
       workspaceScopeKey: workspace.workspaceScopeKey,
     })
-    const route = mapActiveRoutesToAssignedRouteViewModel(payload)
+    const route = mapActiveRoutesToAssignedRouteViewModel(payload, orderStateIds)
     setAssignedRoute(store, route)
   } catch (error) {
     console.error('Failed to initialize route workspace', error)

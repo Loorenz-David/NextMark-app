@@ -78,6 +78,13 @@ export const appendVisiblePlans = (clientIds: string[]) => {
   setVisibleIds([...existingIds, ...dedupedIncoming])
 }
 
+export const addVisiblePlan = (clientId: string) => {
+  const { visibleIds, setVisibleIds } = usePlanStore.getState()
+  if (!visibleIds) return
+  if (visibleIds.includes(clientId)) return
+  setVisibleIds([clientId, ...visibleIds])
+}
+
 export const setDeliveryPlanStateId = (clientId: string, stateId: number | null) =>
   usePlanStore.getState().update(clientId, (plan) => ({
     ...plan,

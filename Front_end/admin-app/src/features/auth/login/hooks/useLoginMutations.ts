@@ -1,7 +1,7 @@
 import { useCallback } from 'react'
 
 import { ApiError } from '@/lib/api/ApiClient'
-import { useMessageHandler } from '@/shared/message-handler'
+import { useMessageHandler } from '@shared-message-handler'
 
 import { authLoginApi } from '@/features/auth/login/api/authLoginApi'
 import type { LoginPayload } from '@/features/auth/login/types/authLogin'

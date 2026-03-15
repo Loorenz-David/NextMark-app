@@ -3,6 +3,7 @@ import { useDriverServices } from '@/app/providers/driverServices.context'
 import { useConnectivity } from '@/app/providers/connectivity.context'
 import { useSession } from '@/app/providers/session.context'
 import { useWorkspace } from '@/app/providers/workspace.context'
+import { useRouteExecutionShell } from '@/features/route-execution/providers/routeExecutionShell.context'
 import { locateCurrentLocationAction } from '../actions/locateCurrentLocation.action'
 import { useDriverAppShell } from '../providers/driverAppShell.context'
 import {
@@ -19,6 +20,7 @@ export function useDriverAppShellChromeController() {
   const { isOnline } = useConnectivity()
   const { clearSession } = useSession()
   const { workspace } = useWorkspace()
+  const { closeRouteSearch, routeViewMode } = useRouteExecutionShell()
   const {
     store,
     openSideMenu,
@@ -40,9 +42,6 @@ export function useDriverAppShellChromeController() {
   const overlayState = useMemo(() => selectOverlayState(shellState), [shellState])
   const mapSurfaceState = useMemo(() => selectMapSurfaceState(shellState), [shellState])
   const surfaceFocus = useMemo(() => selectSurfaceFocus(shellState), [shellState])
-  const isRouteExecutionPage =
-    bottomSheetState.currentPage?.page === 'route-workspace'
-    || bottomSheetState.currentPage?.page === 'route-stop-detail'
 
   return useMemo(() => ({
     workspace,
@@ -61,14 +60,21 @@ export function useDriverAppShellChromeController() {
       title: 'Driver Shell',
       message: 'OverlaySurface is live and blocks lower-surface interaction. Route execution remains the first bottom-sheet workspace.',
     }),
-    showHeaderMenuButton: !(isRouteExecutionPage && bottomSheetState.snap === 'expanded'),
+    showHeaderMenuButton: bottomSheetState.snap !== 'expanded',
     locateCurrentLocation: async () => locateCurrentLocationAction({
       browserLocationService,
       store,
     }),
     isLocatingCurrentLocation: mapSurfaceState.currentLocationStatus === 'locating',
     closeShellHelp: closeOverlay,
-    handleBack: handleSurfaceBack,
+    handleBack: () => {
+      if (routeViewMode === 'search') {
+        closeRouteSearch()
+        return true
+      }
+
+      return handleSurfaceBack()
+    },
     clearSession,
   }), [
     browserLocationService,
@@ -76,14 +82,15 @@ export function useDriverAppShellChromeController() {
     bottomSheetState.snap,
     clearSession,
     closeOverlay,
+    closeRouteSearch,
     closeSideMenu,
     handleSurfaceBack,
-    isRouteExecutionPage,
     isOnline,
     mapSurfaceState.currentLocationStatus,
     openOverlay,
     openSideMenu,
     overlayState.isOpen,
+    routeViewMode,
     sideMenuState.isOpen,
     slidingPageState.isOpen,
     store,

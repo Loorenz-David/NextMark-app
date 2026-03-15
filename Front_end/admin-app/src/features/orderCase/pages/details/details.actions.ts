@@ -13,7 +13,7 @@ export const useDetailsActions = (
 ) => {
   const orderCase = useOrderCaseByClientId(orderCaseClientId)
   const [message, setMessage] = useState('')
-  const { updateState, sendChat } = useDetailsControllers()
+  const { updateState, sendChat, loadCaseDetails } = useDetailsControllers()
   const { changeOrderOpenCasesCount } = useOrderForCase()
   const sectionManager = useSectionManager()
 
@@ -59,6 +59,9 @@ export const useDetailsActions = (
     closeCaseDetails,
     changeState,
     addChat,
+    refreshCaseDetails: async (orderCaseId: number) => {
+      await loadCaseDetails(orderCaseId)
+    },
     setMessage,
     message,
   }

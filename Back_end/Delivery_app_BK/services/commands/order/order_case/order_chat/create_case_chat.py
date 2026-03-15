@@ -7,6 +7,8 @@ from Delivery_app_BK.services.commands.utils import (
     build_create_result,
 )
 from Delivery_app_BK.services.queries.get_instance import get_instance
+from Delivery_app_BK.services.infra.events.emiters import emit_app_events
+from Delivery_app_BK.sockets.contracts.realtime import BUSINESS_EVENT_ORDER_CHAT_MESSAGE_CREATED
 
 
 def create_case_chat(ctx: ServiceContext):
@@ -43,6 +45,25 @@ def create_case_chat(ctx: ServiceContext):
 
     db.session.add_all(instances)
     db.session.flush()
-    result = build_create_result(ctx, instances)
+    result = build_create_result(ctx, instances, extract_fields=['id'])
     db.session.commit()
+    emit_app_events(ctx, [
+        {
+            "event_name": BUSINESS_EVENT_ORDER_CHAT_MESSAGE_CREATED,
+            "team_id": instance.order_case.order.team_id if instance.order_case and instance.order_case.order else ctx.team_id,
+            "entity_type": "order_chat",
+            "entity_id": instance.id,
+            "payload": {
+                "chat_id": instance.id,
+                "chat_client_id": instance.client_id,
+                "message": instance.message,
+                "order_case_id": instance.order_case_id,
+                "order_case_client_id": instance.order_case.client_id if instance.order_case else None,
+                "order_id": instance.order_case.order_id if instance.order_case else None,
+                "user_id": instance.user_id,
+            },
+            "occurred_at": instance.creation_date,
+        }
+        for instance in instances
+    ])
     return {"case_chat": result}

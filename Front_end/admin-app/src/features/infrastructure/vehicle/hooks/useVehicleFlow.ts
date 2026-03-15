@@ -1,6 +1,6 @@
 import { useCallback, useEffect } from 'react'
 
-import { useMessageHandler } from '@/shared/message-handler'
+import { useMessageHandler } from '@shared-message-handler'
 
 import { useGetVehicles } from '../api/vehicleApi'
 import { useVehicleModel } from '../domain/useVehicleModel'

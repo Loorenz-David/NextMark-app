@@ -9,8 +9,6 @@ export const useOrderFormValidation = ({
 }) => {
   const validateForm = () => {
    
-
-    const referenceValid = warnings.referenceWarning.validate(formState.reference_number)
     const firstNameValid = warnings.firstNameWarning.validate(formState.client_first_name)
     const lastNameValid = warnings.lastNameWarning.validate(formState.client_last_name)
     const emailValid = warnings.emailWarning.validate(formState.client_email)
@@ -30,7 +28,6 @@ export const useOrderFormValidation = ({
     })
 
     return (
-      referenceValid &&
       firstNameValid &&
       lastNameValid &&
       emailValid &&

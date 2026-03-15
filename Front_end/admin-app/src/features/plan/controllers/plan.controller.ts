@@ -2,7 +2,7 @@ import { useCallback } from 'react'
 
 import { buildClientId } from '@/lib/utils/clientId'
 import { ApiError } from '@/lib/api/ApiClient'
-import { useMessageHandler } from '@/shared/message-handler'
+import { useMessageHandler } from '@shared-message-handler'
 import { useAddressCurrentLocationFlow } from '@/shared/inputs/address-autocomplete/hooks/useAddressCurrentLocationFlow'
 import { planApi } from '@/features/plan/api/plan.api'
 import { useOrderFlow, useOrderPlanPatchController } from '@/features/order'
@@ -18,6 +18,8 @@ import type { InternationalShippingPlan } from '@/features/plan/types/internatio
 import type { LocalDeliveryPlan } from '@/features/plan/planTypes/localDelivery/types/localDeliveryPlan'
 import type { StorePickupPlan } from '@/features/plan/types/storePickupPlan'
 import {
+  addVisiblePlan,
+  appendVisiblePlans,
   insertPlan,
   removePlan,
   selectPlanByClientId,
@@ -47,6 +49,7 @@ import {
   useStorePickupPlanStore,
 } from '@/features/plan/planTypes/storePickup/store/storePickup.slice'
 import { upsertRouteSolution } from '@/features/plan/planTypes/localDelivery/store/routeSolution.store'
+import { incrementPlanListTotal, usePlanListStore } from '@/features/plan/store/planList.store'
 
 type PlanTypeFields = LocalDeliveryPlan | InternationalShippingPlan | StorePickupPlan
 
@@ -121,6 +124,48 @@ const resolveError = (error: unknown, fallback: string) => ({
   message: error instanceof ApiError ? error.message : fallback,
   status: error instanceof ApiError ? error.status : 500,
 })
+
+const canInsertCreatedPlanIntoCurrentList = () => {
+  const { visibleIds } = usePlanStore.getState()
+  const { query } = usePlanListStore.getState()
+
+  if (!visibleIds) {
+    return false
+  }
+
+  if (!query) {
+    return true
+  }
+
+  const hasFilterThatNeedsServerRequery = Boolean(
+    query.label
+      || query.plan_type
+      || query.start_date
+      || query.end_date
+      || query.created_at_from
+      || query.created_at_to
+      || query.plan_state_id
+      || query.orders,
+  )
+
+  return !hasFilterThatNeedsServerRequery
+}
+
+const syncCreatedPlanIntoVisibleList = (plan: DeliveryPlan) => {
+  if (!canInsertCreatedPlanIntoCurrentList()) {
+    return
+  }
+
+  const currentQuery = usePlanListStore.getState().query
+
+  if (currentQuery?.sort === 'date_asc') {
+    appendVisiblePlans([plan.client_id])
+  } else {
+    addVisiblePlan(plan.client_id)
+  }
+
+  incrementPlanListTotal()
+}
 
 export function usePlanController() {
   const { showMessage } = useMessageHandler()
@@ -204,6 +249,8 @@ export function usePlanController() {
           removePlan(planClientId)
           insertPlan(createdPlan)
         }
+
+        syncCreatedPlanIntoVisibleList(createdPlan)
 
         if (typeof createdPlanId === 'number') {
           if (sanitizedNewOrderLinks.length > 0) {

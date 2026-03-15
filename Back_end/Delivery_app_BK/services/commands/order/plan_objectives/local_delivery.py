@@ -67,11 +67,10 @@ def apply_local_delivery_objective(
             route_solutions_by_id=route_solutions_by_id,
             synced_stops=synced_stops,
             changed_route_solutions=changed_route_solutions,
-            orders_by_route_solution_resolver=lambda _route_solution: {
-                order.id: order
-                for order in (delivery_plan.orders or [])
-                if getattr(order, "id", None) is not None
-            },
+            orders_by_route_solution_resolver=lambda _route_solution, created_order=order_instance, plan=delivery_plan: _resolve_orders_for_incremental_sync(
+                plan,
+                created_order,
+            ),
         )
     )
 
@@ -102,6 +101,21 @@ def _skip_reason_value(reason) -> str | None:
     if isinstance(reason, tuple):
         return reason[0] if reason else None
     return reason
+
+
+def _resolve_orders_for_incremental_sync(
+    delivery_plan,
+    created_order,
+) -> dict[int, object]:
+    orders_by_id = {
+        order.id: order
+        for order in (delivery_plan.orders or [])
+        if getattr(order, "id", None) is not None
+    }
+    created_order_id = getattr(created_order, "id", None)
+    if created_order_id is not None:
+        orders_by_id[created_order_id] = created_order
+    return orders_by_id
 
 
 def _build_stop_order_link_action(

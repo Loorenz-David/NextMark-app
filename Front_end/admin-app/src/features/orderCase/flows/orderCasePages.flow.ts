@@ -38,6 +38,7 @@ export const useOrderCasesByOrderFlow = (orderId: number | null) => {
   const cases = useOrderCasesByOrderId(orderId)
   const casesStats = orderCasesCount(cases)
   
+  const refreshCases = loadCasesByOrder
 
   useEffect(() => {
     if (orderId == null) return
@@ -47,7 +48,8 @@ export const useOrderCasesByOrderFlow = (orderId: number | null) => {
 
   return {
     cases,
-    casesStats
+    casesStats,
+    refreshCases,
   }
 }
 

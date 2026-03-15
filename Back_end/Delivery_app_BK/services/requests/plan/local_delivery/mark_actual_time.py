@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from datetime import datetime
 
 from Delivery_app_BK.errors import ValidationFailed
-from Delivery_app_BK.services.requests.common.datetime import parse_datetime_utc
+from Delivery_app_BK.services.requests.common.datetime import parse_optional_datetime
 from Delivery_app_BK.services.requests.common.fields import validate_unexpected
 
 
@@ -32,5 +32,5 @@ def parse_mark_actual_time_request(raw: dict | None) -> ActualTimeMarkRequest:
         return ActualTimeMarkRequest()
 
     return ActualTimeMarkRequest(
-        time=parse_datetime_utc(raw.get("time"), field="time"),
+        time=parse_optional_datetime(raw.get("time"), field="time"),
     )

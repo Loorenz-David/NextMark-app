@@ -1,5 +1,5 @@
 import { ApiError } from '@/lib/api/ApiClient'
-import { useMessageHandler } from '@/shared/message-handler'
+import { useMessageHandler } from '@shared-message-handler'
 
 import { listPrintTemplates } from '../api/printTemplate.api'
 import { upsertPrintTemplates } from '../store'

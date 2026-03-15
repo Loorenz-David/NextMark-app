@@ -1,7 +1,7 @@
 import { useCallback } from 'react'
 
 import { buildClientId } from '@/lib/utils/clientId'
-import { useMessageHandler } from '@/shared/message-handler'
+import { useMessageHandler } from '@shared-message-handler'
 import { usePopupManager } from '@/shared/resource-manager/useResourceManager'
 
 import { useCreateTeamInvite } from '@/features/team/invitations/api/teamInvitationApi'

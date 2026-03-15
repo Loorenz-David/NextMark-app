@@ -1,6 +1,6 @@
 import { useCallback } from 'react'
 
-import { useMessageHandler } from '@/shared/message-handler'
+import { useMessageHandler } from '@shared-message-handler'
 import { sessionStorage } from '@/features/auth/login/store/sessionStorage'
 import { apiClient } from '@/lib/api/ApiClient'
 

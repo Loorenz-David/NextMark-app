@@ -1,55 +1,48 @@
 import { useMemo, useState } from 'react'
 import type { FormEvent } from 'react'
-import type { DriverBaseRole } from '@/app/contracts/driverSession.types'
+import type { DriverWorkspaceKind } from '@/app/contracts/driverSession.types'
 import { useWorkspace } from '@/app/providers/workspace.context'
 
 export function ModeSwitcher() {
-  const { workspace, isSwitchingMode, switchError, switchMode } = useWorkspace()
-  const [targetRole, setTargetRole] = useState<DriverBaseRole>(workspace?.baseRole ?? 'team-driver')
-  const [targetTeamId, setTargetTeamId] = useState(workspace?.teamId ?? '')
+  const { workspace, isSwitchingWorkspace, switchWorkspaceError, switchWorkspace } = useWorkspace()
+  const [targetWorkspace, setTargetWorkspace] = useState<DriverWorkspaceKind>(workspace?.currentWorkspace ?? 'personal')
 
   const helperText = useMemo(() => (
-    targetRole === 'independent-driver'
-      ? 'Independent mode can expose quick route and order creation.'
+    targetWorkspace === 'personal'
+      ? 'Personal workspace can expose quick route and order creation.'
       : 'Team mode restricts creation and focuses on assigned route execution.'
-  ), [targetRole])
+  ), [targetWorkspace])
 
-  if (!workspace?.capabilities.canSwitchMode) {
+  if (!workspace) {
     return null
   }
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    await switchMode({
-      targetBaseRole: targetRole,
-      targetTeamId: targetTeamId.trim() || null,
+    await switchWorkspace({
+      targetWorkspace,
     })
   }
 
   return (
     <section className="mode-switcher">
       <div>
-        <div className="driver-kicker">Driver mode</div>
-        <strong>{workspace.baseRole}</strong>
+        <div className="driver-kicker">Workspace mode</div>
+        <strong>{workspace.currentWorkspace}</strong>
         <p className="driver-subtitle">{helperText}</p>
       </div>
 
       <form className="mode-switcher__form" onSubmit={handleSubmit}>
-        <select value={targetRole} onChange={(event) => setTargetRole(event.target.value as DriverBaseRole)}>
-          <option value="team-driver">Team driver</option>
-          <option value="independent-driver">Independent driver</option>
+        <select value={targetWorkspace} onChange={(event) => setTargetWorkspace(event.target.value as DriverWorkspaceKind)}>
+          <option value="personal">Personal</option>
+          <option disabled={!workspace.hasTeamWorkspace && workspace.currentWorkspace !== 'team'} value="team">Team</option>
         </select>
-        <input
-          placeholder="Target team id"
-          value={targetTeamId}
-          onChange={(event) => setTargetTeamId(event.target.value)}
-        />
-        <button className="primary-button" type="submit" disabled={isSwitchingMode}>
-          {isSwitchingMode ? 'Switching…' : 'Switch workspace'}
+        <button className="primary-button" type="submit" disabled={isSwitchingWorkspace}>
+          {isSwitchingWorkspace ? 'Switching…' : 'Switch workspace'}
         </button>
       </form>
 
-      {switchError ? <p className="form-error">{switchError}</p> : null}
+      {switchWorkspaceError ? <p className="form-error">{switchWorkspaceError}</p> : null}
     </section>
   )
 }

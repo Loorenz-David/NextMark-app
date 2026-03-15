@@ -1,11 +1,11 @@
-import { useCallback, useMemo, useState, useSyncExternalStore } from 'react'
+import { useCallback, useMemo, useSyncExternalStore } from 'react'
 import { useDriverAppShell } from '@/app/shell/providers/driverAppShell.context'
+import { useRouteExecutionShell } from '../providers/routeExecutionShell.context'
 import { selectBottomSheetState, selectSideMenuState } from '@/app/shell/stores/shell.selectors'
 
 export function useAssignedRouteToolbarController() {
-  const { store, closeSideMenu, openSideMenu } = useDriverAppShell()
-  const [searchValue, setSearchValue] = useState('')
-  const [isOverflowMenuOpen, setIsOverflowMenuOpen] = useState(false)
+  const { store, closeSideMenu, openSideMenu, openSlidingPage, snapBottomSheetTo } = useDriverAppShell()
+  const { closeRouteSearch, openRouteSearch, routeSearchQuery, routeViewMode, setRouteSearchQuery } = useRouteExecutionShell()
 
   const shellState = useSyncExternalStore(
     store.subscribe,
@@ -16,9 +16,10 @@ export function useAssignedRouteToolbarController() {
   const bottomSheetState = useMemo(() => selectBottomSheetState(shellState), [shellState])
   const sideMenuState = useMemo(() => selectSideMenuState(shellState), [shellState])
 
-  const handleSearchValueChange = useCallback((value: string) => {
-    setSearchValue(value)
-  }, [])
+  const enterRouteSearch = useCallback(() => {
+    openRouteSearch()
+    snapBottomSheetTo('expanded')
+  }, [openRouteSearch, snapBottomSheetTo])
 
   const openSideMenuFromToolbar = useCallback(() => {
     if (sideMenuState.isOpen) {
@@ -29,32 +30,34 @@ export function useAssignedRouteToolbarController() {
     openSideMenu('menu-home', undefined)
   }, [closeSideMenu, openSideMenu, sideMenuState.isOpen])
 
-  const openOverflowMenu = useCallback(() => {
-    setIsOverflowMenuOpen(true)
-  }, [])
-
-  const closeOverflowMenu = useCallback(() => {
-    setIsOverflowMenuOpen(false)
-  }, [])
+  const openThreeDotMenu = useCallback(() => {
+    openSlidingPage('route-three-dot-menu', undefined)
+  }, [openSlidingPage])
 
   return useMemo(() => ({
-    searchValue,
-    showEmbeddedMenuButton: bottomSheetState.snap === 'expanded',
+    routeViewMode,
+    searchValue: routeSearchQuery,
+    showEmbeddedMenuButton:
+      bottomSheetState.snap === 'expanded'
+      && bottomSheetState.currentPage?.page === 'route-workspace'
+      && routeViewMode === 'route',
     showShellHeaderMenuButton: bottomSheetState.snap !== 'expanded',
     isSideMenuOpen: sideMenuState.isOpen,
-    isOverflowMenuOpen,
-    onSearchValueChange: handleSearchValueChange,
+    onBackFromSearch: closeRouteSearch,
+    onSearchValueChange: routeViewMode === 'search' ? setRouteSearchQuery : enterRouteSearch,
+    onSearchFocus: routeViewMode === 'search' ? undefined : enterRouteSearch,
     onOpenSideMenu: openSideMenuFromToolbar,
-    onOpenOverflowMenu: openOverflowMenu,
-    onCloseOverflowMenu: closeOverflowMenu,
+    onOpenThreeDotMenu: openThreeDotMenu,
   }), [
+    bottomSheetState.currentPage?.page,
     bottomSheetState.snap,
-    closeOverflowMenu,
-    handleSearchValueChange,
-    isOverflowMenuOpen,
-    openOverflowMenu,
+    closeRouteSearch,
+    enterRouteSearch,
     openSideMenuFromToolbar,
-    searchValue,
+    openThreeDotMenu,
+    routeSearchQuery,
+    routeViewMode,
+    setRouteSearchQuery,
     sideMenuState.isOpen,
   ])
 }

@@ -1,4 +1,4 @@
-from Delivery_app_BK.models import db, User, Team
+from Delivery_app_BK.models import db, User
 from Delivery_app_BK.errors import ValidationFailed
 
 from ...context import ServiceContext
@@ -25,4 +25,10 @@ def login_user_service( ctx:ServiceContext ):
     
 
 
-    return build_user_tokens(user)
+    tokens = build_user_tokens(
+        user,
+        app_scope=login_request.app_scope,
+        time_zone=login_request.time_zone,
+    )
+    db.session.commit()
+    return tokens

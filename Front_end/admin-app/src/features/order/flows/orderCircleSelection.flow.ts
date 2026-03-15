@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react'
 
-import { useMessageHandler } from '@/shared/message-handler'
+import { useMessageHandler } from '@shared-message-handler'
 import { MAP_MARKER_LAYERS } from '@/shared/map'
 import { useMapManager } from '@/shared/resource-manager/useResourceManager'
 

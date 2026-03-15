@@ -4,6 +4,7 @@ export {
 
 export {
   clearStops,
+  patchStopTimingByClientId,
   setStops,
 } from './stops.mutations'
 

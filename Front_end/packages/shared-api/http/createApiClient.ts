@@ -344,9 +344,10 @@ export class HttpApiClient {
     }
 
     const nextUser: SessionUser = { ...(user ?? {}) }
-    const teamId = identity?.team_id
+    const teamId = identity?.active_team_id ?? identity?.team_id
     if (teamId !== undefined) {
       nextUser.teamId = teamId
+      nextUser.active_team_id = teamId
     }
     const userRoleId = identity?.user_role_id
     if (typeof userRoleId === 'number') {
@@ -355,6 +356,26 @@ export class HttpApiClient {
     const baseRoleId = identity?.base_role_id
     if (typeof baseRoleId === 'number') {
       nextUser.base_role_id = baseRoleId
+    }
+    const baseRole = identity?.base_role
+    if (typeof baseRole === 'string') {
+      nextUser.base_role = baseRole
+    }
+    const appScope = identity?.app_scope
+    if (typeof appScope === 'string') {
+      nextUser.app_scope = appScope
+    }
+    const sessionScopeId = identity?.session_scope_id
+    if (typeof sessionScopeId === 'string') {
+      nextUser.session_scope_id = sessionScopeId
+    }
+    const currentWorkspace = identity?.current_workspace
+    if (typeof currentWorkspace === 'string') {
+      nextUser.current_workspace = currentWorkspace
+    }
+    const hasTeamWorkspace = identity?.has_team_workspace
+    if (typeof hasTeamWorkspace === 'boolean') {
+      nextUser.has_team_workspace = hasTeamWorkspace
     }
     return nextUser
   }

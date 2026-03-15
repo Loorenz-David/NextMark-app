@@ -6,6 +6,7 @@ import { OverlaySurface } from './OverlaySurface'
 import { SideMenuSurface } from './SideMenuSurface'
 import { SlidingPageSurface } from './SlidingPageSurface'
 import { MenuButton } from './MenuButton'
+import { DriverNotificationsButton } from '@/app/notifications'
 import { DRIVER_SHELL_CONFIG } from '../domain/shell.config'
 import { useDriverAppShellChromeController } from '../controllers/useDriverAppShellChrome.controller'
 import './driverAppShell.css'
@@ -45,6 +46,9 @@ export function DriverAppShell() {
             mode={'onMap'}
           />
         ) : null}
+        <div className="ml-auto">
+          <DriverNotificationsButton />
+        </div>
       </header>
 
       <BottomSheetSurface />

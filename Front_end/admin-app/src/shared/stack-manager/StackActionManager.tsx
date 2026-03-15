@@ -1,6 +1,7 @@
 import { createElement,  } from 'react'
 import type { ComponentType, ReactNode } from 'react'
 import { motion } from 'framer-motion'
+import { v4 as uuidv4 } from "uuid"
 
 // Keep payload flexible; simple object shapes should be allowed without requiring an index signature.
 export type ActionPayload = any
@@ -85,7 +86,7 @@ export class StackActionManager <
     }
 
     const entry: ActionEntry<K,TPayloadMap[K]> = {
-      id: crypto.randomUUID(),
+      id: uuidv4(),
       key,
       payload: params.payload,
       parentParams: params.parentParams,

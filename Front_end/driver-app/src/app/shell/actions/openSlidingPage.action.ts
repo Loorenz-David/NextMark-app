@@ -1,4 +1,9 @@
-import type { ShellStore, SlidingPagePageId, SlidingPagePageParamsMap } from '../domain/shell.types'
+import type {
+  ShellStore,
+  SlidingPagePageId,
+  SlidingPagePageParamsMap,
+  SlidingPageStackEntry,
+} from '../domain/shell.types'
 import { createStackKey } from '../domain/shell.types'
 import { replaceSlidingPageStack } from '../stores/shell.mutations'
 
@@ -7,9 +12,11 @@ export function openSlidingPage<PageId extends SlidingPagePageId>(
   page: PageId,
   params: SlidingPagePageParamsMap[PageId],
 ) {
-  store.setState((state) => replaceSlidingPageStack(state, [{
+  const entry: SlidingPageStackEntry = {
     key: createStackKey(page),
     page,
     params,
-  }]))
+  } as SlidingPageStackEntry
+
+  store.setState((state) => replaceSlidingPageStack(state, [entry]))
 }

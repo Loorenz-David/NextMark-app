@@ -1,6 +1,6 @@
 import { useCallback } from 'react'
 
-import { useMessageHandler } from '@/shared/message-handler'
+import { useMessageHandler } from '@shared-message-handler'
 import { usePopupManager } from '@/shared/resource-manager/useResourceManager'
 
 import { useUpdateUser } from '../api/user.api'

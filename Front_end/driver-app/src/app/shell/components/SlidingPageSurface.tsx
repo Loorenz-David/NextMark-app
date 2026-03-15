@@ -1,5 +1,13 @@
 import { useMemo, useSyncExternalStore } from 'react'
 import { CloseIcon } from '@/assets/icons'
+import { DriverNotificationsPage } from '@/app/notifications'
+import {
+  MapAppChooserPage,
+  PhoneCallChooserPage,
+  RouteThreeDotMenuPage,
+  StopFailureFormPage,
+  StopOrderItemsPage,
+} from '@/features/route-execution'
 import { useDriverAppShell } from '../providers/driverAppShell.context'
 import { selectSlidingPageState } from '../stores/shell.selectors'
 
@@ -56,6 +64,37 @@ export function SlidingPageSurface() {
             onClose={closeSlidingPage}
             title={slidingPageState.currentPage.params.title}
           />
+        ) : null}
+        {slidingPageState.currentPage?.page === 'notifications' ? (
+          <DriverNotificationsPage />
+        ) : null}
+        {slidingPageState.currentPage?.page === 'route-stop-failure-form' ? (
+          <StopFailureFormPage
+            onClose={closeSlidingPage}
+            orderId={slidingPageState.currentPage.params.orderId}
+            stopClientId={slidingPageState.currentPage.params.stopClientId}
+          />
+        ) : null}
+        {slidingPageState.currentPage?.page === 'route-stop-order-items' ? (
+          <StopOrderItemsPage
+            onClose={closeSlidingPage}
+            stopClientId={slidingPageState.currentPage.params.stopClientId}
+          />
+        ) : null}
+        {slidingPageState.currentPage?.page === 'map-app-chooser' ? (
+          <MapAppChooserPage
+            destination={slidingPageState.currentPage.params.destination}
+            onClose={closeSlidingPage}
+          />
+        ) : null}
+        {slidingPageState.currentPage?.page === 'phone-call-chooser' ? (
+          <PhoneCallChooserPage
+            onClose={closeSlidingPage}
+            options={slidingPageState.currentPage.params.options}
+          />
+        ) : null}
+        {slidingPageState.currentPage?.page === 'route-three-dot-menu' ? (
+          <RouteThreeDotMenuPage onClose={closeSlidingPage} />
         ) : null}
       </div>
     </section>

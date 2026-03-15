@@ -2,7 +2,7 @@ import { useCallback } from 'react'
 
 import { normalizeEntityMap } from '@/lib/utils/entities/normalizeEntityMap'
 import { ApiError } from '@/lib/api/ApiClient'
-import { useMessageHandler } from '@/shared/message-handler'
+import { useMessageHandler } from '@shared-message-handler'
 
 import { planApi } from '@/features/plan/api/plan.api'
 import { planTypesApi } from '@/features/plan/api/planTypes.api'

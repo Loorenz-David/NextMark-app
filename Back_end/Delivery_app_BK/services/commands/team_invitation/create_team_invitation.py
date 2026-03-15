@@ -51,7 +51,7 @@ def create_team_invitation(ctx: ServiceContext):
 
     if not user:
         raise NotFound(
-            f"User with username '{username}' and email '{email}' was not found."
+            f"User with email '{email}' was not found."
         )
     
     if user.id == ctx.user_id:

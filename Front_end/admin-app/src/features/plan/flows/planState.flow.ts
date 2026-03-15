@@ -1,7 +1,7 @@
 import { useCallback } from 'react'
 
 import { planApi } from '@/features/plan/api/plan.api'
-import { useMessageHandler } from '@/shared/message-handler'
+import { useMessageHandler } from '@shared-message-handler'
 import { insertDeliveryPlanStates } from '@/features/plan/store/planState.store'
 import type { DeliveryPlanStateQueryFilters } from '@/features/plan/types/planMeta'
 import { ApiError } from '@/lib/api/ApiClient'

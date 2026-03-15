@@ -1,7 +1,14 @@
 import type { Coordinates } from '../types'
 
 export type MapMarkerStatus = 'pending' | 'in_progress' | 'completed' | 'skipped' | string
-export type MapMarkerInteractionVariant = 'default' | 'stop' | 'current-location'
+export type MapMarkerInteractionVariant =
+  | 'default'
+  | 'stop'
+  | 'current-location'
+  | 'route-start'
+  | 'route-end'
+
+export type MapMarkerIconName = 'home-start' | 'finish'
 
 export type MapMarker = {
   id: string
@@ -15,4 +22,5 @@ export type MapMarker = {
   onMouseLeave?: (event: MouseEvent) => void
   className?: string
   interactionVariant?: MapMarkerInteractionVariant
+  iconName?: MapMarkerIconName
 }

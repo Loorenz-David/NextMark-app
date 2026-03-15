@@ -25,22 +25,27 @@ def update_local_delivery_settings(ctx: ServiceContext) -> dict:
     request: LocalDeliverySettingsRequest = parse_update_local_delivery_settings_request(
         incoming_data
     )
- 
+    return apply_local_delivery_settings_request(ctx, request)
+
+
+def apply_local_delivery_settings_request(
+    ctx: ServiceContext,
+    request: LocalDeliverySettingsRequest,
+    *,
+    reset_route_execution_timing: bool = False,
+) -> dict:
     local_delivery_plan, delivery_plan, route_solution = load_local_delivery_settings_entities(
         ctx=ctx,
         request=request,
     )
-   
 
     previous_start, previous_end, pending_plan_events = apply_delivery_plan_patch(
         delivery_plan=delivery_plan,
         patch=request.delivery_plan,
     )
-  
-   
 
     route_updates = _build_route_solution_updates(request.route_solution)
-    effective_time_zone = ctx.time_zone
+    effective_time_zone = request.time_zone or ctx.time_zone
     route_solution, stops_changed, original_route_solution = update_route_solution_from_plan(
         route_solution=route_solution,
         updates=route_updates,
@@ -51,6 +56,13 @@ def update_local_delivery_settings(ctx: ServiceContext) -> dict:
         create_variant_on_save=request.create_variant_on_save,
         time_zone=effective_time_zone,
     )
+    if reset_route_execution_timing:
+        route_solution.actual_start_time = None
+        route_solution.actual_end_time = None
+        route_solution.actual_end_time_source = None
+        local_delivery_plan.actual_start_time = None
+        local_delivery_plan.actual_end_time = None
+
     plan_window_changed = (
         previous_start != delivery_plan.start_date
         or previous_end != delivery_plan.end_date
@@ -61,6 +73,7 @@ def update_local_delivery_settings(ctx: ServiceContext) -> dict:
         or route_patch_requested
         or original_route_solution is not None
         or stops_changed
+        or reset_route_execution_timing
     )
 
     db.session.add(delivery_plan)
@@ -72,10 +85,7 @@ def update_local_delivery_settings(ctx: ServiceContext) -> dict:
         db.session.add_all(route_solution.stops or [])
     db.session.commit()
 
-   
-
     emit_pending_delivery_plan_events(ctx, pending_plan_events)
-   
 
     return build_local_delivery_settings_response(
         ctx=ctx,

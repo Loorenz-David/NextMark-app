@@ -2,7 +2,7 @@ import { useCallback } from "react"
 import type { CaseChat, OrderCaseState } from "../types"
 import { apiClient, ApiError } from "@/lib/api/ApiClient"
 import { useCreateCaseChat, useMarkOrderCaseChatsRead, useUpdateOrderCaseState } from "../api/orderCase.api"
-import { useMessageHandler } from "@/shared/message-handler"
+import { useMessageHandler } from "@shared-message-handler"
 import { useOrderCaseFlow } from "../flows/orderCase.flow"
 import { appendChatToCase, selectOrderCaseById, updateCaseState, updateUnseenCount, useOrderCaseStore } from "../store/orderCaseStore"
 import { buildClientId } from "@/lib/utils/clientId"
@@ -102,7 +102,8 @@ export const useDetailsControllers = ()=>{
     return {
         updateState,
         sendChat,
-        markCaseChatsAsRead
+        markCaseChatsAsRead,
+        loadCaseDetails,
     }
 }
 

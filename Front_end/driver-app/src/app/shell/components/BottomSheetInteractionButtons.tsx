@@ -14,14 +14,14 @@ export function BottomSheetInteractionButtons({
   return (
     <div className={`driver-bottom-sheet__actions-strip${isVisible ? ' is-visible' : ''}`}>
       <button
-        className="p-3 rounded-full driver-bottom-sheet__action-button"
+        className="p-3 rounded-full   map-glass-fake-bg"
         disabled={isLocatingCurrentLocation}
         onClick={onLocateCurrentLocation}
         type="button"
       >
         <CurrentLocationIcon
           aria-hidden="true"
-          className="h-4 w-4 shrink-0 text-[rgb(var(--bg-app-color))]"
+          className="h-5 w-5 shrink-0 text-[rgb(var(--bg-strong-light))]"
         />
 
       </button>

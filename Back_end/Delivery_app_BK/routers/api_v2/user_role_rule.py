@@ -50,7 +50,7 @@ user_role_rule_bp = Blueprint("api_v2_user_role_rule_bp", __name__)
 
 @user_role_rule_bp.route("/", methods=["GET"])
 @jwt_required()
-@role_required([ADMIN, ASSISTANT, DRIVER])
+@role_required([ADMIN, ASSISTANT])
 def list_user_role_rules():
     identity = get_jwt()
     ctx = ServiceContext(
@@ -71,7 +71,7 @@ def list_user_role_rules():
 
 @user_role_rule_bp.route("/<int:user_role_id>/", methods=["GET"])
 @jwt_required()
-@role_required([ADMIN, ASSISTANT, DRIVER])
+@role_required([ADMIN, ASSISTANT])
 def list_user_role_rules_by_role(user_role_id: int):
     identity = get_jwt()
     ctx = ServiceContext(
@@ -95,7 +95,7 @@ def list_user_role_rules_by_role(user_role_id: int):
 
 @user_role_rule_bp.route("/date_range/", methods=["GET"])
 @jwt_required()
-@role_required([ADMIN, ASSISTANT, DRIVER])
+@role_required([ADMIN, ASSISTANT])
 def list_date_range_access_rules():
     identity = get_jwt()
     ctx = ServiceContext(
@@ -116,7 +116,7 @@ def list_date_range_access_rules():
 
 @user_role_rule_bp.route("/date_range/", methods=["PUT"])
 @jwt_required()
-@role_required([ADMIN, ASSISTANT, DRIVER])
+@role_required([ADMIN, ASSISTANT])
 def create_date_range_access_rule():
     identity = get_jwt()
     incoming_data = request.get_json(silent=True) or {}
@@ -141,7 +141,7 @@ def create_date_range_access_rule():
 
 @user_role_rule_bp.route("/date_range/", methods=["PATCH"])
 @jwt_required()
-@role_required([ADMIN, ASSISTANT, DRIVER])
+@role_required([ADMIN, ASSISTANT])
 def update_date_range_access_rule():
     identity = get_jwt()
     incoming_data = request.get_json(silent=True) or {}
@@ -166,7 +166,7 @@ def update_date_range_access_rule():
 
 @user_role_rule_bp.route("/date_range/", methods=["DELETE"])
 @jwt_required()
-@role_required([ADMIN, ASSISTANT, DRIVER])
+@role_required([ADMIN, ASSISTANT])
 def delete_date_range_access_rule():
     identity = get_jwt()
     incoming_data = request.get_json(silent=True) or {}
@@ -191,7 +191,7 @@ def delete_date_range_access_rule():
 
 @user_role_rule_bp.route("/date_range/<int:rule_id>", methods=["GET"])
 @jwt_required()
-@role_required([ADMIN, ASSISTANT, DRIVER])
+@role_required([ADMIN, ASSISTANT])
 def get_date_range_access_rule(rule_id: int):
     identity = get_jwt()
     ctx = ServiceContext(
@@ -215,7 +215,7 @@ def get_date_range_access_rule(rule_id: int):
 
 @user_role_rule_bp.route("/order_state/", methods=["GET"])
 @jwt_required()
-@role_required([ADMIN, ASSISTANT, DRIVER])
+@role_required([ADMIN, ASSISTANT])
 def list_order_state_transition_rules():
     identity = get_jwt()
     ctx = ServiceContext(
@@ -239,7 +239,7 @@ def list_order_state_transition_rules():
 
 @user_role_rule_bp.route("/order_state/", methods=["PUT"])
 @jwt_required()
-@role_required([ADMIN, ASSISTANT, DRIVER])
+@role_required([ADMIN, ASSISTANT])
 def create_order_state_transition_rule():
     identity = get_jwt()
     incoming_data = request.get_json(silent=True) or {}
@@ -264,7 +264,7 @@ def create_order_state_transition_rule():
 
 @user_role_rule_bp.route("/order_state/", methods=["PATCH"])
 @jwt_required()
-@role_required([ADMIN, ASSISTANT, DRIVER])
+@role_required([ADMIN, ASSISTANT])
 def update_order_state_transition_rule():
     identity = get_jwt()
     incoming_data = request.get_json(silent=True) or {}
@@ -289,7 +289,7 @@ def update_order_state_transition_rule():
 
 @user_role_rule_bp.route("/order_state/", methods=["DELETE"])
 @jwt_required()
-@role_required([ADMIN, ASSISTANT, DRIVER])
+@role_required([ADMIN, ASSISTANT])
 def delete_order_state_transition_rule():
     identity = get_jwt()
     incoming_data = request.get_json(silent=True) or {}
@@ -314,7 +314,7 @@ def delete_order_state_transition_rule():
 
 @user_role_rule_bp.route("/order_state/<int:rule_id>", methods=["GET"])
 @jwt_required()
-@role_required([ADMIN, ASSISTANT, DRIVER])
+@role_required([ADMIN, ASSISTANT])
 def get_order_state_transition_rule(rule_id: int):
     identity = get_jwt()
     ctx = ServiceContext(

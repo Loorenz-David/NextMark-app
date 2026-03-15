@@ -1,6 +1,6 @@
 import { useCallback, useEffect } from 'react'
 
-import { useMessageHandler } from '@/shared/message-handler'
+import { useMessageHandler } from '@shared-message-handler'
 
 import { useGetItemPositions } from '../api/itemPositionApi'
 import { useItemModel } from '../domain/useItemModel'

@@ -5,6 +5,7 @@ export type LoginPayload = {
   email: string
   password: string
   time_zone: string
+  app_scope: 'driver'
 }
 
 export type LoginResponse = {

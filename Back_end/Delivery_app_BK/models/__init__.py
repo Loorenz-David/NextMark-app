@@ -29,6 +29,7 @@ from .tables.order.order_delivery_window import OrderDeliveryWindow
 from .tables.order.order_audit_log import OrderAuditLog
 from .tables.order.order_event import OrderEvent
 from .tables.order.order_event_action import OrderEventAction
+from .tables.app_event_outbox import AppEventOutbox
 from .tables.costumer.costumer import Costumer
 from .tables.costumer.costumer_address import CostumerAddress
 from .tables.costumer.costumer_phone import CostumerPhone

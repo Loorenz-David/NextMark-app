@@ -5,11 +5,17 @@ export interface SessionUser {
   client_id?: string
   email?: string
   teamId?: string | number | null
+  active_team_id?: string | number | null
   username?: string
   phone_number?: string | null
   profile_picture?: string | null
   user_role_id?: number | null
   base_role_id?: number | null
+  base_role?: string | null
+  app_scope?: string | null
+  session_scope_id?: string | null
+  current_workspace?: string | null
+  has_team_workspace?: boolean
   show_app_tutorial?: boolean
   [key: string]: unknown
 }
@@ -17,8 +23,15 @@ export interface SessionUser {
 export interface SessionIdentity {
   user_id?: string | number
   team_id?: string | number | null
+  active_team_id?: string | number | null
   user_role_id?: number | null
+  role_id?: number | null
   base_role_id?: number | null
+  base_role?: string | null
+  app_scope?: string | null
+  session_scope_id?: string | null
+  current_workspace?: string | null
+  has_team_workspace?: boolean
   time_zone?: string | null
   [key: string]: unknown
 }

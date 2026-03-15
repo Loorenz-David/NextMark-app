@@ -23,7 +23,7 @@ def create_instance(
 
     if ctx.inject_team_id:
         if model_requires_team( Model ):
-            inject_team_id( fields, ctx )
+            fields = inject_team_id( fields, ctx )
 
     new_instance = Model()
     from sqlalchemy import inspect

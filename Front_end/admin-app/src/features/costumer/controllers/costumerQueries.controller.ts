@@ -1,7 +1,7 @@
 import { normalizeCostumerPayload } from '../domain/normalizeCostumerPayload'
 import { setVisibleCostumerIds } from '../store/costumer.patchers'
 import { useGetCostumerApi, useListCostumerOrdersApi, useListCostumersApi } from '../api/costumerApi'
-import { useMessageHandler } from '@/shared/message-handler'
+import { useMessageHandler } from '@shared-message-handler'
 import { upsertCostumers } from '../store/costumer.upserters'
 import {  setCostumerListError, setCostumerListLoading, setCostumerListResult } from '../store/costumerList.store'
 import type {

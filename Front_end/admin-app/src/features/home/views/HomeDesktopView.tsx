@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { BasicButton } from '@/shared/buttons/BasicButton'
 import { useSectionManager, useMapManager, usePopupManager } from '@/shared/resource-manager/useResourceManager'
 
-import { ArchiveIcon, ChevronDownIcon, SettingIcon } from '@/assets/icons'
+import { ChevronDownIcon, SettingIcon } from '@/assets/icons'
 
 import { OrderPage } from '@/features/order/pages/order.page'
 import { OrderMapOverlay } from '@/features/order/components/OrderMapOverlay'
@@ -18,6 +18,7 @@ import { HomeDesktopLayout } from '../layout/HomeDesktopLayout'
 import { useHomeDesktopLayout } from '../hooks/useHomeDesktopLayout'
 import { SectionManagerHost } from '../components/SectionManagerHost'
 import type { PayloadBase } from '../types/types'
+import { AdminNotificationsTrigger } from '@/realtime/notifications'
 
 import { SectionPanel } from '../../../shared/section-panel/SectionPanel'
 import { PlanDesktopShell } from '@/features/plan/views/PlanDesktopShell'
@@ -180,7 +181,6 @@ function HomeDesktopHeader({
   viewMode: 'rail' | 'split'
   onToggleViewMode: () => void
 }) {
-  const sectionManager = useSectionManager()
   const navigate = useNavigate()
   return (
     <div
@@ -199,16 +199,7 @@ function HomeDesktopHeader({
         >
           {viewMode === 'rail' ? 'Split View' : 'Rail View'}
         </BasicButton>
-        <BasicButton
-          params={{
-            variant: 'secondary',
-            ariaLabel: 'Notifications',
-            className: 'border-[var(--color-muted)]/30',
-            onClick: () => sectionManager.open({ key: 'orderCase.main' }),
-          }}
-        >
-          <ArchiveIcon className="h-5 w-5 " />
-        </BasicButton>
+        <AdminNotificationsTrigger />
         <BasicButton
           params={{
             variant: 'secondary',

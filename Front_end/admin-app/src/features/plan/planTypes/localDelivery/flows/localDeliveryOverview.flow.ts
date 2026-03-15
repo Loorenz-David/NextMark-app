@@ -1,7 +1,7 @@
 import { useCallback } from 'react'
 
 import { ApiError } from '@/lib/api/ApiClient'
-import { useMessageHandler } from '@/shared/message-handler'
+import { useMessageHandler } from '@shared-message-handler'
 
 import { planOverviewApi } from '@/features/plan/planTypes/localDelivery/api/planOverview.api'
 import type { LocalDeliveryOverviewResponse } from '@/features/plan/planTypes/localDelivery/api/planOverview.api'

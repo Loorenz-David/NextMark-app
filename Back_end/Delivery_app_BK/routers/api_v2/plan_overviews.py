@@ -20,7 +20,7 @@ plan_overviews_bp = Blueprint("api_v2_plan_overviews_bp", __name__)
 
 @plan_overviews_bp.route("/<int:plan_id>/local_delivery/", methods=["GET"])
 @jwt_required()
-@role_required([ADMIN, ASSISTANT, DRIVER])
+@role_required([ADMIN, ASSISTANT])
 def get_local_delivery_overview(plan_id: int):
     identity = get_jwt()
     ctx = ServiceContext(identity=identity)

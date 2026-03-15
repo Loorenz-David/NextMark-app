@@ -2,6 +2,7 @@ import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { useWorkspace } from '@/app/providers/workspace.context'
 import { useDriverServices } from '@/app/providers/driverServices.context'
+import { CapabilityGate } from '@/shared/components'
 
 export function QuickRoutePage() {
   const { workspace } = useWorkspace()
@@ -16,6 +17,9 @@ export function QuickRoutePage() {
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
+    if (!workspace?.capabilities.canCreateRoutes) {
+      return
+    }
 
     try {
       await independentDriverApi.createQuickRoute({
@@ -75,10 +79,11 @@ export function QuickRoutePage() {
             placeholder="comma,separated,client_ids"
           />
         </label>
-
-        <button className="primary-button" disabled={!workspace?.capabilities.canCreateRoutes} type="submit">
-          Create quick route
-        </button>
+        <CapabilityGate capability="canCreateRoutes">
+          <button className="primary-button" type="submit">
+            Create quick route
+          </button>
+        </CapabilityGate>
         {status ? <p className="driver-subtitle">{status}</p> : null}
       </form>
     </section>

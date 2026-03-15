@@ -18,16 +18,29 @@ export const GaussianMetricCard = ({ card }: GaussianMetricCardProps) => {
     () => card.faces[activeIndex] ?? card.faces[0],
     [activeIndex, card.faces],
   )
+  const isInteractive = card.faces.length > 1
 
   const handleToggle = () => {
-    if (card.faces.length <= 1) return
+    if (!isInteractive) return
     setActiveIndex((current) => (current + 1) % card.faces.length)
   }
 
   return (
-    <button
-      type="button"
-      onClick={handleToggle}
+    <div
+      role={isInteractive ? 'button' : undefined}
+      tabIndex={isInteractive ? 0 : undefined}
+      onClick={isInteractive ? handleToggle : undefined}
+      onKeyDown={
+        isInteractive
+          ? (event) => {
+              if (event.key !== 'Enter' && event.key !== ' ') {
+                return
+              }
+              event.preventDefault()
+              handleToggle()
+            }
+          : undefined
+      }
       className="pointer-events-auto relative flex min-h-[150px] w-full flex-col rounded-2xl border border-white/45 bg-black/28 p-4 pt-3 text-left text-sm text-white backdrop-blur-md transition-colors hover:bg-black/34"
     >
       <ChevronDownIcon className="-rotate-90 absolute right-3 top-[10px] h-4 w-4 text-white/70" />
@@ -100,6 +113,6 @@ export const GaussianMetricCard = ({ card }: GaussianMetricCardProps) => {
           </div>
         </motion.div>
       </AnimatePresence>
-    </button>
+    </div>
   )
 }

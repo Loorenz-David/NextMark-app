@@ -1,7 +1,6 @@
 from typing import List
 
 from Delivery_app_BK.models import RouteSolution
-
 from ...context import ServiceContext
 from ..utils import map_return_values
 
@@ -24,7 +23,7 @@ def serialize_route_solution(instance: RouteSolution) -> dict:
         "total_travel_time_seconds": instance.total_travel_time_seconds,
         "start_leg_polyline": instance.start_leg_polyline,
         "end_leg_polyline": instance.end_leg_polyline,
-        "has_route_warnings": instance.has_route_warnings,
+        "has_route_warnings": bool(instance.route_warnings),
         "route_warnings": instance.route_warnings,
         "start_location": instance.start_location,
         "end_location": instance.end_location,

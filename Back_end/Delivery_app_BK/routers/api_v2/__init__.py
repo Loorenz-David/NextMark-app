@@ -27,11 +27,47 @@ from .item_position import item_position_bp
 from .item_state import item_state_bp
 from .costumer import costumer_bp
 from .drivers import drivers_bp
+from Delivery_app_BK.routers.utils.role_decorator import install_blueprint_scope_guard
 
 
+ADMIN_APP_BLUEPRINTS = [
+    item_bp,
+    item_type_bp,
+    item_property_bp,
+    item_position_bp,
+    item_state_bp,
+    label_template_bp,
+    message_template_bp,
+    plan_bp,
+    order_bp,
+    infrastructure_bp,
+    external_integration_bp,
+    user_role_bp,
+    user_role_rule_bp,
+    user_bp,
+    team_bp,
+    team_invitation_bp,
+    seed_bp,
+    bootstrap_bp,
+    shopify_bp,
+    integrations_bp,
+    twilio_bp,
+    email_bp,
+    route_solution_bp,
+    plan_overviews_bp,
+    costumer_bp,
+]
+
+
+def _install_scope_guards():
+    for blueprint in ADMIN_APP_BLUEPRINTS:
+        install_blueprint_scope_guard(blueprint, "admin")
+    install_blueprint_scope_guard(order_case_bp, ("admin", "driver"))
+    install_blueprint_scope_guard(drivers_bp, "driver")
 
 
 def register_v2_blueprints(app):
+    _install_scope_guards()
     app.register_blueprint(item_bp, url_prefix="/api_v2/items")
     app.register_blueprint(item_type_bp, url_prefix="/api_v2/item_types")
     app.register_blueprint(item_property_bp, url_prefix="/api_v2/item_properties")

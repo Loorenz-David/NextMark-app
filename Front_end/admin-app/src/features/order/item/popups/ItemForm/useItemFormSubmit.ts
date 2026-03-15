@@ -1,7 +1,7 @@
 import type { RefObject } from 'react'
 import { useCallback, useMemo } from 'react'
 
-import { useMessageHandler } from '@/shared/message-handler'
+import { useMessageHandler } from '@shared-message-handler'
 import { hasFormChanges } from '@shared-domain'
 
 import { useItemController } from '../../hooks/useItemController'

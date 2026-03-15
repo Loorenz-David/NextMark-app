@@ -13,7 +13,7 @@ import type { DeliveryPlan } from '@/features/plan/types/plan'
 import type { RouteSolution, RouteSolutionWarning } from '@/features/plan/planTypes/localDelivery/types/routeSolution'
 import type { LocalDeliveryPlan } from '@/features/plan/planTypes/localDelivery/types/localDeliveryPlan'
 import { createRouteWarningActionRegistry } from './routeWarningActionRegistry'
-import { useMessageHandler } from '@/shared/message-handler'
+import { useMessageHandler } from '@shared-message-handler'
 import type { useLoadingController } from '../controllers/useLoadingController'
 import { MIN_LOADER_VISIBLE_MS } from '../constants/optimization.constants'
 

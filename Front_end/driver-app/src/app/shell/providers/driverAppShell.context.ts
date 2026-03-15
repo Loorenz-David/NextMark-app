@@ -23,6 +23,10 @@ export type DriverAppShellContextValue = {
     page: PageId,
     params: BottomSheetPageParamsMap[PageId],
   ) => void
+  replaceCurrentBottomSheet: <PageId extends BottomSheetPageId>(
+    page: PageId,
+    params: BottomSheetPageParamsMap[PageId],
+  ) => void
   openSideMenu: <PageId extends SideMenuPageId>(
     page: PageId,
     params: SideMenuPageParamsMap[PageId],
@@ -37,7 +41,13 @@ export type DriverAppShellContextValue = {
     page: PageId,
     params: OverlayPageParamsMap[PageId],
   ) => void
+  pushOverlay: <PageId extends OverlayPageId>(
+    page: PageId,
+    params: OverlayPageParamsMap[PageId],
+  ) => void
+  popOverlay: () => void
   closeOverlay: () => void
+  snapBottomSheetTo: (snap: BottomSheetSnap) => void
   setBottomSheetSnap: (snap: BottomSheetSnap) => void
   setBottomSheetHeight: (percent: number) => void
   setBottomSheetMotionState: (motionState: BottomSheetMotionState) => void

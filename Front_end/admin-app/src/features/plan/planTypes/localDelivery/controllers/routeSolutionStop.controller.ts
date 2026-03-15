@@ -2,8 +2,8 @@ import { useCallback } from 'react'
 import { arrayMove } from '@dnd-kit/sortable'
 
 import { ApiError } from '@/lib/api/ApiClient'
-import { useMessageHandler } from '@/shared/message-handler'
-import { optimisticTransaction } from '@/shared/optimistic'
+import { useMessageHandler } from '@shared-message-handler'
+import { optimisticTransaction } from '@shared-optimistic'
 
 import { routeSolutionApi } from '@/features/plan/planTypes/localDelivery/api/routeSolution.api'
 import type { RouteSolutionUpdateResponse } from '@/features/plan/planTypes/localDelivery/api/routeSolution.api'

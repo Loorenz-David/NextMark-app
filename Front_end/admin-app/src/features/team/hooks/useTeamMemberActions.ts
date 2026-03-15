@@ -1,6 +1,6 @@
 import { useCallback } from 'react'
 
-import { useMessageHandler } from '@/shared/message-handler'
+import { useMessageHandler } from '@shared-message-handler'
 import { apiClient } from '@/lib/api/ApiClient'
 import { usePopupManager } from '@/shared/resource-manager/useResourceManager'
 
@@ -19,6 +19,7 @@ export const useTeamMemberActions = () => {
   const currentUserId = apiClient.getSessionUserId()
 
   const openInvitePopup = useCallback(() => {
+
     popupManager.open({ key: 'team.invite.create' })
   }, [popupManager])
 

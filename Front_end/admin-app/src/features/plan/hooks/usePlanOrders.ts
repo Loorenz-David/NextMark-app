@@ -1,5 +1,5 @@
 import { useCallback } from 'react'
-import { useMessageHandler } from '@/shared/message-handler'
+import { useMessageHandler } from '@shared-message-handler'
 import { ApiError } from '@/lib/api/ApiClient'
 import { upsertOrders } from '@/features/order/store/order.store'
 import {

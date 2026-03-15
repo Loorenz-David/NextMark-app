@@ -1,4 +1,4 @@
-import { BoldArrowIcon, ItemIcon, PhoneIcon, TimeIcon } from '@/assets/icons'
+import { BoldArrowIcon, ItemIcon, MessageIcon, PhoneIcon, TimeIcon } from '@/assets/icons'
 import type { StopDetailInfoRowDisplay } from '../../domain/stopDetailDisplay.types'
 
 
@@ -15,6 +15,10 @@ function LeadingIcon({ id }: { id: StopDetailInfoRowDisplay['id'] }) {
 
   if (id === 'order-phone') {
     return <PhoneIcon aria-hidden="true" className={className} />
+  }
+
+  if (id === 'cases') {
+    return <MessageIcon aria-hidden="true" className={className} />
   }
 
   return <ItemIcon aria-hidden="true" className={className} />

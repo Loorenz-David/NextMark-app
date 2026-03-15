@@ -22,6 +22,8 @@ Allowed package imports:
 - `@shared-domain`
 - `@shared-api`
 - `@shared-store`
+- `@shared-optimistic`
+- `@shared-message-handler`
 - `@shared-utils`
 
 Disallowed examples:
@@ -56,6 +58,8 @@ Exception:
 
 - `@shared-store` is an allowed shared runtime utility package for cross-app store factories built on Zustand
 - `@shared-store` must remain app-independent and must not import app code, feature code, or React UI
+- `@shared-message-handler` is an allowed shared React UI/runtime package for cross-app transient notification handling
+- `@shared-message-handler` must remain app-independent and must not import app or feature code
 
 Utilities in shared packages must be pure:
 

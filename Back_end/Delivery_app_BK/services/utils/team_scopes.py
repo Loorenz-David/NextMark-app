@@ -20,9 +20,11 @@ def require_team_id(ctx: ServiceContext) -> int:
 
 
 def ensure_instance_in_team(instance: Any, ctx: ServiceContext) -> None:
+
     if not hasattr(instance, "team_id"):
         return
     team_id = require_team_id(ctx)
+    
     if instance.team_id != team_id:
         raise PermissionDenied("You are not authorized to access this resource")
 

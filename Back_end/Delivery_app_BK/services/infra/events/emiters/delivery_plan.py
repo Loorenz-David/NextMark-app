@@ -1,8 +1,10 @@
+from datetime import datetime, timezone
+from uuid import uuid4
+
 from typing import Iterable
 
 from Delivery_app_BK.models import DeliveryPlanEvent, db
 from Delivery_app_BK.services.context import ServiceContext
-from Delivery_app_BK.services.infra.events import get_event_bus
 
 
 def emit_delivery_plan_events(
@@ -23,11 +25,22 @@ def emit_delivery_plan_events(
             payload = {}
 
         row = DeliveryPlanEvent(
+            event_id=event.get("event_id", str(uuid4())),
             delivery_plan_id=delivery_plan_id,
             event_name=event_name,
             payload=payload,
             actor_id=event.get("actor_id", actor_id),
             team_id=event.get("team_id", ctx.team_id),
+            entity_type="delivery_plan",
+            entity_id=str(delivery_plan_id),
+            entity_version=event.get("entity_version"),
+            dispatch_status=(
+                DeliveryPlanEvent.DISPATCH_STATUS_DISPATCHED
+                if ctx.prevent_event_bus
+                else DeliveryPlanEvent.DISPATCH_STATUS_PENDING
+            ),
+            dispatch_attempts=0,
+            next_attempt_at=event.get("next_attempt_at") or datetime.now(timezone.utc),
         )
         db.session.add(row)
         event_rows.append(row)
@@ -37,9 +50,5 @@ def emit_delivery_plan_events(
 
     db.session.flush()
     db.session.commit()
-
-    event_bus = get_event_bus()
-    for event_row in event_rows:
-        event_bus.publish(event_row)
 
     return event_rows

@@ -35,6 +35,7 @@ def refresh_route_solution_incremental(
     orders_by_id: Dict[int, Order] | None = None,
     recompute_from_position: int = 1,
 ) -> list[RouteSolutionStop]:
+  
     resolved_orders = _resolve_orders_by_id(route_solution, orders_by_id)
     build_result = build_directions_request_bundle(
         route_solution=route_solution,
@@ -45,6 +46,7 @@ def refresh_route_solution_incremental(
 
     provider = provider or GoogleDirectionsProvider()
     result = provider.compute(build_result.request)
+   
     return apply_directions_result(
         route_solution=route_solution,
         directions_result=result,

@@ -3,7 +3,7 @@ import type { RefObject } from 'react'
 import { useCallback } from 'react'
 
 import { hasFormChanges } from '@shared-domain'
-import { useMessageHandler } from '@/shared/message-handler'
+import { useMessageHandler } from '@shared-message-handler'
 import { usePopupManager } from '@/shared/resource-manager/useResourceManager'
 
 import { useCostumerController } from '../../../controllers/costumerMutations.controller'

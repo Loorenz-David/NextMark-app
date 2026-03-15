@@ -104,6 +104,10 @@ export const useOrderValidation = () => {
     preferredTimeStart: string | null | undefined
     preferredTimeEnd: string | null | undefined
   }) => {
+    if (!earliestDeliveryDate && !latestDeliveryDate) {
+      return true
+    }
+
     if (earliestDeliveryDate && !isDateOnOrAfterToday(earliestDeliveryDate)) {
       return false
     }
@@ -112,11 +116,17 @@ export const useOrderValidation = () => {
       return false
     }
 
-    if (!isDateTimeOnOrAfterNow(earliestDeliveryDate, preferredTimeStart ?? null)) {
+    if (
+      earliestDeliveryDate
+      && !isDateTimeOnOrAfterNow(earliestDeliveryDate, preferredTimeStart ?? null)
+    ) {
       return false
     }
 
-    if (!isDateTimeOnOrAfterNow(latestDeliveryDate, preferredTimeEnd ?? null)) {
+    if (
+      latestDeliveryDate
+      && !isDateTimeOnOrAfterNow(latestDeliveryDate, preferredTimeEnd ?? null)
+    ) {
       return false
     }
 
@@ -124,6 +134,7 @@ export const useOrderValidation = () => {
   }
 
   const validateOrderFields = (fields: OrderUpdateFields) => {
+ 
     if ('delivery_windows' in fields) {
       const rows = fields.delivery_windows
       if (!Array.isArray(rows)) {
@@ -150,7 +161,7 @@ export const useOrderValidation = () => {
         return false
       }
     }
-
+    
     if ('order_plan_objective' in fields) {
       if (!validateOrderPlanObjective(fields.order_plan_objective)) {
         return false
@@ -163,7 +174,7 @@ export const useOrderValidation = () => {
       }
     }
 
-    if ('reference_number' in fields) {
+    if ('reference_number' in fields && fields.reference_number) {
       if (!validateReferenceNumber(String(fields.reference_number ?? ''))) {
         return false
       }

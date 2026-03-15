@@ -2,6 +2,12 @@ import type { MapRoute } from '../../domain/entities/MapRoute'
 import type { Coordinates } from '../../domain/types'
 import type { MapInstanceManager } from '../core/MapInstanceManager'
 
+const ROUTE_OUTER_STROKE_COLOR = '#0f766e'
+const ROUTE_COMPLETED_INNER_STROKE_COLOR = '#74d8ca'
+const ROUTE_PENDING_INNER_STROKE_COLOR = '#f3fcfa'
+const ROUTE_OUTER_STROKE_WEIGHT = 8
+const ROUTE_INNER_STROKE_WEIGHT = 4.5
+
 export class RouteRenderer {
   private routePolylines: Array<{
     setMap: (map: unknown) => void
@@ -25,17 +31,7 @@ export class RouteRenderer {
 
     this.clearRoute()
 
-    if (!route?.path) {
-      return
-    }
-
-    let encodedPolylines: string[] = []
-
-    if (typeof route.path === 'string') {
-      encodedPolylines = [route.path]
-    } else if (Array.isArray(route.path) && typeof route.path[0] === 'string') {
-      encodedPolylines = route.path as string[]
-    } else {
+    if (!route?.segments.length) {
       return
     }
 
@@ -45,23 +41,33 @@ export class RouteRenderer {
 
     const allPoints: Coordinates[] = []
 
-    encodedPolylines.forEach((encodedPolyline) => {
-      const decoded = google.maps.geometry.encoding.decodePath(encodedPolyline)
+    route.segments.forEach((segment) => {
+      const decoded = google.maps.geometry.encoding.decodePath(segment.path)
 
       const path = decoded.map((point: { lat(): number; lng(): number }) => ({
         lat: point.lat(),
         lng: point.lng(),
       }))
 
-      const polyline = new PolylineCtor({
+      const outerPolyline = new PolylineCtor({
         map,
         path,
-        strokeColor: '#0f766e',
+        strokeColor: ROUTE_OUTER_STROKE_COLOR,
         strokeOpacity: 0.9,
-        strokeWeight: 4,
+        strokeWeight: ROUTE_OUTER_STROKE_WEIGHT,
       })
 
-      this.routePolylines.push(polyline)
+      const innerPolyline = new PolylineCtor({
+        map,
+        path,
+        strokeColor: segment.state === 'completed'
+          ? ROUTE_COMPLETED_INNER_STROKE_COLOR
+          : ROUTE_PENDING_INNER_STROKE_COLOR,
+        strokeOpacity: 0.98,
+        strokeWeight: ROUTE_INNER_STROKE_WEIGHT,
+      })
+
+      this.routePolylines.push(outerPolyline, innerPolyline)
       allPoints.push(...path)
     })
 

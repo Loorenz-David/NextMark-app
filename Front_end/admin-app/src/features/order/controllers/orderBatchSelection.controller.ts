@@ -1,7 +1,7 @@
 import { useCallback } from 'react'
 
 import { ApiError } from '@/lib/api/ApiClient'
-import { useMessageHandler } from '@/shared/message-handler'
+import { useMessageHandler } from '@shared-message-handler'
 
 import { useResolveOrderBatchSelection } from '../api/orderApi'
 import type { OrderBatchSelectionPayload, OrderBatchSelectionResolveResponse } from '../types/orderBatchSelection'

@@ -37,8 +37,12 @@ class User(
     
     profile_picture = Column(JSONB().with_variant(JSON, "sqlite"))
 
-    old_team_id = Column(Integer, nullable=True)
-    old_role_id = Column(Integer, nullable=True)
+    primals_team_id = Column(Integer, nullable=True)
+    primals_role_id = Column(Integer, nullable=True)
+    team_workspace_team_id = Column(Integer, nullable=True)
+    team_workspace_role_id = Column(Integer, nullable=True)
+    admin_app_current_workspace = Column(String, nullable=True)
+    driver_app_current_workspace = Column(String, nullable=True)
     
     show_app_tutorial = Column(Boolean, default=True)
 

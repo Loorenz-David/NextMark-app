@@ -1,4 +1,6 @@
 import type { Coordinates } from '@/shared/map'
+import type { MapNavigationDestination } from '@/app/services/mapNavigation.service'
+import type { PhoneCallOption } from '@/app/services/phoneCall.service'
 import { DRIVER_SHELL_CONFIG } from './shell.config'
 
 export type ShellSurface = 'bottom-sheet' | 'side-menu' | 'sliding-page' | 'overlay'
@@ -12,9 +14,19 @@ export type BottomSheetPageId =
 
 export type SideMenuPageId = 'menu-home'
 
-export type SlidingPagePageId = 'test-sliding-page'
+export type SlidingPagePageId =
+  | 'test-sliding-page'
+  | 'notifications'
+  | 'route-stop-order-items'
+  | 'route-stop-failure-form'
+  | 'map-app-chooser'
+  | 'phone-call-chooser'
+  | 'route-three-dot-menu'
 
-export type OverlayPageId = 'shell-overlay-placeholder'
+export type OverlayPageId =
+  | 'shell-overlay-placeholder'
+  | 'order-case-main'
+  | 'route-date-adjust-warning'
 
 export type BottomSheetPageParamsMap = {
   'route-workspace': undefined
@@ -27,10 +39,23 @@ export type SideMenuPageParamsMap = {
 
 export type SlidingPagePageParamsMap = {
   'test-sliding-page': { title: string }
+  notifications: undefined
+  'route-stop-order-items': { stopClientId: string }
+  'route-stop-failure-form': { stopClientId: string; orderId: number }
+  'map-app-chooser': { destination: MapNavigationDestination }
+  'phone-call-chooser': { options: PhoneCallOption[] }
+  'route-three-dot-menu': undefined
 }
 
 export type OverlayPageParamsMap = {
   'shell-overlay-placeholder': { title: string; message: string }
+  'order-case-main': { orderId: number; orderClientId: string; stopClientId: string }
+  'route-date-adjust-warning': {
+    title: string
+    message: string
+    confirmLabel: string
+    onConfirm: () => Promise<boolean>
+  }
 }
 
 type StackEntryBase<PageId extends string, Params> = {

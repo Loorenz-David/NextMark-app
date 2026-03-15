@@ -2,7 +2,7 @@ import type { RefObject } from 'react'
 import { useCallback } from 'react'
 
 import { useDownloadTemplateByEventFlow } from '@/features/templates/printDocument/flows'
-import { useMessageHandler } from '@/shared/message-handler'
+import { useMessageHandler } from '@shared-message-handler'
 import { usePopupManager, useSectionManager } from '@/shared/resource-manager/useResourceManager'
 
 import type { useOrderItemDraftController } from '../../../item'

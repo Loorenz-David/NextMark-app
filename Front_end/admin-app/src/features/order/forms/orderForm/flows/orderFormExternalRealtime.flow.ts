@@ -63,7 +63,7 @@ export const useOrderFormExternalFlow = (): OrderFormExternalFlow => {
 
   const { handleSendForm } = useOrderFormExternalRealtimeFlow({
     mergeExternalClientData: formSetters.mergeExternalClientData,
-    referenceNumber: formState.reference_number,
+    referenceNumber: formState.reference_number ?? '',
     employeeUserId,
   })
 

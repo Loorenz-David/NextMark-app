@@ -18,7 +18,7 @@ export function DriverMenuPage({ workspace, onOpenShellHelp, onSignOut }: Driver
 
       <article className="shell-panel-card">
         <div className="driver-kicker">Current workspace</div>
-        <strong>{workspace?.baseRole ?? 'No active workspace'}</strong>
+        <strong>{workspace?.currentWorkspace ?? 'No active workspace'}</strong>
         <p className="driver-subtitle">Team id: {workspace?.teamId ?? 'not set'}</p>
       </article>
 

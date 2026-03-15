@@ -2,6 +2,7 @@ import type { ShellStore } from '../domain/shell.types'
 import {
   setBottomSheetSnapState,
   popBottomSheetStackEntry,
+  popOverlayStackEntry,
   replaceOverlayStack,
   replaceSideMenuStack,
   replaceSlidingPageStack,
@@ -11,7 +12,11 @@ export function handleSurfaceBack(store: ShellStore) {
   const state = store.getState()
 
   if (state.overlayStack.length > 0) {
-    store.setState((currentState) => replaceOverlayStack(currentState, []))
+    store.setState((currentState) =>
+      currentState.overlayStack.length > 1
+        ? popOverlayStackEntry(currentState)
+        : replaceOverlayStack(currentState, []),
+    )
     return true
   }
 

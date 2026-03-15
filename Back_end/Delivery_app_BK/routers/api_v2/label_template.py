@@ -34,7 +34,7 @@ label_template_bp = Blueprint("api_v2_label_template_bp", __name__)
 
 @label_template_bp.route("/", methods=["GET"])
 @jwt_required()
-@role_required([ADMIN, ASSISTANT, DRIVER])
+@role_required([ADMIN, ASSISTANT])
 def list_label_templates():
     identity = get_jwt()
     ctx = ServiceContext(
@@ -55,7 +55,7 @@ def list_label_templates():
 
 @label_template_bp.route("/", methods=["PUT"])
 @jwt_required()
-@role_required([ADMIN, ASSISTANT, DRIVER])
+@role_required([ADMIN, ASSISTANT])
 def create_label_template():
     identity = get_jwt()
     incoming_data = request.get_json(silent=True) or {}
@@ -78,7 +78,7 @@ def create_label_template():
 
 @label_template_bp.route("/", methods=["PATCH"])
 @jwt_required()
-@role_required([ADMIN, ASSISTANT, DRIVER])
+@role_required([ADMIN, ASSISTANT])
 def update_label_template():
     identity = get_jwt()
     incoming_data = request.get_json(silent=True) or {}
@@ -99,7 +99,7 @@ def update_label_template():
 
 @label_template_bp.route("/<int:template_id>", methods=["PATCH"])
 @jwt_required()
-@role_required([ADMIN, ASSISTANT, DRIVER])
+@role_required([ADMIN, ASSISTANT])
 def toggle_template_state(template_id):
     identity = get_jwt()
     incoming_data = request.get_json(silent=True) or {}
@@ -122,7 +122,7 @@ def toggle_template_state(template_id):
 
 @label_template_bp.route("/", methods=["DELETE"])
 @jwt_required()
-@role_required([ADMIN, ASSISTANT, DRIVER])
+@role_required([ADMIN, ASSISTANT])
 def delete_label_template():
     identity = get_jwt()
     incoming_data = request.get_json(silent=True) or {}
@@ -144,7 +144,7 @@ def delete_label_template():
 
 @label_template_bp.route("/<int:template_id>", methods=["GET"])
 @jwt_required()
-@role_required([ADMIN, ASSISTANT, DRIVER])
+@role_required([ADMIN, ASSISTANT])
 def get_label_template(template_id: int):
     identity = get_jwt()
     ctx = ServiceContext(

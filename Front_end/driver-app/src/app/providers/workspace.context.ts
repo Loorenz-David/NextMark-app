@@ -1,11 +1,11 @@
 import { createContext, useContext } from 'react'
-import type { DriverWorkspaceContext, ModeSwitchCommand } from '../contracts/driverSession.types'
+import type { DriverWorkspaceContext, WorkspaceSwitchCommand } from '../contracts/driverSession.types'
 
 export type WorkspaceContextValue = {
   workspace: DriverWorkspaceContext | null
-  isSwitchingMode: boolean
-  switchError?: string
-  switchMode: (command: ModeSwitchCommand) => Promise<boolean>
+  isSwitchingWorkspace: boolean
+  switchWorkspaceError?: string
+  switchWorkspace: (command: WorkspaceSwitchCommand) => Promise<boolean>
 }
 
 export const WorkspaceContext = createContext<WorkspaceContextValue | null>(null)

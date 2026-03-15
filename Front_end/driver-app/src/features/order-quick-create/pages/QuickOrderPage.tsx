@@ -2,6 +2,7 @@ import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { useWorkspace } from '@/app/providers/workspace.context'
 import { useDriverServices } from '@/app/providers/driverServices.context'
+import { CapabilityGate } from '@/shared/components'
 
 export function QuickOrderPage() {
   const { workspace } = useWorkspace()
@@ -17,6 +18,9 @@ export function QuickOrderPage() {
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
+    if (!workspace?.capabilities.canCreateOrders) {
+      return
+    }
     try {
       await independentDriverApi.createQuickOrder(formState)
       setStatus('Quick order command submitted.')
@@ -81,10 +85,11 @@ export function QuickOrderPage() {
             onChange={(event) => setFormState((prev) => ({ ...prev, city: event.target.value }))}
           />
         </label>
-
-        <button className="primary-button" disabled={!workspace?.capabilities.canCreateOrders} type="submit">
-          Create quick order
-        </button>
+        <CapabilityGate capability="canCreateOrders">
+          <button className="primary-button" type="submit">
+            Create quick order
+          </button>
+        </CapabilityGate>
         {status ? <p className="driver-subtitle">{status}</p> : null}
       </form>
     </section>

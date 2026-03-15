@@ -1,7 +1,7 @@
 import type { RefObject } from 'react'
 import { useCallback } from 'react'
 
-import { useMessageHandler } from '@/shared/message-handler'
+import { useMessageHandler } from '@shared-message-handler'
 import { getObjectDiff } from '@shared-utils'
 import { hasFormChanges } from '@shared-domain'
 

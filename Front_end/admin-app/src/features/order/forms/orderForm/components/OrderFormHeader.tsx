@@ -9,7 +9,7 @@ type OrderFormHeaderProps = {
   label: string
   operationType: OrderOperationTypes
   isMobile: boolean
-  orderReference?: string
+  orderReference?: string | null
   onSelectOperationType: (value: string | number) => void
   onClose?: () => void
 }

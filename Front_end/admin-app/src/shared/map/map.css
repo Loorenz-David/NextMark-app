@@ -182,3 +182,22 @@
   background: currentColor;
 
 }
+
+.driver-live-marker {
+  min-width: 22px;
+  height: 22px;
+  padding: 0;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #0f766e;
+  border: 2px solid #0f766e;
+  box-shadow: 0 0 0 4px rgba(15, 118, 110, 0.18);
+}
+
+.driver-live-marker::after {
+  display: none;
+}
+
+.driver-live-marker::before {
+  display: none;
+}

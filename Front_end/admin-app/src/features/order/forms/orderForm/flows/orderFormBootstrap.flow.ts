@@ -47,7 +47,7 @@ export const buildInitialOrderForm = ({
   client_id: order?.client_id ?? buildClientId('order'),
   order_plan_objective: order?.order_plan_objective ?? null,
   operation_type: order?.operation_type ?? 'dropoff',
-  reference_number: order?.reference_number ?? '',
+  reference_number: order?.reference_number ?? null,
   external_source: order?.external_source ?? '',
   tracking_number: order?.tracking_number ?? '',
   tracking_link: order?.tracking_link ?? '',

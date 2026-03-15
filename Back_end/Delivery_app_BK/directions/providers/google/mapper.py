@@ -35,12 +35,7 @@ class GoogleDirectionsRequestMapper:
 
         
         if request.departure_time:
-           payload["departure_time"] = (
-                        request.departure_time
-                        .astimezone(timezone.utc)
-                        .isoformat()
-                        .replace("+00:00", "Z")
-            )
+            payload["departure_time"] = _format_time(request.departure_time)
         field_mask = (
             "routes.duration,"
             "routes.distance_meters,"
@@ -136,6 +131,14 @@ class GoogleDirectionsResponseMapper:
             end_time=end_time,
             stop_results=stop_results,
         )
+
+
+def _format_time(value: Optional[datetime]) -> Optional[datetime]:
+    if not value:
+        return None
+    if value.tzinfo is None:
+        value = value.replace(tzinfo=timezone.utc)
+    return value.astimezone(timezone.utc).replace(microsecond=0)
 
 
 def _lat_lng(location: Dict[str, float]) -> Dict[str, Any]:

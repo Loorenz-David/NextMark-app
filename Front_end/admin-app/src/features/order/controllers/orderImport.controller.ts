@@ -1,7 +1,7 @@
 import { useCallback, useState } from 'react'
 
 import { ApiError } from '@/lib/api/ApiClient'
-import { useMessageHandler } from '@/shared/message-handler'
+import { useMessageHandler } from '@shared-message-handler'
 import { useLocalDeliveryOverviewFlow } from '@/features/plan/planTypes/localDelivery/flows/localDeliveryOverview.flow'
 
 import { useUploadOrderCsv } from '../api/orderImport.api'

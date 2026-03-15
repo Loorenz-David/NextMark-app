@@ -29,6 +29,7 @@ export type MapConfig = {
   zoom?: number
   mapId?: string
   disableDefaultUI?: boolean
+  gestureHandling?: 'auto' | 'cooperative' | 'greedy' | 'none'
 }
 
 export type MapBridge = {

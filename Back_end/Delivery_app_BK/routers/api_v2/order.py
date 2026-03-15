@@ -58,7 +58,7 @@ order_bp = Blueprint("api_v2_order_bp", __name__)
 
 @order_bp.route("/", methods=["GET"])
 @jwt_required()
-@role_required([ADMIN, ASSISTANT, DRIVER])
+@role_required([ADMIN, ASSISTANT])
 def list_orders():
     identity = get_jwt()
     ctx = ServiceContext(
@@ -81,7 +81,7 @@ def list_orders():
 
 @order_bp.route("/map_markers/", methods=["GET"])
 @jwt_required()
-@role_required([ADMIN, ASSISTANT, DRIVER])
+@role_required([ADMIN, ASSISTANT])
 def list_order_markers():
     identity = get_jwt()
     ctx = ServiceContext(
@@ -103,7 +103,7 @@ def list_order_markers():
 
 @order_bp.route("/states/", methods=["GET"])
 @jwt_required()
-@role_required([ADMIN, ASSISTANT, DRIVER])
+@role_required([ADMIN, ASSISTANT])
 def list_order_states():
     identity = get_jwt()
     ctx = ServiceContext(
@@ -124,7 +124,7 @@ def list_order_states():
 
 @order_bp.route("/", methods=["PUT"])
 @jwt_required()
-@role_required([ADMIN, ASSISTANT, DRIVER])
+@role_required([ADMIN, ASSISTANT])
 def create_order():
     identity = get_jwt()
     incoming_data = request.get_json(silent=True) or {}
@@ -152,7 +152,7 @@ def create_order():
 
 @order_bp.route("/", methods=["PATCH"])
 @jwt_required()
-@role_required([ADMIN, ASSISTANT, DRIVER])
+@role_required([ADMIN, ASSISTANT])
 def update_order():
     identity = get_jwt()
     incoming_data = request.get_json(silent=True) or {}
@@ -176,7 +176,7 @@ def update_order():
 
 @order_bp.route("/", methods=["DELETE"])
 @jwt_required()
-@role_required([ADMIN, ASSISTANT, DRIVER])
+@role_required([ADMIN, ASSISTANT])
 def delete_order():
     identity = get_jwt()
     incoming_data = request.get_json(silent=True) or {}
@@ -199,7 +199,7 @@ def delete_order():
 
 @order_bp.route("/<int:order_id>", methods=["GET"])
 @jwt_required()
-@role_required([ADMIN, ASSISTANT, DRIVER])
+@role_required([ADMIN, ASSISTANT])
 def get_order(order_id: int):
     identity = get_jwt()
     ctx = ServiceContext(
@@ -220,7 +220,7 @@ def get_order(order_id: int):
 
 @order_bp.route("/<int:order_id>/items/", methods=["GET"])
 @jwt_required()
-@role_required([ADMIN, ASSISTANT, DRIVER])
+@role_required([ADMIN, ASSISTANT])
 def list_order_items(order_id: int):
     identity = get_jwt()
     ctx = ServiceContext(
@@ -242,7 +242,7 @@ def list_order_items(order_id: int):
 
 @order_bp.route("/<int:order_id>/state/<int:state_id>", methods=["PATCH"])
 @jwt_required()
-@role_required([ADMIN, ASSISTANT, DRIVER])
+@role_required([ADMIN, ASSISTANT])
 def update_orders_state(order_id: int, state_id: int):
     identity = get_jwt()
     incoming_data = request.get_json(silent=True) or {} 
@@ -269,7 +269,7 @@ def update_orders_state(order_id: int, state_id: int):
 
 @order_bp.route("/<int:order_id>/plan/<int:plan_id>", methods=["PATCH"])
 @jwt_required()
-@role_required([ADMIN, ASSISTANT, DRIVER])
+@role_required([ADMIN, ASSISTANT])
 def update_order_delivery_plan(order_id: int, plan_id: int):
     identity = get_jwt()
     incoming_data = request.get_json(silent=True) or {}
@@ -295,7 +295,7 @@ def update_order_delivery_plan(order_id: int, plan_id: int):
 
 @order_bp.route("/selection/resolve", methods=["POST"])
 @jwt_required()
-@role_required([ADMIN, ASSISTANT, DRIVER])
+@role_required([ADMIN, ASSISTANT])
 def resolve_order_batch_selection():
     identity = get_jwt()
     incoming_data = request.get_json(silent=True) or {}
@@ -320,7 +320,7 @@ def resolve_order_batch_selection():
 
 @order_bp.route("/plan/<int:plan_id>/batch", methods=["PATCH"])
 @jwt_required()
-@role_required([ADMIN, ASSISTANT, DRIVER])
+@role_required([ADMIN, ASSISTANT])
 def update_orders_delivery_plan_batch(plan_id: int):
     identity = get_jwt()
     incoming_data = request.get_json(silent=True) or {}
@@ -349,7 +349,7 @@ def update_orders_delivery_plan_batch(plan_id: int):
 
 @order_bp.route("/import", methods=["PUT"])
 @jwt_required()
-@role_required([ADMIN, ASSISTANT, DRIVER])
+@role_required([ADMIN, ASSISTANT])
 def create_order_import():
     identity = get_jwt()
     
@@ -378,7 +378,7 @@ def create_order_import():
 
 @order_bp.route("/archive", methods=["PATCH"])
 @jwt_required()
-@role_required([ADMIN, ASSISTANT, DRIVER])
+@role_required([ADMIN, ASSISTANT])
 def archive_order():
     identity = get_jwt()
     incoming_data = request.get_json(silent=True) or {}
@@ -402,7 +402,7 @@ def archive_order():
 
 @order_bp.route("/unarchive", methods=["PATCH"])
 @jwt_required()
-@role_required([ADMIN, ASSISTANT, DRIVER])
+@role_required([ADMIN, ASSISTANT])
 def unarchive_order():
     identity = get_jwt()
     incoming_data = request.get_json(silent=True) or {}

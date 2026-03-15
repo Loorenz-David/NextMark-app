@@ -1,7 +1,7 @@
 import { useCallback } from 'react'
 
 import { buildClientId } from '@/lib/utils/clientId'
-import { useMessageHandler } from '@/shared/message-handler'
+import { useMessageHandler } from '@shared-message-handler'
 
 import { useCreateItem, useDeleteItem, useUpdateItem as useUpdateItemApi } from '../api/item.api'
 import { useItemValidation } from '../domain/useItemValidation'

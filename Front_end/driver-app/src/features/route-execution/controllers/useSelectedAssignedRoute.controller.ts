@@ -1,4 +1,5 @@
 import { useMemo, useSyncExternalStore } from 'react'
+import { useDriverOrderStateRegistry } from '@/features/order-states'
 import {
   selectAllOrders,
   selectSelectedRoute,
@@ -11,6 +12,7 @@ import {
 import { createDriverOrderLookup, mapDriverRouteRecordToAssignedRouteViewModel } from '../domain/mapActiveRoutesToAssignedRouteViewModel'
 
 export function useSelectedAssignedRoute() {
+  const orderStateRegistry = useDriverOrderStateRegistry()
   const routesState = useSyncExternalStore(
     useRoutesStore.subscribe,
     useRoutesStore.getState,
@@ -36,6 +38,10 @@ export function useSelectedAssignedRoute() {
     const selectedRoute = selectSelectedRoute(routesSelectionState, routesState)
     const orderLookup = createDriverOrderLookup(selectAllOrders(ordersState))
     const routeStops = selectStopsByRouteRecord(stopsState, selectedRoute)
-    return mapDriverRouteRecordToAssignedRouteViewModel(selectedRoute, orderLookup, routeStops)
-  }, [ordersState, routesSelectionState, routesState, stopsState])
+    return mapDriverRouteRecordToAssignedRouteViewModel(selectedRoute, orderLookup, routeStops, {
+      processingId: orderStateRegistry.getStateIdByName('Processing'),
+      completedId: orderStateRegistry.getStateIdByName('Completed'),
+      failId: orderStateRegistry.getStateIdByName('Fail'),
+    })
+  }, [orderStateRegistry, ordersState, routesSelectionState, routesState, stopsState])
 }

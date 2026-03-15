@@ -23,7 +23,7 @@ export default defineConfig([
       'no-restricted-imports': ['error', {
         patterns: [
           {
-            group: ['@shared-domain/*', '@shared-api/*', '@shared-store/*', '@shared-google-maps/*', '@packages/*'],
+            group: ['@shared-domain/*', '@shared-api/*', '@shared-store/*', '@shared-optimistic/*', '@shared-message-handler/*', '@shared-google-maps/*', '@packages/*'],
             message: 'Import shared packages from their root barrel only.',
           },
           {

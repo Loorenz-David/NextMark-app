@@ -35,7 +35,7 @@ export default defineConfig([
       'no-restricted-imports': ['error', {
         patterns: [
           {
-            group: ['@shared-utils/*', '@shared-domain/*', '@shared-api/*', '@shared-store/*', '@shared-google-maps/*', '@packages/*'],
+            group: ['@shared-utils/*', '@shared-domain/*', '@shared-api/*', '@shared-store/*', '@shared-optimistic/*', '@shared-message-handler/*', '@shared-google-maps/*', '@packages/*'],
             message: 'Import shared packages from their root barrel only.',
           },
         ],
@@ -43,7 +43,7 @@ export default defineConfig([
     },
   },
   {
-    files: ['../packages/shared-store/**/*.{ts,tsx}'],
+    files: ['../packages/shared-store/**/*.{ts,tsx}', '../packages/shared-optimistic/**/*.{ts,tsx}'],
     rules: {
       'no-restricted-imports': ['error', {
         paths: [
@@ -62,7 +62,28 @@ export default defineConfig([
             message: 'Shared packages cannot import admin-app code.',
           },
           {
-            group: ['@shared-utils/*', '@shared-domain/*', '@shared-api/*', '@shared-store/*', '@shared-google-maps/*'],
+            group: ['@shared-utils/*', '@shared-domain/*', '@shared-api/*', '@shared-store/*', '@shared-optimistic/*', '@shared-message-handler/*', '@shared-google-maps/*'],
+            message: 'Shared packages must be imported from their root barrel only.',
+          },
+          {
+            group: ['../admin-app/*', '../../admin-app/*', '../../../admin-app/*'],
+            message: 'Shared packages cannot import app code via relative paths.',
+          },
+        ],
+      }],
+    },
+  },
+  {
+    files: ['../packages/shared-message-handler/**/*.{ts,tsx}'],
+    rules: {
+      'no-restricted-imports': ['error', {
+        patterns: [
+          {
+            group: ['@/*', '@app', '@app/*', '@features', '@features/*'],
+            message: 'Shared packages cannot import admin-app code.',
+          },
+          {
+            group: ['@shared-utils/*', '@shared-domain/*', '@shared-api/*', '@shared-store/*', '@shared-optimistic/*', '@shared-message-handler/*', '@shared-google-maps/*'],
             message: 'Shared packages must be imported from their root barrel only.',
           },
           {
@@ -132,7 +153,7 @@ export default defineConfig([
             message: 'Shared packages cannot import admin-app code.',
           },
           {
-            group: ['@shared-utils/*', '@shared-domain/*', '@shared-api/*', '@shared-store/*', '@shared-google-maps/*'],
+            group: ['@shared-utils/*', '@shared-domain/*', '@shared-api/*', '@shared-store/*', '@shared-optimistic/*', '@shared-message-handler/*', '@shared-google-maps/*'],
             message: 'Shared packages must be imported from their root barrel only.',
           },
           {

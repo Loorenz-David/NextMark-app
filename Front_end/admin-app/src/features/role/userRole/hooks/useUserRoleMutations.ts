@@ -2,7 +2,7 @@ import { useCallback } from 'react'
 
 import { buildClientId } from '@/lib/utils/clientId'
 import { ApiError } from '@/lib/api/ApiClient'
-import { useMessageHandler } from '@/shared/message-handler'
+import { useMessageHandler } from '@shared-message-handler'
 
 import { userRoleApi } from '@/features/role/userRole/api/userRoleApi'
 import type { UserRole, UserRoleFields, UserRoleUpdateFields } from '@/features/role/userRole/types/userRole'

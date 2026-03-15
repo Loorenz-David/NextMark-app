@@ -20,6 +20,7 @@ from Delivery_app_BK.route_optimization.constants.is_optimized import (
     IS_OPTIMIZED_VALUES,
 )
 from Delivery_app_BK.route_optimization.constants.route_end_strategy import ROUND_TRIP, CUSTOM_END_ADDRESS,LAST_STOP
+from Delivery_app_BK.services.domain.route_solution import RouteActualEndTimeSource
 
 
 
@@ -50,6 +51,7 @@ class RouteSolution(
     expected_end_time = Column(UTCDateTime)
     actual_start_time = Column(UTCDateTime)
     actual_end_time = Column(UTCDateTime)
+    actual_end_time_source = Column(String, nullable=True)
 
     has_route_warnings = Column(Boolean, default=False)
     route_warnings = Column(JSONB, nullable=True)
@@ -137,3 +139,20 @@ class RouteSolution(
         if value < 0 or value > 7200:
             raise ValueError("eta_tolerance_seconds must be between 0 and 7200.")
         return value
+
+    @validates("actual_end_time_source")
+    def validate_actual_end_time_source(self, key, value):
+        if value is None:
+            return None
+        if isinstance(value, RouteActualEndTimeSource):
+            return value.value
+        if not isinstance(value, str):
+            raise ValueError(
+                f"actual_end_time_source must be one of {RouteActualEndTimeSource.values()}."
+            )
+        try:
+            return RouteActualEndTimeSource(value).value
+        except ValueError as error:
+            raise ValueError(
+                f"actual_end_time_source must be one of {RouteActualEndTimeSource.values()}."
+            ) from error

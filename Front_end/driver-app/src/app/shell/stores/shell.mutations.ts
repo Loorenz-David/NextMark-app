@@ -102,6 +102,21 @@ export function replaceOverlayStack(
   }
 }
 
+export function pushOverlayStackEntry(
+  state: ShellStoreState,
+  entry: OverlayStackEntry,
+): ShellStoreState {
+  return replaceOverlayStack(state, [...state.overlayStack, entry])
+}
+
+export function popOverlayStackEntry(state: ShellStoreState): ShellStoreState {
+  if (state.overlayStack.length <= 1) {
+    return replaceOverlayStack(state, [])
+  }
+
+  return replaceOverlayStack(state, state.overlayStack.slice(0, -1))
+}
+
 export function setBottomSheetSnapState(
   state: ShellStoreState,
   snap: BottomSheetSnap,

@@ -5,7 +5,33 @@ import type {
   SyncExecutionState,
 } from '@/app/contracts/routeExecution.types'
 import type { DriverWorkspaceContext } from '@/app/contracts/driverSession.types'
+import {
+  buildOptimisticCaseChat,
+  buildOptimisticOrderCase,
+  patchCaseChatByClientId,
+  patchOrderCaseByClientId,
+  removeCaseChatByClientId,
+  removeOrderCaseByClientId,
+  upsertCaseChat,
+  upsertOrderCase,
+} from '@/features/order-case'
+import type { DriverOrderStateIds } from '@/features/order-states'
+import { optimisticTransaction } from '@shared-optimistic'
+import { selectStopsByRouteId, useRoutesStore, useStopsStore } from '@/features/routes'
 import { submitRouteActionAction } from '../actions/submitRouteAction.action'
+import { markRouteActualEndTimeLastOrderAction } from '../actions/markRouteActualEndTimeLastOrder.action'
+import {
+  applyOrderCommandDeltas,
+  createOrdersSnapshotByServerIds,
+  patchOrderStateByServerIds,
+  restoreOrdersSnapshot,
+} from '@/features/routes/orders'
+import { mapOrderCommandDeltas } from '../domain/mapOrderCommandDeltas'
+import type {
+  CompleteOrderResponseDto,
+  FailOrderResponseDto,
+  UndoTerminalOrderResponseDto,
+} from '../api'
 import {
   applyRouteActionResult,
   setRouteActionFailure,
@@ -17,12 +43,47 @@ type SubmitRouteActionDependencies = {
   workspace: DriverWorkspaceContext | null
   store: RouteExecutionStore
   command: DriverRouteActionCommand
+  orderStateIds: DriverOrderStateIds
+}
+
+function isOrderCommandResult(
+  value:
+    | DriverRouteActionResult
+    | CompleteOrderResponseDto
+    | FailOrderResponseDto
+    | UndoTerminalOrderResponseDto
+    | undefined,
+): value is CompleteOrderResponseDto | FailOrderResponseDto | UndoTerminalOrderResponseDto {
+  return Boolean(
+    value
+    && typeof value === 'object'
+    && 'orders' in value
+    && value.orders
+    && typeof value.orders === 'object',
+  )
+}
+
+function isFailOrderCommandResult(
+  value:
+    | DriverRouteActionResult
+    | CompleteOrderResponseDto
+    | FailOrderResponseDto
+    | UndoTerminalOrderResponseDto
+    | undefined,
+): value is FailOrderResponseDto {
+  return Boolean(
+    value
+    && typeof value === 'object'
+    && 'order_case' in value
+    && 'case_chat' in value,
+  )
 }
 
 export async function submitRouteActionFlow({
   workspace,
   store,
   command,
+  orderStateIds,
 }: SubmitRouteActionDependencies): Promise<DriverRouteActionResult> {
   if (!workspace) {
     return {
@@ -40,24 +101,157 @@ export async function submitRouteActionFlow({
 
   setRouteActionSubmitting(store, envelope)
 
-  try {
-    const result = await submitRouteActionAction(envelope)
-    const nextResult = result ?? {
-      syncState: 'synced' as SyncExecutionState,
-      route: null,
+  const optimisticOrderStateId =
+    command.type === 'complete-stop'
+      ? orderStateIds.completedId
+      : command.type === 'fail-stop'
+        ? orderStateIds.failId
+        : command.type === 'undo-stop-terminal'
+          ? orderStateIds.processingId
+          : null
+
+  let result:
+    | DriverRouteActionResult
+    | CompleteOrderResponseDto
+    | FailOrderResponseDto
+    | UndoTerminalOrderResponseDto
+    | undefined
+  let requestError: unknown = null
+  const optimisticOrderCase = (
+    command.type === 'fail-stop'
+    && typeof command.orderId === 'number'
+    && typeof command.orderCaseClientId === 'string'
+    && command.orderCaseClientId
+  )
+    ? buildOptimisticOrderCase(command.orderId, command.orderCaseClientId)
+    : null
+  const optimisticCaseChat = (
+    command.type === 'fail-stop'
+    && optimisticOrderCase
+    && typeof command.caseChatClientId === 'string'
+    && command.caseChatClientId
+    && typeof command.note === 'string'
+  )
+    ? buildOptimisticCaseChat(
+        optimisticOrderCase.id ?? 0,
+        command.caseChatClientId,
+        command.note,
+      )
+    : null
+
+  const didSucceed = await optimisticTransaction({
+    snapshot: () => createOrdersSnapshotByServerIds(
+      typeof command.orderId === 'number' ? [command.orderId] : [],
+    ),
+    mutate: () => {
+      if (typeof command.orderId === 'number' && optimisticOrderStateId != null) {
+        patchOrderStateByServerIds([command.orderId], optimisticOrderStateId)
+      }
+
+      if (optimisticOrderCase) {
+        upsertOrderCase(optimisticOrderCase)
+      }
+
+      if (optimisticCaseChat) {
+        upsertCaseChat(optimisticCaseChat)
+      }
+    },
+    request: async () => {
+      result = await submitRouteActionAction(envelope)
+      return result
+    },
+    commit: (requestResult) => {
+      if (isOrderCommandResult(requestResult)) {
+        const mappedOrders = mapOrderCommandDeltas(requestResult.orders)
+        applyOrderCommandDeltas(mappedOrders)
+      }
+
+      if (
+        command.type === 'fail-stop'
+        && isFailOrderCommandResult(requestResult)
+        && command.orderCaseClientId
+        && typeof requestResult.order_case?.id === 'number'
+      ) {
+        patchOrderCaseByClientId(command.orderCaseClientId, {
+          id: requestResult.order_case.id,
+        })
+      }
+
+      if (
+        command.type === 'fail-stop'
+        && isFailOrderCommandResult(requestResult)
+        && command.caseChatClientId
+        && typeof requestResult.case_chat?.id === 'number'
+      ) {
+        patchCaseChatByClientId(command.caseChatClientId, {
+          id: requestResult.case_chat.id,
+          order_case_id: typeof requestResult.order_case?.id === 'number'
+            ? requestResult.order_case.id
+            : undefined,
+        })
+      }
+    },
+    rollback: (snapshot) => {
+      restoreOrdersSnapshot(snapshot as ReturnType<typeof createOrdersSnapshotByServerIds>)
+
+      if (command.type === 'fail-stop') {
+        if (command.orderCaseClientId) {
+          removeOrderCaseByClientId(command.orderCaseClientId)
+        }
+        if (command.caseChatClientId) {
+          removeCaseChatByClientId(command.caseChatClientId)
+        }
+      }
+    },
+    onError: (error) => {
+      requestError = error
+    },
+  })
+
+  if (didSucceed) {
+    if (
+      (command.type === 'complete-stop' || command.type === 'fail-stop')
+      && command.routeClientId
+      && command.stopClientId
+    ) {
+      const routesState = useRoutesStore.getState()
+      const routeRecord = routesState.byClientId[command.routeClientId] ?? null
+      const routeStops = routeRecord
+        ? [...selectStopsByRouteId(useStopsStore.getState(), routeRecord.id)]
+          .sort((left, right) => (left.stop_order ?? Number.MAX_SAFE_INTEGER) - (right.stop_order ?? Number.MAX_SAFE_INTEGER))
+        : []
+      const lastStop = routeStops.at(-1)
+
+      if (routeRecord?.id && lastStop?.client_id === command.stopClientId) {
+        try {
+          await markRouteActualEndTimeLastOrderAction(routeRecord.id, envelope.issuedAt)
+        } catch (error) {
+          console.error('Failed to record projected route end time', error)
+        }
+      }
     }
+
+    const nextResult: DriverRouteActionResult = isOrderCommandResult(result)
+      ? {
+          syncState: 'synced' as SyncExecutionState,
+          route: null,
+        }
+      : (result ?? {
+          syncState: 'synced' as SyncExecutionState,
+          route: null,
+        })
 
     applyRouteActionResult(store, envelope, nextResult)
     return nextResult
-  } catch (error) {
-    console.error('Failed to submit route action', error)
-
-    const failure: DriverRouteActionResult = {
-      syncState: 'retryable_failure',
-      message: 'Unable to send route action.',
-    }
-
-    setRouteActionFailure(store, envelope, failure.message ?? 'Unable to send route action.')
-    return failure
   }
+
+  console.error('Failed to submit route action', requestError)
+
+  const failure: DriverRouteActionResult = {
+    syncState: 'retryable_failure',
+    message: 'Unable to send route action.',
+  }
+
+  setRouteActionFailure(store, envelope, failure.message ?? 'Unable to send route action.')
+  return failure
 }

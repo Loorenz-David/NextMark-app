@@ -2,7 +2,7 @@ import { NavLink, Outlet } from 'react-router-dom'
 import { useConnectivity } from '@/app/providers/connectivity.context'
 import { useSession } from '@/app/providers/session.context'
 import { useWorkspace } from '@/app/providers/workspace.context'
-import { ModeSwitcher } from '@/features/driver-mode/components/ModeSwitcher'
+import { CapabilityGate } from '@/shared/components'
 
 const linkClassName = ({ isActive }: { isActive: boolean }) =>
   `driver-nav__link${isActive ? ' driver-nav__link--active' : ''}`
@@ -19,9 +19,9 @@ export function AppShell() {
           <div className="driver-kicker">Driver Workspace</div>
           <h1 className="driver-title">Route Pilot</h1>
           <p className="driver-subtitle">
-            {workspace?.baseRole === 'independent-driver'
-              ? 'Independent driver workspace'
-              : 'Team driver workspace'}
+            {workspace?.currentWorkspace === 'team'
+              ? 'Team workspace'
+              : 'Personal workspace'}
           </p>
         </div>
         <div className="driver-topbar__actions">
@@ -31,17 +31,18 @@ export function AppShell() {
           <button className="ghost-button" onClick={clearSession}>Sign out</button>
         </div>
       </header>
-
-      <ModeSwitcher />
-
       <main className="driver-main">
         <Outlet />
       </main>
 
       <nav className="driver-nav">
         <NavLink className={linkClassName} to="/route">Assigned Route</NavLink>
-        <NavLink className={linkClassName} to="/create/order">Quick Order</NavLink>
-        <NavLink className={linkClassName} to="/create/route">Quick Route</NavLink>
+        <CapabilityGate capability="canCreateOrders">
+          <NavLink className={linkClassName} to="/create/order">Quick Order</NavLink>
+        </CapabilityGate>
+        <CapabilityGate capability="canCreateRoutes">
+          <NavLink className={linkClassName} to="/create/route">Quick Route</NavLink>
+        </CapabilityGate>
       </nav>
     </div>
   )

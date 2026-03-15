@@ -48,8 +48,7 @@ class ServiceContext():
 
     @property
     def team_id( self ):
-
-        return self.identity.get( "team_id" )
+        return self.identity.get("active_team_id", self.identity.get("team_id"))
     
     @property
     def user_id ( self ):
@@ -57,11 +56,27 @@ class ServiceContext():
     
     @property
     def role_id ( self ):
-        return self.identity.get( "role_id" )
+        return self.identity.get("role_id", self.identity.get("user_role_id"))
     
     @property
     def base_role_id ( self ):
         return self.identity.get( "base_role_id" )
+
+    @property
+    def app_scope(self):
+        return self.identity.get("app_scope")
+
+    @property
+    def session_scope_id(self):
+        return self.identity.get("session_scope_id")
+
+    @property
+    def current_workspace(self):
+        return self.identity.get("current_workspace")
+
+    @property
+    def active_team_id(self):
+        return self.identity.get("active_team_id", self.identity.get("team_id"))
 
     @property
     def time_zone(self):

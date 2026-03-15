@@ -7,7 +7,7 @@ import { useOrderSelectionStore } from '@/features/order/store/orderSelection.st
 import { buildBatchSelectionPayload } from '@/features/order/store/orderSelectionHooks.store'
 import { resolveSelectionAuthorityBatchCount } from '@/features/order/domain/orderBatchTargetIds'
 import type { RouteSolutionStop } from '@/features/plan/planTypes/localDelivery/types/routeSolutionStop'
-import { useMessageHandler } from '@/shared/message-handler'
+import { useMessageHandler } from '@shared-message-handler'
 
 import { useExecutePlanDndIntent } from '@/features/plan/controllers/useExecutePlanDndIntent'
 import type { PlanDndIntent } from '@/features/plan/domain/planDndIntent'

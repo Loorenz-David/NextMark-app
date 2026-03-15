@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useCallback, useEffect, useRef } from 'react'
 
 import type { Order } from '@/features/order/types/order'
 import type { RouteSolutionStop } from '@/features/plan/planTypes/localDelivery/types/routeSolutionStop'
@@ -15,6 +15,7 @@ import {
   useLocalDeliveryMapInteractionActions,
 } from '@/features/plan/planTypes/localDelivery/store/localDeliveryMapInteractionHooks.store'
 import type { LocalDeliveryMarkerGroupLookup } from '@/features/plan/planTypes/localDelivery/store/localDeliveryMapInteraction.store'
+import { selectDriverLivePositions, useDriverLiveStore } from '@/realtime/driverLive'
 
 type LocalDeliveryMapParams = {
   orders: Order[]
@@ -85,15 +86,14 @@ export const useLocalDeliveryMapFlow = ({
   const sectionManager = useSectionManager()
   const lookupSignatureRef = useRef<string>('')
   const { setMarkerLookup, clearMarkerLookup, openGroupOverlay, closeGroupOverlay } = useLocalDeliveryMapInteractionActions()
+  const liveDriverPositions = useDriverLiveStore(selectDriverLivePositions)
 
-  const handleClickMarker = (element:MouseEvent, order:Order) =>{
-    element
-    
+  const handleClickMarker = useCallback((order: Order) => {
     sectionManager.open({
         key:"order.details",
         payload:{mode:"edit", clientId:order.client_id, parentParams:{borderLeft:'rgb(var(--color-light-blue-r),0.7)'}}
     })
-  }
+  }, [sectionManager])
   useEffect(() => {
     const mapOrders: MapOrder[] = []
     const markerOrderClientIdsByMarkerId: Record<string, string[]> = {}
@@ -106,7 +106,7 @@ export const useLocalDeliveryMapFlow = ({
       status: 'start',
       boundary: boundaryLocations.start,
       idPrefix: `route-start-${solutionClientId}`,
-      onClick: (e: MouseEvent) => handleClickStartEndMarker(e, 'start'),
+      onClick: handleClickStartEndMarker,
     })
     if (startMarker) {
       mapOrders.push(startMarker)
@@ -117,7 +117,7 @@ export const useLocalDeliveryMapFlow = ({
       status: 'end',
       idPrefix: `route-end-${solutionClientId}`,
       boundary: boundaryLocations.end,
-      onClick: (e: MouseEvent) => handleClickStartEndMarker(e, 'end'),
+      onClick: handleClickStartEndMarker,
     })
     if (endMarker) {
       mapOrders.push(endMarker)
@@ -174,7 +174,7 @@ export const useLocalDeliveryMapFlow = ({
               return
             }
           }
-          handleClickMarker(event, markerRepresentative.order)
+          handleClickMarker(markerRepresentative.order)
         },
         coordinates: markerRepresentative.order.client_address.coordinates,
         markerColor: '#0034c1',
@@ -201,7 +201,7 @@ export const useLocalDeliveryMapFlow = ({
         const stop = order.id != null ? stopByOrderId.get(order.id) : undefined
         mapOrders.push({
           id: markerId,
-          onClick: (event: MouseEvent) => handleClickMarker(event, order),
+          onClick: () => handleClickMarker(order),
           coordinates: order.client_address.coordinates,
           markerColor: '#0034c1',
           delivery_plan_id: order.delivery_plan_id ?? null,
@@ -240,11 +240,45 @@ export const useLocalDeliveryMapFlow = ({
     selectedRouteSolution,
     setMarkerLookup,
     stopByOrderId,
+    handleClickMarker,
+  ])
+
+  useEffect(() => {
+    if (!isActive) {
+      mapManager.clearMarkerLayer(MAP_MARKER_LAYERS.driverLive)
+      return
+    }
+
+    const selectedDriverId = selectedRouteSolution?.driver_id ?? null
+    if (selectedDriverId == null) {
+      mapManager.clearMarkerLayer(MAP_MARKER_LAYERS.driverLive)
+      return
+    }
+
+    const driverMarker = liveDriverPositions
+      .filter((position) => position.driver_id === selectedDriverId)
+      .map((position) => ({
+        id: `driver-live:${position.driver_id}`,
+        coordinates: position.coords,
+        label: undefined,
+        className: 'driver-live-marker',
+        markerColor: '#ffffff',
+        onClick: () => undefined,
+      }))
+
+    mapManager.setMarkerLayer(MAP_MARKER_LAYERS.driverLive, driverMarker)
+    mapManager.setMarkerLayerVisibility(MAP_MARKER_LAYERS.driverLive, isActive)
+  }, [
+    isActive,
+    liveDriverPositions,
+    mapManager,
+    selectedRouteSolution?.driver_id,
   ])
 
   useEffect(() => {
     if (isActive) return
     mapManager.clearMarkerLayer(MAP_MARKER_LAYERS.localDelivery)
+    mapManager.clearMarkerLayer(MAP_MARKER_LAYERS.driverLive)
     mapManager.showRoute(null)
     mapManager.reframeToVisibleArea()
     closeGroupOverlay()
@@ -255,6 +289,7 @@ export const useLocalDeliveryMapFlow = ({
   useEffect(() => {
     return () => {
       mapManager.clearMarkerLayer(MAP_MARKER_LAYERS.localDelivery)
+      mapManager.clearMarkerLayer(MAP_MARKER_LAYERS.driverLive)
       mapManager.showRoute(null)
       closeGroupOverlay()
       lookupSignatureRef.current = ''
@@ -265,7 +300,7 @@ export const useLocalDeliveryMapFlow = ({
 
 
 
-const handleClickStartEndMarker = (_element: MouseEvent, _marker: string) => {
+const handleClickStartEndMarker = () => {
   // Marker clicks for start/end are intentionally no-op for now.
 }
 

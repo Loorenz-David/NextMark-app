@@ -1,6 +1,6 @@
 import { useCallback, type Dispatch, type SetStateAction } from 'react'
 
-import { useMessageHandler } from '@/shared/message-handler'
+import { useMessageHandler } from '@shared-message-handler'
 import { buildClientId } from '@/lib/utils/clientId'
 
 import { useCreateEmailMessage, useUpdateEmailMessage } from '../api/emailMessageApi'

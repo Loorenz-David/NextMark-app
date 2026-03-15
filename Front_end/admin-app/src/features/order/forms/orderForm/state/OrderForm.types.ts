@@ -22,7 +22,7 @@ export type OrderFormState = {
   client_id: string
   order_plan_objective: string | null
   operation_type: OrderOperationTypes
-  reference_number: string
+  reference_number: string | null
   external_source: string
   tracking_number: string
   tracking_link: string

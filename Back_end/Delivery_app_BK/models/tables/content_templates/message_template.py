@@ -8,6 +8,10 @@ from Delivery_app_BK.errors import ValidationFailed
 from Delivery_app_BK.models import db
 from Delivery_app_BK.models.mixins.team_mixings.team_id import TeamScopedMixin
 from Delivery_app_BK.models.utils import UTCDateTime
+from Delivery_app_BK.services.domain.messaging import (
+    ALLOWED_SCHEDULE_OFFSET_UNITS,
+    validate_schedule_configuration,
+)
 from Delivery_app_BK.services.domain.order.order_events import OrderEvent
 from Delivery_app_BK.services.domain.plan.plan_events import DeliveryPlanEvent
 
@@ -30,6 +34,8 @@ class MessageTemplate(db.Model, TeamScopedMixin):
     name = Column(String)
     ask_permission = Column(Boolean, default=False)
     channel = Column(String, nullable=False)
+    schedule_offset_value = Column(Integer, nullable=True)
+    schedule_offset_unit = Column(String, nullable=True)
 
 
     timestampt = Column(UTCDateTime)
@@ -59,7 +65,42 @@ class MessageTemplate(db.Model, TeamScopedMixin):
                 f"Invalid event '{value}'. "
                 f"Allowed events: {[e.value for e in OrderEvent]}"
             )
+        self._validate_schedule_configuration(event_name=value)
         return value
+
+    @validates("schedule_offset_value")
+    def validate_schedule_offset_value(self, key, value):
+        self._validate_schedule_configuration(offset_value=value)
+        return value
+
+    @validates("schedule_offset_unit")
+    def validate_schedule_offset_unit(self, key, value):
+        if value is not None and value not in ALLOWED_SCHEDULE_OFFSET_UNITS:
+            raise ValidationFailed(
+                f"Invalid schedule_offset_unit '{value}'. "
+                f"Allowed values: {sorted(ALLOWED_SCHEDULE_OFFSET_UNITS)}"
+            )
+        self._validate_schedule_configuration(offset_unit=value)
+        return value
+
+    def _validate_schedule_configuration(
+        self,
+        *,
+        event_name=None,
+        offset_value=None,
+        offset_unit=None,
+    ) -> None:
+        current_event_name = self.event if event_name is None else event_name
+        current_offset_value = self.schedule_offset_value if offset_value is None else offset_value
+        current_offset_unit = self.schedule_offset_unit if offset_unit is None else offset_unit
+        if current_offset_value is None or current_offset_unit is None:
+            return
+
+        validate_schedule_configuration(
+            event_name=current_event_name,
+            offset_value=current_offset_value,
+            offset_unit=current_offset_unit,
+        )
 
 
 class SafeDict(dict):

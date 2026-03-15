@@ -1,7 +1,7 @@
 import { useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 
-import { useMessageHandler } from '@/shared/message-handler'
+import { useMessageHandler } from '@shared-message-handler'
 import { usePopupManager } from '@/shared/resource-manager/useResourceManager'
 
 import type { IntegrationKey } from '../types/integration'

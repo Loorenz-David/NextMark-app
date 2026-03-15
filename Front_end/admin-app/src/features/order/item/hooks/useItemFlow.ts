@@ -1,7 +1,7 @@
 import { useCallback, useState } from 'react'
 
 import { ApiError } from '@/lib/api/ApiClient'
-import { useMessageHandler } from '@/shared/message-handler'
+import { useMessageHandler } from '@shared-message-handler'
 
 import { useGetOrderItems } from '../api/item.api'
 import { useItemModel } from '../domain/useItemModel'

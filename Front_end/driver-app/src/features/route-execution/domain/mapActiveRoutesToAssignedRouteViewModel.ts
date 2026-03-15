@@ -1,7 +1,10 @@
 import type {
   AssignedRouteViewModel,
   AssignedStopViewModel,
+  AssignedStopOrderItemPropertyViewModel,
+  AssignedStopOrderItemViewModel,
 } from '@/app/contracts/routeExecution.types'
+import type { DriverOrderStateIds } from '@/features/order-states'
 import type { RouteSolution, RouteSolutionStop, Order, Phone, address } from '@shared-domain'
 import type { ActiveRoutesQueryResult, DriverOrderRecord, DriverRouteRecord } from '@/features/routes'
 import type { DriverRouteStopRecord } from '@/features/routes/stops'
@@ -120,6 +123,106 @@ function buildItemSummary(order: DriverOrderRecord | null) {
   return labels.join(' + ')
 }
 
+function formatPropertyLabel(key: string) {
+  const normalized = key
+    .replace(/[_-]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+
+  if (!normalized) {
+    return 'Property'
+  }
+
+  return normalized.charAt(0).toUpperCase() + normalized.slice(1)
+}
+
+function formatPropertyValue(value: unknown): string {
+  if (value == null) {
+    return '—'
+  }
+
+  if (typeof value === 'string') {
+    const normalized = value.trim()
+    return normalized.length > 0 ? normalized : '—'
+  }
+
+  if (typeof value === 'number' || typeof value === 'boolean') {
+    return String(value)
+  }
+
+  if (Array.isArray(value)) {
+    const normalized = value
+      .map((entry) => formatPropertyValue(entry))
+      .filter((entry) => entry !== '—')
+
+    return normalized.length > 0 ? normalized.join(', ') : '—'
+  }
+
+  try {
+    return JSON.stringify(value)
+  } catch {
+    return '—'
+  }
+}
+
+function buildOrderItemProperties(value: unknown): AssignedStopOrderItemPropertyViewModel[] {
+  if (!Array.isArray(value)) {
+    return []
+  }
+
+  return value
+    .flatMap((entry) => {
+      if (typeof entry !== 'object' || entry == null || Array.isArray(entry)) {
+        return []
+      }
+
+      return Object.entries(entry).map(([key, entryValue]) => ({
+        label: formatPropertyLabel(key),
+        value: formatPropertyValue(entryValue),
+      }))
+    })
+    .filter((entry) => entry.value !== '—')
+}
+
+function buildDimensionsLabel(item: DriverOrderRecord['items']['byClientId'][string]) {
+  const dimensions = [
+    item.dimension_width,
+    item.dimension_height,
+    item.dimension_depth,
+  ]
+
+  if (dimensions.every((value) => value == null)) {
+    return null
+  }
+
+  return `W ${item.dimension_width ?? 0} x H ${item.dimension_height ?? 0} x D ${item.dimension_depth ?? 0}`
+}
+
+function mapOrderItem(item: DriverOrderRecord['items']['byClientId'][string]): AssignedStopOrderItemViewModel {
+  return {
+    clientId: item.client_id,
+    itemType: item.item_type?.trim() || null,
+    articleNumber: item.article_number.trim() || null,
+    referenceNumber: item.reference_number?.trim() || null,
+    quantity: item.quantity,
+    weight: item.weight,
+    pageLink: item.page_link?.trim() || null,
+    dimensionsLabel: buildDimensionsLabel(item),
+    properties: buildOrderItemProperties(item.properties),
+  }
+}
+
+function buildOrderItems(order: DriverOrderRecord | null): AssignedStopOrderItemViewModel[] {
+  if (!order || order.items.allIds.length === 0) {
+    return []
+  }
+
+  return order.items.allIds
+    .map((clientId) => order.items.byClientId[clientId])
+    .filter((item): item is DriverOrderRecord['items']['byClientId'][string] => Boolean(item))
+    .map(mapOrderItem)
+}
+
 function buildAddressTitle(order: Order | null, stop: RouteSolutionStop) {
   if (order?.client_address?.street_address) {
     const [streetOnly] = order.client_address.street_address
@@ -165,6 +268,49 @@ function buildBadgeLabel(order: DriverOrderRecord | null, stop: RouteSolutionSto
   }
 
   return null
+}
+
+function buildSearchText(orderRecord: DriverOrderRecord | null, order: Order | null, stop: RouteSolutionStop) {
+  const itemTokens = orderRecord
+    ? orderRecord.items.allIds
+      .map((clientId) => orderRecord.items.byClientId[clientId])
+      .filter((item): item is DriverOrderRecord['items']['byClientId'][string] => Boolean(item))
+      .flatMap((item) => [
+        item.article_number,
+        item.reference_number,
+        item.item_type,
+        item.page_link,
+      ])
+    : []
+
+  return [
+    order?.reference_number,
+    order?.external_order_id,
+    order?.external_source,
+    order?.tracking_number,
+    order?.client_first_name,
+    order?.client_last_name,
+    order?.client_email,
+    order?.client_primary_phone?.prefix,
+    order?.client_primary_phone?.number,
+    order?.client_secondary_phone?.prefix,
+    order?.client_secondary_phone?.number,
+    order?.client_address?.street_address,
+    order?.client_address?.city,
+    order?.client_address?.country,
+    order?.client_address?.postal_code,
+    order?.order_scalar_id,
+    stop.service_duration,
+    buildAddressTitle(order, stop),
+    buildSecondaryAddressLine(order),
+    buildItemSummary(orderRecord),
+    buildPhoneLine(orderRecord),
+    buildBadgeLabel(orderRecord, stop),
+    ...itemTokens,
+  ]
+    .filter((value): value is string | number => value != null && value !== '')
+    .join(' ')
+    .toLowerCase()
 }
 
 function mapRouteStop(stop: DriverRouteStopRecord): RouteSolutionStop {
@@ -234,13 +380,23 @@ export function createDriverOrderLookup(orders: DriverOrderRecord[]) {
   }, {})
 }
 
-function isCompletedStop(stop: RouteSolutionStop) {
-  return Boolean(stop.actual_departure_time)
+function isTerminalOrderState(
+  orderStateId: number | null | undefined,
+  orderStateIds: DriverOrderStateIds,
+) {
+  return (
+    orderStateId != null
+    && (
+      orderStateId === orderStateIds.completedId
+      || orderStateId === orderStateIds.failId
+    )
+  )
 }
 
 function buildAssignedStops(
   routeStops: DriverRouteStopRecord[],
   orderLookup: Record<number, DriverOrderRecord>,
+  orderStateIds: DriverOrderStateIds,
 ): {
   activeStopClientId: string | null
   completedStops: number
@@ -250,13 +406,16 @@ function buildAssignedStops(
   const rawStops = routeStops
     .map(mapRouteStop)
 
-  const activeStop = rawStops.find((stop) => !isCompletedStop(stop)) ?? null
+  const activeStop = rawStops.find((stop) => {
+    const orderRecord = stop.order_id != null ? orderLookup[stop.order_id] ?? null : null
+    return !isTerminalOrderState(orderRecord?.order_state_id, orderStateIds)
+  }) ?? null
   const activeStopClientId = activeStop?.client_id ?? null
-  const completedStops = rawStops.filter(isCompletedStop).length
 
   const stops = rawStops.map((stop) => {
     const orderRecord = stop.order_id != null ? orderLookup[stop.order_id] ?? null : null
     const order = mapOrder(orderRecord)
+    const isCompleted = isTerminalOrderState(orderRecord?.order_state_id, orderStateIds)
 
     return {
       stopClientId: stop.client_id,
@@ -269,14 +428,18 @@ function buildAssignedStops(
       title: buildAddressTitle(order, stop),
       secondaryAddressLine: buildSecondaryAddressLine(order),
       itemSummary: buildItemSummary(orderRecord),
+      orderItems: buildOrderItems(orderRecord),
       phoneLine: buildPhoneLine(orderRecord),
       badgeLabel: buildBadgeLabel(orderRecord, stop),
+      searchText: buildSearchText(orderRecord, order, stop),
       order,
       address: order?.client_address ?? null,
       isActive: stop.client_id === activeStopClientId,
-      isCompleted: isCompletedStop(stop),
+      isCompleted,
     }
   })
+
+  const completedStops = stops.filter((stop) => stop.isCompleted).length
 
   return {
     activeStopClientId,
@@ -288,6 +451,7 @@ function buildAssignedStops(
 
 export function mapActiveRoutesToAssignedRouteViewModel(
   payload: ActiveRoutesQueryResult,
+  orderStateIds: DriverOrderStateIds,
 ): AssignedRouteViewModel | null {
   const route =
     payload.routes.allIds
@@ -310,24 +474,27 @@ export function mapActiveRoutesToAssignedRouteViewModel(
     .map((clientId) => payload.stops.byClientId[clientId])
     .filter((stop): stop is DriverRouteStopRecord => Boolean(stop) && stop.route_solution_id === route.id)
 
-  return mapDriverRouteRecordToAssignedRouteViewModel(route, orderLookup, routeStops)
+  return mapDriverRouteRecordToAssignedRouteViewModel(route, orderLookup, routeStops, orderStateIds)
 }
 
 export function mapDriverRouteRecordToAssignedRouteViewModel(
   route: DriverRouteRecord | null,
   orderLookup: Record<number, DriverOrderRecord>,
   routeStops: DriverRouteStopRecord[],
+  orderStateIds: DriverOrderStateIds,
 ): AssignedRouteViewModel | null {
   if (!route) {
     return null
   }
 
-  const assignedStops = buildAssignedStops(routeStops, orderLookup)
+  const assignedStops = buildAssignedStops(routeStops, orderLookup, orderStateIds)
 
   return {
     routeClientId: route.client_id,
     label: route.label ?? route.delivery_plan?.label ?? 'Assigned route',
     score: route.score,
+    deliveryPlanStartDate: route.delivery_plan?.start_date ?? null,
+    deliveryPlanEndDate: route.delivery_plan?.end_date ?? null,
     startLocation: mapAddress(route.start_location),
     endLocation: mapAddress(route.end_location),
     activeStopClientId: assignedStops.activeStopClientId,
