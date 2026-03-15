@@ -55,10 +55,14 @@ export default defineConfig({
           },
         ],
       },
+
       workbox: {
-        globPatterns: ['**/*.{js,css,html,svg,png,ico}'],
+        globPatterns: ['**/*.{js,css,svg,png,ico,webmanifest}'],
+        globIgnores: ['**/index.html'],
         runtimeCaching: [],
-        navigateFallbackDenylist: [/^\/api\//],
+        navigateFallback: null,
+        skipWaiting: true,
+        clientsClaim: true
       },
     }),
   ],

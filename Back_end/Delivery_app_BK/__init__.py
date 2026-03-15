@@ -42,7 +42,14 @@ def create_app(config_name="development"):
 
     frontend_origins = os.environ.get("FRONTEND_ORIGINS", "http://localhost:5173").split(',')
 
-    CORS(app, resources={r"/*": {"origins": frontend_origins}}, supports_credentials=True)
+    CORS(
+        app, 
+        supports_credentials=True,
+        resources={r"/*": {"origins": frontend_origins}}, 
+        allow_headers=["Content-Type", "Authorization"],
+        expose_headers="*",
+        methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"]
+        )
 
     # init app object
     db.init_app(app)
