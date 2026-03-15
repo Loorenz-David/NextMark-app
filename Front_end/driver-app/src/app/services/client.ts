@@ -6,3 +6,6 @@ export const driverApiClient = createApiClient({
   refreshPath: '/auths/refresh_token',
   sessionAccessor: sessionStorage,
 })
+
+console.log("API BASE URL:", import.meta.env.VITE_API_BASE_URL)
+console.log("SOCKET URL:", import.meta.env.VITE_SOCKET_URL)
