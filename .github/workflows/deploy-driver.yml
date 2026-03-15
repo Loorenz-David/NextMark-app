@@ -50,7 +50,7 @@ jobs:
       - name: Invalidate CloudFront cache
         run: |
           aws cloudfront create-invalidation \
-            --distribution-id YOUR_DISTRIBUTION_ID \
+            --distribution-id E2JL7CL4VDTFZG \
             --paths "/*"
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
