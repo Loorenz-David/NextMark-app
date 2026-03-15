@@ -87,6 +87,53 @@ Back_end/
    - `redis_worker_io.py`: processes provider-facing jobs like SMS/email
    - `redis_scheduler.py`: schedules repair sweeps, retries, and delayed work
 
+## Production Deployment Model
+
+Elastic Beanstalk web environments should run the web process only:
+
+```text
+web: gunicorn --worker-class eventlet -w 2 application:application
+```
+
+Do not run `dispatcher`, `worker-default`, `worker-io`, or `scheduler` in the EB web Procfile. Those processes should run in a separate supervised runtime such as:
+- a separate EB worker environment
+- ECS tasks
+- a dedicated EC2/systemd process host
+
+### Production Behavior
+
+- Web runtime:
+  - boots even if Redis is missing or temporarily unreachable
+  - initializes Socket.IO with Redis fanout only when Redis is available
+  - falls back to in-process Socket.IO if Redis is unavailable
+- Async runtime:
+  - requires a valid reachable `REDIS_URI`
+  - fails fast on startup if Redis is unavailable
+  - logs the Redis target and startup failure clearly
+
+### Production Environment Variables
+
+Required for the web environment:
+- `APP_ENV=production`
+- `DATABASE_URI`
+- `SECRET_KEY`
+- `JWT_SECRET_KEY`
+
+Required for the async runtime:
+- all of the above as needed by the app
+- `REDIS_URI`
+
+Recommended for both runtimes:
+- `FRONTEND_ORIGINS`
+
+### Degraded Mode Note
+
+If the web environment is up but the async runtime is down, the API can still serve normal HTTP traffic, but Redis-backed features will be degraded or unavailable:
+- delayed/scheduled jobs
+- Redis unread notifications
+- multi-instance websocket fanout
+- background dispatch/worker processing
+
 ## Async Backbone
 
 The backend now uses a DB-outbox style flow for durable business events:

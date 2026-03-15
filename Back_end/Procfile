@@ -1,5 +1,1 @@
 web: gunicorn --worker-class eventlet -w 2 application:application
-dispatcher: python redis_dispatcher.py
-worker-default: python redis_worker_default.py
-worker-io: python redis_worker_io.py
-scheduler: python redis_scheduler.py

@@ -3,7 +3,12 @@ import os
 from Delivery_app_BK import create_app
 from Delivery_app_BK.services.infra.jobs.queues import get_named_queue
 from Delivery_app_BK.services.infra.jobs.runtime import get_worker_class
-from Delivery_app_BK.services.infra.redis import get_current_rq_redis_connection
+from Delivery_app_BK.services.infra.redis import (
+    assert_current_redis_available,
+    describe_redis_uri,
+    get_current_rq_redis_connection,
+    get_redis_uri,
+)
 
 
 def main() -> None:
@@ -11,6 +16,14 @@ def main() -> None:
     app = create_app(config_name)
 
     with app.app_context():
+        redis_uri = get_redis_uri()
+        app.logger.info("Starting IO Redis worker against %s.", describe_redis_uri(redis_uri))
+        try:
+            assert_current_redis_available(decode_responses=False)
+        except Exception:
+            app.logger.exception("IO Redis worker failed startup for %s.", describe_redis_uri(redis_uri))
+            raise
+
         connection = get_current_rq_redis_connection()
         worker_class = get_worker_class()
         worker = worker_class(

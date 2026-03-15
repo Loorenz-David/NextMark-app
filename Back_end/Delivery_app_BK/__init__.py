@@ -1,7 +1,6 @@
 
-# Standard library imports
-from datetime import timedelta
 import os
+from datetime import timedelta
 
 # Third-part dependencies
 from flask import Flask, request
@@ -21,6 +20,7 @@ from Delivery_app_BK.routers.utils.decompress_request import decompress_request
 # Local application imports 
 from Delivery_app_BK.models import db
 from Delivery_app_BK.routers.utils.jwt_handler import jwt
+from Delivery_app_BK.services.infra.redis import assert_redis_available, describe_redis_uri
 
 
 # configuration map
@@ -48,20 +48,7 @@ def create_app(config_name="development"):
     db.init_app(app)
     jwt.init_app(app)
     Migrate(app, db)
-
-    # redis_uri = app.config.get("REDIS_URI")
-    # if redis_uri:
-    #     socketio.init_app(
-    #             app,
-    #             cors_allowed_origins=frontend_origins,
-    #             message_queue= redis_uri or None,
-    #             channel="nextmark-socketio",
-    #         )
-    # else:
-    #       socketio.init_app(
-    #             app,
-    #             cors_allowed_origins=frontend_origins,
-    #         )
+    _initialize_socketio(app, frontend_origins)
 
 
     from .routers.api_v2 import register_v2_blueprints
@@ -109,3 +96,32 @@ def create_app(config_name="development"):
         return {"status": "ok"}, 200
 
     return app
+
+
+def _initialize_socketio(app: Flask, frontend_origins: list[str]) -> None:
+    redis_uri = app.config.get("REDIS_URI")
+    socketio_kwargs = {
+        "cors_allowed_origins": frontend_origins,
+    }
+
+    if not redis_uri:
+        app.logger.warning("Socket.IO initialized without Redis message queue because REDIS_URI is not configured.")
+        socketio.init_app(app, **socketio_kwargs)
+        return
+
+    try:
+        assert_redis_available(redis_uri, decode_responses=False)
+        socketio.init_app(
+            app,
+            **socketio_kwargs,
+            message_queue=redis_uri,
+            channel="nextmark-socketio",
+        )
+        app.logger.info("Socket.IO initialized with Redis message queue at %s.", describe_redis_uri(redis_uri))
+    except Exception as exc:
+        app.logger.warning(
+            "Socket.IO Redis message queue unavailable (%s). Falling back to in-process Socket.IO. Error: %s",
+            describe_redis_uri(redis_uri),
+            exc,
+        )
+        socketio.init_app(app, **socketio_kwargs)

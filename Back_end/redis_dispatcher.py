@@ -4,6 +4,7 @@ from uuid import uuid4
 
 from Delivery_app_BK import create_app
 from Delivery_app_BK.services.infra.events.dispatcher import dispatch_pending_events
+from Delivery_app_BK.services.infra.redis import assert_current_redis_available, describe_redis_uri, get_redis_uri
 
 
 def main() -> None:
@@ -12,6 +13,14 @@ def main() -> None:
     dispatcher_id = os.environ.get("DISPATCHER_ID", f"dispatcher-{uuid4()}")
 
     with app.app_context():
+        redis_uri = get_redis_uri()
+        app.logger.info("Starting Redis dispatcher against %s.", describe_redis_uri(redis_uri))
+        try:
+            assert_current_redis_available(decode_responses=False)
+        except Exception:
+            app.logger.exception("Redis dispatcher failed startup for %s.", describe_redis_uri(redis_uri))
+            raise
+
         while True:
             claimed = dispatch_pending_events(
                 dispatcher_id=dispatcher_id,

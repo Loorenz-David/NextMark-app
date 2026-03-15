@@ -10,6 +10,7 @@ from Delivery_app_BK.services.infra.jobs.tasks.maintenance import (
     requeue_stale_message_actions_job,
 )
 from Delivery_app_BK.services.infra.redis import get_current_rq_redis_connection
+from Delivery_app_BK.services.infra.redis import assert_current_redis_available, describe_redis_uri, get_redis_uri
 
 
 def _ensure_periodic_job(*, scheduler: Scheduler, job_id: str, fn, interval_seconds: int, queue_name: str) -> None:
@@ -32,6 +33,14 @@ def main() -> None:
     app = create_app(config_name)
 
     with app.app_context():
+        redis_uri = get_redis_uri()
+        app.logger.info("Starting Redis scheduler against %s.", describe_redis_uri(redis_uri))
+        try:
+            assert_current_redis_available(decode_responses=False)
+        except Exception:
+            app.logger.exception("Redis scheduler failed startup for %s.", describe_redis_uri(redis_uri))
+            raise
+
         connection = get_current_rq_redis_connection()
         queue_names = get_queue_names()
         scheduler = Scheduler(connection=connection, queue_name=queue_names.default)

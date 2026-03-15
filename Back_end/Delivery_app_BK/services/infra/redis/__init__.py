@@ -1,4 +1,7 @@
 from .client import (
+    assert_current_redis_available,
+    assert_redis_available,
+    describe_redis_uri,
     get_current_redis_connection,
     get_current_rq_redis_connection,
     get_redis_connection,
@@ -23,11 +26,14 @@ from .keys import (
 )
 
 __all__ = [
+    "assert_current_redis_available",
+    "assert_redis_available",
     "build_driver_location_key",
     "build_driver_location_scan_pattern",
     "build_notification_count_key",
     "build_notification_payload_key",
     "build_notification_unread_key",
+    "describe_redis_uri",
     "dumps_json",
     "add_unread_notification",
     "get_current_redis_connection",

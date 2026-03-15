@@ -14,6 +14,14 @@ def _normalize_redis_uri(redis_uri: str) -> str:
     return redis_uri
 
 
+def describe_redis_uri(redis_uri: str) -> str:
+    parsed = urlparse(_normalize_redis_uri(redis_uri))
+    db = parsed.path.lstrip("/") or "0"
+    host = parsed.hostname or "unknown-host"
+    port = parsed.port or (6380 if parsed.scheme == "rediss" else 6379)
+    return f"{parsed.scheme}://{host}:{port}/{db}"
+
+
 def get_redis_uri() -> str:
     redis_uri = current_app.config.get("REDIS_URI")
     if not redis_uri:
@@ -36,3 +44,13 @@ def get_rq_redis_connection(redis_uri: str) -> Redis:
 
 def get_current_rq_redis_connection() -> Redis:
     return get_rq_redis_connection(get_redis_uri())
+
+
+def assert_redis_available(redis_uri: str, *, decode_responses: bool = True) -> Redis:
+    connection = get_redis_connection(redis_uri, decode_responses=decode_responses)
+    connection.ping()
+    return connection
+
+
+def assert_current_redis_available(*, decode_responses: bool = True) -> Redis:
+    return assert_redis_available(get_redis_uri(), decode_responses=decode_responses)
