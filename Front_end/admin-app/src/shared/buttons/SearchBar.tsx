@@ -1,7 +1,7 @@
 import type { ChangeEvent, CSSProperties, ReactNode } from 'react'
 import { useMemo, useState } from 'react'
 
-import { FilterIcon } from '@/assets/icons'
+import { FilteredIcon } from '@/assets/icons'
 import { FloatingPopover } from '@/shared/popups/FloatingPopover/FloatingPopover'
 
 export type SearchBarFilterOption = {
@@ -95,7 +95,7 @@ export const SearchBar = ({
               className={iconClassName ?? 'p-1 '}
               style={iconStyle}
             >
-              <FilterIcon className="h-4 w-4" />
+              <FilteredIcon className="h-4 w-4" />
             </button>
           }
         >

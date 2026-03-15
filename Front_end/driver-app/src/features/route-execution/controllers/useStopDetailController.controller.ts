@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useSyncExternalStore } from 'react'
+import { useCallback, useMemo } from 'react'
 import { useDriverBootstrapState } from '@/app/bootstrap'
 import { useMessageHandler } from '@shared-message-handler'
 import { useDriverServices } from '@/app/providers/driverServices.context'
@@ -45,16 +45,8 @@ export function useStopDetailController(stopClientId?: string) {
     snapBottomSheetTo,
   } = useDriverAppShell()
   const route = useSelectedAssignedRoute()
-  const orderCaseListState = useSyncExternalStore(
-    useOrderCaseListStore.subscribe,
-    useOrderCaseListStore.getState,
-    useOrderCaseListStore.getState,
-  )
-  const orderCasesState = useSyncExternalStore(
-    useOrderCasesStore.subscribe,
-    useOrderCasesStore.getState,
-    useOrderCasesStore.getState,
-  )
+  const orderCaseListState = useOrderCaseListStore((state) => state)
+  const orderCasesState = useOrderCasesStore((state) => state)
   const stop = useMemo(
     () => route?.stops.find((candidate) => candidate.stopClientId === stopClientId) ?? null,
     [route, stopClientId],

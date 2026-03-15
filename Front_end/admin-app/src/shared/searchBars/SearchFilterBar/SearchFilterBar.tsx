@@ -3,7 +3,7 @@ import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
 import { DatePicker } from '@mui/x-date-pickers'
 
-import { FilterIcon } from '@/assets/icons'
+import { FilteredIcon } from '@/assets/icons'
 import { BasicButton } from '@/shared/buttons/BasicButton'
 import { InputField } from '@/shared/inputs/InputField'
 import { FloatingPopover } from '@/shared/popups/FloatingPopover/FloatingPopover'
@@ -26,7 +26,7 @@ export const SearchFilterBar = ({
   updateFilter,
   filters = {},
   config = [],
-  hideFilterIcon = false,
+  hideFilteredIcon = false,
   placeholder,
 }: SearchFilterBarProps) => {
   const [open, setOpen] = useState(false)
@@ -96,7 +96,7 @@ export const SearchFilterBar = ({
 
               />
             </div>
-            {!hideFilterIcon ? (
+            {!hideFilteredIcon ? (
               <BasicButton
                 params={{
                   variant: 'ghost',
@@ -105,7 +105,7 @@ export const SearchFilterBar = ({
                   className: 'pr-3',
                 }}
               >
-                <FilterIcon className="h-4 w-4" />
+                <FilteredIcon className="h-4 w-4" />
               </BasicButton>
             ) : null}
           </div>

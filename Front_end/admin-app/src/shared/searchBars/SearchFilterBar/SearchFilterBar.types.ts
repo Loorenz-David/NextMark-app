@@ -17,6 +17,6 @@ export type SearchFilterBarProps = {
   updateFilter?: (key: string, value: unknown) => void
   filters?: Record<string, unknown>
   config?: FilterConfig[]
-  hideFilterIcon?: boolean
+  hideFilteredIcon?: boolean
   placeholder?: string
 }

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useSyncExternalStore } from 'react'
+import { useEffect, useMemo } from 'react'
 import { selectOrderCaseListScope, selectOrderCasesByOrderId, useOrderCaseListStore, useOrderCasesStore } from '../stores'
 import { initializeOrderCasesForOrderFlow, openOrderCaseChatFlow } from '../flows'
 
@@ -11,16 +11,8 @@ export function useOrderCaseListController({
   orderId,
   openCase,
 }: UseOrderCaseListControllerOptions) {
-  const listState = useSyncExternalStore(
-    useOrderCaseListStore.subscribe,
-    useOrderCaseListStore.getState,
-    useOrderCaseListStore.getState,
-  )
-  const casesState = useSyncExternalStore(
-    useOrderCasesStore.subscribe,
-    useOrderCasesStore.getState,
-    useOrderCasesStore.getState,
-  )
+  const listState = useOrderCaseListStore((state) => state)
+  const casesState = useOrderCasesStore((state) => state)
 
   useEffect(() => {
     void initializeOrderCasesForOrderFlow(orderId)

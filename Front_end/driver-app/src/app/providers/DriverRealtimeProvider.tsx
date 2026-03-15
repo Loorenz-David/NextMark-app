@@ -1,5 +1,5 @@
 import type { PropsWithChildren } from 'react'
-import { useEffect, useMemo, useSyncExternalStore } from 'react'
+import { useEffect, useMemo } from 'react'
 import {
   createRouteOrdersChannel,
   type BusinessEventEnvelope,
@@ -42,16 +42,8 @@ const getPayloadNumber = (payload: BusinessPayload, key: string): number | null 
 export function DriverRealtimeProvider({ children }: PropsWithChildren) {
   const { session, sessionState } = useSession()
   const { workspace } = useWorkspace()
-  const routesState = useSyncExternalStore(
-    useRoutesStore.subscribe,
-    useRoutesStore.getState,
-    useRoutesStore.getState,
-  )
-  const routesSelectionState = useSyncExternalStore(
-    useRoutesSelectionStore.subscribe,
-    useRoutesSelectionStore.getState,
-    useRoutesSelectionStore.getState,
-  )
+  const routesState = useRoutesStore((state) => state)
+  const routesSelectionState = useRoutesSelectionStore((state) => state)
   const selectedRoute = useMemo(
     () => selectSelectedRoute(routesSelectionState, routesState),
     [routesSelectionState, routesState],

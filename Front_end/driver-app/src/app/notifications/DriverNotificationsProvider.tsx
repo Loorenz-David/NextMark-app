@@ -23,16 +23,8 @@ export function DriverNotificationsProvider({ children }: PropsWithChildren) {
   const { session, sessionState } = useSession()
   const { workspace } = useWorkspace()
   const { store } = useDriverAppShell()
-  const routesState = useSyncExternalStore(
-    useRoutesStore.subscribe,
-    useRoutesStore.getState,
-    useRoutesStore.getState,
-  )
-  const routesSelectionState = useSyncExternalStore(
-    useRoutesSelectionStore.subscribe,
-    useRoutesSelectionStore.getState,
-    useRoutesSelectionStore.getState,
-  )
+  const routesState = useRoutesStore((state) => state)
+  const routesSelectionState = useRoutesSelectionStore((state) => state)
   const selectedRoute = useMemo(
     () => selectSelectedRoute(routesSelectionState, routesState),
     [routesSelectionState, routesState],

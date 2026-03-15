@@ -1,13 +1,9 @@
-import { useMemo, useSyncExternalStore } from 'react'
+import { useMemo } from 'react'
 import { useOrderStatesStore } from '../stores'
 import { selectAllOrderStates } from '../stores/orderStates.store'
 
 export const useOrderStates = () => {
-  const state = useSyncExternalStore(
-    useOrderStatesStore.subscribe,
-    useOrderStatesStore.getState,
-    useOrderStatesStore.getState,
-  )
+  const state = useOrderStatesStore((store) => store)
 
   return useMemo(() => selectAllOrderStates(state), [state])
 }

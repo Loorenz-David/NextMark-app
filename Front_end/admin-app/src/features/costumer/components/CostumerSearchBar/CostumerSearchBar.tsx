@@ -87,7 +87,7 @@ export const CostumerSearchBar = ({
       <SearchFilterBar
         placeholder={placeholder}
         applySearch={(input) => setSearchInput(input)}
-        hideFilterIcon
+        hideFilteredIcon
       />
 
       <div className="mt-2  overflow-y-auto scroll-thin rounded-lg border border-[var(--color-border)]/60 bg-[var(--color-page)]/50">

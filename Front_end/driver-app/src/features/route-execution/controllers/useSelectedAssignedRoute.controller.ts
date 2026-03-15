@@ -1,4 +1,4 @@
-import { useMemo, useSyncExternalStore } from 'react'
+import { useMemo } from 'react'
 import { useDriverOrderStateRegistry } from '@/features/order-states'
 import {
   selectAllOrders,
@@ -13,26 +13,10 @@ import { createDriverOrderLookup, mapDriverRouteRecordToAssignedRouteViewModel }
 
 export function useSelectedAssignedRoute() {
   const orderStateRegistry = useDriverOrderStateRegistry()
-  const routesState = useSyncExternalStore(
-    useRoutesStore.subscribe,
-    useRoutesStore.getState,
-    useRoutesStore.getState,
-  )
-  const routesSelectionState = useSyncExternalStore(
-    useRoutesSelectionStore.subscribe,
-    useRoutesSelectionStore.getState,
-    useRoutesSelectionStore.getState,
-  )
-  const ordersState = useSyncExternalStore(
-    useOrdersStore.subscribe,
-    useOrdersStore.getState,
-    useOrdersStore.getState,
-  )
-  const stopsState = useSyncExternalStore(
-    useStopsStore.subscribe,
-    useStopsStore.getState,
-    useStopsStore.getState,
-  )
+  const routesState = useRoutesStore((state) => state)
+  const routesSelectionState = useRoutesSelectionStore((state) => state)
+  const ordersState = useOrdersStore((state) => state)
+  const stopsState = useStopsStore((state) => state)
 
   return useMemo(() => {
     const selectedRoute = selectSelectedRoute(routesSelectionState, routesState)

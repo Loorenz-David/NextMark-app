@@ -1,5 +1,5 @@
 import type { PropsWithChildren } from 'react'
-import { useCallback, useEffect, useMemo, useState, useSyncExternalStore } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useWorkspace } from '@/app/providers/workspace.context'
 import { initializeActiveRoutesFlow } from '../flows'
 import {
@@ -19,16 +19,8 @@ export function RoutesListProvider({ children, onSelectRoute }: RoutesListProvid
   const [status, setStatus] = useState<'idle' | 'loading' | 'ready' | 'error'>('loading')
   const [error, setError] = useState<string | null>(null)
 
-  const routesState = useSyncExternalStore(
-    useRoutesStore.subscribe,
-    useRoutesStore.getState,
-    useRoutesStore.getState,
-  )
-  const selectedRouteClientId = useSyncExternalStore(
-    useRoutesSelectionStore.subscribe,
-    () => selectSelectedRouteClientId(useRoutesSelectionStore.getState()),
-    () => selectSelectedRouteClientId(useRoutesSelectionStore.getState()),
-  )
+  const routesState = useRoutesStore((state) => state)
+  const selectedRouteClientId = useRoutesSelectionStore(selectSelectedRouteClientId)
   const routes = useMemo(() => selectAllRoutes(routesState), [routesState])
 
   const refreshRoutes = useCallback(async () => {

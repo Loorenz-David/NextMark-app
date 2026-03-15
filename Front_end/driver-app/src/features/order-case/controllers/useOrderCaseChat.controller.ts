@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, useSyncExternalStore } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useMessageHandler } from '@shared-message-handler'
 import { useSession } from '@/app/providers/session.context'
 import {
@@ -47,16 +47,8 @@ export function useOrderCaseChatController({
     return null
   }, [session?.user?.id])
 
-  const orderCasesState = useSyncExternalStore(
-    useOrderCasesStore.subscribe,
-    useOrderCasesStore.getState,
-    useOrderCasesStore.getState,
-  )
-  const caseChatsState = useSyncExternalStore(
-    useCaseChatsStore.subscribe,
-    useCaseChatsStore.getState,
-    useCaseChatsStore.getState,
-  )
+  const orderCasesState = useOrderCasesStore((state) => state)
+  const caseChatsState = useCaseChatsStore((state) => state)
 
   useEffect(() => {
     let cancelled = false
