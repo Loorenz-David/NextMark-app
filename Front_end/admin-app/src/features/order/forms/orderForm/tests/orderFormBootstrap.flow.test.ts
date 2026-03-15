@@ -19,7 +19,10 @@ export const runOrderFormBootstrapFlowTests = () => {
 
   assert(createState.delivery_plan_id === 42, 'create state should use payload delivery plan id')
   assert(createState.client_id.length > 0, 'create state should generate client id')
-  assert(createState.reference_number.length > 0, 'create state should generate reference number')
+  assert(
+    typeof createState.reference_number === 'string' && createState.reference_number.length > 0,
+    'create state should generate reference number',
+  )
 
   const editState = buildOrderFormInitialState({
     mode: 'edit',

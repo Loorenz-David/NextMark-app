@@ -1,4 +1,4 @@
-import { useMemo, useState, type ReactNode } from 'react'
+import { useState } from 'react'
 
 import { BasicButton } from '@/shared/buttons/BasicButton'
 import { Field } from '@/shared/inputs/FieldContainer'
@@ -137,7 +137,7 @@ export const OrderFormFields = ({ model, compact = false }: OrderFormFieldsProps
                 warningController={warnings.referenceWarning}
               >
                 <InputField
-                  value={formState.reference_number}
+                  value={formState.reference_number ?? ''}
                   onChange={formSetters.handleReference}
                   warningController={warnings.referenceWarning}
                   fieldClassName={PLAIN_INPUT_CONTAINER_CLASS}
