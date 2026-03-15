@@ -195,6 +195,8 @@ temp/
 # Backend specific (Elastic Beanstalk)
 # =====================================================
 .elasticbeanstalk/*
+\.elasticbeanstalk/app_versions/
+\.elasticbeanstalk/*.zip
 !.elasticbeanstalk/*.cfg.yml
 !.elasticbeanstalk/*.global.yml
 !.elasticbeanstalk/config.yml
