@@ -194,14 +194,15 @@ temp/
 # =====================================================
 # Backend specific (Elastic Beanstalk)
 # =====================================================
-.elasticbeanstalk/*
-.elasticbeanstalk/app_versions/
-.elasticbeanstalk/logs/
-.elasticbeanstalk/*.zip
-!.elasticbeanstalk/*.cfg.yml
-!.elasticbeanstalk/*.global.yml
-!.elasticbeanstalk/config.yml
+Back_end/.elasticbeanstalk/*
+Back_end/.elasticbeanstalk/app_versions/
+Back_end/.elasticbeanstalk/logs/
+Back_end/.elasticbeanstalk/*.zip
 
+!Back_end/.elasticbeanstalk/*.cfg.yml
+!Back_end/.elasticbeanstalk/*.global.yml
+!Back_end/.elasticbeanstalk/config.yml
+.ebEnv
 # backend credentials folder
 credentials/
 

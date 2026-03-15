@@ -6,7 +6,7 @@ React + TypeScript + Vite single-page app for dispatching routes, orders, and it
 
 - Node.js 20+
 - npm 10+
-
+ 
 ## Environment
 
 1. Copy `.env.example` to `.env.local` (or `.env`) inside this folder.
