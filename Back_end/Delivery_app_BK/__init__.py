@@ -48,7 +48,7 @@ def create_app(config_name="development"):
         resources={r"/*": {"origins": frontend_origins}}, 
         allow_headers=["Content-Type", "Authorization"],
         expose_headers="*",
-        methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"]
+        methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"]
         )
 
     # init app object
