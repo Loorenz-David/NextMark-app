@@ -1,6 +1,5 @@
 import random
 import string
-from datetime import datetime, timezone
 
 from Delivery_app_BK.errors import ValidationFailed
 from Delivery_app_BK.models import db, Team, User, UserRole
@@ -36,7 +35,7 @@ def register_user(ctx: ServiceContext):
     time_zone = field_set.get("time_zone")
 
     if not time_zone:
-        time_zone = datetime.now(timezone.utc)
+        time_zone = "UTC"
     
     if not username or not email or not password or phone_number is None:
         raise ValidationFailed(

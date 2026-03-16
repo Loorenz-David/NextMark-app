@@ -16,6 +16,7 @@ import {
 } from '@/features/plan/planTypes/localDelivery/store/localDeliveryMapInteractionHooks.store'
 import type { LocalDeliveryMarkerGroupLookup } from '@/features/plan/planTypes/localDelivery/store/localDeliveryMapInteraction.store'
 import { selectDriverLivePositions, useDriverLiveStore } from '@/realtime/driverLive'
+import { useShallow } from 'zustand/react/shallow'
 
 type LocalDeliveryMapParams = {
   orders: Order[]
@@ -86,7 +87,7 @@ export const useLocalDeliveryMapFlow = ({
   const sectionManager = useSectionManager()
   const lookupSignatureRef = useRef<string>('')
   const { setMarkerLookup, clearMarkerLookup, openGroupOverlay, closeGroupOverlay } = useLocalDeliveryMapInteractionActions()
-  const liveDriverPositions = useDriverLiveStore(selectDriverLivePositions)
+  const liveDriverPositions = useDriverLiveStore(useShallow(selectDriverLivePositions))
 
   const handleClickMarker = useCallback((order: Order) => {
     sectionManager.open({

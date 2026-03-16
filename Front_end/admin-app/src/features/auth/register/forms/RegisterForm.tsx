@@ -11,7 +11,7 @@ import { useRegisterMutations } from '@/features/auth/register/hooks/useRegister
 import { useRegisterError, useRegisterLoading } from '@/features/auth/register/hooks/useRegisterSelectors'
 import { useNavigate } from 'react-router-dom'
 
-
+const detectTimeZone = () => Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC'
 
 export function RegisterForm() {
   const navidate = useNavigate()
@@ -30,6 +30,7 @@ export function RegisterForm() {
       email,
       password,
       phone_number: phone,
+      time_zone: detectTimeZone(),
     })
 
     if (outcome) {
