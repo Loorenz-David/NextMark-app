@@ -4,20 +4,24 @@ set -e
 
 WEB_ENV="nextmarkapp-prod"
 WORKER_ENV="nextmark-workers"
-SCHEDULER_ENV="nextmark-schefuler"
+SCHEDULER_ENV="nextmark-scheduler"
 
-echo="Deploying to web environment..."
+echo "Deploying to web environment..."
 eb deploy $WEB_ENV
 
 echo "Fetching latest version label..."
-VERSION=$(eb appversion --all | head -n 1 | awk '{print$1}')
+VERSION=$(eb status $WEB_ENV | grep "Deployed Version" | awk '{print $3}')
 
 echo "Latest version: $VERSION"
 
-echo "Deploing same version to workers..."
-eb deploy $WORKER_ENV --version $VERSION
+echo "Deploying same version to workers and schedulers..."
+eb deploy $WORKER_ENV --version $VERSION & 
+WORKER_PID=$!
 
-echo "Deploying smae version to schedulers..."
-eb deploy $SCHEDULER_ENV --version $VERSION
+eb deploy $SCHEDULER_ENV --version $VERSION &
+SCHED_PID=$!
+
+wait $WORKER_PID
+wait $SCHED_PID
 
 echo "Deployment completed for all environments."
