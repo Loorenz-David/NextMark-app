@@ -61,7 +61,7 @@ def main() -> None:
             queue_name=queue_names.default,
         )
 
-        scheduler.run()
+        scheduler.run(burst=False)
 
 
 if __name__ == "__main__":

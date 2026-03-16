@@ -4,7 +4,10 @@ from functools import lru_cache
 from urllib.parse import urlparse
 
 from flask import current_app
-from redis import Redis
+from redis import Redis, ConnectionPool
+
+
+_pool: ConnectionPool | None = None
 
 
 def _normalize_redis_uri(redis_uri: str) -> str:
@@ -39,7 +42,8 @@ def get_current_redis_connection() -> Redis:
 
 
 def get_rq_redis_connection(redis_uri: str) -> Redis:
-    return get_redis_connection(redis_uri, decode_responses=False)
+    pool = get_redis_pool(redis_uri)
+    return Redis(connection_pool=pool)
 
 
 def get_current_rq_redis_connection() -> Redis:
@@ -54,3 +58,22 @@ def assert_redis_available(redis_uri: str, *, decode_responses: bool = True) -> 
 
 def assert_current_redis_available(*, decode_responses: bool = True) -> Redis:
     return assert_redis_available(get_redis_uri(), decode_responses=decode_responses)
+
+
+
+
+def get_redis_pool(redis_uri: str) -> ConnectionPool:
+    global _pool
+
+    if _pool is None:
+        _pool = ConnectionPool.from_url(
+            redis_uri,
+            max_connections=50,
+            decode_responses=False,
+            socket_timeout=5,
+            socket_connect_timeout=5,
+            retry_on_timeout=True,
+            health_check_interval=30,
+        )
+
+    return _pool

@@ -3,6 +3,14 @@ branch-defaults:
     environment: nextmarkapp-prod
     group_suffix: null
 environment-defaults:
+  nextmark-workers:
+    branch: main
+    repository: origin
+
+  nextmark-scheduler:
+    branch: main
+    repository: origin
+    
   delivery-env:
     branch: null
     repository: null
