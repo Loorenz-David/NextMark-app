@@ -10,6 +10,7 @@ type RouteExecutionShellContextValue = {
   submitRouteAction: (command: DriverRouteActionCommand) => Promise<DriverRouteActionResult>
   stopDetailTransitionDirection: StopDetailTransitionDirection
   prepareRouteStopDetailTransition: (
+    previousStopClientId: string | null,
     stopClientId: string,
   ) => boolean
   routeViewMode: 'route' | 'search'

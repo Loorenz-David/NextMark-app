@@ -19,7 +19,11 @@ export function useOpenRouteStopDetail() {
   )
 
   return useCallback((stopClientId: string, options?: { snap?: BottomSheetSnap | null }) => {
-    const shouldOpen = prepareRouteStopDetailTransition(stopClientId)
+    const currentBottomSheetPage = shellStore.getState().bottomSheetStack.at(-1)
+    const previousStopClientId = currentBottomSheetPage?.page === 'route-stop-detail'
+      ? currentBottomSheetPage.params.stopClientId
+      : null
+    const shouldOpen = prepareRouteStopDetailTransition(previousStopClientId, stopClientId)
     if (!shouldOpen) {
       if (options?.snap) {
         snapBottomSheetTo(options.snap)
@@ -27,7 +31,6 @@ export function useOpenRouteStopDetail() {
       return
     }
 
-    const currentBottomSheetPage = shellStore.getState().bottomSheetStack.at(-1)
     if (currentBottomSheetPage?.page === 'route-stop-detail') {
       replaceCurrentBottomSheet('route-stop-detail', { stopClientId })
     } else {

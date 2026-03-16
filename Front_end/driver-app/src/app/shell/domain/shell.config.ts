@@ -5,6 +5,7 @@ export const DRIVER_SHELL_CONFIG = {
       workspace: 45,
       expanded: 98,
     },
+    headerFadeEndPercent: 84,
     interactionButtonsFadeOffsetPercent: 5,
     directionLockThresholdPx: 10,
     contentDragActivationThresholdPx: 10,

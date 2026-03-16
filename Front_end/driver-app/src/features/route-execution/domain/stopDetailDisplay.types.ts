@@ -16,7 +16,7 @@ export type StopDetailPrimaryActionDisplay = {
 }
 
 export type StopDetailInfoRowDisplay = {
-  id: 'service-time' | 'order-phone' | 'items' | 'cases'
+  id: 'service-time' | 'order-phone' | 'items' | 'customer' | 'cases'
   label: string
   value: string
   onPress?: () => void

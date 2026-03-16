@@ -78,6 +78,15 @@ export type AssignedStopViewModel = {
   isCompleted: boolean
 }
 
+export type AssignedStopCustomerViewModel = {
+  fullName: string | null
+  email: string | null
+  primaryPhone: string | null
+  secondaryPhone: string | null
+  addressLine: string | null
+  costumerId: number | null
+}
+
 export type AssignedRouteViewModel = {
   routeClientId: string
   label: string

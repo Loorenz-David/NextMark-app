@@ -51,9 +51,6 @@ export function useBottomSheetSurfaceController() {
   )
 
   const bottomSheetState = useMemo(() => selectBottomSheetState(shellState), [shellState])
-  const interactionButtonsThreshold =
-    DRIVER_SHELL_CONFIG.bottomSheet.snapHeights.workspace
-    + DRIVER_SHELL_CONFIG.bottomSheet.interactionButtonsFadeOffsetPercent
   const shellStateRef = useRef(shellState)
   const bottomSheetHeightPercentRef = useRef(bottomSheetState.heightPercent)
 
@@ -380,7 +377,6 @@ export function useBottomSheetSurfaceController() {
 
   return useMemo(() => ({
     ...bottomSheetState,
-    showInteractionButtons: bottomSheetState.heightPercent <= interactionButtonsThreshold,
     handleContentTouchCancel,
     handleContentTouchEnd,
     handleContentTouchMove,
@@ -393,6 +389,5 @@ export function useBottomSheetSurfaceController() {
     handleContentTouchMove,
     handleContentTouchStart,
     handlePointerDown,
-    interactionButtonsThreshold,
   ])
 }

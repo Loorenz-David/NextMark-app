@@ -19,6 +19,7 @@ export type AssignedRouteStopRowDisplay = {
   addressLine: string | null
   durationLabel: string | null
   itemSummary: string | null
+  itemCountLabel: string | null
   phoneLine: string | null
   badgeLabel: string | null
   isActive: boolean

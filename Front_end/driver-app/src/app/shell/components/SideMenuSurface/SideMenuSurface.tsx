@@ -32,7 +32,7 @@ export function SideMenuSurface() {
         onClick={closeSideMenu}
         type="button"
       />
-      <aside className="driver-side-menu-surface__panel map-glass-fake-strong-bg">
+      <aside className="driver-side-menu-surface__panel bg-[rgba(var(--bg-app-color),0.90)] backdrop-blur-[40px] backdrop-saturate-[115%] backdrop-contrast-[92%]">
         <div className="flex h-full flex-col gap-6 overflow-y-auto">
           <div className="flex flex-col border-b border-white/10">
             {canInstall ? (

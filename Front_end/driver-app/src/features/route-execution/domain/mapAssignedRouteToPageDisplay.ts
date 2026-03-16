@@ -29,6 +29,10 @@ function formatStopCountLabel(totalStops: number) {
   return `${totalStops} stop${totalStops === 1 ? '' : 's'}`
 }
 
+function formatItemCountLabel(itemCount: number) {
+  return `${itemCount} item${itemCount === 1 ? '' : 's'}`
+}
+
 function formatAddressLine(routeAddress: AssignedRouteViewModel['startLocation'] | AssignedRouteViewModel['endLocation']) {
   if (!routeAddress) {
     return null
@@ -89,6 +93,7 @@ export function mapAssignedRouteToPageDisplay(
         addressLine: stop.secondaryAddressLine,
         durationLabel: stop.serviceDurationLabel,
         itemSummary: stop.itemSummary,
+        itemCountLabel: stop.orderItems.length > 0 ? formatItemCountLabel(stop.orderItems.length) : null,
         phoneLine: stop.phoneLine,
         badgeLabel: stop.badgeLabel,
         isActive: stop.isActive,

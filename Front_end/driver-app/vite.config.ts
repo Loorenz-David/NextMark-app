@@ -25,8 +25,8 @@ export default defineConfig({
       ],
       manifest: {
         id: '/',
-        name: 'Route Pilot Driver',
-        short_name: 'Route Pilot',
+        name: 'Next Mark',
+        short_name: 'Next Mark',
         description: 'Installable driver workspace for route execution and delivery operations.',
         theme_color: '#1f6f5d',
         background_color: '#f3ede2',

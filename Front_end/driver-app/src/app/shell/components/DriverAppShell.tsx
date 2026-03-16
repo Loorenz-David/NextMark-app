@@ -38,18 +38,23 @@ export function DriverAppShell() {
     <div className="driver-shell" style={shellStyle}>
       <MapSurface />
 
-      <header className="driver-shell__topbar">
-        {controller.showHeaderMenuButton ? (
+      {controller.shouldRenderHeader ? (
+        <header
+          className="driver-shell__topbar"
+          style={{
+            opacity: controller.overSheetChromeOpacity,
+            transform: `translateY(-${controller.overSheetChromeTranslateYPx}px)`,
+            pointerEvents: controller.isOverSheetChromeInteractive ? 'auto' : 'none',
+          }}
+        >
           <MenuButton
             isOpen={controller.isSideMenuOpen}
             onClick={controller.isSideMenuOpen ? controller.closeMenu : controller.openMenu}
             mode={'onMap'}
           />
-        ) : null}
-        <div className="ml-auto">
           <DriverNotificationsButton />
-        </div>
-      </header>
+        </header>
+      ) : null}
 
       <BottomSheetSurface />
       <SideMenuSurface />

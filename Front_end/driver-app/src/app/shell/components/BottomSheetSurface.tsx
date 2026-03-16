@@ -88,11 +88,14 @@ export function BottomSheetSurface() {
     <section
       ref={sheetRef}
       aria-label="Bottom sheet workspace"
-      className={`map-glass-fake-bg driver-bottom-sheet driver-bottom-sheet--${controller.snap}${controller.motionState === 'snapping' ? ' is-snapping' : ''}`}
+      className={`driver-bottom-sheet driver-bottom-sheet--${controller.snap} bg-[rgba(var(--bg-app-color),0.70)] backdrop-blur-[18px] backdrop-saturate-[115%] backdrop-contrast-[92%]${controller.motionState === 'snapping' ? ' is-snapping' : ''}`}
       style={{ height: `${controller.heightPercent}%` }}
     >
       <BottomSheetInteractionButtons
-        isVisible={controller.showInteractionButtons}
+        shouldRender={chromeController.shouldRenderOverSheetChrome}
+        opacity={chromeController.overSheetChromeOpacity}
+        translateYPx={chromeController.overSheetChromeTranslateYPx}
+        isInteractive={chromeController.isOverSheetChromeInteractive}
         isLocatingCurrentLocation={chromeController.isLocatingCurrentLocation}
         onLocateCurrentLocation={() => {
           void chromeController.locateCurrentLocation()

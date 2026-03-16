@@ -21,6 +21,27 @@ function LeadingIcon({ id }: { id: StopDetailInfoRowDisplay['id'] }) {
     return <MessageIcon aria-hidden="true" className={className} />
   }
 
+  if (id === 'customer') {
+    return (
+      <svg aria-hidden="true" className={className} fill="none" viewBox="0 0 24 24">
+        <path
+          d="M12 12C14.7614 12 17 9.76142 17 7C17 4.23858 14.7614 2 12 2C9.23858 2 7 4.23858 7 7C7 9.76142 9.23858 12 12 12Z"
+          stroke="currentColor"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth="1.75"
+        />
+        <path
+          d="M4 21C4.9 17.9 7.9 16 12 16C16.1 16 19.1 17.9 20 21"
+          stroke="currentColor"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth="1.75"
+        />
+      </svg>
+    )
+  }
+
   return <ItemIcon aria-hidden="true" className={className} />
 }
 

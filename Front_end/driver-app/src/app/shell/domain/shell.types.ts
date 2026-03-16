@@ -18,6 +18,7 @@ export type SlidingPagePageId =
   | 'test-sliding-page'
   | 'notifications'
   | 'route-stop-order-items'
+  | 'route-stop-customer'
   | 'route-stop-failure-form'
   | 'map-app-chooser'
   | 'phone-call-chooser'
@@ -41,6 +42,7 @@ export type SlidingPagePageParamsMap = {
   'test-sliding-page': { title: string }
   notifications: undefined
   'route-stop-order-items': { stopClientId: string }
+  'route-stop-customer': { stopClientId: string }
   'route-stop-failure-form': { stopClientId: string; orderId: number }
   'map-app-chooser': { destination: MapNavigationDestination }
   'phone-call-chooser': { options: PhoneCallOption[] }

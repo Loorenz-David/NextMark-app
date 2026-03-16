@@ -212,6 +212,11 @@ export function useStopDetailController(stopClientId?: string) {
           stopClientId: stop.stopClientId,
         })
       },
+      openStopCustomer: () => {
+        openSlidingPage('route-stop-customer', {
+          stopClientId: stop.stopClientId,
+        })
+      },
       openOrderCases: () => {
         if (!stop.order?.id || !stop.order.client_id) {
           return

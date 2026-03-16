@@ -1,3 +1,4 @@
+import { ItemIcon } from '@/assets/icons'
 import type { AssignedRouteStopRowDisplay } from '../domain/assignedRouteDisplay.types'
 
 type AssignedRouteStopRowProps = {
@@ -73,8 +74,11 @@ export function AssignedRouteStopRow({
           </div>
         ) : null}
 
-        {stop.itemSummary ? (
-          <p className="mt-5 text-sm leading-snug text-white/80">{stop.itemSummary}</p>
+        {stop.itemCountLabel ? (
+          <div className="mt-5 flex items-center gap-2 text-sm leading-snug text-white/80">
+            <ItemIcon aria-hidden="true" className="h-4 w-4 shrink-0 text-white/72" />
+            <p className="font-medium text-white/88">{stop.itemCountLabel}</p>
+          </div>
         ) : null}
 
         {stop.phoneLine ? (

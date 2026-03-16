@@ -5,6 +5,7 @@ import {
   MapAppChooserPage,
   PhoneCallChooserPage,
   RouteThreeDotMenuPage,
+  StopCustomerPage,
   StopFailureFormPage,
   StopOrderItemsPage,
 } from '@/features/route-execution'
@@ -77,6 +78,12 @@ export function SlidingPageSurface() {
         ) : null}
         {slidingPageState.currentPage?.page === 'route-stop-order-items' ? (
           <StopOrderItemsPage
+            onClose={closeSlidingPage}
+            stopClientId={slidingPageState.currentPage.params.stopClientId}
+          />
+        ) : null}
+        {slidingPageState.currentPage?.page === 'route-stop-customer' ? (
+          <StopCustomerPage
             onClose={closeSlidingPage}
             stopClientId={slidingPageState.currentPage.params.stopClientId}
           />

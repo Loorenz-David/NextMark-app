@@ -113,7 +113,13 @@ function buildItemSummary(order: DriverOrderRecord | null) {
   const labels = order.items.allIds
     .map((clientId) => order.items.byClientId[clientId])
     .filter((item): item is DriverOrderRecord['items']['byClientId'][string] => Boolean(item))
-    .map((item) => item.article_number.trim())
+    .map((item) => {
+      if (typeof item.quantity === 'number' && !Number.isNaN(item.quantity)) {
+        return `Qty ${item.quantity}`
+      }
+
+      return null
+    })
     .filter(Boolean)
 
   if (labels.length === 0) {

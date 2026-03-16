@@ -8,6 +8,7 @@ import { buildStopPhoneCallOptions } from './buildStopPhoneCallOptions'
 type StopDetailPageDisplayDependencies = {
   openTestSlidingPage: (title: string) => void
   openStopOrderItems: () => void
+  openStopCustomer: () => void
   openOrderCases: () => void
   openFailureForm: () => void
   navigateToStop: () => void
@@ -36,6 +37,23 @@ function formatExpectedArrivalTime(value: string | null) {
     hour: '2-digit',
     minute: '2-digit',
   }).format(parsed)
+}
+
+function formatItemCountLabel(itemCount: number) {
+  return `${itemCount} item${itemCount === 1 ? '' : 's'}`
+}
+
+function formatCustomerName(stop: AssignedStopViewModel) {
+  const parts = [
+    stop.order?.client_first_name?.trim(),
+    stop.order?.client_last_name?.trim(),
+  ].filter((value): value is string => Boolean(value))
+
+  if (parts.length === 0) {
+    return 'Customer details not set'
+  }
+
+  return parts.join(' ')
 }
 
 export function mapStopDetailToPageDisplay(
@@ -83,8 +101,14 @@ export function mapStopDetailToPageDisplay(
       {
         id: 'items',
         label: 'Items',
-        value: stop.itemSummary ?? 'No items',
+        value: stop.orderItems.length > 0 ? formatItemCountLabel(stop.orderItems.length) : 'No items',
         onPress: deps.openStopOrderItems,
+      },
+      {
+        id: 'customer',
+        label: 'Customer',
+        value: formatCustomerName(stop),
+        onPress: deps.openStopCustomer,
       },
       {
         id: 'service-time',

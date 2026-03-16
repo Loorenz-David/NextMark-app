@@ -16,7 +16,6 @@ export function RouteExecutionShellProvider({ children }: PropsWithChildren) {
   const orderStateRegistry = useDriverOrderStateRegistry()
   const [store] = useState(() => createRouteExecutionStore(createInitialRouteExecutionStoreState()))
   const [stopDetailTransitionDirection, setStopDetailTransitionDirection] = useState<'forward' | 'backward'>('forward')
-  const [lastOpenedStopClientId, setLastOpenedStopClientId] = useState<string | null>(null)
   const [routeViewMode, setRouteViewMode] = useState<'route' | 'search'>('route')
   const [routeSearchQuery, setRouteSearchQuery] = useState('')
 
@@ -53,9 +52,8 @@ export function RouteExecutionShellProvider({ children }: PropsWithChildren) {
     setRouteSearchQuery('')
   }, [])
 
-  const prepareRouteStopDetailTransition = useCallback((stopClientId: string) => {
+  const prepareRouteStopDetailTransition = useCallback((previousStopClientId: string | null, stopClientId: string) => {
     const assignedRoute = store.getState().workspace.route
-    const previousStopClientId = lastOpenedStopClientId
 
     if (previousStopClientId === stopClientId) {
       return false
@@ -67,9 +65,8 @@ export function RouteExecutionShellProvider({ children }: PropsWithChildren) {
     const nextIndex = assignedRoute?.stops.findIndex((candidate) => candidate.stopClientId === stopClientId) ?? -1
 
     setStopDetailTransitionDirection(previousIndex >= 0 && nextIndex >= 0 && nextIndex < previousIndex ? 'backward' : 'forward')
-    setLastOpenedStopClientId(stopClientId)
     return true
-  }, [lastOpenedStopClientId, store])
+  }, [store])
 
   const openRouteSearch = useCallback(() => {
     setRouteViewMode('search')

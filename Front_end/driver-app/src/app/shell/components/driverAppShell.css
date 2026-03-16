@@ -12,9 +12,14 @@
   position: fixed;
   top: 0;
   left: 0;
+  right: 0;
   z-index: 30;
-  padding: 1rem 0 0 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1rem 0;
   pointer-events: auto;
+  will-change: transform, opacity;
 }
 
 .driver-map-surface {
@@ -431,7 +436,7 @@
 
 @media (max-width: 720px) {
   .driver-shell__topbar {
-    padding: 0.75rem 0 0 0.75rem;
+    padding: 0.75rem 0.75rem 0;
   }
 
  

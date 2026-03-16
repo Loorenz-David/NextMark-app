@@ -1,5 +1,5 @@
 import { useSyncExternalStore } from 'react'
-import { MessageIcon } from '@/assets/icons'
+import { BellIcon } from '@/assets/icons'
 import { useDriverAppShell } from '@/app/shell'
 import {
   getDriverNotificationSnapshot,
@@ -21,7 +21,7 @@ export function DriverNotificationsButton() {
       onClick={() => openSlidingPage('notifications', undefined)}
       type="button"
     >
-      <MessageIcon className="h-5 w-5 text-[rgb(var(--bg-strong-light))]" />
+      <BellIcon className="h-5 w-5 text-[rgb(var(--bg-strong-light))]" />
       {unreadCount > 0 ? (
         <span className="absolute -right-1 -top-1 inline-flex min-h-5 min-w-5 items-center justify-center rounded-full bg-[#f26a63] px-1 text-[10px] font-semibold text-white">
           {unreadCount > 99 ? '99+' : unreadCount}
