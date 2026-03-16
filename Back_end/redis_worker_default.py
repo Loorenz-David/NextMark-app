@@ -35,7 +35,7 @@ def main() -> None:
             connection=connection,
             name=os.environ.get("RQ_WORKER_NAME", "worker-default"),
         )
-        worker.work()
+        worker.work(burst=False)
 
 
 if __name__ == "__main__":
