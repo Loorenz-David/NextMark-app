@@ -20,16 +20,19 @@ def main() -> None:
         except Exception:
             app.logger.exception("Redis dispatcher failed startup for %s.", describe_redis_uri(redis_uri))
             raise
-
-        while True:
-            
-            claimed = dispatch_pending_events(
-                dispatcher_id=dispatcher_id,
-                batch_size=app.config.get("REDIS_DISPATCH_BATCH_SIZE", 50),
-                lease_seconds=app.config.get("REDIS_DISPATCHER_LEASE_SECONDS", 120),
-            )
-            time.sleep(1 if claimed else 3)
-
+        try:
+            while True:
+                
+                claimed = dispatch_pending_events(
+                    dispatcher_id=dispatcher_id,
+                    batch_size=app.config.get("REDIS_DISPATCH_BATCH_SIZE", 50),
+                    lease_seconds=app.config.get("REDIS_DISPATCHER_LEASE_SECONDS", 120),
+                )
+                print("DISPATCH RESULT:", claimed, flush=True)
+                time.sleep(1 if claimed else 3)
+        except Exception as e:
+            print("DISPATCH ERROR:", str(e), flush=True)
+            raise
 
 if __name__ == "__main__":
     main()

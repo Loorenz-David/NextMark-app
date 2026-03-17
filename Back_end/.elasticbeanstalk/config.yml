@@ -1,6 +1,6 @@
 branch-defaults:
   main:
-    environment: nextmark-workers
+    environment: nextmarkapp-prod
     group_suffix: null
 environment-defaults:
   delivery-env:
