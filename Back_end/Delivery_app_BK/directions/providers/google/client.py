@@ -44,12 +44,9 @@ class GoogleDirectionsProvider(DirectionsProvider):
 
     def compute(self, request: DirectionsRequest) -> DirectionsResult:
 
-        try:
-            from google.maps import routing_v2
-        except Exception as exc:  # pragma: no cover - runtime dependency
-            raise ValidationFailed("google.maps.routing_v2 is not available.") from exc
-
+      
         client = get_routes_client()
+
 
         payload, field_mask = GoogleDirectionsRequestMapper.build_request(request)
 
