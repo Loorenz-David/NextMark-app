@@ -41,9 +41,16 @@ def get_current_redis_connection() -> Redis:
     return get_redis_connection(get_redis_uri())
 
 
+class DebugRedis(Redis):
+    def execute_command(self, *args, **kwargs):
+        print(f"[REDIS CMD] {args}", flush=True)
+        return super().execute_command(*args, **kwargs)
+    
+
 def get_rq_redis_connection(redis_uri: str) -> Redis:
     pool = get_redis_pool(redis_uri)
-    return Redis(connection_pool=pool)
+    #return Redis(connection_pool=pool)
+    return DebugRedis(connection_pool=pool)
 
 
 def get_current_rq_redis_connection() -> Redis:

@@ -9,10 +9,14 @@ from rq import Queue
 from Delivery_app_BK.services.infra.redis import get_current_rq_redis_connection
 
 
-EVENTS_QUEUE = "{events}"
-MESSAGING_QUEUE = "{messaging}"
-REALTIME_QUEUE = "{realtime}"
-DEFAULT_QUEUE = "{default}"
+HASH_TAG = "{rq}"
+
+EVENTS_QUEUE = f"{HASH_TAG}:events"
+DEFAULT_QUEUE = f"{HASH_TAG}:default"
+REALTIME_QUEUE = f"{HASH_TAG}:realtime"
+MESSAGING_QUEUE = f"{HASH_TAG}:messaging"
+
+
 
 
 @dataclass(frozen=True)
@@ -33,7 +37,18 @@ def get_queue_names() -> QueueNames:
 
 
 def get_queue(name: str, connection: Redis | None = None) -> Queue:
-    return Queue(name, connection=connection or get_current_rq_redis_connection(), default_timeout=600)
+    prefix = f"rq:{name}"
+    print(
+        f"[RQ DEBUG] Creating queue | name={name} | prefix={prefix}",
+        flush=True
+    )
+    return Queue(
+        name, 
+        connection=connection or get_current_rq_redis_connection(), 
+        default_timeout=600,
+        prefix=f"rq:{name}"
+        
+        )
 
 
 def get_named_queue(queue_key: str, connection: Redis | None = None) -> Queue:
