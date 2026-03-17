@@ -15,7 +15,7 @@ case "$APP_ROLE" in
     ;;
   dispatcher)
     echo "Using Procfile.dispatcher"
-    cp "Procfile.dispatcher"
+    cp Procfile.dispatcher Procfile
     ;;
   web|"")
     echo "Using default Procfile (web)"
