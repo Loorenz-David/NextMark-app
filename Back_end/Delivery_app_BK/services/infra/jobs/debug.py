@@ -20,10 +20,10 @@ class FailedJobRecord:
 def get_queue_summary() -> dict[str, int]:
     names = get_queue_names()
     return {
-        names.events: get_named_queue("{events}").count,
-        names.messaging: get_named_queue("{messaging}").count,
-        names.realtime: get_named_queue("{realtime}").count,
-        names.default: get_named_queue("{default}").count,
+        names.events: get_named_queue("events").count,
+        names.messaging: get_named_queue("messaging").count,
+        names.realtime: get_named_queue("realtime").count,
+        names.default: get_named_queue("default").count,
     }
 
 

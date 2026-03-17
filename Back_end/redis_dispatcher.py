@@ -28,7 +28,6 @@ def main() -> None:
                     batch_size=app.config.get("REDIS_DISPATCH_BATCH_SIZE", 50),
                     lease_seconds=app.config.get("REDIS_DISPATCHER_LEASE_SECONDS", 120),
                 )
-                print("DISPATCH RESULT:", claimed, flush=True)
                 time.sleep(1 if claimed else 3)
         except Exception as e:
             print("DISPATCH ERROR:", str(e), flush=True)
