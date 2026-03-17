@@ -8,7 +8,8 @@ SCHEDULER_ENV="nextmark-scheduler"
 DISPATCHER_ENV="nextmarkapp-dispatcher"
 
 echo "Deploying to web environment..."
-eb deploy $WEB_ENV
+eb use $WEB_ENV
+eb deploy 
 
 echo "Fetching latest version label..."
 VERSION=$(eb status $WEB_ENV | grep "Deployed Version" | awk '{print $3}')
