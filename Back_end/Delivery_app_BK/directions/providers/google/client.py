@@ -1,7 +1,7 @@
 from __future__ import annotations
-
+from functools import lru_cache
 import os
-from typing import Any, Dict
+
 
 from Delivery_app_BK.errors import ValidationFailed
 from Delivery_app_BK.directions.domain.models import DirectionsRequest, DirectionsResult
@@ -10,13 +10,27 @@ from Delivery_app_BK.directions.providers.google.mapper import (
     GoogleDirectionsRequestMapper,
     GoogleDirectionsResponseMapper,
 )
-import json
-import base64
-import os
+
 from google.oauth2 import service_account
 from google.maps import routing_v2
 
-from google.auth.transport.requests import Request
+
+
+from Delivery_app_BK.lib.secrets.google_credentials import (
+    get_google_credentials_dict,
+)
+
+
+@lru_cache()
+def get_routes_client():
+    credentials_info = get_google_credentials_dict()
+
+    credentials = service_account.Credentials.from_service_account_info(
+        credentials_info,
+        scopes=["https://www.googleapis.com/auth/cloud-platform"],
+    )
+
+    return routing_v2.RoutesClient(credentials=credentials)
 
 
 class GoogleDirectionsProvider(DirectionsProvider):
@@ -35,28 +49,7 @@ class GoogleDirectionsProvider(DirectionsProvider):
         except Exception as exc:  # pragma: no cover - runtime dependency
             raise ValidationFailed("google.maps.routing_v2 is not available.") from exc
 
-        credentials_json = os.environ.get("GOOGLE_SERVICE_ACCOUNT_JSON")
-        if not credentials_json:
-            raise ValidationFailed("GOOGLE_SERVICE_ACCOUNT_JSON is not configured.")
-     
-        try:
-            credentials_info = json.loads(credentials_json)
-            
-            if "private_key" in credentials_info:
-                credentials_info["private_key"] = credentials_info["private_key"].replace("\\n", "\n")
-        except Exception as exc:
-            raise ValidationFailed(f"Invalid GOOGLE_SERVICE_ACCOUNT_JSON: {exc}") from exc
-        
-       
-
-        credentials = service_account.Credentials.from_service_account_info(
-            credentials_info,
-            scopes=["https://www.googleapis.com/auth/cloud-platform"],
-        )
-
-        
-
-        client = routing_v2.RoutesClient(credentials=credentials)
+        client = get_routes_client()
 
         payload, field_mask = GoogleDirectionsRequestMapper.build_request(request)
 

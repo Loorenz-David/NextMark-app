@@ -37,11 +37,7 @@ def get_queue_names() -> QueueNames:
 
 
 def get_queue(name: str, connection: Redis | None = None) -> Queue:
-    prefix = f"rq:{name}"
-    print(
-        f"[RQ DEBUG] Creating queue | name={name} | prefix={prefix}",
-        flush=True
-    )
+    
     return Queue(
         name, 
         connection=connection or get_current_rq_redis_connection(), 
