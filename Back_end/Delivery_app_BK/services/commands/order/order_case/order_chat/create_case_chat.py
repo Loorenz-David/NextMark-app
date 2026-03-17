@@ -21,7 +21,7 @@ def create_case_chat(ctx: ServiceContext):
     ctx.set_relationship_map(relationship_map)
     instances = []
 
-
+    
     user_id = ctx.identity.get('user_id') 
     
     if not user_id:

@@ -277,6 +277,7 @@ def _assign_segment_polylines(
 
 
 def calculate_score(result:OptimizationResult):
+    
     score = (
         result.total_distance_meters
         + 60 * result.total_duration_seconds

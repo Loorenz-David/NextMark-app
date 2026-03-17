@@ -35,11 +35,14 @@ def dispatch_pending_events(*, dispatcher_id: str, batch_size: int, lease_second
     claimed_count = 0
     if recovered:
         db.session.commit()
-
+   
     for target in DISPATCH_TARGETS:
+        
         claimed_rows = _claim_rows(target, dispatcher_id=dispatcher_id, batch_size=batch_size)
         claimed_count += len(claimed_rows)
+        
         for row in claimed_rows:
+           
             try:
                 enqueue_job(
                     queue_key="events",

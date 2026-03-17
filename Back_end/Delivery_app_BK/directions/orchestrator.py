@@ -45,7 +45,9 @@ def refresh_route_solution_incremental(
     )
 
     provider = provider or GoogleDirectionsProvider()
+   
     result = provider.compute(build_result.request)
+   
    
     return apply_directions_result(
         route_solution=route_solution,

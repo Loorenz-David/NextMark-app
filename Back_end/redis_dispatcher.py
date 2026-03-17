@@ -22,6 +22,7 @@ def main() -> None:
             raise
 
         while True:
+            
             claimed = dispatch_pending_events(
                 dispatcher_id=dispatcher_id,
                 batch_size=app.config.get("REDIS_DISPATCH_BATCH_SIZE", 50),

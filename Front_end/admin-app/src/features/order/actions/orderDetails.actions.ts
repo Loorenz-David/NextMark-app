@@ -25,7 +25,7 @@ export const useOrderDetailActions = ({ onClose }: { onClose?: () => void } = {}
 
   const openOrderCases = useCallback((payload: OrderDetailOpenCasesPayload) => {
     sectionManager.open({
-      key: 'costumer.details', //'orderCase.orderCases',
+      key: 'orderCase.orderCases', 
       payload,
       parentParams: { borderLeft: 'rgb(var(--color-turques-r),0.7)' },
     })

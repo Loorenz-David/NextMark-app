@@ -13,7 +13,10 @@ case "$APP_ROLE" in
     echo "Using Procfile.scheduler"
     cp Procfile.scheduler Procfile
     ;;
-
+  dispatcher)
+    echo "Using Procfile.dispatcher"
+    cp "Procfile.dispatcher"
+    ;;
   web|"")
     echo "Using default Procfile (web)"
     ;;

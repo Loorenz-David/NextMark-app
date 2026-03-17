@@ -35,17 +35,61 @@ class GoogleRouteOptimizationProvider(RouteOptimizationProvider):
             raise ValidationFailed("GOOGLE_ROUTE_OPTIMIZATION_PROJECT_ID is not configured.")
 
         credentials_json = os.environ.get("GOOGLE_SERVICE_ACCOUNT_JSON")
-
         if not credentials_json:
-            raise ValidationFailed("GOOGLE_APPLICATION_CREDENTIALS is not configured.")
+            raise ValidationFailed("GOOGLE_SERVICE_ACCOUNT_JSON is not configured.")
+     
+        try:
+            credentials_info = json.loads(credentials_json)
+            
+            if "private_key" in credentials_info:
+                credentials_info["private_key"] = credentials_info["private_key"].replace("\\n", "\n")
+        except Exception as exc:
+            raise ValidationFailed(f"Invalid GOOGLE_SERVICE_ACCOUNT_JSON: {exc}") from exc
+        
+
 
         credentials = service_account.Credentials.from_service_account_info(
-            json.loads(credentials_json)
+            credentials_info,
+            scopes=["https://www.googleapis.com/auth/cloud-platform"],
         )
-
+       
         self.parent = f"projects/{project_id}"
         self.location = location
 
         self.client = routeoptimization_v1.RouteOptimizationClient(
             credentials=credentials
         )
+
+    def optimize(self, request: OptimizationRequest) -> OptimizationResult:
+        """
+        Executes route optimization using Google Route Optimization API.
+        """
+        
+        google_request = GoogleRequestMapper.build_request(
+            parent=self.parent,
+            request=request,
+        )
+
+        try:
+            response = self.client.optimize_tours(request=google_request)
+
+        except Exception as e:
+            print("GOOGLE API ERROR:", e, flush=True)
+            raise ValidationFailed(f"Google Route Optimization API failed: {e}") from e
+
+
+        try:
+            response_dict = MessageToDict(response._pb)
+
+        except Exception:
+            print("Could not convert response to dict", flush=True)
+
+        result = GoogleResponseMapper.parse_response(
+            response_dict=response_dict,
+            request=request,
+        )
+
+        if result is None:
+            raise ValidationFailed("Google optimization returned no result")
+
+        return result
