@@ -5,7 +5,7 @@ set -e
 WEB_ENV="nextmarkapp-prod"
 WORKER_ENV="nextmark-workers"
 SCHEDULER_ENV="nextmark-scheduler"
-DISPATCHER_ENV="nextmarkapp-dispacher"
+DISPATCHER_ENV="nextmarkapp-dispatcher"
 
 echo "Deploying to web environment..."
 eb deploy $WEB_ENV
@@ -22,7 +22,7 @@ WORKER_PID=$!
 eb deploy $SCHEDULER_ENV --version $VERSION &
 SCHED_PID=$!
 
-eb deploy $DISPATCHER_ENV --VERSION $VERSION &
+eb deploy $DISPATCHER_ENV --version $VERSION &
 DISPATCH_PID=$!
 
 wait $WORKER_PID
