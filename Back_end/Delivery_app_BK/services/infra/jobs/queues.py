@@ -9,10 +9,10 @@ from rq import Queue
 from Delivery_app_BK.services.infra.redis import get_current_rq_redis_connection
 
 
-EVENTS_QUEUE = "events"
-MESSAGING_QUEUE = "messaging"
-REALTIME_QUEUE = "realtime"
-DEFAULT_QUEUE = "default"
+EVENTS_QUEUE = "{events}"
+MESSAGING_QUEUE = "{messaging}"
+REALTIME_QUEUE = "{realtime}"
+DEFAULT_QUEUE = "{default}"
 
 
 @dataclass(frozen=True)

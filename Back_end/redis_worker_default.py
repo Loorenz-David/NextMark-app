@@ -28,9 +28,9 @@ def main() -> None:
         worker_class = get_worker_class()
         worker = worker_class(
             [
-                get_named_queue("events", connection=connection),
-                get_named_queue("default", connection=connection),
-                get_named_queue("realtime", connection=connection),
+                get_named_queue("{events}", connection=connection),
+                get_named_queue("{default}", connection=connection),
+                get_named_queue("{realtime}", connection=connection),
             ],
             connection=connection,
             name=os.environ.get("RQ_WORKER_NAME", "worker-default"),

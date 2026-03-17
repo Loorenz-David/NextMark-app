@@ -27,7 +27,7 @@ def main() -> None:
         connection = get_current_rq_redis_connection()
         worker_class = get_worker_class()
         worker = worker_class(
-            [get_named_queue("messaging", connection=connection)],
+            [get_named_queue("{messaging}", connection=connection)],
             connection=connection,
             name=os.environ.get("RQ_WORKER_NAME", "worker-io"),
         )
