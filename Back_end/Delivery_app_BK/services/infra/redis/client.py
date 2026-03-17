@@ -40,12 +40,21 @@ def get_redis_connection(redis_uri: str, *, decode_responses: bool = True) -> Re
 def get_current_redis_connection() -> Redis:
     return get_redis_connection(get_redis_uri())
 
+from redis.client import Pipeline
 
+class DebugPipeline(Pipeline):
+    def execute(self, *args, **kwargs):
+        print(f"[REDIS PIPELINE EXECUTE] {self.command_stack}", flush=True)
+        return super().execute(*args, **kwargs)
+    
 class DebugRedis(Redis):
     def execute_command(self, *args, **kwargs):
         print(f"[REDIS CMD] {args}", flush=True)
         return super().execute_command(*args, **kwargs)
-    
+    def pipeline(self, *args, **kwargs):
+        pipe = super().pipeline(*args, **kwargs)
+        pipe.__class__ = DebugPipeline
+        return pipe
 
 def get_rq_redis_connection(redis_uri: str) -> Redis:
     pool = get_redis_pool(redis_uri)

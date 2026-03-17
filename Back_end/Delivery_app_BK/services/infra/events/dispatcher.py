@@ -56,6 +56,8 @@ def dispatch_pending_events(*, dispatcher_id: str, batch_size: int, lease_second
                 row.claimed_at = None
                 row.last_error = None
             except Exception as exc:
+                print('Error',flush=True)
+                print(Exception,flush=True)
                 _mark_claim_failed(row, str(exc))
         db.session.commit()
 

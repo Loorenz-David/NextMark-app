@@ -25,7 +25,10 @@ def enqueue_job(
 ) -> Job:
     queue = get_named_queue(queue_key)
     policy = retry_policy or DEFAULT_RETRY_POLICY
-    return queue.enqueue_call(
+    
+    print(f"[ENQUEUE] fn={fn} args={args}", flush=True)
+
+    job = queue.enqueue_call(
         func=fn,
         args=args,
         kwargs=kwargs or {},
@@ -35,6 +38,10 @@ def enqueue_job(
         result_ttl=result_ttl,
         failure_ttl=failure_ttl,
     )
+
+    print("[ENQUEUE] success", flush=True)
+
+    return job
 
 
 def schedule_job(
