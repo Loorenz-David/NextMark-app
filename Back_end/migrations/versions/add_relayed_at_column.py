@@ -22,7 +22,7 @@ def upgrade():
     
     event_tables = [
         'order_event',
-        'delivery_plan_event',
+        'plan_event',  # delivery_plan_event model uses __tablename__ = 'plan_event'
         'local_delivery_plan_event',
         'route_solution_event',
         'route_solution_stop_event',
@@ -56,7 +56,7 @@ def downgrade():
     
     event_tables = [
         'order_event',
-        'delivery_plan_event',
+        'plan_event',  # delivery_plan_event model uses __tablename__ = 'plan_event'
         'local_delivery_plan_event',
         'route_solution_event',
         'route_solution_stop_event',
