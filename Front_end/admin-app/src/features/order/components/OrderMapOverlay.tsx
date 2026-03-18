@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { EraseIcon, MultiSelectIcon } from '@/assets/icons'
 import { BasicButton } from '@/shared/buttons/BasicButton'
 import { useMobile } from '@/app/contexts/MobileContext'
+import { DriverLiveMarkerOverlay } from '@/realtime/driverLive'
 import { MapMultiSelectOverlay } from '@/shared/map/components/MapMultiSelectOverlay'
 import {
   DRAWING_SELECTION_CLEAR_EVENT,
@@ -140,6 +141,7 @@ export const OrderMapOverlay = () => {
         )}
       />
       <OrderMarkerGroupOverlay />
+      <DriverLiveMarkerOverlay />
     </>
   )
 }

@@ -7,6 +7,8 @@ import type { OrderState } from '../types/orderState'
 import { AccordionSection } from '@/shared/layout/AccordionSection'
 import type { PropsWithChildren } from 'react'
 import { formatIsoDate } from '@/shared/utils/formatIsoDate'
+import { ClientFormLinkButton } from './clientFormLink/ClientFormLinkButton'
+import { ClientFormLinkStatus } from './clientFormLink/ClientFormLinkStatus'
 
 type OrderDetailSummaryProps = {
   order: Order | null
@@ -135,6 +137,17 @@ export const OrderDetailSummary = ({ order, orderState }: OrderDetailSummaryProp
                 <p className="text-xs text-[var(--color-muted)]">Tracking number</p>
                   <p className="break-all">{asText(order?.tracking_number)}</p>
               </div>
+
+              {/* ── Client form link section ── */}
+              {typeof order?.id === 'number' && (
+                <div className="space-y-2 border-t border-[var(--color-border)] pt-3">
+                  <ClientFormLinkStatus
+                    clientFormSubmittedAt={order.client_form_submitted_at}
+                    tokenHash={order.client_form_token_hash}
+                  />
+                  <ClientFormLinkButton orderId={order.id} />
+                </div>
+              )}
             </>
           </SummaryCard>
 

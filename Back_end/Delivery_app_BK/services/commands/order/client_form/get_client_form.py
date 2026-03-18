@@ -9,26 +9,24 @@ Returns: { "reference_number": str, "items": [...], "team_name": str, "expires_a
 Raises: TokenInvalidError | TokenExpiredError | TokenAlreadyUsedError
 """
 
-import hashlib
-from datetime import datetime, timezone
-
-# TODO: import db, Order, Team models
-# TODO: define TokenInvalidError, TokenExpiredError, TokenAlreadyUsedError in errors/
+from Delivery_app_BK.services.commands.order.client_form._validate_token import validate_and_get_order
 
 
 def get_client_form_data(token: str) -> dict:
-    token_hash = hashlib.sha256(token.encode("utf-8")).hexdigest()
+    order = validate_and_get_order(token)
 
-    # TODO: order = Order.query.filter_by(client_form_token_hash=token_hash).first()
-    # TODO: if not order: raise TokenInvalidError()
-    # TODO: if datetime.now(timezone.utc) > order.client_form_token_expires_at: raise TokenExpiredError()
-    # TODO: if order.client_form_submitted_at is not None: raise TokenAlreadyUsedError()
+    # Resolve team name; the Order model has a `team` relationship to Team.
+    team = getattr(order, "team", None)
+    team_name = team.name if team is not None else str(order.team_id)
 
-    # TODO: return safe payload:
-    # {
-    #     "reference_number": order.reference_number,
-    #     "team_name": order.team.name,
-    #     "items": [{"name": i.name, "quantity": i.quantity} for i in order.items],
-    #     "expires_at": order.client_form_token_expires_at.isoformat(),
-    # }
-    raise NotImplementedError
+    items = [
+        {"name": item.name, "quantity": item.quantity}
+        for item in (order.items or [])
+    ]
+
+    return {
+        "reference_number": order.reference_number,
+        "team_name": team_name,
+        "items": items,
+        "expires_at": order.client_form_token_expires_at.isoformat(),
+    }

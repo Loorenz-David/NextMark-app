@@ -15,23 +15,31 @@ import hashlib
 import secrets
 from datetime import datetime, timedelta, timezone
 
-# TODO: import db, Order model
+from Delivery_app_BK.models import db, Order
+from Delivery_app_BK.errors import NotFound
 
 
 DEFAULT_TTL_HOURS = 72
 
 
 def generate_client_form_token(order_id: int, team_id: int, ttl_hours: int = DEFAULT_TTL_HOURS) -> dict:
-    # TODO: fetch order, validate it belongs to team_id, raise 404 otherwise
+    order: Order | None = (
+        db.session.query(Order)
+        .filter(Order.id == order_id, Order.team_id == team_id)
+        .first()
+    )
+
+    if order is None:
+        raise NotFound(f"Order {order_id} not found.")
 
     raw_token = secrets.token_urlsafe(32)
     token_hash = hashlib.sha256(raw_token.encode("utf-8")).hexdigest()
     expires_at = datetime.now(timezone.utc) + timedelta(hours=ttl_hours)
 
-    # TODO: set on order row:
-    #   order.client_form_token_hash = token_hash
-    #   order.client_form_token_expires_at = expires_at
-    #   order.client_form_submitted_at = None   ← clears previous submission on regenerate
-    # TODO: db.session.commit()
+    order.client_form_token_hash = token_hash
+    order.client_form_token_expires_at = expires_at
+    order.client_form_submitted_at = None   # reset previous submission on regenerate
 
-    return {"raw_token": raw_token, "expires_at": expires_at}
+    db.session.commit()
+
+    return {"raw_token": raw_token, "expires_at": order.client_form_token_expires_at}

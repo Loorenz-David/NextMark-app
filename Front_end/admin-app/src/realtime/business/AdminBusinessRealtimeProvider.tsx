@@ -3,9 +3,14 @@ import { useEffect, useMemo, useSyncExternalStore } from 'react'
 import {
   createAdminBusinessChannel,
   type BusinessEventEnvelope,
+  type ClientFormSubmittedPayload,
 } from '@shared-realtime'
 import { sessionStorage } from '@/features/auth/login/store/sessionStorage'
 import { adminRealtimeClient } from '../client'
+import {
+  subscribeToClientFormSubmitted,
+  unsubscribeFromClientFormSubmitted,
+} from '../clientForm/clientForm.realtime'
 import { getOrder } from '@/features/order/api/orderApi'
 import { useOrderModel } from '@/features/order/domain/useOrderModel'
 import {
@@ -240,6 +245,20 @@ export function AdminBusinessRealtimeProvider({ children }: PropsWithChildren) {
       void runDedupedPlanRefresh(deliveryPlanId, () => refreshPlanById(deliveryPlanId))
     }
 
+    const handleClientFormSubmitted = (payload: ClientFormSubmittedPayload) => {
+      const order = selectOrderByServerId(payload.order_id)(useOrderStore.getState())
+      if (!order) {
+        return
+      }
+      // Optimistic update so the status badge reflects immediately;
+      // the subsequent deduped refresh will overwrite with the exact server timestamp.
+      updateOrderByClientId(order.client_id, (existing) => ({
+        ...existing,
+        client_form_submitted_at: new Date().toISOString(),
+      }))
+      void runDedupedOrderRefresh(payload.order_id, () => refreshOrderById(payload.order_id))
+    }
+
     const releaseAdminBusiness = adminBusinessChannel.subscribeTeamAdmin((event) => {
       if (!markAdminBusinessEventHandled(event.event_id)) {
         return
@@ -251,8 +270,11 @@ export function AdminBusinessRealtimeProvider({ children }: PropsWithChildren) {
       handleRouteSolutionEvent(event)
     })
 
+    subscribeToClientFormSubmitted(handleClientFormSubmitted)
+
     return () => {
       releaseAdminBusiness()
+      unsubscribeFromClientFormSubmitted(handleClientFormSubmitted)
     }
   }, [
     adminBusinessChannel,

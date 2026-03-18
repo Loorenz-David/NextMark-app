@@ -1,4 +1,3 @@
-import React from "react";
 import { ClientFormPage } from "./features/clientForm/pages/ClientFormPage";
 
 // Token is read from the URL path: /form/<token>

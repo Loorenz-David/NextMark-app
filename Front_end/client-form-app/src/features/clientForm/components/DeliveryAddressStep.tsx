@@ -32,20 +32,23 @@ export const DeliveryAddressStep = () => {
             { key: 'country', label: 'Country', placeholder: 'United States' },
             { key: 'notes', label: 'Delivery notes', placeholder: 'Ring doorbell, apartment 4B…', optional: true },
           ] as const
-        ).map(({ key, label, placeholder, optional }) => (
-          <div key={key} className="space-y-1.5">
-            <label className="text-sm font-medium text-[var(--color-text)]">
-              {label}{' '}
-              {optional && <span className="text-[var(--color-muted)]">(optional)</span>}
-            </label>
-            <input
-              className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
-              value={address[key]}
-              onChange={(e) => setAddress({ [key]: e.target.value })}
-              placeholder={placeholder}
-            />
-          </div>
-        ))}
+        ).map((item) => {
+          const isOptional = 'optional' in item
+          return (
+            <div key={item.key} className="space-y-1.5">
+              <label className="text-sm font-medium text-[var(--color-text)]">
+                {item.label}{' '}
+                {isOptional && <span className="text-[var(--color-muted)]">(optional)</span>}
+              </label>
+              <input
+                className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                value={address[item.key]}
+                onChange={(e) => setAddress({ [item.key]: e.target.value })}
+                placeholder={item.placeholder}
+              />
+            </div>
+          )
+        })}
       </div>
 
       <div className="flex justify-between">

@@ -15,7 +15,14 @@ import {
   useLocalDeliveryMapInteractionActions,
 } from '@/features/plan/planTypes/localDelivery/store/localDeliveryMapInteractionHooks.store'
 import type { LocalDeliveryMarkerGroupLookup } from '@/features/plan/planTypes/localDelivery/store/localDeliveryMapInteraction.store'
-import { selectDriverLivePositions, useDriverLiveStore } from '@/realtime/driverLive'
+import {
+  buildLocalDeliveryDriverLocationMarkers,
+  selectDriverLivePositions,
+  selectDriverLiveVisibility,
+  useDriverLiveMarkerOverlayStore,
+  useDriverLiveStore,
+  useDriverLiveVisibilityStore,
+} from '@/realtime/driverLive'
 import { useShallow } from 'zustand/react/shallow'
 
 type LocalDeliveryMapParams = {
@@ -88,6 +95,7 @@ export const useLocalDeliveryMapFlow = ({
   const lookupSignatureRef = useRef<string>('')
   const { setMarkerLookup, clearMarkerLookup, openGroupOverlay, closeGroupOverlay } = useLocalDeliveryMapInteractionActions()
   const liveDriverPositions = useDriverLiveStore(useShallow(selectDriverLivePositions))
+  const isDriverLiveVisible = useDriverLiveVisibilityStore(selectDriverLiveVisibility)
 
   const handleClickMarker = useCallback((order: Order) => {
     sectionManager.open({
@@ -246,31 +254,49 @@ export const useLocalDeliveryMapFlow = ({
 
   useEffect(() => {
     if (!isActive) {
-      mapManager.clearMarkerLayer(MAP_MARKER_LAYERS.driverLive)
+      mapManager.clearMarkerLayer(MAP_MARKER_LAYERS.driverLiveLocalDelivery)
+      useDriverLiveMarkerOverlayStore.getState().closeOverlay()
       return
     }
 
     const selectedDriverId = selectedRouteSolution?.driver_id ?? null
     if (selectedDriverId == null) {
-      mapManager.clearMarkerLayer(MAP_MARKER_LAYERS.driverLive)
+      mapManager.clearMarkerLayer(MAP_MARKER_LAYERS.driverLiveLocalDelivery)
+      useDriverLiveMarkerOverlayStore.getState().closeOverlay()
       return
     }
 
-    const driverMarker = liveDriverPositions
-      .filter((position) => position.driver_id === selectedDriverId)
-      .map((position) => ({
-        id: `driver-live:${position.driver_id}`,
-        coordinates: position.coords,
-        label: undefined,
-        className: 'driver-live-marker',
-        markerColor: '#ffffff',
-        onClick: () => undefined,
-      }))
+    const { openOverlay, closeOverlay } = useDriverLiveMarkerOverlayStore.getState()
+    const driverMarkers = buildLocalDeliveryDriverLocationMarkers({
+      positions: liveDriverPositions,
+      selectedDriverId,
+      onClick: () => undefined,
+      onMouseEnter: (event, position) => {
+        const markerAnchorEl = event.currentTarget as HTMLElement | null
+        if (!markerAnchorEl) return
 
-    mapManager.setMarkerLayer(MAP_MARKER_LAYERS.driverLive, driverMarker)
-    mapManager.setMarkerLayerVisibility(MAP_MARKER_LAYERS.driverLive, isActive)
+        openOverlay({
+          markerId: `driver-live:local-delivery:${position.driver_id}`,
+          markerAnchorEl,
+          position,
+        })
+      },
+      onMouseLeave: () => {
+        closeOverlay()
+      },
+    })
+
+    mapManager.setMarkerLayer(MAP_MARKER_LAYERS.driverLiveLocalDelivery, driverMarkers)
+    mapManager.setMarkerLayerVisibility(
+      MAP_MARKER_LAYERS.driverLiveLocalDelivery,
+      isActive && isDriverLiveVisible,
+    )
+    if (!isDriverLiveVisible) {
+      closeOverlay()
+    }
   }, [
     isActive,
+    isDriverLiveVisible,
     liveDriverPositions,
     mapManager,
     selectedRouteSolution?.driver_id,
@@ -279,10 +305,11 @@ export const useLocalDeliveryMapFlow = ({
   useEffect(() => {
     if (isActive) return
     mapManager.clearMarkerLayer(MAP_MARKER_LAYERS.localDelivery)
-    mapManager.clearMarkerLayer(MAP_MARKER_LAYERS.driverLive)
+    mapManager.clearMarkerLayer(MAP_MARKER_LAYERS.driverLiveLocalDelivery)
     mapManager.showRoute(null)
     mapManager.reframeToVisibleArea()
     closeGroupOverlay()
+    useDriverLiveMarkerOverlayStore.getState().closeOverlay()
     lookupSignatureRef.current = ''
     clearMarkerLookup()
   }, [clearMarkerLookup, closeGroupOverlay, isActive, mapManager])
@@ -290,9 +317,10 @@ export const useLocalDeliveryMapFlow = ({
   useEffect(() => {
     return () => {
       mapManager.clearMarkerLayer(MAP_MARKER_LAYERS.localDelivery)
-      mapManager.clearMarkerLayer(MAP_MARKER_LAYERS.driverLive)
+      mapManager.clearMarkerLayer(MAP_MARKER_LAYERS.driverLiveLocalDelivery)
       mapManager.showRoute(null)
       closeGroupOverlay()
+      useDriverLiveMarkerOverlayStore.getState().closeOverlay()
       lookupSignatureRef.current = ''
       clearMarkerLookup()
     }

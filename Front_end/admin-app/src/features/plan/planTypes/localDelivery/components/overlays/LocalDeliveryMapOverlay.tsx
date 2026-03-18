@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 
 import { EraseIcon, MultiSelectIcon } from '@/assets/icons'
 import { useMobile } from '@/app/contexts/MobileContext'
+import { DriverLiveMarkerOverlay } from '@/realtime/driverLive'
 import { BasicButton } from '@/shared/buttons/BasicButton'
 import { MapMultiSelectOverlay } from '@/shared/map/components/MapMultiSelectOverlay'
 import {
@@ -117,6 +118,7 @@ export const LocalDeliveryMapOverlay = () => {
         )}
       />
       <LocalDeliveryMarkerGroupOverlay />
+      <DriverLiveMarkerOverlay />
     </>
   )
 }

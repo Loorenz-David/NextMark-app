@@ -4,8 +4,7 @@ import { ClientFormProvider } from '../context/ClientForm.provider'
 import { ClientFormContent } from './ClientFormContent'
 import type { ClientFormMeta, ClientFormStatus } from '../domain/clientForm.types'
 import { fetchClientForm } from '../../../api/clientForm.api'
-
-// TODO: import CheckMarkIcon from local assets (copy from admin-app/src/assets/icons)
+import { CheckMarkIcon } from '../../../assets/icons/CheckMarkIcon'
 
 interface Props {
   token: string
@@ -51,10 +50,9 @@ export const ClientFormPage = ({ token }: Props) => {
     return (
       <main className="mx-auto flex w-full max-w-3xl flex-col items-center gap-4 px-4 py-8 text-center">
         <div className="flex h-14 w-14 items-center justify-center rounded-full bg-emerald-100 text-emerald-700">
-          {/* TODO: <CheckMarkIcon className="h-7 w-7" /> */}
-          ✓
-        </div>
-        <p className="text-lg font-semibold text-[var(--color-text)]">Already submitted</p>
+            <CheckMarkIcon className="h-7 w-7" />
+          </div>
+          <p className="text-lg font-semibold text-[var(--color-text)]">Already submitted</p>
         <p className="text-sm text-[var(--color-muted)]">Your information has already been received. Thank you!</p>
       </main>
     )
@@ -69,8 +67,7 @@ export const ClientFormPage = ({ token }: Props) => {
           className="mx-auto flex w-full max-w-3xl flex-col items-center gap-4 px-4 py-8 text-center"
         >
           <div className="flex h-14 w-14 items-center justify-center rounded-full bg-emerald-100 text-emerald-700">
-            {/* TODO: <CheckMarkIcon className="h-7 w-7" /> */}
-            ✓
+            <CheckMarkIcon className="h-7 w-7" />
           </div>
           <p className="text-lg font-semibold text-[var(--color-text)]">Form submitted</p>
           <p className="text-sm text-[var(--color-muted)]">Your information has been received. Thank you!</p>
