@@ -1,3 +1,5 @@
+import { useShallow } from 'zustand/react/shallow'
+
 import {
   selectAllLocalDeliveryPlans,
   selectLocalDeliveryPlanByClientId,
@@ -7,7 +9,7 @@ import {
 } from '@/features/plan/planTypes/localDelivery/store/localDelivery.slice'
 
 export const useLocalDeliveryPlans = () =>
-  useLocalDeliveryPlanStore(selectAllLocalDeliveryPlans)
+  useLocalDeliveryPlanStore(useShallow(selectAllLocalDeliveryPlans))
 
 export const useLocalDeliveryPlanByClientId = (clientId: string | null | undefined) =>
   useLocalDeliveryPlanStore(selectLocalDeliveryPlanByClientId(clientId))
