@@ -5,12 +5,23 @@ from datetime import datetime, timedelta, timezone
 
 from sqlalchemy.orm import Query
 
-from Delivery_app_BK.models import AppEventOutbox, DeliveryPlanEvent, OrderEvent, db
+from Delivery_app_BK.models import (
+    AppEventOutbox,
+    DeliveryPlanEvent,
+    LocalDeliveryPlanEvent,
+    OrderEvent,
+    RouteSolutionEvent,
+    RouteSolutionStopEvent,
+    db,
+)
 from Delivery_app_BK.services.infra.jobs import DEFAULT_RETRY_POLICY, enqueue_job
 from Delivery_app_BK.services.infra.jobs.tasks.events import (
     process_app_event_outbox_job,
     process_delivery_plan_event_job,
+    process_local_delivery_plan_event_job,
     process_order_event_job,
+    process_route_solution_event_job,
+    process_route_solution_stop_event_job,
 )
 
 MAX_DISPATCH_ATTEMPTS = 5
@@ -26,6 +37,9 @@ class DispatchTarget:
 DISPATCH_TARGETS = (
     DispatchTarget(OrderEvent, process_order_event_job, "order"),
     DispatchTarget(DeliveryPlanEvent, process_delivery_plan_event_job, "delivery_plan"),
+    DispatchTarget(LocalDeliveryPlanEvent, process_local_delivery_plan_event_job, "local_delivery_plan"),
+    DispatchTarget(RouteSolutionEvent, process_route_solution_event_job, "route_solution"),
+    DispatchTarget(RouteSolutionStopEvent, process_route_solution_stop_event_job, "route_solution_stop"),
     DispatchTarget(AppEventOutbox, process_app_event_outbox_job, "app"),
 )
 
@@ -56,8 +70,11 @@ def dispatch_pending_events(*, dispatcher_id: str, batch_size: int, lease_second
                 row.claimed_at = None
                 row.last_error = None
             except Exception as exc:
-                print('Error',flush=True)
-                print(Exception,flush=True)
+                from flask import current_app
+                current_app.logger.error(
+                    "Failed to enqueue event: %s. Event ID: %s, Type: %s, Error: %s",
+                    target.label, row.id, target.model.__name__, str(exc), exc_info=True
+                )
                 _mark_claim_failed(row, str(exc))
         db.session.commit()
 

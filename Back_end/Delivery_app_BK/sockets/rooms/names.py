@@ -14,6 +14,10 @@ def build_team_order_cases_room(team_id: int | str) -> str:
     return f"team:{team_id}:order_cases"
 
 
+def build_team_admin_room(team_id: int | str) -> str:
+    return f"team:{team_id}:admin"
+
+
 def build_route_orders_room(team_id: int | str, route_id: int | str) -> str:
     return f"team:{team_id}:route:{route_id}:orders"
 
@@ -28,3 +32,7 @@ def build_order_chat_room(team_id: int | str, order_id: int | str) -> str:
 
 def build_external_form_room(team_id: int | str, user_id: int | str) -> str:
     return f"external_form:{team_id}:{user_id}"
+
+
+def build_team_members_room(team_id: int | str) -> str:
+    return f"team:{team_id}:members"

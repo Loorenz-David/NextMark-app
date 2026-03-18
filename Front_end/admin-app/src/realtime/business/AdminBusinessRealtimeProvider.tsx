@@ -1,8 +1,7 @@
 import type { PropsWithChildren } from 'react'
 import { useEffect, useMemo, useSyncExternalStore } from 'react'
 import {
-  createOrderCasesChannel,
-  createOrdersChannel,
+  createAdminBusinessChannel,
   type BusinessEventEnvelope,
 } from '@shared-realtime'
 import { sessionStorage } from '@/features/auth/login/store/sessionStorage'
@@ -55,12 +54,8 @@ export function AdminBusinessRealtimeProvider({ children }: PropsWithChildren) {
     () => sessionStorage.getSession(),
   )
 
-  const ordersChannel = useMemo(
-    () => createOrdersChannel(adminRealtimeClient),
-    [],
-  )
-  const orderCasesChannel = useMemo(
-    () => createOrderCasesChannel(adminRealtimeClient),
+  const adminBusinessChannel = useMemo(
+    () => createAdminBusinessChannel(adminRealtimeClient),
     [],
   )
   const { normalizeOrderPayload } = useOrderModel()
@@ -101,11 +96,11 @@ export function AdminBusinessRealtimeProvider({ children }: PropsWithChildren) {
     }
 
     const handleOrderEvent = (event: BusinessEventEnvelope<BusinessPayload>) => {
-      if (!markAdminBusinessEventHandled(event.event_id)) {
-        return
-      }
-
-      if (event.event_name !== 'order.updated' && event.event_name !== 'order.state_changed') {
+      if (
+        event.event_name !== 'order.created'
+        && event.event_name !== 'order.updated'
+        && event.event_name !== 'order.state_changed'
+      ) {
         return
       }
 
@@ -116,11 +111,8 @@ export function AdminBusinessRealtimeProvider({ children }: PropsWithChildren) {
       }
 
       const order = selectOrderByServerId(orderId)(useOrderStore.getState())
-      if (!order) {
-        return
-      }
 
-      if (event.event_name === 'order.state_changed') {
+      if (event.event_name === 'order.state_changed' && order) {
         const nextOrderStateId = getPayloadNumber(payload, 'order_state_id')
         if (nextOrderStateId != null) {
           updateOrderByClientId(order.client_id, (existing) => ({
@@ -133,11 +125,26 @@ export function AdminBusinessRealtimeProvider({ children }: PropsWithChildren) {
       void runDedupedOrderRefresh(orderId, () => refreshOrderById(orderId))
     }
 
-    const handleOrderCaseEvent = (event: BusinessEventEnvelope<BusinessPayload>) => {
-      if (!markAdminBusinessEventHandled(event.event_id)) {
+    const handleOrderChatEvent = (event: BusinessEventEnvelope<BusinessPayload>) => {
+      if (event.event_name !== 'order_chat.message_created') {
         return
       }
 
+      const payload = event.payload ?? {}
+      const orderId = getPayloadNumber(payload, 'order_id')
+      if (!orderId) {
+        return
+      }
+
+      void runDedupedOrderRefresh(orderId, () => refreshOrderById(orderId))
+      void runDedupedOrderCaseRefresh(orderId, () => refreshOrderCasesByOrderId(orderId))
+
+      if (useOrderCaseListStore.getState().queryKey) {
+        void runDedupedGlobalOrderCasesRefresh(refreshGlobalOrderCases)
+      }
+    }
+
+    const handleOrderCaseEvent = (event: BusinessEventEnvelope<BusinessPayload>) => {
       if (
         event.event_name !== 'order_case.created'
         && event.event_name !== 'order_case.updated'
@@ -193,20 +200,25 @@ export function AdminBusinessRealtimeProvider({ children }: PropsWithChildren) {
       }
     }
 
-    const releaseOrders = ordersChannel.subscribeTeamOrders(handleOrderEvent)
-    const releaseOrderCases = orderCasesChannel.subscribeTeamOrderCases(handleOrderCaseEvent)
+    const releaseAdminBusiness = adminBusinessChannel.subscribeTeamAdmin((event) => {
+      if (!markAdminBusinessEventHandled(event.event_id)) {
+        return
+      }
+
+      handleOrderEvent(event)
+      handleOrderCaseEvent(event)
+      handleOrderChatEvent(event)
+    })
 
     return () => {
-      releaseOrderCases()
-      releaseOrders()
+      releaseAdminBusiness()
     }
   }, [
+    adminBusinessChannel,
     loadAllCases,
     normalizeOrderCaseEntity,
     normalizeOrderCaseMap,
     normalizeOrderPayload,
-    orderCasesChannel,
-    ordersChannel,
     session,
   ])
 

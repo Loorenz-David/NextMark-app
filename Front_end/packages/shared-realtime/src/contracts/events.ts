@@ -21,6 +21,7 @@ export const REALTIME_CLIENT_EVENTS = {
 } as const
 
 export const REALTIME_CHANNELS = {
+  teamAdmin: 'team_admin',
   teamOrders: 'team_orders',
   teamOrderCases: 'team_order_cases',
   routeOrders: 'route_orders',
@@ -31,6 +32,7 @@ export const REALTIME_CHANNELS = {
 export type RealtimeChannelId = (typeof REALTIME_CHANNELS)[keyof typeof REALTIME_CHANNELS]
 
 export type RealtimeChannelParamsMap = {
+  team_admin: Record<string, never>
   team_orders: Record<string, never>
   team_order_cases: Record<string, never>
   route_orders: { route_id: number }
@@ -45,7 +47,66 @@ export type BusinessEventName =
   | 'order_case.created'
   | 'order_case.updated'
   | 'order_case.state_changed'
+  | 'delivery_plan.created'
+  | 'delivery_plan.updated'
+  | 'delivery_plan.deleted'
+  | 'local_delivery_plan.updated'
+  | 'route_solution.created'
+  | 'route_solution.updated'
+  | 'route_solution.deleted'
+  | 'route_solution_stop.updated'
   | 'order_chat.message_created'
+
+export const ADMIN_BUSINESS_EVENT_NAMES = [
+  'order.created',
+  'order.updated',
+  'order.state_changed',
+  'order_case.created',
+  'order_case.updated',
+  'order_case.state_changed',
+  'order_chat.message_created',
+  'delivery_plan.created',
+  'delivery_plan.updated',
+  'delivery_plan.deleted',
+  'local_delivery_plan.updated',
+  'route_solution.created',
+  'route_solution.updated',
+  'route_solution.deleted',
+  'route_solution_stop.updated',
+] as const satisfies readonly BusinessEventName[]
+
+export const DRIVER_BUSINESS_EVENT_NAMES = [
+  'order.updated',
+  'order.state_changed',
+  'order_case.created',
+  'order_case.updated',
+  'order_case.state_changed',
+  'order_chat.message_created',
+  'local_delivery_plan.updated',
+  'route_solution.updated',
+  'route_solution_stop.updated',
+] as const satisfies readonly BusinessEventName[]
+
+export type BusinessEntityType =
+  | 'order'
+  | 'order_case'
+  | 'order_chat'
+  | 'delivery_plan'
+  | 'local_delivery_plan'
+  | 'route_solution'
+  | 'route_solution_stop'
+  | 'app_event'
+
+export const BUSINESS_ENTITY_TYPES = [
+  'order',
+  'order_case',
+  'order_chat',
+  'delivery_plan',
+  'local_delivery_plan',
+  'route_solution',
+  'route_solution_stop',
+  'app_event',
+] as const satisfies readonly BusinessEntityType[]
 
 export type BusinessEventEnvelope<TPayload = Record<string, unknown>> = {
   event_id: string
@@ -53,7 +114,7 @@ export type BusinessEventEnvelope<TPayload = Record<string, unknown>> = {
   version: number
   occurred_at: string
   team_id: number | null
-  entity_type: 'order' | 'order_case' | 'order_chat'
+  entity_type: BusinessEntityType
   entity_id: number | null
   app_scopes: string[]
   payload: TPayload

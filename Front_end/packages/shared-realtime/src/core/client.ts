@@ -5,7 +5,7 @@ import {
   type RealtimeChannelParamsMap,
   type RealtimeSubscriptionPayload,
 } from '../contracts'
-import { SocketIoTransport } from '../transport/socketIoTransport'
+import { SocketIoTransport, type TransportDiagnostics } from '../transport/socketIoTransport'
 
 type SessionSource = SessionAccessor & {
   subscribe?: (listener: (session: SessionSnapshot | null) => void) => () => void
@@ -16,11 +16,26 @@ type RealtimeClientConfig = {
   sessionAccessor: SessionSource
 }
 
+export type RealtimeSubscriptionStatus = 'pending' | 'active' | 'releasing'
+
+export type RealtimeClientDiagnostics = {
+  transport: TransportDiagnostics
+  subscriptions: {
+    total: number
+    active: number
+    pending: number
+    releasing: number
+  }
+}
+
 type SubscriptionRecord = {
   channel: RealtimeChannelId
   params: RealtimeChannelParamsMap[RealtimeChannelId] | undefined
   count: number
+  status: RealtimeSubscriptionStatus
 }
+
+const MAX_SUBSCRIPTIONS = 1000
 
 const stableStringify = (value: unknown): string => {
   if (Array.isArray(value)) {
@@ -60,8 +75,10 @@ export class SharedRealtimeClient {
   private readonly sessionAccessor: SessionSource
   private readonly transport = new SocketIoTransport()
   private readonly subscriptions = new Map<string, SubscriptionRecord>()
+  private readonly diagnosticsHandlers = new Set<(diagnostics: RealtimeClientDiagnostics) => void>()
   private currentSocketToken: string | null = null
   private readonly removeSessionListener?: () => void
+  private removeTransportDiagnosticsListener?: () => void
 
   constructor(config: RealtimeClientConfig) {
     this.baseUrl = config.baseUrl
@@ -70,7 +87,15 @@ export class SharedRealtimeClient {
     this.transport.onConnectionChange((connected) => {
       if (connected) {
         this.resubscribeAll()
+      } else {
+        this.markSubscriptionsPending()
       }
+
+      this.emitDiagnosticsChange()
+    })
+
+    this.removeTransportDiagnosticsListener = this.transport.onDiagnosticsChange(() => {
+      this.emitDiagnosticsChange()
     })
 
     if (typeof this.sessionAccessor.subscribe === 'function') {
@@ -80,6 +105,7 @@ export class SharedRealtimeClient {
         if (!nextToken) {
           this.currentSocketToken = null
           this.transport.disconnect()
+          this.emitDiagnosticsChange()
           return
         }
 
@@ -93,6 +119,7 @@ export class SharedRealtimeClient {
   connect(): boolean {
     const nextToken = this.sessionAccessor.getSession()?.socketToken ?? null
     if (!nextToken) {
+      this.emitDiagnosticsChange()
       return false
     }
 
@@ -102,16 +129,22 @@ export class SharedRealtimeClient {
       token: nextToken,
     })
 
+    this.emitDiagnosticsChange()
+
     return true
   }
 
   disconnect(): void {
     this.currentSocketToken = null
     this.transport.disconnect()
+    this.markSubscriptionsPending()
+    this.emitDiagnosticsChange()
   }
 
   destroy(): void {
+    this.removeTransportDiagnosticsListener?.()
     this.removeSessionListener?.()
+    this.diagnosticsHandlers.clear()
     this.disconnect()
   }
 
@@ -121,10 +154,47 @@ export class SharedRealtimeClient {
 
   on<TPayload>(event: string, handler: (payload: TPayload) => void): () => void {
     const release = this.transport.on(event, (payload) => {
-      handler(payload as TPayload)
+      try {
+        handler(payload as TPayload)
+      } catch (error) {
+        console.error('[shared-realtime] Realtime handler failed for event:', event, error)
+      }
     })
     this.connect()
     return release
+  }
+
+  getDiagnostics(): RealtimeClientDiagnostics {
+    const subscriptions = {
+      total: this.subscriptions.size,
+      active: 0,
+      pending: 0,
+      releasing: 0,
+    }
+
+    this.subscriptions.forEach((record) => {
+      if (record.status === 'active') {
+        subscriptions.active += 1
+      } else if (record.status === 'pending') {
+        subscriptions.pending += 1
+      } else {
+        subscriptions.releasing += 1
+      }
+    })
+
+    return {
+      transport: this.transport.getDiagnostics(),
+      subscriptions,
+    }
+  }
+
+  onDiagnosticsChange(handler: (diagnostics: RealtimeClientDiagnostics) => void): () => void {
+    this.diagnosticsHandlers.add(handler)
+    handler(this.getDiagnostics())
+
+    return () => {
+      this.diagnosticsHandlers.delete(handler)
+    }
   }
 
   subscribe<Channel extends RealtimeChannelId>(
@@ -136,25 +206,39 @@ export class SharedRealtimeClient {
 
     if (existing) {
       existing.count += 1
+
+      if (this.transport.isConnected() && existing.status !== 'active') {
+        this.emitSubscribe(existing.channel, existing.params)
+        existing.status = 'active'
+      }
+
+      this.emitDiagnosticsChange()
       return () => {
         this.unsubscribe(channel, params)
       }
     }
 
-    this.subscriptions.set(key, {
+    if (this.subscriptions.size >= MAX_SUBSCRIPTIONS) {
+      throw new Error('Too many realtime subscriptions registered')
+    }
+
+    const record: SubscriptionRecord = {
       channel,
       params: params as RealtimeChannelParamsMap[RealtimeChannelId] | undefined,
       count: 1,
-    })
+      status: 'pending',
+    }
+
+    this.subscriptions.set(key, record)
 
     this.connect()
 
     if (this.transport.isConnected()) {
-      this.transport.emit(REALTIME_CLIENT_EVENTS.subscribe, {
-        channel,
-        params,
-      } satisfies RealtimeSubscriptionPayload<Channel>)
+      this.emitSubscribe(channel, params)
+      record.status = 'active'
     }
+
+    this.emitDiagnosticsChange()
 
     return () => {
       this.unsubscribe(channel, params)
@@ -173,17 +257,22 @@ export class SharedRealtimeClient {
 
     existing.count -= 1
     if (existing.count > 0) {
+      this.emitDiagnosticsChange()
       return
     }
 
-    this.subscriptions.delete(key)
+    const wasActive = existing.status === 'active'
+    existing.status = 'releasing'
 
-    if (this.transport.isConnected()) {
+    if (wasActive && this.transport.isConnected()) {
       this.transport.emit(REALTIME_CLIENT_EVENTS.unsubscribe, {
         channel,
         params,
       } satisfies RealtimeSubscriptionPayload<Channel>)
     }
+
+    this.subscriptions.delete(key)
+    this.emitDiagnosticsChange()
   }
 
   publish<TPayload>(event: string, payload: TPayload): void {
@@ -193,10 +282,43 @@ export class SharedRealtimeClient {
 
   private resubscribeAll(): void {
     this.subscriptions.forEach((record) => {
-      this.transport.emit(REALTIME_CLIENT_EVENTS.subscribe, {
-        channel: record.channel,
-        params: record.params,
-      })
+      if (record.count <= 0) {
+        return
+      }
+
+      this.emitSubscribe(record.channel, record.params)
+      record.status = 'active'
+    })
+
+    this.emitDiagnosticsChange()
+  }
+
+  private markSubscriptionsPending(): void {
+    this.subscriptions.forEach((record) => {
+      if (record.count > 0) {
+        record.status = 'pending'
+      }
+    })
+  }
+
+  private emitSubscribe<Channel extends RealtimeChannelId>(
+    channel: Channel,
+    params?: RealtimeChannelParamsMap[Channel],
+  ): void {
+    this.transport.emit(REALTIME_CLIENT_EVENTS.subscribe, {
+      channel,
+      params,
+    } satisfies RealtimeSubscriptionPayload<Channel>)
+  }
+
+  private emitDiagnosticsChange(): void {
+    const snapshot = this.getDiagnostics()
+    this.diagnosticsHandlers.forEach((handler) => {
+      try {
+        handler(snapshot)
+      } catch (error) {
+        console.error('[shared-realtime] Client diagnostics handler failed:', error)
+      }
     })
   }
 }

@@ -10,7 +10,7 @@ from Delivery_app_BK.sockets.contracts.realtime import (
 from Delivery_app_BK.sockets.emitters.common import build_business_event_envelope, emit_business_event
 from Delivery_app_BK.sockets.notifications import notify_app_event
 from Delivery_app_BK.sockets.emitters.route_orders import emit_route_order_event
-from Delivery_app_BK.sockets.rooms.names import build_order_chat_room, build_team_order_cases_room
+from Delivery_app_BK.sockets.rooms.names import build_order_chat_room, build_team_admin_room
 
 
 def fanout_app_event(event_row: AppEventOutbox) -> None:
@@ -39,7 +39,7 @@ def fanout_app_event(event_row: AppEventOutbox) -> None:
         BUSINESS_EVENT_ORDER_CASE_STATE_CHANGED,
     }:
         emit_business_event(
-            room=build_team_order_cases_room(event_row.team_id),
+            room=build_team_admin_room(event_row.team_id),
             envelope=envelope,
         )
         emit_route_order_event(
@@ -60,6 +60,10 @@ def fanout_app_event(event_row: AppEventOutbox) -> None:
         return
 
     if event_row.event_name == BUSINESS_EVENT_ORDER_CHAT_MESSAGE_CREATED and order_id is not None:
+        emit_business_event(
+            room=build_team_admin_room(event_row.team_id),
+            envelope=envelope,
+        )
         emit_business_event(
             room=build_order_chat_room(event_row.team_id, order_id),
             envelope=envelope,

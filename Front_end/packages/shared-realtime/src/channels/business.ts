@@ -34,6 +34,24 @@ export const createOrdersChannel = (client: SharedRealtimeClient) => ({
   },
 })
 
+export const createAdminBusinessChannel = (client: SharedRealtimeClient) => ({
+  subscribeTeamAdmin: (handler: (event: BusinessEventEnvelope) => void) => {
+    const releaseChannel = client.subscribe(REALTIME_CHANNELS.teamAdmin, {})
+    const releaseListener = client.on<BusinessEventEnvelope>(REALTIME_SERVER_EVENTS.businessEvent, (event) => {
+      if (!isBusinessEventEnvelope(event)) {
+        return
+      }
+
+      handler(event)
+    })
+
+    return () => {
+      releaseListener()
+      releaseChannel()
+    }
+  },
+})
+
 export const createOrderCasesChannel = (client: SharedRealtimeClient) => ({
   subscribeTeamOrderCases: (handler: (event: BusinessEventEnvelope) => void) => {
     const releaseChannel = client.subscribe(REALTIME_CHANNELS.teamOrderCases, {})

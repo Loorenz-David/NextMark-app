@@ -7,7 +7,7 @@ from Delivery_app_BK.sockets.contracts.realtime import (
 from Delivery_app_BK.sockets.emitters.common import build_business_event_envelope, emit_business_event
 from Delivery_app_BK.sockets.notifications import notify_order_event
 from Delivery_app_BK.sockets.emitters.route_orders import emit_route_order_event
-from Delivery_app_BK.sockets.rooms.names import build_team_orders_room
+from Delivery_app_BK.sockets.rooms.names import build_team_admin_room
 
 ORDER_REALTIME_EVENT_BY_NAME = {
     StoredOrderEventName.CREATED.value: BUSINESS_EVENT_ORDER_CREATED,
@@ -49,7 +49,7 @@ def fanout_order_event(event_row) -> None:
     )
 
     emit_business_event(
-        room=build_team_orders_room(event_row.team_id),
+        room=build_team_admin_room(event_row.team_id),
         envelope=envelope,
     )
     emit_route_order_event(
