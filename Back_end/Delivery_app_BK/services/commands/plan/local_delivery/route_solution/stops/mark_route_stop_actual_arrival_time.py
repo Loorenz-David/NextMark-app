@@ -17,6 +17,9 @@ from Delivery_app_BK.services.requests.plan.local_delivery import (
     ActualTimeMarkRequest,
     parse_mark_actual_time_request,
 )
+from Delivery_app_BK.services.commands.plan.local_delivery.event_helpers import create_route_solution_stop_event
+from Delivery_app_BK.sockets.contracts.realtime import BUSINESS_EVENT_ROUTE_SOLUTION_STOP_UPDATED
+from Delivery_app_BK.sockets.emitters.route_solution_stop_events import emit_route_solution_stop_updated
 
 
 def mark_route_stop_actual_arrival_time(
@@ -50,6 +53,20 @@ def mark_route_stop_actual_arrival_time(
     db.session.add(route_stop)
     db.session.add(route_solution)
     db.session.commit()
+
+    # Emit real-time event
+    create_route_solution_stop_event(
+        ctx=ctx,
+        team_id=route_solution.team_id,
+        route_solution_stop_id=route_stop.id,
+        event_name=BUSINESS_EVENT_ROUTE_SOLUTION_STOP_UPDATED,
+        payload={
+            "actual_arrival_time": route_stop.actual_arrival_time.isoformat() if route_stop.actual_arrival_time else None,
+        },
+    )
+    emit_route_solution_stop_updated(route_stop, payload={
+        "actual_arrival_time": route_stop.actual_arrival_time.isoformat() if route_stop.actual_arrival_time else None,
+    })
 
     response = {
         "route_solution_stop": serialize_route_solution_stops([route_stop], ctx),

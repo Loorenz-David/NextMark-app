@@ -31,7 +31,7 @@ def main() -> None:
 
                 time.sleep(1 if claimed else 3)
         except Exception as e:
-            print("DISPATCH ERROR:", str(e), flush=True)
+            app.logger.critical("Dispatcher loop failed: %s", str(e), exc_info=True)
             raise
 
 if __name__ == "__main__":

@@ -37,6 +37,7 @@ from .tables.costumer.costumer_operating_hours import CostumerOperatingHours
 from .tables.delivery_plan.delivery_plan import DeliveryPlan
 from .tables.delivery_plan.delivery_plan_event import DeliveryPlanEvent
 from .tables.delivery_plan.delivery_plan_event_action import DeliveryPlanEventAction
+from .tables.delivery_plan.local_delivery_plan_event import LocalDeliveryPlanEvent
 from .tables.delivery_plan.delivery_plan_types.local_delivery_plan.local_delivery_plan import LocalDeliveryPlan
 from .tables.delivery_plan.delivery_plan_types.international_shipping_plan import (
     InternationalShippingPlan,
@@ -45,8 +46,14 @@ from .tables.delivery_plan.delivery_plan_types.store_pickup_plan import StorePic
 from .tables.delivery_plan.delivery_plan_types.local_delivery_plan.route_solutions.route_solution import (
     RouteSolution,
 )
+from .tables.delivery_plan.delivery_plan_types.local_delivery_plan.route_solutions.route_solution_event import (
+    RouteSolutionEvent,
+)
 from .tables.delivery_plan.delivery_plan_types.local_delivery_plan.route_solutions.route_stop import (
     RouteSolutionStop,
+)
+from .tables.delivery_plan.delivery_plan_types.local_delivery_plan.route_solutions.route_solution_stop_event import (
+    RouteSolutionStopEvent,
 )
 from .tables.delivery_plan.delivery_plan_state import DeliveryPlanState
 from .tables.order.order_state import OrderState

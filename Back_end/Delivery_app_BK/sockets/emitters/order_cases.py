@@ -6,7 +6,7 @@ from Delivery_app_BK.sockets.contracts.realtime import (
 )
 from Delivery_app_BK.sockets.emitters.common import build_business_event_envelope, emit_business_event
 from Delivery_app_BK.sockets.emitters.route_orders import emit_route_order_event
-from Delivery_app_BK.sockets.rooms.names import build_team_order_cases_room
+from Delivery_app_BK.sockets.rooms.names import build_team_admin_room
 
 
 def _emit_order_case_event(order_case: OrderCase, *, event_name: str, payload: dict | None = None) -> None:
@@ -30,7 +30,7 @@ def _emit_order_case_event(order_case: OrderCase, *, event_name: str, payload: d
     )
 
     emit_business_event(
-        room=build_team_order_cases_room(team_id),
+        room=build_team_admin_room(team_id),
         envelope=envelope,
     )
     emit_route_order_event(

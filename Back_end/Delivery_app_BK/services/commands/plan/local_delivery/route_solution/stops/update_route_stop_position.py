@@ -16,6 +16,9 @@ from Delivery_app_BK.services.queries.route_solutions import (
     serialize_route_solution_stops,
     serialize_route_solutions,
 )
+from Delivery_app_BK.services.commands.plan.local_delivery.event_helpers import create_route_solution_stop_event
+from Delivery_app_BK.sockets.contracts.realtime import BUSINESS_EVENT_ROUTE_SOLUTION_STOP_UPDATED
+from Delivery_app_BK.sockets.emitters.route_solution_stop_events import emit_route_solution_stop_updated
 from ..clone import clone_route_solution
 from ..serializers import (
     serialize_stop_short,
@@ -148,10 +151,27 @@ def update_route_stop_position(
         db.session.add(original_route_solution)
     db.session.commit()
 
+    # Emit real-time events for all affected stops
+    team_id = route_solution.team_id
+    all_affected_stops = _dedupe_and_sort_stops(touched_stops + refreshed_stops)
+    for stop in all_affected_stops:
+        create_route_solution_stop_event(
+            ctx=ctx,
+            team_id=team_id,
+            route_solution_stop_id=stop.id,
+            event_name=BUSINESS_EVENT_ROUTE_SOLUTION_STOP_UPDATED,
+            payload={
+                "stop_order": stop.stop_order,
+                "expected_arrival_time": stop.expected_arrival_time.isoformat() if stop.expected_arrival_time else None,
+                "expected_departure_time": stop.expected_departure_time.isoformat() if stop.expected_departure_time else None,
+            },
+        )
+        emit_route_solution_stop_updated(stop)
+
     return {
         "route_solution": serialize_route_solutions([route_solution], ctx),
         "route_solution_stops": serialize_route_solution_stops(
-            _dedupe_and_sort_stops(touched_stops + refreshed_stops),
+            all_affected_stops,
             ctx,
         ),
     }

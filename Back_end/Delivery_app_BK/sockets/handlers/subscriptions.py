@@ -9,11 +9,13 @@ from Delivery_app_BK.sockets.contracts.realtime import (
     ALLOWED_CHANNELS,
     CHANNEL_ORDER_CHAT,
     CHANNEL_ROUTE_ORDERS,
+    CHANNEL_TEAM_ADMIN,
     CHANNEL_TEAM_DRIVER_LIVE,
     CHANNEL_TEAM_ORDERS,
     CHANNEL_TEAM_ORDER_CASES,
 )
 from Delivery_app_BK.sockets.rooms.names import (
+    build_team_admin_room,
     build_order_chat_room,
     build_route_orders_room,
     build_team_order_cases_room,
@@ -93,6 +95,10 @@ def handle_subscribe(claims, data):
 
     team_id = claims.get("active_team_id") or claims.get("team_id")
 
+    if channel == CHANNEL_TEAM_ADMIN:
+        join_room(build_team_admin_room(team_id), sid=request.sid)
+        return
+
     if channel == CHANNEL_TEAM_ORDERS:
         join_room(build_team_orders_room(team_id), sid=request.sid)
         return
@@ -125,6 +131,10 @@ def handle_unsubscribe(claims, data):
         return
 
     team_id = claims.get("active_team_id") or claims.get("team_id")
+
+    if channel == CHANNEL_TEAM_ADMIN and team_id is not None:
+        leave_room(build_team_admin_room(team_id), sid=request.sid)
+        return
 
     if channel == CHANNEL_TEAM_ORDERS and team_id is not None:
         leave_room(build_team_orders_room(team_id), sid=request.sid)

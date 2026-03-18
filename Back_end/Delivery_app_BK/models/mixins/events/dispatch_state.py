@@ -27,3 +27,4 @@ class DispatchStateMixin:
         index=True,
     )
     last_error = Column(Text, nullable=True)
+    relayed_at = Column(UTCDateTime, nullable=True, index=True)

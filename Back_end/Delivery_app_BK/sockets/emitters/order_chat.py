@@ -2,7 +2,7 @@ from Delivery_app_BK.models import CaseChat
 from Delivery_app_BK.sockets.contracts.realtime import BUSINESS_EVENT_ORDER_CHAT_MESSAGE_CREATED
 from Delivery_app_BK.sockets.emitters.common import build_business_event_envelope, emit_business_event
 from Delivery_app_BK.sockets.emitters.route_orders import emit_route_order_event
-from Delivery_app_BK.sockets.rooms.names import build_order_chat_room
+from Delivery_app_BK.sockets.rooms.names import build_order_chat_room, build_team_admin_room
 
 
 def emit_order_chat_message_created(case_chat: CaseChat) -> None:
@@ -29,6 +29,10 @@ def emit_order_chat_message_created(case_chat: CaseChat) -> None:
         },
     )
 
+    emit_business_event(
+        room=build_team_admin_room(team_id),
+        envelope=envelope,
+    )
     emit_business_event(
         room=build_order_chat_room(team_id, order_id),
         envelope=envelope,
