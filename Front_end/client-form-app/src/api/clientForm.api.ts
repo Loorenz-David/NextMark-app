@@ -5,7 +5,7 @@ import type { ClientFormData } from '../features/clientForm/domain/clientForm.ty
 // In development the Vite dev-server proxy forwards /api/* → http://localhost:5000,
 // so an empty base string is correct and the path alone is sufficient.
 const BASE_URL = (import.meta.env.VITE_API_BASE_URL as string | undefined) ?? ''
-const BASE = `${BASE_URL}/api/v2/public/client-form`
+const BASE = `${BASE_URL}/api_v2/public/client-form`
 
 type ApiError = Error & { status?: number }
 
