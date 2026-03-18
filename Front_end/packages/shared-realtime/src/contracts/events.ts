@@ -22,6 +22,7 @@ export const REALTIME_CLIENT_EVENTS = {
 
 export const REALTIME_CHANNELS = {
   teamAdmin: 'team_admin',
+  teamMembers: 'team_members',
   teamOrders: 'team_orders',
   teamOrderCases: 'team_order_cases',
   routeOrders: 'route_orders',
@@ -33,6 +34,7 @@ export type RealtimeChannelId = (typeof REALTIME_CHANNELS)[keyof typeof REALTIME
 
 export type RealtimeChannelParamsMap = {
   team_admin: Record<string, never>
+  team_members: Record<string, never>
   team_orders: Record<string, never>
   team_order_cases: Record<string, never>
   route_orders: { route_id: number }
@@ -83,6 +85,7 @@ export const DRIVER_BUSINESS_EVENT_NAMES = [
   'order_case.state_changed',
   'order_chat.message_created',
   'local_delivery_plan.updated',
+  'route_solution.created',
   'route_solution.updated',
   'route_solution_stop.updated',
 ] as const satisfies readonly BusinessEventName[]

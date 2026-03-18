@@ -6,6 +6,7 @@ export interface CaseChat {
   message: string
   creation_date: string
   user_id?: number | null
+  user_name?: string | null
   order_case_id: number
 }
 

@@ -74,15 +74,15 @@ export const LocalDeliveryStatsOverlayShell = ({
               <div className="  min-w-full px-4">
                 <div className={bodyClassByMode[layoutMode]}>
                   <div className={layoutMode === 'medium' ? 'col-start-1 row-start-1' : ''}>
-                    <LocalDeliveryStatsTopSummary routeSummary={data.routeSummary} />
+                    <LocalDeliveryStatsTopSummary routeSummary={data.routeSummary} routeScopeKey={data.routeScopeKey} />
                   </div>
 
                   <div className={layoutMode === 'medium' ? 'col-start-1 row-start-2' : ''}>
-                    <LocalDeliveryGaussianMetricsGrid cards={data.gaussianCards} />
+                    <LocalDeliveryGaussianMetricsGrid cards={data.gaussianCards} routeScopeKey={data.routeScopeKey} />
                   </div>
 
                   <div className={layoutMode === 'medium' ? 'col-start-2 row-span-2' : ''}>
-                    <LocalDeliveryConsumptionStatsColumn metrics={data.consumptionMetrics} />
+                    <LocalDeliveryConsumptionStatsColumn metrics={data.consumptionMetrics} routeScopeKey={data.routeScopeKey} />
                   </div>
                 </div>
               </div>

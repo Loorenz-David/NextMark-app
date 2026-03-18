@@ -23,6 +23,7 @@ const normalizeChat = (chat: Partial<CaseChat>, orderCaseId: number): CaseChat |
     message: String(chat.message ?? ''),
     creation_date: String(chat.creation_date ?? ''),
     user_id: typeof chat.user_id === 'number' ? chat.user_id : null,
+    user_name: typeof chat.user_name === 'string' ? chat.user_name : null,
     order_case_id: typeof chat.order_case_id === 'number' ? chat.order_case_id : orderCaseId,
   }
 }

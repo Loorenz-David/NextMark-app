@@ -9,6 +9,27 @@ export type LocalDeliverySummaryMetric = {
   label: string
   value: string
   delta?: string | null
+  animation?: LocalDeliveryAnimatedMetric | null
+}
+
+export type LocalDeliveryMetricSourceType = 'realtime' | 'derived' | 'estimated'
+
+export type LocalDeliveryAnimatedValueType =
+  | 'integer'
+  | 'decimal'
+  | 'duration_seconds'
+  | 'percent'
+  | 'currency'
+
+export type LocalDeliveryAnimatedMetric = {
+  numericValue: number
+  valueType: LocalDeliveryAnimatedValueType
+  unitSuffix?: string
+  sourceType: LocalDeliveryMetricSourceType
+  compareMode?: 'strict' | 'epsilon' | 'threshold'
+  epsilon?: number
+  threshold?: number
+  decimals?: number
 }
 
 export type LocalDeliveryRouteSummaryStats = {
@@ -25,6 +46,7 @@ export type LocalDeliveryGaussianMetricFace = {
   displayValue: string
   progressValue: number
   accentClassName?: string
+  animation?: LocalDeliveryAnimatedMetric | null
 }
 
 export type LocalDeliveryGaussianMetricCard = {
@@ -36,6 +58,7 @@ export type LocalDeliveryConsumptionMetric = {
   id: string
   label: string
   displayValue: string
+  animation: LocalDeliveryAnimatedMetric
 }
 
 export type LocalDeliveryTimingAnalytics = {
@@ -45,6 +68,7 @@ export type LocalDeliveryTimingAnalytics = {
 }
 
 export type LocalDeliveryStatsOverlayData = {
+  routeScopeKey: string
   routeSummary: LocalDeliveryRouteSummaryStats
   driver: LocalDeliveryDriverOverlayStats
   gaussianCards: LocalDeliveryGaussianMetricCard[]

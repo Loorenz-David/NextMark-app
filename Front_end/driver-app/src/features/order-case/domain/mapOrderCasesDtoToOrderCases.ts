@@ -108,6 +108,7 @@ export function mapCaseChatsDtoToCaseChats(
       message: String(chat.message ?? ''),
       creation_date: String(chat.creation_date ?? ''),
       user_id: typeof chat.user_id === 'number' ? chat.user_id : null,
+      user_name: typeof chat.user_name === 'string' ? chat.user_name : null,
       order_case_id: chat.order_case_id,
     }
     allIds.push(clientId)

@@ -40,12 +40,14 @@ type SendOrderCaseChatFlowOptions = {
   orderCaseId: number
   message: string
   currentUserId?: number | null
+  currentUserName?: string | null
 }
 
 export async function sendOrderCaseChatFlow({
   orderCaseId,
   message,
   currentUserId,
+  currentUserName,
 }: SendOrderCaseChatFlowOptions) {
   const trimmedMessage = message.trim()
   if (!trimmedMessage) {
@@ -58,8 +60,9 @@ export async function sendOrderCaseChatFlow({
     snapshot: () => selectCaseChatByClientId(clientId)(useCaseChatsStore.getState()),
     mutate: () => {
       upsertCaseChat({
-        ...buildOptimisticCaseChat(orderCaseId, clientId, trimmedMessage),
+        ...buildOptimisticCaseChat(orderCaseId, clientId, trimmedMessage, currentUserName),
         user_id: currentUserId ?? null,
+        user_name: currentUserName ?? null,
       })
     },
     request: () =>

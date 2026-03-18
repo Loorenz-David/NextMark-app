@@ -47,6 +47,20 @@ export function useOrderCaseChatController({
     return null
   }, [session?.user?.id])
 
+  const currentUserName = useMemo(() => {
+    const username = session?.user?.username
+    if (typeof username === 'string' && username.trim()) {
+      return username.trim()
+    }
+
+    const email = session?.user?.email
+    if (typeof email === 'string' && email.trim()) {
+      return email.trim()
+    }
+
+    return null
+  }, [session?.user?.email, session?.user?.username])
+
   const orderCasesState = useOrderCasesStore((state) => state)
   const caseChatsState = useCaseChatsStore((state) => state)
 
@@ -109,17 +123,15 @@ export function useOrderCaseChatController({
       orderCaseId,
       message: draft,
       currentUserId,
+      currentUserName,
     })
 
     setIsSending(false)
 
     if (!didSucceed) {
-      showMessage({ status: 500, message: 'Unable to send message.' })
       setSendError('Unable to send message.')
       return
     }
-
-    showMessage({ status: 200, message: 'Message sent.' })
     setDraft('')
   }
 
@@ -134,7 +146,6 @@ export function useOrderCaseChatController({
 
     setStateError(null)
     setIsUpdatingState(true)
-    showMessage({ status: 200, message: `Case moved to ${nextState.toLowerCase()}.` })
 
     const didSucceed = await updateOrderCaseStateFlow({
       orderCaseClientId,

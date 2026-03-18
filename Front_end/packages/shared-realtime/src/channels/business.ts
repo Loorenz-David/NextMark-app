@@ -124,3 +124,27 @@ export const createOrderChatChannel = (client: SharedRealtimeClient) => ({
     }
   },
 })
+
+export const createTeamMembersChannel = (client: SharedRealtimeClient) => ({
+  subscribeTeamMembers: (handler: (event: BusinessEventEnvelope) => void) => {
+    const releaseChannel = client.subscribe(REALTIME_CHANNELS.teamMembers, {})
+    const releaseListener = client.on<BusinessEventEnvelope>(REALTIME_SERVER_EVENTS.businessEvent, (event) => {
+      if (!isBusinessEventEnvelope(event)) {
+        return
+      }
+
+      if (
+        event.event_name === 'route_solution.created'
+        || event.event_name === 'route_solution.updated'
+        || event.event_name === 'local_delivery_plan.updated'
+      ) {
+        handler(event)
+      }
+    })
+
+    return () => {
+      releaseListener()
+      releaseChannel()
+    }
+  },
+})

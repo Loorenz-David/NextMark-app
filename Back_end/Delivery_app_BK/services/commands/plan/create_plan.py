@@ -3,6 +3,7 @@ from sqlalchemy.exc import InvalidRequestError
 from Delivery_app_BK.models import db, DeliveryPlan, RouteSolution, DeliveryPlanState, Team, Order
 from Delivery_app_BK.services.domain.plan.plan_states import PlanStateId
 from Delivery_app_BK.services.infra.events.emiters.order import emit_order_events
+from Delivery_app_BK.sockets.emitters.route_solution_events import emit_route_solution_created
 from Delivery_app_BK.services.commands.order.update_order_delivery_plan import (
     apply_orders_delivery_plan_change,
 )
@@ -30,6 +31,7 @@ def create_plan(ctx: ServiceContext):
     )
     pending_order_events: list[dict] = []
     created_bundles: list[dict] = []
+    created_route_solutions: list = []
 
     create_items = [
         parse_create_plan_request(field_set) for field_set in extract_fields(ctx)
@@ -98,6 +100,7 @@ def create_plan(ctx: ServiceContext):
                 bundle["route_solution"] = serialize_created_route_solution(
                     local_route_solution
                 )
+                created_route_solutions.append(local_route_solution)
             created_bundles.append(bundle)
 
     try:
@@ -110,6 +113,9 @@ def create_plan(ctx: ServiceContext):
 
     if pending_order_events:
         emit_order_events(ctx, pending_order_events)
+
+    for route_solution in created_route_solutions:
+        emit_route_solution_created(route_solution)
 
     return {"created": created_bundles}
 

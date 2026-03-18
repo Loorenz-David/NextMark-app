@@ -7,10 +7,7 @@ from flask import current_app
 from Delivery_app_BK.models import (
     AppEventOutbox,
     DeliveryPlanEvent,
-    LocalDeliveryPlanEvent,
     OrderEvent,
-    RouteSolutionEvent,
-    RouteSolutionStopEvent,
     db,
 )
 
@@ -93,9 +90,6 @@ def get_event_table_stats() -> dict:
     event_models = [
         (OrderEvent, "order_events"),
         (DeliveryPlanEvent, "delivery_plan_events"),
-        (LocalDeliveryPlanEvent, "local_delivery_plan_events"),
-        (RouteSolutionEvent, "route_solution_events"),
-        (RouteSolutionStopEvent, "route_solution_stop_events"),
         (AppEventOutbox, "app_event_outbox"),
     ]
     

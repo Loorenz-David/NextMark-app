@@ -82,6 +82,7 @@ class CaseChat(db.Model, TeamScopedMixin):
     id = Column( Integer, primary_key = True )
     client_id = Column(String, index=True)
     message = Column( Text )
+    user_name = Column(String, nullable=True)
     creation_date = Column(UTCDateTime, default=lambda: datetime.now(timezone.utc))
 
 
