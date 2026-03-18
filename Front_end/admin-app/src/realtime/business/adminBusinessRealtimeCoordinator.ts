@@ -3,6 +3,7 @@ const MAX_RECENT_EVENT_IDS = 300
 const recentEventIds = new Map<string, number>()
 const inFlightOrderRefreshes = new Map<number, Promise<void>>()
 const inFlightOrderCaseRefreshes = new Map<number, Promise<void>>()
+const inFlightPlanRefreshes = new Map<number, Promise<void>>()
 let inFlightGlobalOrderCasesRefresh: Promise<void> | null = null
 
 export const markAdminBusinessEventHandled = (eventId: string): boolean => {
@@ -72,4 +73,21 @@ export const runDedupedGlobalOrderCasesRefresh = (
   })
 
   return inFlightGlobalOrderCasesRefresh
+}
+
+export const runDedupedPlanRefresh = (
+  planId: number,
+  refresh: () => Promise<void>,
+) => {
+  const existing = inFlightPlanRefreshes.get(planId)
+  if (existing) {
+    return existing
+  }
+
+  const request = refresh().finally(() => {
+    inFlightPlanRefreshes.delete(planId)
+  })
+
+  inFlightPlanRefreshes.set(planId, request)
+  return request
 }

@@ -8,20 +8,14 @@ from sqlalchemy.orm import Query
 from Delivery_app_BK.models import (
     AppEventOutbox,
     DeliveryPlanEvent,
-    LocalDeliveryPlanEvent,
     OrderEvent,
-    RouteSolutionEvent,
-    RouteSolutionStopEvent,
     db,
 )
 from Delivery_app_BK.services.infra.jobs import DEFAULT_RETRY_POLICY, enqueue_job
 from Delivery_app_BK.services.infra.jobs.tasks.events import (
     process_app_event_outbox_job,
     process_delivery_plan_event_job,
-    process_local_delivery_plan_event_job,
     process_order_event_job,
-    process_route_solution_event_job,
-    process_route_solution_stop_event_job,
 )
 
 MAX_DISPATCH_ATTEMPTS = 5
@@ -37,20 +31,29 @@ class DispatchTarget:
 DISPATCH_TARGETS = (
     DispatchTarget(OrderEvent, process_order_event_job, "order"),
     DispatchTarget(DeliveryPlanEvent, process_delivery_plan_event_job, "delivery_plan"),
-    DispatchTarget(LocalDeliveryPlanEvent, process_local_delivery_plan_event_job, "local_delivery_plan"),
-    DispatchTarget(RouteSolutionEvent, process_route_solution_event_job, "route_solution"),
-    DispatchTarget(RouteSolutionStopEvent, process_route_solution_stop_event_job, "route_solution_stop"),
     DispatchTarget(AppEventOutbox, process_app_event_outbox_job, "app"),
 )
 
 
 def dispatch_pending_events(*, dispatcher_id: str, batch_size: int, lease_seconds: int) -> int:
+    from sqlalchemy import inspect as sqla_inspect
+    from flask import current_app
+    
+    # Get list of existing tables once
+    inspector = sqla_inspect(db.engine)
+    existing_tables = inspector.get_table_names()
+    
     recovered = repair_stale_claims(lease_seconds=lease_seconds)
     claimed_count = 0
     if recovered:
         db.session.commit()
    
     for target in DISPATCH_TARGETS:
+        # Skip if table doesn't exist
+        table_name = target.model.__tablename__
+        if table_name not in existing_tables:
+            current_app.logger.debug(f"Skipping dispatch target {target.label}: table {table_name} does not exist")
+            continue
         
         claimed_rows = _claim_rows(target, dispatcher_id=dispatcher_id, batch_size=batch_size)
         claimed_count += len(claimed_rows)
@@ -70,7 +73,6 @@ def dispatch_pending_events(*, dispatcher_id: str, batch_size: int, lease_second
                 row.claimed_at = None
                 row.last_error = None
             except Exception as exc:
-                from flask import current_app
                 current_app.logger.error(
                     "Failed to enqueue event: %s. Event ID: %s, Type: %s, Error: %s",
                     target.label, row.id, target.model.__name__, str(exc), exc_info=True
@@ -82,10 +84,21 @@ def dispatch_pending_events(*, dispatcher_id: str, batch_size: int, lease_second
 
 
 def repair_stale_claims(*, lease_seconds: int) -> int:
+    from sqlalchemy import inspect as sqla_inspect
+    
     threshold = datetime.now(timezone.utc) - timedelta(seconds=lease_seconds)
     repaired = 0
+    
+    # Get list of existing tables
+    inspector = sqla_inspect(db.engine)
+    existing_tables = inspector.get_table_names()
 
     for target in DISPATCH_TARGETS:
+        # Skip if table doesn't exist
+        table_name = target.model.__tablename__
+        if table_name not in existing_tables:
+            continue
+            
         rows = (
             db.session.query(target.model)
             .filter(

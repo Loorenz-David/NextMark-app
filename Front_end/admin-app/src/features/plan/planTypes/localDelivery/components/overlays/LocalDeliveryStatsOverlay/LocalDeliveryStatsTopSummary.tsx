@@ -3,10 +3,12 @@ import { InlineRouteMetric } from './InlineRouteMetric'
 
 type LocalDeliveryStatsTopSummaryProps = {
   routeSummary: LocalDeliveryRouteSummaryStats
+  routeScopeKey: string
 }
 
 export const LocalDeliveryStatsTopSummary = ({
   routeSummary,
+  routeScopeKey,
 }: LocalDeliveryStatsTopSummaryProps) => (
   <div className="pointer-events-none min-w-[300px] rounded-[28px] border border-white/20 bg-black/28 px-4 py-4 backdrop-blur-md ">
     <div className="flex flex-col gap-3">
@@ -15,8 +17,8 @@ export const LocalDeliveryStatsTopSummary = ({
           {row.map((metric) => (
             <InlineRouteMetric
               key={metric.id}
-              label={metric.label}
-              value={metric.value}
+              metric={metric}
+              routeScopeKey={routeScopeKey}
             />
           ))}
         </div>

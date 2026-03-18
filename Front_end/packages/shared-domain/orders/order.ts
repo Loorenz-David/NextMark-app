@@ -59,6 +59,8 @@ export type Order = {
   total_volume?: number | null
   open_order_cases?: number | null
   archive_at?: ISODateTime | null
+  client_form_token_hash?: string | null
+  client_form_submitted_at?: ISODateTime | null
   __optimistic?: boolean
 }
 

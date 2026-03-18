@@ -83,6 +83,11 @@ class Order(
     )
 
     archive_at = Column(UTCDateTime)
+
+    # Client-form secure link fields
+    client_form_token_hash = Column(String(64), unique=True, nullable=True, index=True)
+    client_form_token_expires_at = Column(UTCDateTime, nullable=True)
+    client_form_submitted_at = Column(UTCDateTime, nullable=True)
     
   
 

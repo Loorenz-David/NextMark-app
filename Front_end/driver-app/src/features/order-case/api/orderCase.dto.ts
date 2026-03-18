@@ -7,6 +7,7 @@ export type CaseChatDto = {
   message?: string | null
   creation_date?: string | null
   user_id?: number | null
+  user_name?: string | null
   order_case_id?: number | null
 }
 

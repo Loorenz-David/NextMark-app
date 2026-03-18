@@ -35,6 +35,7 @@ def emit_route_solution_created(route_solution: RouteSolution, *, payload: dict 
         payload={
             "route_solution_id": route_solution.id,
             "local_delivery_plan_id": route_solution.local_delivery_plan_id,
+            "delivery_plan_id": local_delivery_plan.delivery_plan_id,
             "label": route_solution.label,
             "is_selected": route_solution.is_selected,
             "driver_id": route_solution.driver_id,

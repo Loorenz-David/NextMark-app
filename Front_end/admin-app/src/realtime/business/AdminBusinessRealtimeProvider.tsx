@@ -3,9 +3,14 @@ import { useEffect, useMemo, useSyncExternalStore } from 'react'
 import {
   createAdminBusinessChannel,
   type BusinessEventEnvelope,
+  type ClientFormSubmittedPayload,
 } from '@shared-realtime'
 import { sessionStorage } from '@/features/auth/login/store/sessionStorage'
 import { adminRealtimeClient } from '../client'
+import {
+  subscribeToClientFormSubmitted,
+  unsubscribeFromClientFormSubmitted,
+} from '../clientForm/clientForm.realtime'
 import { getOrder } from '@/features/order/api/orderApi'
 import { useOrderModel } from '@/features/order/domain/useOrderModel'
 import {
@@ -19,6 +24,7 @@ import { useOrderCaseFlow } from '@/features/orderCase/flows/orderCase.flow'
 import { useOrderCaseModel } from '@/features/orderCase/domain/orderCase.model'
 import {
   selectOrderCaseById,
+  selectOrderCaseByClientId,
   updateCaseState,
   upsertOrderCase,
   upsertOrderCases,
@@ -26,11 +32,16 @@ import {
 } from '@/features/orderCase/store/orderCaseStore'
 import { useOrderCaseListStore } from '@/features/orderCase/store/orderCaseList.store'
 import { useOrderCaseQueryStore } from '@/features/orderCase/store/orderCaseQueryStore'
+import { planApi } from '@/features/plan/api/plan.api'
+import type { DeliveryPlan } from '@/features/plan/types/plan'
+import { addVisiblePlan, upsertPlan } from '@/features/plan/store/plan.slice'
+import { normalizeEntityMap, type EntityMap } from '@/lib/utils/entities/normalizeEntityMap'
 import {
   markAdminBusinessEventHandled,
   runDedupedGlobalOrderCasesRefresh,
   runDedupedOrderCaseRefresh,
   runDedupedOrderRefresh,
+  runDedupedPlanRefresh,
 } from './adminBusinessRealtimeCoordinator'
 
 type BusinessPayload = Record<string, unknown>
@@ -93,6 +104,24 @@ export function AdminBusinessRealtimeProvider({ children }: PropsWithChildren) {
         filters: orderCaseQueryState.filters,
       }
       await loadAllCases(currentQuery, true)
+    }
+
+    const refreshPlanById = async (planId: number) => {
+      const response = await planApi.getPlan(planId)
+      const payload = response.data
+      if (!payload?.delivery_plan) {
+        return
+      }
+
+      const normalized = normalizeEntityMap<DeliveryPlan>(payload.delivery_plan as EntityMap<DeliveryPlan> | DeliveryPlan)
+      if (!normalized) {
+        return
+      }
+
+      normalized.allIds.forEach((clientId) => {
+        upsertPlan(normalized.byClientId[clientId] as DeliveryPlan)
+        addVisiblePlan(clientId)
+      })
     }
 
     const handleOrderEvent = (event: BusinessEventEnvelope<BusinessPayload>) => {
@@ -174,11 +203,13 @@ export function AdminBusinessRealtimeProvider({ children }: PropsWithChildren) {
       }
 
       if (event.event_name === 'order_case.created' && orderCaseId) {
+        const clientId = String(payload.order_case_client_id ?? `order-case-${orderCaseId}`)
         const existingOrderCase = selectOrderCaseById(orderCaseId)(useOrderCaseStore.getState())
+          ?? selectOrderCaseByClientId(clientId)(useOrderCaseStore.getState())
         if (!existingOrderCase) {
           const normalizedEntity = normalizeOrderCaseEntity({
             id: orderCaseId,
-            client_id: String(payload.order_case_client_id ?? `order-case-${orderCaseId}`),
+            client_id: clientId,
             order_id: orderId,
             state: typeof payload.state === 'string' ? payload.state : 'Open',
             creation_date: String(event.occurred_at),
@@ -200,6 +231,34 @@ export function AdminBusinessRealtimeProvider({ children }: PropsWithChildren) {
       }
     }
 
+    const handleRouteSolutionEvent = (event: BusinessEventEnvelope<BusinessPayload>) => {
+      if (event.event_name !== 'route_solution.created') {
+        return
+      }
+
+      const payload = event.payload ?? {}
+      const deliveryPlanId = getPayloadNumber(payload, 'delivery_plan_id')
+      if (!deliveryPlanId) {
+        return
+      }
+
+      void runDedupedPlanRefresh(deliveryPlanId, () => refreshPlanById(deliveryPlanId))
+    }
+
+    const handleClientFormSubmitted = (payload: ClientFormSubmittedPayload) => {
+      const order = selectOrderByServerId(payload.order_id)(useOrderStore.getState())
+      if (!order) {
+        return
+      }
+      // Optimistic update so the status badge reflects immediately;
+      // the subsequent deduped refresh will overwrite with the exact server timestamp.
+      updateOrderByClientId(order.client_id, (existing) => ({
+        ...existing,
+        client_form_submitted_at: new Date().toISOString(),
+      }))
+      void runDedupedOrderRefresh(payload.order_id, () => refreshOrderById(payload.order_id))
+    }
+
     const releaseAdminBusiness = adminBusinessChannel.subscribeTeamAdmin((event) => {
       if (!markAdminBusinessEventHandled(event.event_id)) {
         return
@@ -208,10 +267,14 @@ export function AdminBusinessRealtimeProvider({ children }: PropsWithChildren) {
       handleOrderEvent(event)
       handleOrderCaseEvent(event)
       handleOrderChatEvent(event)
+      handleRouteSolutionEvent(event)
     })
+
+    subscribeToClientFormSubmitted(handleClientFormSubmitted)
 
     return () => {
       releaseAdminBusiness()
+      unsubscribeFromClientFormSubmitted(handleClientFormSubmitted)
     }
   }, [
     adminBusinessChannel,

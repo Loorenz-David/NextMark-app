@@ -188,10 +188,7 @@
   height: 22px;
   padding: 0;
   border-radius: 999px;
-  background: #ffffff;
-  color: #0f766e;
-  border: 2px solid #0f766e;
-  box-shadow: 0 0 0 4px rgba(15, 118, 110, 0.18);
+  border: 2px solid transparent;
 }
 
 .driver-live-marker::after {
@@ -200,4 +197,18 @@
 
 .driver-live-marker::before {
   display: none;
+}
+
+.driver-live-marker--active {
+  background: #0f766e;
+  color: #ffffff;
+  border-color: #ffffff;
+  box-shadow: 0 0 0 4px rgba(15, 118, 110, 0.2);
+}
+
+.driver-live-marker--passive {
+  background: #ffffff;
+  color: #64748b;
+  border-color: #64748b;
+  box-shadow: 0 0 0 4px rgba(100, 116, 139, 0.12);
 }

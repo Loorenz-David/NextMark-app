@@ -1,0 +1,35 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --color-text: #111827;
+  --color-muted: #6b7280;
+  --color-border: #e5e7eb;
+  --color-surface: #f9fafb;
+  --color-surface-2: #f3f4f6;
+  --color-primary: #2563eb;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: 'Inter', 'SF Pro Display', 'Segoe UI', system-ui, -apple-system,
+    BlinkMacSystemFont, sans-serif;
+  color: var(--color-text);
+  background-color: var(--color-surface);
+}
+
+input {
+  border: none;
+  outline: none;
+  background: transparent;
+}
+
+input:focus {
+  outline: none;
+  box-shadow: none;
+}

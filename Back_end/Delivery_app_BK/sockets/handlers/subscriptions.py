@@ -11,6 +11,7 @@ from Delivery_app_BK.sockets.contracts.realtime import (
     CHANNEL_ROUTE_ORDERS,
     CHANNEL_TEAM_ADMIN,
     CHANNEL_TEAM_DRIVER_LIVE,
+    CHANNEL_TEAM_MEMBERS,
     CHANNEL_TEAM_ORDERS,
     CHANNEL_TEAM_ORDER_CASES,
 )
@@ -18,6 +19,7 @@ from Delivery_app_BK.sockets.rooms.names import (
     build_team_admin_room,
     build_order_chat_room,
     build_route_orders_room,
+    build_team_members_room,
     build_team_order_cases_room,
     build_team_orders_room,
 )
@@ -117,6 +119,10 @@ def handle_subscribe(claims, data):
         subscribe_team_driver_live(claims)
         return
 
+    if channel == CHANNEL_TEAM_MEMBERS:
+        join_room(build_team_members_room(team_id), sid=request.sid)
+        return
+
     if channel == CHANNEL_ORDER_CHAT:
         room = _resolve_order_chat_room(claims, params if isinstance(params, dict) else None)
         if room:
@@ -152,6 +158,10 @@ def handle_unsubscribe(claims, data):
 
     if channel == CHANNEL_TEAM_DRIVER_LIVE:
         unsubscribe_team_driver_live(claims)
+        return
+
+    if channel == CHANNEL_TEAM_MEMBERS and team_id is not None:
+        leave_room(build_team_members_room(team_id), sid=request.sid)
         return
 
     if channel == CHANNEL_ORDER_CHAT:

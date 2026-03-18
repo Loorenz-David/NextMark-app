@@ -27,12 +27,20 @@ def create_case_chat(ctx: ServiceContext):
     if not user_id:
         raise NotFound("Could not create a chat because User not found")
 
+    user: User = get_instance(
+        ctx=ctx,
+        model=User,
+        value=user_id,
+    )
+    resolved_user_name = user.username or user.email
+
     for field_set in extract_fields(ctx):
 
         if "order_case_id" not in field_set:
             raise ValidationFailed("Chat must pass an order_case_id")
             
         field_set['user_id'] = user_id
+        field_set['user_name'] = resolved_user_name
 
         
         instance: CaseChat = create_instance(ctx, CaseChat, dict(field_set))
@@ -61,6 +69,7 @@ def create_case_chat(ctx: ServiceContext):
                 "order_case_client_id": instance.order_case.client_id if instance.order_case else None,
                 "order_id": instance.order_case.order_id if instance.order_case else None,
                 "user_id": instance.user_id,
+                "user_name": instance.user_name,
             },
             "occurred_at": instance.creation_date,
         }

@@ -117,5 +117,15 @@ const toOptimisticChat = (orderCaseId: number, message: string): CaseChat => ({
     const userId = apiClient.getSessionUserId()
     return typeof userId === 'number' ? userId : null
   })(),
+  user_name: (() => {
+    const user = apiClient.getSessionUser()
+    if (typeof user?.username === 'string' && user.username.trim()) {
+      return user.username.trim()
+    }
+    if (typeof user?.email === 'string' && user.email.trim()) {
+      return user.email.trim()
+    }
+    return null
+  })(),
   order_case_id: orderCaseId,
 })

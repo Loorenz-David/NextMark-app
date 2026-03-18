@@ -20,12 +20,13 @@ export async function initializeOrderCaseChatFlow(
 
   const existingChats = selectCaseChatsByOrderCaseId(useCaseChatsStore.getState(), orderCaseId)
   const orderCase = selectOrderCaseByServerId(orderCaseId)(useOrderCasesStore.getState())
+  const unseenChats = orderCase?.unseen_chats
 
-  if (!force && initializedOrderCaseChats.has(orderCaseId)) {
+  if (!force && initializedOrderCaseChats.has(orderCaseId) && unseenChats === 0) {
     return true
   }
 
-  if (!force && existingChats.length > 0 && (orderCase?.unseen_chats ?? 0) === 0) {
+  if (!force && existingChats.length > 0 && unseenChats === 0) {
     initializedOrderCaseChats.add(orderCaseId)
     return true
   }
@@ -39,7 +40,11 @@ export async function initializeOrderCaseChatFlow(
     try {
       const result = await loadCaseChatsQuery(orderCaseId)
       upsertCaseChats(result.caseChats)
-      await markOrderCaseChatsReadAction(orderCaseId)
+      try {
+        await markOrderCaseChatsReadAction(orderCaseId)
+      } catch (error) {
+        console.error('Failed to mark order case chats as read', error)
+      }
       updateOrderCaseUnseenCount(orderCaseId, 0)
       initializedOrderCaseChats.add(orderCaseId)
       return true

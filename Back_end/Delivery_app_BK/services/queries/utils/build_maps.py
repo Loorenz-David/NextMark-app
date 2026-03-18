@@ -35,10 +35,11 @@ def build_client_ids_map(
     all_ids = []
     
     for obj in unpacked_instances:
-        target_id = obj.get('client_id', obj.get("id", None) )
+        target_id = obj.get('client_id')
+        if target_id is None or target_id == "":
+            target_id = obj.get("id", None)
 
-        if not target_id:
-            print(unpacked_instances)
+        if target_id is None or target_id == "":
             raise ValidationFailed(f"when building ids map for intance { table }, the object 'id' was missing.")
 
         target_id = str( target_id )

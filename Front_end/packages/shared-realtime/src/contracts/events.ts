@@ -7,6 +7,7 @@ export const REALTIME_SERVER_EVENTS = {
   notificationSnapshot: 'notification:snapshot',
   externalFormReceived: 'external_form:received',
   externalFormRequested: 'external_form:requested',
+  clientFormSubmitted: 'client_form:submitted',
 } as const
 
 export const REALTIME_CLIENT_EVENTS = {
@@ -22,6 +23,7 @@ export const REALTIME_CLIENT_EVENTS = {
 
 export const REALTIME_CHANNELS = {
   teamAdmin: 'team_admin',
+  teamMembers: 'team_members',
   teamOrders: 'team_orders',
   teamOrderCases: 'team_order_cases',
   routeOrders: 'route_orders',
@@ -33,6 +35,7 @@ export type RealtimeChannelId = (typeof REALTIME_CHANNELS)[keyof typeof REALTIME
 
 export type RealtimeChannelParamsMap = {
   team_admin: Record<string, never>
+  team_members: Record<string, never>
   team_orders: Record<string, never>
   team_order_cases: Record<string, never>
   route_orders: { route_id: number }
@@ -83,6 +86,7 @@ export const DRIVER_BUSINESS_EVENT_NAMES = [
   'order_case.state_changed',
   'order_chat.message_created',
   'local_delivery_plan.updated',
+  'route_solution.created',
   'route_solution.updated',
   'route_solution_stop.updated',
 ] as const satisfies readonly BusinessEventName[]
@@ -154,6 +158,11 @@ export type ExternalFormReceivedPayload<TFormData> = {
 export type ExternalFormRequestedPayload = {
   request_data?: Record<string, unknown>
   requested_by: number
+}
+
+export type ClientFormSubmittedPayload = {
+  order_id: number
+  order_reference: string
 }
 
 export type NotificationTargetKind =

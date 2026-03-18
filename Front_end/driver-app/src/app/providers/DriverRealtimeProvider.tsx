@@ -2,6 +2,7 @@ import type { PropsWithChildren } from 'react'
 import { useEffect, useMemo } from 'react'
 import {
   createRouteOrdersChannel,
+  createTeamMembersChannel,
   type BusinessEventEnvelope,
 } from '@shared-realtime'
 import type { SessionSnapshot } from '@shared-api'
@@ -9,6 +10,7 @@ import { useWorkspace } from './workspace.context'
 import { useSession } from './session.context'
 import { driverRealtimeClient } from '@/app/services/realtime'
 import { patchOrderStateByServerIds, selectOrderByServerId, useOrdersStore } from '@/features/routes/orders'
+import { initializeOrderCaseChatFlow } from '@/features/order-case'
 import {
   selectSelectedRoute,
   useRoutesSelectionStore,
@@ -51,6 +53,11 @@ export function DriverRealtimeProvider({ children }: PropsWithChildren) {
 
   const routeOrdersChannel = useMemo(
     () => createRouteOrdersChannel(driverRealtimeClient),
+    [],
+  )
+
+  const teamMembersChannel = useMemo(
+    () => createTeamMembersChannel(driverRealtimeClient),
     [],
   )
 
@@ -109,6 +116,11 @@ export function DriverRealtimeProvider({ children }: PropsWithChildren) {
           return
         }
 
+        const orderCaseId = getPayloadNumber(payload, 'order_case_id')
+        if (event.event_name === 'order_chat.message_created' && orderCaseId != null) {
+          void initializeOrderCaseChatFlow(orderCaseId, { force: true })
+        }
+
         void refreshDriverRealtimeOrderCases(orderId)
       }
     }
@@ -123,6 +135,66 @@ export function DriverRealtimeProvider({ children }: PropsWithChildren) {
     session,
     sessionState,
     selectedRoute?.id,
+    workspace,
+  ])
+
+  useEffect(() => {
+    const teamId = workspace?.teamId ?? null
+    const workspaceScopeKey = workspace?.workspaceScopeKey
+
+    if (
+      !workspaceScopeKey
+      || sessionState !== 'authenticated'
+      || !session?.socketToken
+      || !teamId
+    ) {
+      return
+    }
+
+    const currentUserId = workspace?.userId ?? session?.identity?.user_id ?? session?.user?.id ?? null
+
+    const releaseTeamMembers = teamMembersChannel.subscribeTeamMembers((event: BusinessEventEnvelope<BusinessPayload>) => {
+      if (!markDriverRealtimeEventHandled(event.event_id)) {
+        return
+      }
+
+      const payload = event.payload ?? {}
+
+      if (event.event_name === 'route_solution.created') {
+        const driverId = getPayloadNumber(payload, 'driver_id')
+        if (driverId == null || currentUserId == null) {
+          return
+        }
+
+        if (String(driverId) !== String(currentUserId)) {
+          return
+        }
+
+        void refreshDriverRealtimeRoutes(workspaceScopeKey)
+        return
+      }
+
+      if (event.event_name === 'local_delivery_plan.updated') {
+        const driverId = getPayloadNumber(payload, 'driver_id')
+        if (driverId == null || currentUserId == null) {
+          return
+        }
+
+        if (String(driverId) !== String(currentUserId)) {
+          return
+        }
+
+        void refreshDriverRealtimeRoutes(workspaceScopeKey)
+      }
+    })
+
+    return () => {
+      releaseTeamMembers()
+    }
+  }, [
+    teamMembersChannel,
+    session,
+    sessionState,
     workspace,
   ])
 

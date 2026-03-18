@@ -27,6 +27,7 @@ from .item_position import item_position_bp
 from .item_state import item_state_bp
 from .costumer import costumer_bp
 from .drivers import drivers_bp
+from .client_form import client_form_bp, public_client_form_bp
 from Delivery_app_BK.routers.utils.role_decorator import install_blueprint_scope_guard
 
 
@@ -56,6 +57,7 @@ ADMIN_APP_BLUEPRINTS = [
     route_solution_bp,
     plan_overviews_bp,
     costumer_bp,
+    client_form_bp,
 ]
 
 
@@ -101,3 +103,7 @@ def register_v2_blueprints(app):
     app.register_blueprint(plan_overviews_bp, url_prefix="/api_v2/plan_overviews")
     app.register_blueprint(costumer_bp, url_prefix="/api_v2/costumers")
     app.register_blueprint(drivers_bp, url_prefix="/api_v2/drivers")
+    # client_form_bp is an admin-scoped blueprint registered under /api_v2
+    app.register_blueprint(client_form_bp, url_prefix="/api_v2")
+    # public_client_form_bp requires no auth; do NOT add to ADMIN_APP_BLUEPRINTS
+    app.register_blueprint(public_client_form_bp, url_prefix="/api_v2")

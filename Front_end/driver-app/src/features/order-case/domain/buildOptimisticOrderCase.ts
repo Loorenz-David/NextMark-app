@@ -28,12 +28,14 @@ export function buildOptimisticCaseChat(
   orderCaseId: number,
   clientId: string,
   message: string,
+  userName?: string | null,
 ): CaseChat {
   return {
     client_id: clientId,
     message,
     creation_date: new Date().toISOString(),
     user_id: null,
+    user_name: userName ?? null,
     order_case_id: orderCaseId,
   }
 }

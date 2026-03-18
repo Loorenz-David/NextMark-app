@@ -23,6 +23,7 @@ import { useAuthSession } from '@/features/auth/login/hooks/useAuthSelectors'
 import { useOrderGroupUIStore } from '../store/orderGroupUI.store'
 import { useOrderPaginationController } from '../hooks/useOrderPaginationController'
 import { useOrderMapDataFlow } from '../flows/orderMapData.flow'
+import { useOrderDriverLiveMapFlow } from '../flows/orderDriverLiveMap.flow'
 
 type OrderProviderProps = PropsWithChildren<{
   scrollContainerRef?: RefObject<HTMLElement | null>
@@ -126,6 +127,7 @@ export const OrderProvider = ({ children, scrollContainerRef }: OrderProviderPro
     visible: !baseControlls.isBaseOpen,
     refreshEnabled: activeOrderDetailClientId == null,
   })
+  useOrderDriverLiveMapFlow()
   useOrderCircleSelectionFlow()
 
   useEffect(() => {

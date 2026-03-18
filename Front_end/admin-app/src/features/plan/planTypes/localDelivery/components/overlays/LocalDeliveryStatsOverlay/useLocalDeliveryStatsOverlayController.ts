@@ -189,23 +189,109 @@ const buildGaussianCards = ({
     {
       id: 'timing',
       faces: [
-        { id: 'on-time', label: 'On time stops', displayValue: `${onTimeStops}`, progressValue: clampPercent(totalStops === 0 ? 0 : (onTimeStops / totalStops) * 100), accentClassName: 'stroke-emerald-400' },
-        { id: 'late', label: 'Late stops', displayValue: `${lateStops}`, progressValue: clampPercent(totalStops === 0 ? 0 : (lateStops / totalStops) * 100), accentClassName: 'stroke-amber-400' },
-        { id: 'early', label: 'Early stops', displayValue: `${earlyStops}`, progressValue: clampPercent(totalStops === 0 ? 0 : (earlyStops / totalStops) * 100), accentClassName: 'stroke-sky-400' },
+        {
+          id: 'on-time',
+          label: 'On time stops',
+          displayValue: `${onTimeStops}`,
+          progressValue: clampPercent(totalStops === 0 ? 0 : (onTimeStops / totalStops) * 100),
+          accentClassName: 'stroke-emerald-400',
+          animation: {
+            numericValue: onTimeStops,
+            valueType: 'integer',
+            sourceType: 'realtime',
+            compareMode: 'strict',
+          },
+        },
+        {
+          id: 'late',
+          label: 'Late stops',
+          displayValue: `${lateStops}`,
+          progressValue: clampPercent(totalStops === 0 ? 0 : (lateStops / totalStops) * 100),
+          accentClassName: 'stroke-amber-400',
+          animation: {
+            numericValue: lateStops,
+            valueType: 'integer',
+            sourceType: 'realtime',
+            compareMode: 'strict',
+          },
+        },
+        {
+          id: 'early',
+          label: 'Early stops',
+          displayValue: `${earlyStops}`,
+          progressValue: clampPercent(totalStops === 0 ? 0 : (earlyStops / totalStops) * 100),
+          accentClassName: 'stroke-sky-400',
+          animation: {
+            numericValue: earlyStops,
+            valueType: 'integer',
+            sourceType: 'realtime',
+            compareMode: 'strict',
+          },
+        },
       ],
     },
     {
       id: 'capacity',
       faces: [
-        { id: 'volume', label: 'Route capacity volume', displayValue: formatVolumeLabel(totalVolumeCubicCentimeters), progressValue: volumeRatio, accentClassName: 'stroke-cyan-400' },
-        { id: 'weight', label: 'Route weight', displayValue: formatWeightLabel(totalWeightGrams), progressValue: weightRatio, accentClassName: 'stroke-violet-400' },
+        {
+          id: 'volume',
+          label: 'Route capacity volume',
+          displayValue: formatVolumeLabel(totalVolumeCubicCentimeters),
+          progressValue: volumeRatio,
+          accentClassName: 'stroke-cyan-400',
+          animation: {
+            numericValue: volumeRatio,
+            valueType: 'percent',
+            sourceType: 'estimated',
+            compareMode: 'threshold',
+            threshold: 1,
+          },
+        },
+        {
+          id: 'weight',
+          label: 'Route weight',
+          displayValue: formatWeightLabel(totalWeightGrams),
+          progressValue: weightRatio,
+          accentClassName: 'stroke-violet-400',
+          animation: {
+            numericValue: weightRatio,
+            valueType: 'percent',
+            sourceType: 'estimated',
+            compareMode: 'threshold',
+            threshold: 1,
+          },
+        },
       ],
     },
     {
       id: 'completion',
       faces: [
-        { id: 'completed-orders', label: 'Orders completed', displayValue: `${completedOrders}`, progressValue: clampPercent(totalStops === 0 ? 0 : (completedOrders / totalStops) * 100), accentClassName: 'stroke-lime-400' },
-        { id: 'failed-orders', label: 'Orders fail', displayValue: `${failedOrders}`, progressValue: clampPercent(totalStops === 0 ? 0 : (failedOrders / totalStops) * 100), accentClassName: 'stroke-rose-400' },
+        {
+          id: 'completed-orders',
+          label: 'Orders completed',
+          displayValue: `${completedOrders}`,
+          progressValue: clampPercent(totalStops === 0 ? 0 : (completedOrders / totalStops) * 100),
+          accentClassName: 'stroke-lime-400',
+          animation: {
+            numericValue: completedOrders,
+            valueType: 'integer',
+            sourceType: 'derived',
+            compareMode: 'strict',
+          },
+        },
+        {
+          id: 'failed-orders',
+          label: 'Orders fail',
+          displayValue: `${failedOrders}`,
+          progressValue: clampPercent(totalStops === 0 ? 0 : (failedOrders / totalStops) * 100),
+          accentClassName: 'stroke-rose-400',
+          animation: {
+            numericValue: failedOrders,
+            valueType: 'integer',
+            sourceType: 'derived',
+            compareMode: 'strict',
+          },
+        },
       ],
     },
   ]
@@ -213,6 +299,7 @@ const buildGaussianCards = ({
 
 const buildStatsData = ({
   routeId,
+  routeClientId,
   distanceMeters,
   travelTimeSeconds,
   serviceTimeSeconds,
@@ -235,6 +322,7 @@ const buildStatsData = ({
   failedOrders,
 }: {
   routeId: number | null
+  routeClientId?: string | null
   distanceMeters?: number | null
   travelTimeSeconds?: number | null
   serviceTimeSeconds?: number | null
@@ -258,6 +346,8 @@ const buildStatsData = ({
 }): LocalDeliveryStatsOverlayData => {
   const seed = routeId ?? 0
   const distanceKm = Math.max(0, (distanceMeters ?? 0) / 1000)
+  const roundedDistanceKm = Math.round(distanceKm)
+  const avgDistanceKm = totalStops > 0 ? distanceKm / Math.max(1, totalStops) : 0
   const drivingSeconds = travelTimeSeconds ?? 0
   const serviceSeconds = serviceTimeSeconds ?? 0
   const totalSeconds = drivingSeconds + serviceSeconds
@@ -265,11 +355,36 @@ const buildStatsData = ({
   const co2Value = Math.max(3.2, distanceKm * 0.115)
 
   return {
+    routeScopeKey: routeClientId || `route-${routeId ?? 'unknown'}`,
     routeSummary: {
       rows: [
         [
-          { id: 'distance-total', label: 'total distance', value: formatDistanceLabel(distanceMeters) },
-          { id: 'distance-avg-stop', label: 'distance / stop', value: formatDistancePerStopLabel(distanceMeters, totalStops) },
+          {
+            id: 'distance-total',
+            label: 'total distance',
+            value: formatDistanceLabel(distanceMeters),
+            animation: {
+              numericValue: roundedDistanceKm,
+              valueType: 'integer',
+              unitSuffix: 'km',
+              sourceType: 'realtime',
+              compareMode: 'strict',
+            },
+          },
+          {
+            id: 'distance-avg-stop',
+            label: 'distance / stop',
+            value: formatDistancePerStopLabel(distanceMeters, totalStops),
+            animation: {
+              numericValue: avgDistanceKm,
+              valueType: 'decimal',
+              unitSuffix: 'km',
+              sourceType: 'derived',
+              compareMode: 'epsilon',
+              epsilon: 0.1,
+              decimals: 1,
+            },
+          },
           { id: 'distance-empty', label: '', value: '' },
         ],
         [
@@ -278,24 +393,75 @@ const buildStatsData = ({
             label: 'total duration',
             value: formatDurationLabel(totalSeconds),
             delta: totalDurationDelta,
+            animation: {
+              numericValue: totalSeconds,
+              valueType: 'duration_seconds',
+              sourceType: 'realtime',
+              compareMode: 'threshold',
+              threshold: 30,
+            },
           },
           {
             id: 'duration-driving',
             label: 'driving duration',
             value: formatDurationLabel(drivingSeconds),
             delta: drivingDurationDelta,
+            animation: {
+              numericValue: drivingSeconds,
+              valueType: 'duration_seconds',
+              sourceType: 'realtime',
+              compareMode: 'threshold',
+              threshold: 30,
+            },
           },
           {
             id: 'duration-service',
             label: 'service duration',
             value: formatDurationLabel(serviceSeconds),
             delta: serviceDurationDelta,
+            animation: {
+              numericValue: serviceSeconds,
+              valueType: 'duration_seconds',
+              sourceType: 'derived',
+              compareMode: 'threshold',
+              threshold: 30,
+            },
           },
         ],
         [
-          { id: 'stops-total', label: 'total stops', value: `${totalStops}` },
-          { id: 'stops-dropoffs', label: 'dropoffs', value: `${dropoffCount}` },
-          { id: 'stops-pickups', label: 'pickups', value: `${pickupCount}` },
+          {
+            id: 'stops-total',
+            label: 'total stops',
+            value: `${totalStops}`,
+            animation: {
+              numericValue: totalStops,
+              valueType: 'integer',
+              sourceType: 'realtime',
+              compareMode: 'strict',
+            },
+          },
+          {
+            id: 'stops-dropoffs',
+            label: 'dropoffs',
+            value: `${dropoffCount}`,
+            animation: {
+              numericValue: dropoffCount,
+              valueType: 'integer',
+              sourceType: 'derived',
+              compareMode: 'strict',
+            },
+          },
+          {
+            id: 'stops-pickups',
+            label: 'pickups',
+            value: `${pickupCount}`,
+            animation: {
+              numericValue: pickupCount,
+              valueType: 'integer',
+              sourceType: 'derived',
+              compareMode: 'strict',
+            },
+          },
         ],
       ],
     },
@@ -315,9 +481,47 @@ const buildStatsData = ({
       failedOrders,
     }),
     consumptionMetrics: [
-      { id: 'stops-per-hour', label: 'Stops / hour', displayValue: formatStopsPerHourLabel(totalStops, totalSeconds) },
-      { id: 'fuel-cost', label: 'Fuel cost', displayValue: `${fuelCost.toFixed(1)} €` },
-      { id: 'co2', label: 'Co2', displayValue: `${co2Value.toFixed(1)} kg` },
+      {
+        id: 'stops-per-hour',
+        label: 'Stops / hour',
+        displayValue: formatStopsPerHourLabel(totalStops, totalSeconds),
+        animation: {
+          numericValue: totalSeconds > 0 ? totalStops / (totalSeconds / 3600) : 0,
+          valueType: 'decimal',
+          sourceType: 'derived',
+          compareMode: 'epsilon',
+          epsilon: 0.1,
+          decimals: 1,
+        },
+      },
+      {
+        id: 'fuel-cost',
+        label: 'Fuel cost',
+        displayValue: `${fuelCost.toFixed(1)} €`,
+        animation: {
+          numericValue: fuelCost,
+          valueType: 'currency',
+          unitSuffix: '€',
+          sourceType: 'estimated',
+          compareMode: 'epsilon',
+          epsilon: 0.1,
+          decimals: 1,
+        },
+      },
+      {
+        id: 'co2',
+        label: 'Co2',
+        displayValue: `${co2Value.toFixed(1)} kg`,
+        animation: {
+          numericValue: co2Value,
+          valueType: 'decimal',
+          unitSuffix: 'kg',
+          sourceType: 'estimated',
+          compareMode: 'epsilon',
+          epsilon: 0.1,
+          decimals: 1,
+        },
+      },
     ],
     timingAnalytics: {
       unclassifiedStopCount: unclassifiedStops,
@@ -407,6 +611,7 @@ export const useLocalDeliveryStatsOverlayController = () => {
 
     return buildStatsData({
       routeId: selectedRouteSolution.id ?? null,
+      routeClientId: selectedRouteSolution.client_id,
       distanceMeters: selectedRouteSolution.total_distance_meters,
       travelTimeSeconds: selectedRouteSolution.total_travel_time_seconds,
       serviceTimeSeconds,

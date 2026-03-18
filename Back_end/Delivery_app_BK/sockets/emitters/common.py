@@ -37,11 +37,12 @@ def build_business_event_envelope(
     app_scopes: list[str] | None = None,
 ) -> dict:
     resolved_occurred_at = occurred_at or datetime.now(timezone.utc)
+    resolved_version = str(DEFAULT_EVENT_VERSION)
 
     envelope = {
         "event_id": event_id or str(uuid4()),
         "event_name": event_name,
-        "version": DEFAULT_EVENT_VERSION,
+        "version": resolved_version,
         "occurred_at": resolved_occurred_at.isoformat(),
         "team_id": team_id,
         "entity_type": entity_type,

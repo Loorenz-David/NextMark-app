@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 import type { StackComponentProps } from '@/shared/stack-manager/types'
 
@@ -12,16 +12,86 @@ type OrderCaseDetailsPayload = {
   orderCaseClientId: string
 }
 
+const BOTTOM_STICKY_THRESHOLD_PX = 48
+
 const CaseDetailsPageContent = () => {
   const { orderCase, detailsActions, currentUserId } = useCaseDetailsContext()
 
   const chatScrollRef = useRef<HTMLDivElement | null>(null)
+  const shouldStickToBottomRef = useRef(true)
+  const previousChatCountRef = useRef(0)
+  const [showNewMessagesPill, setShowNewMessagesPill] = useState(false)
+
+  const scrollToBottom = (behavior: ScrollBehavior = 'auto') => {
+    const container = chatScrollRef.current
+    if (!container) {
+      return
+    }
+
+    container.scrollTo({ top: container.scrollHeight, behavior })
+  }
 
   useEffect(() => {
+    if (!orderCase) {
+      return
+    }
+
+    shouldStickToBottomRef.current = true
+    setShowNewMessagesPill(false)
+    previousChatCountRef.current = 0
+
+    const frame = requestAnimationFrame(() => {
+      scrollToBottom('auto')
+    })
+
+    return () => {
+      cancelAnimationFrame(frame)
+    }
+  }, [orderCase?.id])
+
+  useEffect(() => {
+    const chats = orderCase?.chats ?? []
+    const hasNewMessage = chats.length > previousChatCountRef.current
+    previousChatCountRef.current = chats.length
+
+    if (shouldStickToBottomRef.current) {
+      const frame = requestAnimationFrame(() => {
+        scrollToBottom('auto')
+        setShowNewMessagesPill(false)
+      })
+
+      return () => {
+        cancelAnimationFrame(frame)
+      }
+    }
+
+    if (hasNewMessage) {
+      const latestChat = chats[chats.length - 1]
+      const isFromCurrentUser = currentUserId != null && latestChat?.user_id === currentUserId
+      if (!isFromCurrentUser) {
+        setShowNewMessagesPill(true)
+      }
+    }
+  }, [currentUserId, orderCase?.chats])
+
+  const handleScroll = () => {
     const container = chatScrollRef.current
-    if (!container) return
-    container.scrollTo({ top: container.scrollHeight, behavior: 'auto' })
-  }, [orderCase?.chats.length])
+    if (!container) {
+      return
+    }
+
+    const remaining = container.scrollHeight - container.scrollTop - container.clientHeight
+    shouldStickToBottomRef.current = remaining <= BOTTOM_STICKY_THRESHOLD_PX
+    if (shouldStickToBottomRef.current) {
+      setShowNewMessagesPill(false)
+    }
+  }
+
+  const handleJumpToLatest = () => {
+    shouldStickToBottomRef.current = true
+    setShowNewMessagesPill(false)
+    scrollToBottom('smooth')
+  }
 
   if (!orderCase) {
     return (
@@ -40,8 +110,21 @@ const CaseDetailsPageContent = () => {
         onClose={detailsActions.closeCaseDetails}
       />
 
-      <div ref={chatScrollRef} className="flex-1 overflow-y-auto scroll-thin p-3">
+      <div ref={chatScrollRef} className="flex-1 overflow-y-auto scroll-thin p-3" onScroll={handleScroll}>
         <OrderCaseChatList chats={orderCase.chats} currentUserId={currentUserId} />
+      </div>
+
+      <div className="flex justify-center px-3 pb-2">
+        {showNewMessagesPill ? (
+          <button
+            className="mb-2 flex w-max flex-col items-center rounded-full border border-[var(--color-primary)]/40 bg-[var(--color-primary)]/15 px-4 py-2 text-sm font-medium text-[var(--color-text)] transition hover:bg-[var(--color-primary)]/25"
+            onClick={handleJumpToLatest}
+            type="button"
+          >
+            <span>New messages</span>
+            <span className="text-lg font-bold leading-none">↓</span>
+          </button>
+        ) : null}
       </div>
 
       <div className="p-3 pb-5">
