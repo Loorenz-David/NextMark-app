@@ -1,16 +1,29 @@
-import { ClientFormMeta, ClientFormPayload } from "../features/clientForm/types";
+import type { ClientFormMeta } from '../features/clientForm/domain/clientForm.types'
+import type { ClientFormData } from '../features/clientForm/domain/clientForm.types'
 
-const BASE = "/api/v2/public/client-form";
+const BASE = '/api/v2/public/client-form'
 
-export async function fetchClientForm(token: string): Promise<ClientFormMeta> {
-  // TODO: implement — GET ${BASE}/${token}
-  throw new Error("Not implemented");
+type ApiError = Error & { status?: number }
+
+async function handleResponse(res: Response): Promise<unknown> {
+  if (!res.ok) {
+    const err: ApiError = new Error(`HTTP ${res.status}`)
+    err.status = res.status
+    throw err
+  }
+  return res.json()
 }
 
-export async function submitClientForm(
-  token: string,
-  payload: ClientFormPayload
-): Promise<void> {
-  // TODO: implement — POST ${BASE}/${token}
-  throw new Error("Not implemented");
+export async function fetchClientForm(token: string): Promise<ClientFormMeta> {
+  const res = await fetch(`${BASE}/${token}`)
+  return handleResponse(res) as Promise<ClientFormMeta>
+}
+
+export async function submitClientForm(token: string, payload: ClientFormData): Promise<void> {
+  const res = await fetch(`${BASE}/${token}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  })
+  await handleResponse(res)
 }

@@ -7,6 +7,7 @@ export const REALTIME_SERVER_EVENTS = {
   notificationSnapshot: 'notification:snapshot',
   externalFormReceived: 'external_form:received',
   externalFormRequested: 'external_form:requested',
+  clientFormSubmitted: 'client_form:submitted',
 } as const
 
 export const REALTIME_CLIENT_EVENTS = {
@@ -157,6 +158,11 @@ export type ExternalFormReceivedPayload<TFormData> = {
 export type ExternalFormRequestedPayload = {
   request_data?: Record<string, unknown>
   requested_by: number
+}
+
+export type ClientFormSubmittedPayload = {
+  order_id: number
+  order_reference: string
 }
 
 export type NotificationTargetKind =

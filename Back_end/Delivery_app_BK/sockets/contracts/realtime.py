@@ -6,6 +6,7 @@ SERVER_EVENT_DRIVER_LOCATION_UPDATED = "driver_location.updated"
 SERVER_EVENT_DRIVER_LOCATION_SNAPSHOT = "driver_location.snapshot"
 SERVER_EVENT_EXTERNAL_FORM_RECEIVED = "external_form:received"
 SERVER_EVENT_EXTERNAL_FORM_REQUESTED = "external_form:requested"
+SERVER_EVENT_CLIENT_FORM_SUBMITTED = "client_form:submitted"
 SERVER_EVENT_NOTIFICATION_EVENT = "notification:event"
 SERVER_EVENT_NOTIFICATION_SNAPSHOT = "notification:snapshot"
 

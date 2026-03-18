@@ -1,22 +1,37 @@
 """
-TODO: Generate a secure client-form token for an order.
+Generate a secure client-form token for an order.
 
-Responsibilities:
-- Validate that the order belongs to the requesting team.
-- Generate a cryptographically random token via secrets.token_urlsafe(32).
-- Set client_form_token, client_form_token_expires_at (now + TTL hours).
-- Clear client_form_submitted_at if regenerating.
-- Persist and return the token.
+Security model:
+- A cryptographically random raw token is generated with secrets.token_urlsafe(32).
+- Only the SHA-256 hash is stored in the DB (client_form_token_hash).
+- The raw token is returned once and embedded in the public form URL — never stored.
+- Regenerating clears client_form_submitted_at so the new token is single-use.
 
-Returns: { "token": str, "expires_at": datetime, "form_url": str }
+Returns: { "raw_token": str, "expires_at": datetime }
+  Caller builds the full URL as: f"{BASE_URL}/form/{raw_token}"
 """
 
+import hashlib
 import secrets
 from datetime import datetime, timedelta, timezone
 
-# TODO: import db, Order model, config for TTL and BASE_URL
+# TODO: import db, Order model
 
 
-def generate_client_form_token(order_id: int, team_id: int, ttl_hours: int = 72):
-    # TODO: implement
-    raise NotImplementedError
+DEFAULT_TTL_HOURS = 72
+
+
+def generate_client_form_token(order_id: int, team_id: int, ttl_hours: int = DEFAULT_TTL_HOURS) -> dict:
+    # TODO: fetch order, validate it belongs to team_id, raise 404 otherwise
+
+    raw_token = secrets.token_urlsafe(32)
+    token_hash = hashlib.sha256(raw_token.encode("utf-8")).hexdigest()
+    expires_at = datetime.now(timezone.utc) + timedelta(hours=ttl_hours)
+
+    # TODO: set on order row:
+    #   order.client_form_token_hash = token_hash
+    #   order.client_form_token_expires_at = expires_at
+    #   order.client_form_submitted_at = None   ← clears previous submission on regenerate
+    # TODO: db.session.commit()
+
+    return {"raw_token": raw_token, "expires_at": expires_at}
