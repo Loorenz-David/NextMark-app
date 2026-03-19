@@ -25,8 +25,10 @@ from Delivery_app_BK.services.commands.order.update_extensions import (
 )
 from Delivery_app_BK.services.infra.events.builders.order import (
     build_delivery_window_rescheduled_by_user_event,
+    build_order_edited_event,
 )
 from Delivery_app_BK.services.infra.events.emiters.order import emit_order_events
+from Delivery_app_BK.services.domain.plan.route_freshness import touch_route_freshness
 from Delivery_app_BK.services.utils import model_requires_team, require_team_id, to_datetime
 from Delivery_app_BK.services.domain.order.delivery_windows import (
     derive_legacy_delivery_envelope_fields,
@@ -82,6 +84,7 @@ WINDOW_FIELDS = {
     "preferred_time_end",
     "delivery_windows",
 }
+DETAIL_FIELDS = MUTABLE_FIELDS.difference(WINDOW_FIELDS)
 
 
 def update_order(ctx: ServiceContext):
@@ -93,9 +96,10 @@ def update_order(ctx: ServiceContext):
     pending_events: list[dict[str, Any]] = []
     order_deltas: list[OrderUpdateDelta] = []
     extension_result = None
+    delivery_plans_to_touch: list[DeliveryPlan] = []
 
     def _apply() -> None:
-        nonlocal updated_orders, pending_events, order_deltas, extension_result
+        nonlocal updated_orders, pending_events, order_deltas, extension_result, delivery_plans_to_touch
         updated_orders, pending_events, order_deltas = apply_order_updates(ctx, targets)
         extension_context = build_order_update_extension_context(ctx, order_deltas)
         extension_result = apply_order_update_extensions(ctx, order_deltas, extension_context)
@@ -106,6 +110,20 @@ def update_order(ctx: ServiceContext):
 
         if extension_result.instances:
             db.session.add_all(extension_result.instances)
+
+        delivery_plans_to_touch = [
+            delta.delivery_plan
+            for delta in order_deltas
+            if (
+                delta.delivery_plan is not None
+                and getattr(delta.delivery_plan, "plan_type", None) == "local_delivery"
+                and bool(delta.changed_sections)
+            )
+        ]
+        for delivery_plan in delivery_plans_to_touch:
+            touch_route_freshness(delivery_plan)
+        if delivery_plans_to_touch:
+            db.session.flush()
 
     try:
         with db.session.begin():
@@ -169,6 +187,7 @@ def apply_order_updates(
             )
 
         old_values = _capture_sync_values(existing)
+        old_driver_visible_values = _capture_driver_visible_values(existing)
         old_earliest: datetime = to_datetime(existing.earliest_delivery_date)
         old_latest: datetime = to_datetime(existing.latest_delivery_date)
 
@@ -182,19 +201,32 @@ def apply_order_updates(
             )
 
         new_values = _capture_sync_values(existing)
+        new_driver_visible_values = _capture_driver_visible_values(existing)
         new_earliest = to_datetime(existing.earliest_delivery_date)
         new_latest = to_datetime(existing.latest_delivery_date)
-
-        if old_earliest != new_earliest or old_latest != new_latest:
-            pending_events.append(
-                build_delivery_window_rescheduled_by_user_event(
-                    order_instance=existing,
-                    old_earliest=old_earliest,
-                    old_latest=old_latest,
-                    new_earliest=new_earliest,
-                    new_latest=new_latest,
+        changed_sections = _resolve_changed_sections(
+            old_values=old_driver_visible_values,
+            new_values=new_driver_visible_values,
+        )
+        if changed_sections:
+            if "schedule" in changed_sections:
+                pending_events.append(
+                    build_delivery_window_rescheduled_by_user_event(
+                        order_instance=existing,
+                        old_earliest=old_earliest,
+                        old_latest=old_latest,
+                        new_earliest=new_earliest,
+                        new_latest=new_latest,
+                        changed_sections=list(changed_sections),
+                    )
                 )
-            )
+            else:
+                pending_events.append(
+                    build_order_edited_event(
+                        order_instance=existing,
+                        changed_sections=list(changed_sections),
+                    )
+                )
 
         flags = _build_change_flags(old_values, new_values, fields_to_apply)
         order_deltas.append(
@@ -203,6 +235,7 @@ def apply_order_updates(
                 old_values=old_values,
                 new_values=new_values,
                 flags=flags,
+                changed_sections=changed_sections,
                 delivery_plan=_resolve_delivery_plan_for_order(existing),
             )
         )
@@ -238,6 +271,58 @@ def _capture_sync_values(order: Order) -> dict[str, Any]:
         "preferred_time_start": order.preferred_time_start,
         "preferred_time_end": order.preferred_time_end,
     }
+
+
+def _capture_driver_visible_values(order: Order) -> dict[str, Any]:
+    return {
+        "order_plan_objective": order.order_plan_objective,
+        "operation_type": order.operation_type,
+        "reference_number": order.reference_number,
+        "external_order_id": order.external_order_id,
+        "external_source": order.external_source,
+        "tracking_number": order.tracking_number,
+        "client_first_name": order.client_first_name,
+        "client_last_name": order.client_last_name,
+        "client_email": order.client_email,
+        "client_primary_phone": order.client_primary_phone,
+        "client_secondary_phone": order.client_secondary_phone,
+        "client_address": order.client_address,
+        "earliest_delivery_date": order.earliest_delivery_date.isoformat() if order.earliest_delivery_date else None,
+        "latest_delivery_date": order.latest_delivery_date.isoformat() if order.latest_delivery_date else None,
+        "preferred_time_start": order.preferred_time_start,
+        "preferred_time_end": order.preferred_time_end,
+        "delivery_windows": [
+            {
+                "start_at": window.start_at.isoformat() if window.start_at else None,
+                "end_at": window.end_at.isoformat() if window.end_at else None,
+                "window_type": window.window_type,
+            }
+            for window in sorted(
+                list(getattr(order, "delivery_windows", None) or []),
+                key=lambda window: (
+                    window.start_at.isoformat() if window.start_at else "",
+                    window.end_at.isoformat() if window.end_at else "",
+                    window.window_type or "",
+                ),
+            )
+        ],
+    }
+
+
+def _resolve_changed_sections(
+    *,
+    old_values: dict[str, Any],
+    new_values: dict[str, Any],
+) -> tuple[str, ...]:
+    changed_sections: list[str] = []
+
+    if any(old_values.get(field) != new_values.get(field) for field in DETAIL_FIELDS):
+        changed_sections.append("details")
+
+    if any(old_values.get(field) != new_values.get(field) for field in WINDOW_FIELDS):
+        changed_sections.append("schedule")
+
+    return tuple(changed_sections)
 
 
 def _resolve_delivery_plan_for_order(order: Order) -> DeliveryPlan | None:

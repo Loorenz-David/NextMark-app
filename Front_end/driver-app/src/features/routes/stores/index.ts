@@ -13,6 +13,15 @@ export {
 } from './routes.mutations'
 
 export {
+  routeSnapshotMetaStore,
+} from './routeSnapshotMeta.store'
+
+export {
+  clearRouteSnapshotMeta,
+  setRouteSnapshotMeta,
+} from './routeSnapshotMeta.mutations'
+
+export {
   clearSelectedRoute,
   setSelectedRoute,
 } from './routesSelection.mutations'

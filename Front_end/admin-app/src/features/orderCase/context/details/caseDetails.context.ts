@@ -10,6 +10,7 @@ export type DetailsCaseContextValue = {
     orderCase: OrderCase | null
     detailsActions: ReturnType<typeof useDetailsActions>
     currentUserId: number | null
+    isRefreshing: boolean
 }
 
 export const DetailsCaseContext = createContext<DetailsCaseContextValue | null>(null)

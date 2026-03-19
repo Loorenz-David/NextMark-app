@@ -51,6 +51,7 @@ export type RouteSolution = {
   local_delivery_plan_id?: number | null
   has_route_warnings?: boolean
   route_warnings?: RouteSolutionWarning[] | null
+  updated_at?: ISODateTime | null
 }
 
 export type RouteSolutionMap = {

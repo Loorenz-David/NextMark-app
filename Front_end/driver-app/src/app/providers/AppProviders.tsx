@@ -19,17 +19,17 @@ function WorkspaceScopedProviders({ children }: PropsWithChildren) {
 
   return (
     <DriverBootstrapProvider key={workspaceScopeKey}>
-      <RouteExecutionShellProvider>
-        <DriverRouteTimingProvider>
-          <DriverRealtimeProvider>
-            <DriverLiveLocationProvider>
-              <DriverAppShellProvider>
+      <DriverAppShellProvider>
+        <RouteExecutionShellProvider>
+          <DriverRouteTimingProvider>
+            <DriverRealtimeProvider>
+              <DriverLiveLocationProvider>
                 <DriverNotificationsProvider>{children}</DriverNotificationsProvider>
-              </DriverAppShellProvider>
-            </DriverLiveLocationProvider>
-          </DriverRealtimeProvider>
-        </DriverRouteTimingProvider>
-      </RouteExecutionShellProvider>
+              </DriverLiveLocationProvider>
+            </DriverRealtimeProvider>
+          </DriverRouteTimingProvider>
+        </RouteExecutionShellProvider>
+      </DriverAppShellProvider>
     </DriverBootstrapProvider>
   )
 }

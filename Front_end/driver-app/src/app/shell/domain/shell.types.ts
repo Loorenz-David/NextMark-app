@@ -51,7 +51,14 @@ export type SlidingPagePageParamsMap = {
 
 export type OverlayPageParamsMap = {
   'shell-overlay-placeholder': { title: string; message: string }
-  'order-case-main': { orderId: number; orderClientId: string; stopClientId: string }
+  'order-case-main': {
+    orderId: number
+    orderClientId?: string
+    stopClientId?: string
+    orderCaseId?: number
+    orderCaseClientId?: string
+    freshAfter?: string | null
+  }
   'route-date-adjust-warning': {
     title: string
     message: string

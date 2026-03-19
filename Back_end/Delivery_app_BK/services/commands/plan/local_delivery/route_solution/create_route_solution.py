@@ -8,6 +8,11 @@ from Delivery_app_BK.services.commands.utils import generate_client_id
 from Delivery_app_BK.route_optimization.constants.is_optimized import (
     IS_OPTIMIZED_NOT_OPTIMIZED,
 )
+from Delivery_app_BK.services.domain.local_delivery.route_lifecycle import (
+    FULL_RECOMPUTE,
+    ensure_single_selected_route_solution,
+    refresh_local_delivery_route_execution,
+)
 
 from Delivery_app_BK.services.context import ServiceContext
 from Delivery_app_BK.services.queries.get_instance import get_instance
@@ -59,6 +64,18 @@ def create_route_solution(ctx: ServiceContext):
         db.session.add_all(stop_instances)
 
     db.session.flush()
+    ensure_single_selected_route_solution(
+        local_delivery_plan.id,
+        preferred_route_solution_id=route_solution.id,
+    )
+    if stop_instances:
+        route_solution, stop_instances = refresh_local_delivery_route_execution(
+            route_solution.id,
+            recompute_mode=FULL_RECOMPUTE,
+            time_zone=ctx.time_zone,
+            warning_sink=ctx,
+        )
+        db.session.flush()
 
     route_solution_result = build_create_result(
         ctx,

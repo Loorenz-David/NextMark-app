@@ -24,8 +24,9 @@ def resolve_route_ids_for_order(order_id: int | None, team_id: int | None) -> li
     return [route_id for (route_id,) in rows if isinstance(route_id, int)]
 
 
-def emit_route_order_event(*, team_id: int | None, order_id: int | None, envelope: dict) -> None:
-    for route_id in resolve_route_ids_for_order(order_id, team_id):
+def emit_route_order_event(*, route_ids: list[int], envelope: dict) -> None:
+    team_id = envelope.get("team_id")
+    for route_id in route_ids:
         socketio.emit(
             SERVER_EVENT_REALTIME_EVENT,
             envelope,

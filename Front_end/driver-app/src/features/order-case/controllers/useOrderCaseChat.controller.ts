@@ -16,6 +16,7 @@ import { initializeOrderCaseChatFlow, sendOrderCaseChatFlow, updateOrderCaseStat
 type UseOrderCaseChatControllerOptions = {
   orderCaseId: number
   orderCaseClientId: string
+  freshAfter?: string | null
 }
 
 const MIN_CHAT_LOADING_MS = 1000
@@ -23,6 +24,7 @@ const MIN_CHAT_LOADING_MS = 1000
 export function useOrderCaseChatController({
   orderCaseId,
   orderCaseClientId,
+  freshAfter,
 }: UseOrderCaseChatControllerOptions) {
   const { showMessage } = useMessageHandler()
   const { session } = useSession()
@@ -72,7 +74,7 @@ export function useOrderCaseChatController({
       setLoadError(null)
       const startedAt = Date.now()
 
-      const didSucceed = await initializeOrderCaseChatFlow(orderCaseId)
+      const didSucceed = await initializeOrderCaseChatFlow(orderCaseId, { freshAfter })
       if (cancelled) {
         return
       }
@@ -102,7 +104,7 @@ export function useOrderCaseChatController({
     return () => {
       cancelled = true
     }
-  }, [orderCaseId])
+  }, [freshAfter, orderCaseId])
 
   const orderCase = useMemo(
     () => selectOrderCaseByClientId(orderCaseClientId)(orderCasesState),

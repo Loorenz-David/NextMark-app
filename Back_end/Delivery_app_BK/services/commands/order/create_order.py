@@ -30,6 +30,7 @@ from .create_serializers import (
     serialize_created_order,
 )
 from Delivery_app_BK.services.infra.events.emiters.order import emit_order_events
+from Delivery_app_BK.services.domain.plan.route_freshness import touch_route_freshness
 from .plan_objectives import PlanObjectiveCreateResult, apply_order_plan_objective
 from ...domain.order.delivery_windows import (
     derive_legacy_delivery_envelope_fields,
@@ -108,6 +109,7 @@ def create_order(ctx: ServiceContext):
         item_instances: list[Item] = []
         extra_instances: list[object] = []
         post_flush_actions: list[Callable[[], None]] = []
+        touched_delivery_plans: dict[int, DeliveryPlan] = {}
         items_by_order_client_id: dict[str, list[Item]] = defaultdict(list)
         plan_objective_results_by_order_client_id: dict[str, PlanObjectiveCreateResult] = {}
         allocated_scalar_ids = reserve_order_scalar_ids(ctx, len(order_requests))
@@ -153,6 +155,8 @@ def create_order(ctx: ServiceContext):
             if resolved_delivery_plan_id is not None:
                 order_instance.delivery_plan_id = resolved_delivery_plan_id
                 order_instance.delivery_plan = delivery_plan
+                if delivery_plan is not None:
+                    touched_delivery_plans[delivery_plan.id] = delivery_plan
             order_instances.append(order_instance)
 
             if normalized_windows is not None:
@@ -201,6 +205,11 @@ def create_order(ctx: ServiceContext):
         for action in post_flush_actions:
             action()
         if post_flush_actions:
+            db.session.flush()
+
+        for delivery_plan in touched_delivery_plans.values():
+            touch_route_freshness(delivery_plan)
+        if touched_delivery_plans:
             db.session.flush()
 
         for order_instance in order_instances:

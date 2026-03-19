@@ -1,0 +1,35 @@
+import type { PhonePrefixOption } from './phonePrefixes'
+import { getFlagEmoji } from './phonePrefixes'
+
+type PhonePrefixCardProps = {
+  prefixOption: PhonePrefixOption
+  onSelectPrefix: (prefixOption: PhonePrefixOption) => void
+  isSelected: boolean
+}
+
+export const PhonePrefixCard = ({
+  prefixOption,
+  isSelected,
+  onSelectPrefix,
+}: PhonePrefixCardProps) => {
+  return (
+    <li>
+      <button
+        type="button"
+        className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left hover:bg-[var(--color-page)]"
+        onMouseDown={(event) => event.preventDefault()}
+        onClick={() => onSelectPrefix(prefixOption)}
+      >
+        <span className="text-base leading-none" aria-hidden>
+          {getFlagEmoji(prefixOption.countryCode)}
+        </span>
+        <span className="text-sm font-medium text-[var(--color-text)]">
+          {prefixOption.display}
+        </span>
+        {isSelected && (
+          <div className="ml-auto h-2 w-2 rounded-full bg-green-600" />
+        )}
+      </button>
+    </li>
+  )
+}

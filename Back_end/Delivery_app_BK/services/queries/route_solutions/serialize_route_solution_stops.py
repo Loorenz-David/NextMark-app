@@ -33,6 +33,7 @@ def serialize_route_solution_stops(instances: List[RouteSolutionStop], ctx: Serv
                 "expected_service_duration_seconds": instance.expected_service_duration_seconds,
                 "actual_arrival_time": actual_arrival_time.isoformat() if actual_arrival_time else None,
                 "actual_departure_time": actual_departure_time.isoformat() if actual_departure_time else None,
+                "updated_at": instance.updated_at.isoformat() if instance.updated_at else None,
                 "to_next_polyline": instance.to_next_polyline,
             }
         )

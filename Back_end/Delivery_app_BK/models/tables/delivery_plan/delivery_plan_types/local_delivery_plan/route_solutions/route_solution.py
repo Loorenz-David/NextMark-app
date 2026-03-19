@@ -83,6 +83,11 @@ class RouteSolution(
         UTCDateTime,
         default=lambda: datetime.now(timezone.utc)
     )
+    updated_at = Column(
+        UTCDateTime,
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
+    )
 
     is_selected = Column(Boolean, default=False)
 

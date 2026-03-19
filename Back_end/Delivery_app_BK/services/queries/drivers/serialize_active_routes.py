@@ -26,11 +26,12 @@ def _serialize_delivery_plan_collapsed(instance: DeliveryPlan | None):
         "start_date": start_date.isoformat() if start_date else None,
         "end_date": end_date.isoformat() if end_date else None,
         "created_at": created_at.isoformat() if created_at else None,
+        "updated_at": instance.updated_at.isoformat() if instance.updated_at else None,
         "state_id": instance.state_id,
     }
 
 
-def _serialize_active_route(instance: RouteSolution, ctx: ServiceContext):
+def serialize_active_route(instance: RouteSolution, ctx: ServiceContext):
     local_delivery_plan = getattr(instance, "local_delivery_plan", None)
     delivery_plan = getattr(local_delivery_plan, "delivery_plan", None) if local_delivery_plan else None
 
@@ -47,9 +48,28 @@ def _serialize_active_route(instance: RouteSolution, ctx: ServiceContext):
     return unpacked
 
 
+def serialize_active_route_summary(instance: RouteSolution, ctx: ServiceContext):
+    local_delivery_plan = getattr(instance, "local_delivery_plan", None)
+    delivery_plan = getattr(local_delivery_plan, "delivery_plan", None) if local_delivery_plan else None
+    created_at = instance.created_at
+    updated_at = instance.updated_at
+
+    return {
+        "id": instance.id,
+        "client_id": instance.client_id,
+        "_representation": "summary",
+        "is_selected": bool(instance.is_selected),
+        "driver_id": instance.driver_id,
+        "local_delivery_plan_id": instance.local_delivery_plan_id,
+        "created_at": created_at.isoformat() if created_at else None,
+        "updated_at": updated_at.isoformat() if updated_at else None,
+        "delivery_plan": _serialize_delivery_plan_collapsed(delivery_plan),
+    }
+
+
 def serialize_active_routes(instances: List[RouteSolution], ctx: ServiceContext):
     unpacked_instances = [
-        _serialize_active_route(instance, ctx)
+        serialize_active_route_summary(instance, ctx)
         for instance in instances
     ]
 

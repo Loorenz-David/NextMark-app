@@ -1,19 +1,11 @@
-import { useState, type ReactNode } from 'react'
+import { useState, useMemo, type ReactNode } from 'react'
+import { useDefaultPhonePrefix } from '@shared-inputs'
 import { ClientFormContext } from './ClientForm.context'
 import type { ClientFormData, ClientFormMeta, ClientFormStep } from '../domain/clientForm.types'
 import { isStepValid } from '../domain/clientForm.validation'
 import { submitClientForm } from '../../../api/clientForm.api'
 
 const STEPS: ClientFormStep[] = ['client_info', 'contact_info', 'delivery_address']
-
-const EMPTY_DATA: ClientFormData = {
-  client_first_name: '',
-  client_last_name: '',
-  client_primary_phone: '',
-  client_secondary_phone: '',
-  client_email: '',
-  client_address: null,
-}
 
 type Props = {
   token: string
@@ -23,7 +15,18 @@ type Props = {
 }
 
 export const ClientFormProvider = ({ token, meta, onSubmitted, children }: Props) => {
-  const [data, setData] = useState<ClientFormData>(EMPTY_DATA)
+  const defaultPrefix = useDefaultPhonePrefix(meta.team_timezone)
+
+  const emptyData = useMemo<ClientFormData>(() => ({
+    client_first_name: '',
+    client_last_name: '',
+    client_primary_phone: { prefix: defaultPrefix, number: '' },
+    client_secondary_phone: { prefix: defaultPrefix, number: '' },
+    client_email: '',
+    client_address: null,
+  }), [defaultPrefix])
+
+  const [data, setData] = useState<ClientFormData>(emptyData)
   const [currentStep, setCurrentStep] = useState<ClientFormStep>('client_info')
   const [isSubmitting, setIsSubmitting] = useState(false)
 

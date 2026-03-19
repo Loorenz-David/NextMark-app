@@ -27,6 +27,7 @@ def get_client_form_data(token: str) -> dict:
     return {
         "reference_number": order.reference_number,
         "team_name": team_name,
+        "team_timezone": team.time_zone if team is not None else None,
         "items": items,
         "expires_at": order.client_form_token_expires_at.isoformat(),
     }

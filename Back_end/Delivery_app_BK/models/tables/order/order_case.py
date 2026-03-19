@@ -25,6 +25,12 @@ class OrderCase(db.Model):
         default=lambda: datetime.now(timezone.utc),
         nullable=False,
     )
+    updated_at = Column(
+        UTCDateTime,
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
+        nullable=False,
+    )
 
     order_id = Column(
         Integer,

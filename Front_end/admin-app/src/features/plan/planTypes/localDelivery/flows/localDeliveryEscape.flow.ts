@@ -3,7 +3,7 @@ import { useCallback, useEffect } from 'react'
 import type { BaseControls } from '@/shared/resource-manager/types'
 import type { StackActionManager } from '@/shared/stack-manager/StackActionManager'
 
-type BasePayload = { ordersPlanType: string | null; planId?: number | null }
+type BasePayload = { ordersPlanType: string | null; planId?: number | null; freshAfter?: string | null }
 
 type Params = {
   isMobile: boolean

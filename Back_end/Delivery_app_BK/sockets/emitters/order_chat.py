@@ -41,6 +41,7 @@ def emit_order_chat_message_created(case_chat: CaseChat) -> None:
             "chat_client_id": case_chat.client_id,
             "message": case_chat.message,
             "order_case_id": case_chat.order_case_id,
+            "order_case_client_id": order_case.client_id if order_case else None,
             "order_id": order_id,
             "user_id": case_chat.user_id,
             "user_name": _resolve_user_name(case_chat),

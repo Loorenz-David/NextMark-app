@@ -12,12 +12,11 @@ export function validateStep(step: ClientFormStep, data: ClientFormData): Client
 
   if (step === 'contact_info') {
     if (!data.client_email.trim()) errors.client_email = 'Email is required'
-    if (!data.client_primary_phone.trim()) errors.client_primary_phone = 'Phone number is required'
+    if (!data.client_primary_phone?.number?.trim()) errors.client_primary_phone = 'Phone number is required'
   }
 
   if (step === 'delivery_address') {
     if (!data.client_address) {
-      // surface as a general error — address sub-fields validated in component
       errors.client_address = 'Delivery address is required'
     }
   }

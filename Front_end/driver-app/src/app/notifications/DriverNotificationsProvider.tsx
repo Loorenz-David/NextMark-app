@@ -1,6 +1,8 @@
 import type { PropsWithChildren } from 'react'
 import { useEffect, useMemo, useSyncExternalStore } from 'react'
-import { createNotificationsChannel } from '@shared-realtime'
+import {
+  createNotificationsChannel,
+} from '@shared-realtime'
 import { useSession } from '@/app/providers/session.context'
 import { useWorkspace } from '@/app/providers/workspace.context'
 import { driverRealtimeClient } from '@/app/services/realtime'
@@ -16,6 +18,7 @@ import {
   markDriverNotificationsReadLocally,
   upsertDriverNotification,
 } from './notification.store'
+import { matchesDriverNotificationTarget } from './driverNotificationTargets'
 
 const notificationsChannel = createNotificationsChannel(driverRealtimeClient)
 
@@ -57,13 +60,17 @@ export function DriverNotificationsProvider({ children }: PropsWithChildren) {
 
   useEffect(() => {
     const activeRouteId = selectedRoute?.id ?? null
+    const activeOverlay = shellState.overlayStack.at(-1) ?? null
     if (activeRouteId == null) {
       return
     }
 
     const matchingIds = getDriverNotificationSnapshot()
       .items
-      .filter((notification) => notification.target.kind === 'route_execution' && notification.target.params.routeId === activeRouteId)
+      .filter((notification) => matchesDriverNotificationTarget(notification, {
+        activeRouteId,
+        overlayEntry: activeOverlay,
+      }))
       .map((notification) => notification.notification_id)
 
     if (matchingIds.length === 0) {

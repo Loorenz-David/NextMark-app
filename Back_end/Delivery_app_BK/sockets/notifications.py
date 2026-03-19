@@ -4,9 +4,20 @@ from datetime import datetime, timezone
 from hashlib import sha1
 
 from flask import request
+from flask import current_app
 from sqlalchemy import func
 
-from Delivery_app_BK.models import BaseRole, Order, RouteSolution, RouteSolutionStop, User, UserRole, db
+from Delivery_app_BK.models import (
+    BaseRole,
+    DeliveryPlan,
+    LocalDeliveryPlan,
+    Order,
+    RouteSolution,
+    RouteSolutionStop,
+    User,
+    UserRole,
+    db,
+)
 from Delivery_app_BK.services.domain.user import ADMIN_APP_SCOPE, DRIVER_APP_SCOPE
 from Delivery_app_BK.services.infra.redis import (
     add_unread_notification,
@@ -24,6 +35,24 @@ from Delivery_app_BK.sockets.contracts.realtime import (
 from Delivery_app_BK.sockets.rooms.names import build_user_app_room
 
 ADMIN_NOTIFICATION_BASE_ROLES = {"admin", "assistant"}
+DELIVERY_PLANNING_NOTIFICATION_EVENT_NAMES = {
+    "delivery_plan.created",
+    "delivery_plan.updated",
+    "delivery_plan.deleted",
+    "local_delivery_plan.updated",
+    "route_solution.created",
+    "route_solution.updated",
+    "route_solution.deleted",
+    "route_solution_stop.updated",
+}
+SUPPRESSED_DUPLICATE_ORDER_NOTIFICATION_EVENT_NAMES = {
+    "order_preparing",
+    "order_ready",
+    "order_processing",
+    "order_completed",
+    "order_failed",
+    "order_cancelled",
+}
 
 
 def emit_notification_snapshot_for_claims(claims: dict) -> None:
@@ -71,27 +100,45 @@ def handle_notification_mark_read(claims: dict, data: dict | None) -> None:
     )
 
 
-def notify_order_event(*, event_id: str, event_name: str, team_id: int | None, order_id: int | None, payload: dict | None, occurred_at, actor: User | None) -> None:
+def notify_order_event(
+    *,
+    event_id: str,
+    event_name: str,
+    driver_event_name: str | None = None,
+    team_id: int | None,
+    order_id: int | None,
+    payload: dict | None,
+    occurred_at,
+    actor: User | None,
+) -> None:
     if team_id is None or order_id is None:
+        return
+
+    payload = payload or {}
+    if _should_suppress_order_notification(payload):
         return
 
     order = db.session.get(Order, order_id)
     if order is None:
         return
 
-    recipients = [
-        *(resolve_admin_notification_recipients(team_id=team_id, actor_user_id=actor.id if actor else None)),
-        *(resolve_driver_notification_recipients(team_id=team_id, order_id=order_id, actor_user_id=actor.id if actor else None)),
-    ]
+    admin_recipients = resolve_admin_notification_recipients(team_id=team_id, actor_user_id=actor.id if actor else None)
+    driver_recipients = resolve_driver_notification_recipients(
+        team_id=team_id,
+        order_id=order_id,
+        actor_user_id=actor.id if actor else None,
+    )
     occurred_iso = _to_iso_string(occurred_at)
 
-    for recipient in recipients:
+    for recipient in admin_recipients:
         target = _build_notification_target(
             app_scope=recipient["app_scope"],
             event_name=event_name,
             order=order,
-            payload=payload or {},
+            payload=payload,
             route_id=recipient.get("route_id"),
+            entity_type="order",
+            entity_id=order_id,
         )
         if target is None:
             continue
@@ -109,29 +156,80 @@ def notify_order_event(*, event_id: str, event_name: str, team_id: int | None, o
             description=_build_notification_description(
                 event_name=event_name,
                 order=order,
-                payload=payload or {},
+                payload=payload,
             ),
             occurred_at=occurred_iso,
             target=target,
-            related_ids={"order_id": order_id},
+            related_ids=_build_related_ids(payload=payload, order_id=order_id),
+        )
+        _store_and_emit_notification(recipient["user_id"], recipient["app_scope"], notification)
+
+    effective_driver_event_name = driver_event_name or event_name
+
+    for recipient in driver_recipients:
+        target = _build_notification_target(
+            app_scope=recipient["app_scope"],
+            event_name=effective_driver_event_name,
+            order=order,
+            payload=payload,
+            route_id=recipient.get("route_id"),
+            entity_type="order",
+            entity_id=order_id,
+        )
+        if target is None:
+            continue
+
+        notification = build_notification_item(
+            event_id=event_id,
+            recipient_user_id=recipient["user_id"],
+            app_scope=recipient["app_scope"],
+            kind=effective_driver_event_name,
+            entity_type="order",
+            entity_id=order_id,
+            team_id=team_id,
+            actor=actor,
+            title=_build_notification_title(effective_driver_event_name),
+            description=_build_notification_description(
+                event_name=effective_driver_event_name,
+                order=order,
+                payload=payload,
+            ),
+            occurred_at=occurred_iso,
+            target=target,
+            related_ids=_build_related_ids(payload=payload, order_id=order_id),
         )
         _store_and_emit_notification(recipient["user_id"], recipient["app_scope"], notification)
 
 
-def notify_app_event(*, event_id: str, event_name: str, team_id: int | None, entity_type: str, entity_id: int | None, payload: dict | None, occurred_at, actor: User | None) -> None:
+def notify_app_event(
+    *,
+    event_id: str,
+    event_name: str,
+    team_id: int | None,
+    entity_type: str,
+    entity_id: int | None,
+    payload: dict | None,
+    occurred_at,
+    actor: User | None,
+) -> None:
     if team_id is None:
         return
 
     payload = payload or {}
     order_id = _parse_int(payload.get("order_id"))
-    order_case_id = _parse_int(payload.get("order_case_id"))
     order = db.session.get(Order, order_id) if order_id is not None else None
     if event_name == "order_chat.message_created" and order is None:
         return
 
     recipients = [
         *(resolve_admin_notification_recipients(team_id=team_id, actor_user_id=actor.id if actor else None)),
-        *(resolve_driver_notification_recipients(team_id=team_id, order_id=order_id, actor_user_id=actor.id if actor else None)),
+        *(
+            resolve_driver_notification_recipients(
+                team_id=team_id,
+                order_id=order_id,
+                actor_user_id=actor.id if actor else None,
+            )
+        ),
     ]
     occurred_iso = _to_iso_string(occurred_at)
 
@@ -142,6 +240,8 @@ def notify_app_event(*, event_id: str, event_name: str, team_id: int | None, ent
             order=order,
             payload=payload,
             route_id=recipient.get("route_id"),
+            entity_type=entity_type,
+            entity_id=entity_id,
         )
         if target is None:
             continue
@@ -163,10 +263,84 @@ def notify_app_event(*, event_id: str, event_name: str, team_id: int | None, ent
             ),
             occurred_at=occurred_iso,
             target=target,
-            related_ids={
-                "order_id": order_id,
-                "order_case_id": order_case_id,
-            },
+            related_ids=_build_related_ids(payload=payload, order_id=order_id),
+        )
+        _store_and_emit_notification(recipient["user_id"], recipient["app_scope"], notification)
+
+
+def notify_delivery_planning_event(
+    *,
+    event_id: str,
+    event_name: str,
+    team_id: int | None,
+    entity_type: str,
+    entity_id: int | None,
+    payload: dict | None,
+    occurred_at,
+    actor: User | None,
+) -> None:
+    if team_id is None or event_name not in DELIVERY_PLANNING_NOTIFICATION_EVENT_NAMES:
+        return
+
+    payload = payload or {}
+    route_id = _parse_int(payload.get("route_solution_id"))
+    local_delivery_plan_id = _parse_int(payload.get("local_delivery_plan_id"))
+    driver_id = _parse_int(payload.get("driver_id")) or _parse_int(payload.get("old_driver_id"))
+
+    recipients = [
+        *(resolve_admin_notification_recipients(team_id=team_id, actor_user_id=actor.id if actor else None)),
+        *(
+            resolve_driver_notification_recipients(
+                team_id=team_id,
+                route_id=route_id,
+                local_delivery_plan_id=local_delivery_plan_id,
+                driver_id=driver_id,
+                actor_user_id=actor.id if actor else None,
+            )
+        ),
+    ]
+    current_app.logger.info(
+        "notify_delivery_planning_event resolved recipients | event=%s team_id=%s route_id=%s local_delivery_plan_id=%s driver_id=%s recipients=%s",
+        event_name,
+        team_id,
+        route_id,
+        local_delivery_plan_id,
+        driver_id,
+        recipients,
+    )
+    occurred_iso = _to_iso_string(occurred_at)
+
+    for recipient in recipients:
+        target = _build_notification_target(
+            app_scope=recipient["app_scope"],
+            event_name=event_name,
+            order=None,
+            payload=payload,
+            route_id=recipient.get("route_id"),
+            entity_type=entity_type,
+            entity_id=entity_id,
+        )
+        if target is None:
+            continue
+
+        notification = build_notification_item(
+            event_id=event_id,
+            recipient_user_id=recipient["user_id"],
+            app_scope=recipient["app_scope"],
+            kind=event_name,
+            entity_type=entity_type,
+            entity_id=entity_id,
+            team_id=team_id,
+            actor=actor,
+            title=_build_notification_title(event_name),
+            description=_build_notification_description(
+                event_name=event_name,
+                order=None,
+                payload=payload,
+            ),
+            occurred_at=occurred_iso,
+            target=target,
+            related_ids=_build_related_ids(payload=payload),
         )
         _store_and_emit_notification(recipient["user_id"], recipient["app_scope"], notification)
 
@@ -190,31 +364,110 @@ def resolve_admin_notification_recipients(*, team_id: int, actor_user_id: int | 
     ]
 
 
-def resolve_driver_notification_recipients(*, team_id: int, order_id: int | None, actor_user_id: int | None) -> list[dict]:
-    if order_id is None:
-        return []
+def resolve_driver_notification_recipients(
+    *,
+    team_id: int,
+    order_id: int | None = None,
+    route_id: int | None = None,
+    local_delivery_plan_id: int | None = None,
+    driver_id: int | None = None,
+    actor_user_id: int | None,
+) -> list[dict]:
+    rows: list[tuple[int, int]] = []
 
-    rows = (
-        db.session.query(RouteSolution.driver_id, RouteSolution.id)
-        .join(RouteSolutionStop, RouteSolutionStop.route_solution_id == RouteSolution.id)
-        .filter(
-            RouteSolution.team_id == team_id,
-            RouteSolutionStop.team_id == team_id,
-            RouteSolutionStop.order_id == order_id,
-            RouteSolution.is_selected.is_(True),
-            RouteSolution.driver_id.isnot(None),
+    if route_id is not None:
+        rows = (
+            db.session.query(RouteSolution.driver_id, RouteSolution.id)
+            .filter(
+                RouteSolution.team_id == team_id,
+                RouteSolution.id == route_id,
+                RouteSolution.is_selected.is_(True),
+                RouteSolution.driver_id.isnot(None),
+            )
+            .distinct()
+            .all()
         )
-        .distinct()
-        .all()
-    )
+    elif local_delivery_plan_id is not None:
+        rows = (
+            db.session.query(RouteSolution.driver_id, RouteSolution.id)
+            .filter(
+                RouteSolution.team_id == team_id,
+                RouteSolution.local_delivery_plan_id == local_delivery_plan_id,
+                RouteSolution.is_selected.is_(True),
+                RouteSolution.driver_id.isnot(None),
+            )
+            .distinct()
+            .all()
+        )
+    elif order_id is not None:
+        rows = (
+            db.session.query(RouteSolution.driver_id, RouteSolution.id)
+            .join(RouteSolutionStop, RouteSolutionStop.route_solution_id == RouteSolution.id)
+            .filter(
+                RouteSolution.team_id == team_id,
+                RouteSolutionStop.team_id == team_id,
+                RouteSolutionStop.order_id == order_id,
+                RouteSolution.is_selected.is_(True),
+                RouteSolution.driver_id.isnot(None),
+            )
+            .distinct()
+            .all()
+        )
 
+    recipients = _dedupe_driver_recipients(rows, actor_user_id)
+    if recipients:
+        current_app.logger.info(
+            "resolve_driver_notification_recipients matched rows | team_id=%s order_id=%s route_id=%s local_delivery_plan_id=%s driver_id=%s recipients=%s",
+            team_id,
+            order_id,
+            route_id,
+            local_delivery_plan_id,
+            driver_id,
+            recipients,
+        )
+        return recipients
+
+    if (
+        route_id is not None
+        and isinstance(driver_id, int)
+        and driver_id != actor_user_id
+    ):
+        fallback_recipients = [{
+            "user_id": driver_id,
+            "app_scope": DRIVER_APP_SCOPE,
+            "route_id": route_id,
+        }]
+        current_app.logger.info(
+            "resolve_driver_notification_recipients used fallback | team_id=%s route_id=%s driver_id=%s recipients=%s",
+            team_id,
+            route_id,
+            driver_id,
+            fallback_recipients,
+        )
+        return fallback_recipients
+
+    current_app.logger.info(
+        "resolve_driver_notification_recipients found no recipients | team_id=%s order_id=%s route_id=%s local_delivery_plan_id=%s driver_id=%s actor_user_id=%s",
+        team_id,
+        order_id,
+        route_id,
+        local_delivery_plan_id,
+        driver_id,
+        actor_user_id,
+    )
+    return []
+
+
+def _dedupe_driver_recipients(rows: list[tuple[int, int]], actor_user_id: int | None) -> list[dict]:
     recipients: list[dict] = []
     seen: set[tuple[int, int]] = set()
+
     for driver_id, route_id in rows:
         if not isinstance(driver_id, int) or driver_id == actor_user_id:
             continue
         if not isinstance(route_id, int):
             continue
+
         key = (driver_id, route_id)
         if key in seen:
             continue
@@ -295,17 +548,28 @@ def _build_notification_title(event_name: str) -> str:
         "order_case.updated": "Order case updated",
         "order_case.state_changed": "Order case state changed",
         "order_chat.message_created": "New case message",
+        "delivery_plan.created": "Delivery plan created",
+        "delivery_plan.updated": "Delivery plan updated",
+        "delivery_plan.deleted": "Delivery plan deleted",
+        "local_delivery_plan.updated": "Local delivery updated",
+        "route_solution.created": "Route created",
+        "route_solution.updated": "Route updated",
+        "route_solution.deleted": "Route deleted",
+        "route_solution_stop.updated": "Route stop updated",
     }
     return mapping.get(event_name, "New update")
 
 
 def _build_notification_description(*, event_name: str, order: Order | None, payload: dict) -> str:
-    reference = order.reference_number if order and order.reference_number else None
-    order_label = f"Order #{reference}" if reference else (f"Order #{order.id}" if order and isinstance(order.id, int) else "Order")
+    order_label = _build_order_label(order)
+    plan_label = _resolve_plan_label(payload)
+    route_label = _resolve_route_label(payload)
+    route_subject = _resolve_route_subject_label(payload)
+
     if event_name == "order.created":
         return f"{order_label} was created."
     if event_name == "order.updated":
-        return f"{order_label} was updated."
+        return _build_order_updated_description(order_label=order_label, payload=payload)
     if event_name == "order.state_changed":
         return f"{order_label} changed state."
     if event_name == "order_case.created":
@@ -322,23 +586,161 @@ def _build_notification_description(*, event_name: str, order: Order | None, pay
         if message:
             return message[:140]
         return f"There is a new message for {order_label}."
+    if event_name == "delivery_plan.created":
+        return f"{plan_label} was created."
+    if event_name == "delivery_plan.updated":
+        return f"{plan_label} was updated."
+    if event_name == "delivery_plan.deleted":
+        return f"{plan_label} was deleted."
+    if event_name == "local_delivery_plan.updated":
+        return f"{plan_label} was updated."
+    if event_name == "route_solution.created":
+        return f"{route_subject} was created."
+    if event_name == "route_solution.updated":
+        return f"{route_subject} was updated."
+    if event_name == "route_solution.deleted":
+        return f"{route_subject} was deleted."
+    if event_name == "route_solution_stop.updated":
+        stop_order = _parse_int(payload.get("stop_order"))
+        if stop_order is not None:
+            return f"Stop {stop_order} on {route_label} was updated."
+        return f"A stop on {route_label} was updated."
     return "A new update is available."
 
 
-def _build_notification_target(*, app_scope: str, event_name: str, order: Order | None, payload: dict, route_id: int | None) -> dict | None:
+def _build_order_updated_description(*, order_label: str, payload: dict) -> str:
+    changed_sections = payload.get("changed_sections")
+    if not isinstance(changed_sections, list):
+        return f"{order_label} was updated."
+
+    allowed_sections = [
+        section
+        for section in changed_sections
+        if section in {"details", "schedule", "items"}
+    ]
+    if not allowed_sections:
+        return f"{order_label} was updated."
+
+    labels_by_section = {
+        "details": "details",
+        "schedule": "schedule",
+        "items": "items",
+    }
+    labels = [labels_by_section[section] for section in dict.fromkeys(allowed_sections)]
+
+    if len(labels) == 1:
+        return f"{order_label} {labels[0]} were updated."
+
+    if len(labels) == 2:
+        return f"{order_label} {labels[0]} and {labels[1]} were updated."
+
+    joined_labels = ", ".join(labels[:-1])
+    return f"{order_label} {joined_labels}, and {labels[-1]} were updated."
+
+
+def _build_order_label(order: Order | None) -> str:
+    scalar_id = getattr(order, "order_scalar_id", None) if order is not None else None
+
+    if isinstance(scalar_id, int):
+        return f"Order #{scalar_id}"
+
+    reference = order.reference_number if order and order.reference_number else None
+    if reference:
+        return f"Order #{reference}"
+
+    if order and isinstance(order.id, int):
+        return f"Order #{order.id}"
+
+    return "Order"
+
+
+def _should_suppress_order_notification(payload: dict) -> bool:
+    original_event_name = payload.get("original_event_name")
+    if not isinstance(original_event_name, str):
+        return False
+
+    if original_event_name in SUPPRESSED_DUPLICATE_ORDER_NOTIFICATION_EVENT_NAMES:
+        return True
+
+    if original_event_name == "order_confirmed" and "order_plan_objective" not in payload:
+        return True
+
+    return False
+
+
+def _build_notification_target(
+    *,
+    app_scope: str,
+    event_name: str,
+    order: Order | None,
+    payload: dict,
+    route_id: int | None,
+    entity_type: str | None,
+    entity_id: int | None,
+) -> dict | None:
     order_id = order.id if order and isinstance(order.id, int) else _parse_int(payload.get("order_id"))
     order_case_id = _parse_int(payload.get("order_case_id"))
+    order_case_client_id = payload.get("order_case_client_id") if isinstance(payload.get("order_case_client_id"), str) else None
+    plan_id = _resolve_plan_id(event_name=event_name, payload=payload, entity_type=entity_type, entity_id=entity_id)
+    local_delivery_plan_id = _parse_int(payload.get("local_delivery_plan_id"))
+    route_solution_id = _parse_int(payload.get("route_solution_id"))
+    route_solution_stop_id = _parse_int(payload.get("route_solution_stop_id"))
 
     if app_scope == DRIVER_APP_SCOPE:
         if route_id is None:
             return None
+
+        if (
+            event_name == "order_chat.message_created"
+            and order_id is not None
+            and order_case_id is not None
+            and isinstance(order_case_client_id, str)
+            and order_case_client_id
+        ):
+            return {
+                "kind": "driver_order_case_chat",
+                "route": "/",
+                "params": {
+                    "routeId": route_id,
+                    "orderId": order_id,
+                    "orderCaseId": order_case_id,
+                    "orderCaseClientId": order_case_client_id,
+                },
+            }
+
         params = {"routeId": route_id}
         if order_id is not None:
             params["orderId"] = order_id
         if order_case_id is not None:
             params["orderCaseId"] = order_case_id
+        if isinstance(order_case_client_id, str) and order_case_client_id:
+            params["orderCaseClientId"] = order_case_client_id
+        if plan_id is not None:
+            params["planId"] = plan_id
+        if local_delivery_plan_id is not None:
+            params["localDeliveryPlanId"] = local_delivery_plan_id
+        if route_solution_id is not None:
+            params["routeSolutionId"] = route_solution_id
+        if route_solution_stop_id is not None:
+            params["routeSolutionStopId"] = route_solution_stop_id
         return {
             "kind": "route_execution",
+            "route": "/",
+            "params": params,
+        }
+
+    if event_name in DELIVERY_PLANNING_NOTIFICATION_EVENT_NAMES:
+        if plan_id is None:
+            return None
+        params = {"planId": plan_id}
+        if local_delivery_plan_id is not None:
+            params["localDeliveryPlanId"] = local_delivery_plan_id
+        if route_solution_id is not None:
+            params["routeSolutionId"] = route_solution_id
+        if route_solution_stop_id is not None:
+            params["routeSolutionStopId"] = route_solution_stop_id
+        return {
+            "kind": "local_delivery_workspace",
             "route": "/",
             "params": params,
         }
@@ -357,7 +759,7 @@ def _build_notification_target(*, app_scope: str, event_name: str, order: Order 
             "params": {
                 "orderId": order_id,
                 "orderCaseId": order_case_id,
-                "orderCaseClientId": payload.get("order_case_client_id"),
+                "orderCaseClientId": order_case_client_id,
             },
         }
 
@@ -368,10 +770,91 @@ def _build_notification_target(*, app_scope: str, event_name: str, order: Order 
             "params": {
                 "orderId": order_id,
                 "orderCaseId": order_case_id,
+                "orderCaseClientId": order_case_client_id,
             },
         }
 
     return None
+
+
+def _build_related_ids(*, payload: dict, order_id: int | None = None) -> dict:
+    related_ids = {
+        "order_id": order_id if order_id is not None else _parse_int(payload.get("order_id")),
+        "order_case_id": _parse_int(payload.get("order_case_id")),
+        "order_case_client_id": payload.get("order_case_client_id") if isinstance(payload.get("order_case_client_id"), str) else None,
+        "plan_id": _parse_int(payload.get("delivery_plan_id")),
+        "local_delivery_plan_id": _parse_int(payload.get("local_delivery_plan_id")),
+        "route_solution_id": _parse_int(payload.get("route_solution_id")),
+        "route_solution_stop_id": _parse_int(payload.get("route_solution_stop_id")),
+        "route_freshness_updated_at": payload.get("route_freshness_updated_at") if isinstance(payload.get("route_freshness_updated_at"), str) else None,
+    }
+    return {key: value for key, value in related_ids.items() if value is not None}
+
+
+def _resolve_plan_id(*, event_name: str, payload: dict, entity_type: str | None, entity_id: int | None) -> int | None:
+    plan_id = _parse_int(payload.get("delivery_plan_id"))
+    if plan_id is not None:
+        return plan_id
+
+    if event_name.startswith("delivery_plan.") and entity_type == "delivery_plan" and isinstance(entity_id, int):
+        return entity_id
+
+    local_delivery_plan_id = _parse_int(payload.get("local_delivery_plan_id"))
+    if local_delivery_plan_id is not None:
+        local_delivery_plan = db.session.get(LocalDeliveryPlan, local_delivery_plan_id)
+        if local_delivery_plan is not None and isinstance(local_delivery_plan.delivery_plan_id, int):
+            return local_delivery_plan.delivery_plan_id
+
+    route_solution_id = _parse_int(payload.get("route_solution_id"))
+    if route_solution_id is not None:
+        route_solution = db.session.get(RouteSolution, route_solution_id)
+        if route_solution is not None and isinstance(route_solution.local_delivery_plan_id, int):
+            local_delivery_plan = db.session.get(LocalDeliveryPlan, route_solution.local_delivery_plan_id)
+            if local_delivery_plan is not None and isinstance(local_delivery_plan.delivery_plan_id, int):
+                return local_delivery_plan.delivery_plan_id
+
+    route_solution_stop_id = _parse_int(payload.get("route_solution_stop_id"))
+    if route_solution_stop_id is not None:
+        stop = db.session.get(RouteSolutionStop, route_solution_stop_id)
+        if stop is not None and isinstance(stop.route_solution_id, int):
+            route_solution = db.session.get(RouteSolution, stop.route_solution_id)
+            if route_solution is not None and isinstance(route_solution.local_delivery_plan_id, int):
+                local_delivery_plan = db.session.get(LocalDeliveryPlan, route_solution.local_delivery_plan_id)
+                if local_delivery_plan is not None and isinstance(local_delivery_plan.delivery_plan_id, int):
+                    return local_delivery_plan.delivery_plan_id
+
+    return None
+
+
+def _resolve_plan_label(payload: dict) -> str:
+    label = payload.get("label")
+    plan_type = payload.get("plan_type")
+
+    if isinstance(label, str) and label.strip():
+        prefix = "Local delivery plan" if plan_type == "local_delivery" else "Delivery plan"
+        return f'{prefix} "{label.strip()}"'
+
+    if plan_type == "local_delivery":
+        return "Local delivery plan"
+
+    return "Delivery plan"
+
+
+def _resolve_route_label(payload: dict) -> str:
+    label = payload.get("label")
+    if isinstance(label, str) and label.strip():
+        return f'Route "{label.strip()}"'
+    return "Route"
+
+
+def _resolve_route_subject_label(payload: dict) -> str:
+    plan_label = payload.get("plan_label")
+    if isinstance(plan_label, str) and plan_label.strip():
+        plan_type = payload.get("plan_type")
+        prefix = "Local delivery plan" if plan_type == "local_delivery" else "Delivery plan"
+        return f'{prefix} "{plan_label.strip()}"'
+
+    return _resolve_route_label(payload)
 
 
 def _parse_int(value: object) -> int | None:

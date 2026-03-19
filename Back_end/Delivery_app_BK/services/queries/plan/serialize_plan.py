@@ -24,6 +24,7 @@ def serialize_plans( instances: List[ Type[ DeliveryPlan ] ], ctx:ServiceContext
             "start_date": start_date.isoformat() if start_date else None,
             "end_date": end_date.isoformat() if end_date else None,
             "created_at": created_at.isoformat() if created_at else None,
+            "updated_at": instance.updated_at.isoformat() if instance.updated_at else None,
             "state_id": instance.state_id
         }
         unpacked.update(calculate_plan_metrics(instance))

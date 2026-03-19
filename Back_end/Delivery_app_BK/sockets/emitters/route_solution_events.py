@@ -1,12 +1,14 @@
 from flask import current_app
 
 from Delivery_app_BK.models import RouteSolution, LocalDeliveryPlan, db
+from Delivery_app_BK.services.domain.plan.route_freshness import get_route_freshness_updated_at
 from Delivery_app_BK.sockets.contracts.realtime import (
     BUSINESS_EVENT_ROUTE_SOLUTION_CREATED,
     BUSINESS_EVENT_ROUTE_SOLUTION_UPDATED,
     BUSINESS_EVENT_ROUTE_SOLUTION_DELETED,
 )
 from Delivery_app_BK.sockets.emitters.common import build_business_event_envelope, emit_business_event
+from Delivery_app_BK.sockets.notifications import notify_delivery_planning_event
 from Delivery_app_BK.sockets.rooms.names import build_team_admin_room, build_team_members_room
 
 
@@ -37,16 +39,36 @@ def emit_route_solution_created(route_solution: RouteSolution, *, payload: dict 
             "local_delivery_plan_id": route_solution.local_delivery_plan_id,
             "delivery_plan_id": local_delivery_plan.delivery_plan_id,
             "label": route_solution.label,
+            "plan_label": local_delivery_plan.delivery_plan.label if local_delivery_plan.delivery_plan else None,
+            "plan_type": local_delivery_plan.delivery_plan.plan_type if local_delivery_plan.delivery_plan else None,
+            "route_freshness_updated_at": get_route_freshness_updated_at(local_delivery_plan.delivery_plan),
             "is_selected": route_solution.is_selected,
             "driver_id": route_solution.driver_id,
             **(payload or {}),
         },
+    )
+    current_app.logger.info(
+        "route_solution.created fanout | solution_id=%s team_id=%s assigned_driver_id=%s payload=%s",
+        route_solution.id,
+        team_id,
+        route_solution.driver_id,
+        envelope["payload"],
     )
 
     # Broadcast to team_admin room (admin visibility)
     emit_business_event(room=build_team_admin_room(team_id), envelope=envelope)
     # Broadcast to team_members room (driver notification)
     emit_business_event(room=build_team_members_room(team_id), envelope=envelope)
+    notify_delivery_planning_event(
+        event_id=envelope["event_id"],
+        event_name=BUSINESS_EVENT_ROUTE_SOLUTION_CREATED,
+        team_id=team_id,
+        entity_type="route_solution",
+        entity_id=route_solution.id,
+        payload=envelope["payload"],
+        occurred_at=envelope["occurred_at"],
+        actor=None,
+    )
     current_app.logger.info("Emitted route_solution.created: solution_id=%d, team_id=%d", route_solution.id, team_id)
 
 
@@ -75,7 +97,11 @@ def emit_route_solution_updated(route_solution: RouteSolution, *, payload: dict 
         payload={
             "route_solution_id": route_solution.id,
             "local_delivery_plan_id": route_solution.local_delivery_plan_id,
+            "delivery_plan_id": local_delivery_plan.delivery_plan_id,
             "label": route_solution.label,
+            "plan_label": local_delivery_plan.delivery_plan.label if local_delivery_plan.delivery_plan else None,
+            "plan_type": local_delivery_plan.delivery_plan.plan_type if local_delivery_plan.delivery_plan else None,
+            "route_freshness_updated_at": get_route_freshness_updated_at(local_delivery_plan.delivery_plan),
             "is_selected": route_solution.is_selected,
             "driver_id": route_solution.driver_id,
             "expected_start_time": route_solution.expected_start_time.isoformat() if route_solution.expected_start_time else None,
@@ -88,6 +114,16 @@ def emit_route_solution_updated(route_solution: RouteSolution, *, payload: dict 
     emit_business_event(room=build_team_admin_room(team_id), envelope=envelope)
     # Broadcast to team_members room (driver notification)
     emit_business_event(room=build_team_members_room(team_id), envelope=envelope)
+    notify_delivery_planning_event(
+        event_id=envelope["event_id"],
+        event_name=BUSINESS_EVENT_ROUTE_SOLUTION_UPDATED,
+        team_id=team_id,
+        entity_type="route_solution",
+        entity_id=route_solution.id,
+        payload=envelope["payload"],
+        occurred_at=envelope["occurred_at"],
+        actor=None,
+    )
     current_app.logger.info("Emitted route_solution.updated: solution_id=%d, team_id=%d", route_solution.id, team_id)
 
 
@@ -116,6 +152,8 @@ def emit_route_solution_deleted(team_id: int, local_delivery_plan_id: int, route
         payload={
             "route_solution_id": route_solution_id,
             "local_delivery_plan_id": local_delivery_plan_id,
+            "delivery_plan_id": local_delivery_plan.delivery_plan_id,
+            "route_freshness_updated_at": get_route_freshness_updated_at(local_delivery_plan.delivery_plan),
             **(payload or {}),
         },
     )
@@ -124,4 +162,14 @@ def emit_route_solution_deleted(team_id: int, local_delivery_plan_id: int, route
     emit_business_event(room=build_team_admin_room(team_id), envelope=envelope)
     # Broadcast to team_members room (driver notification)
     emit_business_event(room=build_team_members_room(team_id), envelope=envelope)
+    notify_delivery_planning_event(
+        event_id=envelope["event_id"],
+        event_name=BUSINESS_EVENT_ROUTE_SOLUTION_DELETED,
+        team_id=team_id,
+        entity_type="route_solution",
+        entity_id=route_solution_id,
+        payload=envelope["payload"],
+        occurred_at=envelope["occurred_at"],
+        actor=None,
+    )
     current_app.logger.info("Emitted route_solution.deleted: solution_id=%d, team_id=%d", route_solution_id, team_id)

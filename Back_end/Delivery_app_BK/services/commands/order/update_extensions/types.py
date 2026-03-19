@@ -16,6 +16,7 @@ class OrderUpdateDelta:
     old_values: dict[str, Any]
     new_values: dict[str, Any]
     flags: OrderUpdateChangeFlags
+    changed_sections: tuple[str, ...] = ()
     delivery_plan: Any | None = None
 
 

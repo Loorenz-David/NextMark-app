@@ -9,7 +9,9 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@floating-ui/react": "^0.27.19",
     "framer-motion": "^11.1.0",
+    "libphonenumber-js": "^1.12.40",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
   },

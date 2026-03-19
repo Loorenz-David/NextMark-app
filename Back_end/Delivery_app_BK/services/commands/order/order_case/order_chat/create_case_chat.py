@@ -1,3 +1,5 @@
+from datetime import datetime, timezone
+
 from Delivery_app_BK.models import db, CaseChat, OrderCase, Team, User, NotificationRead
 from Delivery_app_BK.errors import NotFound, ValidationFailed
 from Delivery_app_BK.services.context import ServiceContext
@@ -45,6 +47,9 @@ def create_case_chat(ctx: ServiceContext):
         
         instance: CaseChat = create_instance(ctx, CaseChat, dict(field_set))
         instances.append(instance)
+
+        if instance.order_case is not None:
+            instance.order_case.updated_at = datetime.now(timezone.utc)
         
         notification_read = create_instance(ctx, NotificationRead, {'user_id':user_id})
 

@@ -26,6 +26,8 @@
       "@shared-icons/*": ["../packages/shared-icons/*"],
       "@shared-realtime": ["../packages/shared-realtime/src/index.ts"],
       "@shared-realtime/*": ["../packages/shared-realtime/src/*"],
+      "@shared-inputs": ["../packages/shared-inputs/src/index.ts"],
+      "@shared-inputs/*": ["../packages/shared-inputs/src/*"],
       "socket.io-client": ["./node_modules/socket.io-client/build/esm/index.d.ts"]
     },
     "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.app.tsbuildinfo",

@@ -55,7 +55,7 @@ const resolveDefaultStartTime = (
   storedStartTime: string | null,
 ) => {
   if (isPlanStartToday(planStartDate)) {
-    return getTeamNowPlusOneMinute()
+    return getTeamNowPlusFifteenMinutes()
   }
   return storedStartTime ?? LOCAL_DELIVERY_DEFAULT_START_TIME
 }
@@ -74,10 +74,10 @@ const isPlanStartToday = (planStartDate: string | Date | null | undefined) => {
   return formatDateOnlyInTimeZone(parsed, timeZone) === formatDateOnlyInTimeZone(new Date(), timeZone)
 }
 
-const getTeamNowPlusOneMinute = () => {
+const getTeamNowPlusFifteenMinutes = () => {
   const timeZone = getTeamTimeZone()
-  const nextMinute = new Date(Date.now() + 60_000)
-  return formatTimeInTimeZone(nextMinute, timeZone)
+  const futureTime = new Date(Date.now() + 15 * 60_000)
+  return formatTimeInTimeZone(futureTime, timeZone)
 }
 
 const formatTimeInTimeZone = (value: Date, timeZone: string) => {

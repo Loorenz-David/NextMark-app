@@ -51,6 +51,7 @@ export type Order = {
   preferred_time_end?: string | null
   delivery_windows?: OrderDeliveryWindow[]
   creation_date?: ISODateTime | null
+  updated_at?: ISODateTime | null
   items_updated_at?: ISODateTime | null
   order_state_id?: number | null
   delivery_plan_id?: number | null

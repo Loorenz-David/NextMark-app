@@ -1,10 +1,12 @@
 from flask import current_app
 
 from Delivery_app_BK.models import RouteSolutionStop, RouteSolution, LocalDeliveryPlan, db
+from Delivery_app_BK.services.domain.plan.route_freshness import get_route_freshness_updated_at
 from Delivery_app_BK.sockets.contracts.realtime import (
     BUSINESS_EVENT_ROUTE_SOLUTION_STOP_UPDATED,
 )
 from Delivery_app_BK.sockets.emitters.common import build_business_event_envelope, emit_business_event
+from Delivery_app_BK.sockets.notifications import notify_delivery_planning_event
 from Delivery_app_BK.sockets.rooms.names import build_team_admin_room, build_team_members_room
 
 
@@ -41,6 +43,11 @@ def emit_route_solution_stop_updated(route_solution_stop: RouteSolutionStop, *, 
         payload={
             "route_solution_stop_id": route_solution_stop.id,
             "route_solution_id": route_solution_stop.route_solution_id,
+            "local_delivery_plan_id": local_delivery_plan.id,
+            "delivery_plan_id": local_delivery_plan.delivery_plan_id,
+            "label": route_solution.label,
+            "route_freshness_updated_at": get_route_freshness_updated_at(local_delivery_plan.delivery_plan),
+            "driver_id": route_solution.driver_id,
             "order_id": route_solution_stop.order_id,
             "stop_order": route_solution_stop.stop_order,
             "expected_arrival_time": route_solution_stop.expected_arrival_time.isoformat() if route_solution_stop.expected_arrival_time else None,
@@ -57,6 +64,16 @@ def emit_route_solution_stop_updated(route_solution_stop: RouteSolutionStop, *, 
     emit_business_event(room=build_team_members_room(team_id), envelope=envelope)
     # Also broadcast to order room for order-specific listeners
     emit_business_event(room=f"order:{route_solution_stop.order_id}", envelope=envelope)
+    notify_delivery_planning_event(
+        event_id=envelope["event_id"],
+        event_name=BUSINESS_EVENT_ROUTE_SOLUTION_STOP_UPDATED,
+        team_id=team_id,
+        entity_type="route_solution_stop",
+        entity_id=route_solution_stop.id,
+        payload=envelope["payload"],
+        occurred_at=envelope["occurred_at"],
+        actor=None,
+    )
     
     current_app.logger.info(
         "Emitted route_solution_stop.updated: stop_id=%d, route_id=%d, order_id=%d, team_id=%d",

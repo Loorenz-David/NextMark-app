@@ -25,6 +25,7 @@ from Delivery_app_BK.services.infra.events.emiters.order import emit_order_event
 from Delivery_app_BK.services.queries.route_solutions.serialize_route_solutions import (
     serialize_route_solution,
 )
+from Delivery_app_BK.services.domain.plan.route_freshness import touch_route_freshness
 from Delivery_app_BK.services.utils import model_requires_team, require_team_id
 
 from ...context import ServiceContext
@@ -146,6 +147,16 @@ def apply_orders_delivery_plan_change(
     for action in post_flush_actions:
         action()
     if post_flush_actions:
+        db.session.flush()
+
+    plans_to_touch = {
+        plan.id: plan
+        for plan in [new_plan, *old_plans_by_id.values()]
+        if getattr(plan, "plan_type", None) == "local_delivery"
+    }
+    for delivery_plan in plans_to_touch.values():
+        touch_route_freshness(delivery_plan)
+    if plans_to_touch:
         db.session.flush()
 
     old_local_delivery_bundle = _serialize_old_local_delivery_batch_bundle(

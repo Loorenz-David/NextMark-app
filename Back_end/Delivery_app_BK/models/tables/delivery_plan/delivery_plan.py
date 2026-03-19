@@ -31,6 +31,11 @@ class DeliveryPlan(db.Model, TeamScopedMixin):
         UTCDateTime,
         default=lambda: datetime.now(timezone.utc)
     )
+    updated_at = Column(
+        UTCDateTime,
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
+    )
 
     state_id = Column(
         Integer,

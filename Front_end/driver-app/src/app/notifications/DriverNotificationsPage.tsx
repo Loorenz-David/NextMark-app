@@ -1,29 +1,25 @@
 import { useMemo, useSyncExternalStore } from 'react'
 import { CloseIcon } from '@/assets/icons'
-import { type NotificationItem, createNotificationsChannel } from '@shared-realtime'
+import { createNotificationsChannel } from '@shared-realtime'
 import { useWorkspace } from '@/app/providers/workspace.context'
 import { driverRealtimeClient } from '@/app/services/realtime'
 import { useDriverAppShell } from '@/app/shell'
-import { selectRouteFlow } from '@/features/routes/flows/selectRoute.flow'
-import {
-  selectRouteByServerId,
-  useRoutesStore,
-} from '@/features/routes/stores'
-import {
-  refreshDriverRealtimeOrderCases,
-  refreshDriverRealtimeRoutes,
-} from '@/app/realtime/driverRealtimeCoordinator'
+import { useOpenRouteStopDetail, useRouteExecutionShell } from '@/features/route-execution'
+import { useRoutesStore } from '@/features/routes/stores'
 import {
   getDriverNotificationSnapshot,
   markDriverNotificationsReadLocally,
   subscribeDriverNotifications,
 } from './notification.store'
+import { openDriverNotificationTarget } from './driverNotificationTargets'
 
 const relativeTimeFormatter = new Intl.RelativeTimeFormat('en', { numeric: 'auto' })
 const notificationsChannel = createNotificationsChannel(driverRealtimeClient)
 
 export function DriverNotificationsPage() {
-  const { closeSlidingPage, openBottomSheet } = useDriverAppShell()
+  const { closeSlidingPage, openBottomSheet, openOverlay } = useDriverAppShell()
+  const openRouteStopDetail = useOpenRouteStopDetail()
+  const { store: routeExecutionStore } = useRouteExecutionShell()
   const { workspace } = useWorkspace()
   const { items } = useSyncExternalStore(
     subscribeDriverNotifications,
@@ -46,34 +42,61 @@ export function DriverNotificationsPage() {
     }
 
     return items.map((notification) => (
-      <button
+      <article
         key={notification.notification_id}
-        className="flex w-full flex-col gap-2 rounded-3xl border border-white/8 bg-white/[0.04] px-4 py-4 text-left transition hover:bg-white/[0.08]"
-        onClick={() => {
-          openDriverNotification(notification, {
-            workspaceScopeKey: workspace?.workspaceScopeKey ?? null,
-            routesState,
-            openBottomSheet,
-            closeSlidingPage,
-          })
-          markDriverNotificationsReadLocally([notification.notification_id])
-          notificationsChannel.markRead([notification.notification_id])
-        }}
-        type="button"
+        className="flex flex-col gap-2 rounded-3xl border border-white/8 bg-white/[0.04] px-4 py-4 text-left transition hover:bg-white/[0.08]"
       >
         <div className="flex items-start justify-between gap-3">
-          <div>
+          <button
+            className="min-w-0 flex-1 text-left"
+            onClick={() => {
+              openDriverNotificationTarget(notification, {
+                workspaceScopeKey: workspace?.workspaceScopeKey ?? null,
+                routeExecutionStore,
+                routesState,
+                openBottomSheet,
+                openOverlay,
+                openRouteStopDetail,
+                closeSlidingPage,
+              })
+              markDriverNotificationsReadLocally([notification.notification_id])
+              notificationsChannel.markRead([notification.notification_id])
+            }}
+            type="button"
+          >
             <p className="text-sm font-semibold text-white">{notification.title}</p>
             <p className="text-sm text-white/70">{notification.description}</p>
+          </button>
+          <div className="flex shrink-0 items-start gap-2">
+            <span className="text-xs text-white/45">{formatRelativeTime(notification.occurred_at)}</span>
+            <button
+              aria-label="Dismiss notification"
+              className="flex h-8 w-8 items-center justify-center rounded-full border border-white/10 bg-white/5 text-white/70 transition hover:bg-white/10 hover:text-white"
+              onClick={() => {
+                markDriverNotificationsReadLocally([notification.notification_id])
+                notificationsChannel.markRead([notification.notification_id])
+              }}
+              type="button"
+            >
+              <CloseIcon aria-hidden="true" className="h-3.5 w-3.5" />
+            </button>
           </div>
-          <span className="shrink-0 text-xs text-white/45">{formatRelativeTime(notification.occurred_at)}</span>
         </div>
         {notification.actor_username ? (
           <span className="text-xs font-medium text-white/60">{notification.actor_username}</span>
         ) : null}
-      </button>
+      </article>
     ))
-  }, [closeSlidingPage, items, openBottomSheet, routesState, workspace?.workspaceScopeKey])
+  }, [
+    closeSlidingPage,
+    items,
+    openBottomSheet,
+    openOverlay,
+    openRouteStopDetail,
+    routeExecutionStore,
+    routesState,
+    workspace?.workspaceScopeKey,
+  ])
 
   return (
     <div className="driver-sliding-page-surface__panel-content">
@@ -97,40 +120,6 @@ export function DriverNotificationsPage() {
       </div>
     </div>
   )
-}
-
-function openDriverNotification(
-  notification: NotificationItem,
-  dependencies: {
-    workspaceScopeKey: string | null
-    routesState: ReturnType<typeof useRoutesStore.getState>
-    openBottomSheet: ReturnType<typeof useDriverAppShell>['openBottomSheet']
-    closeSlidingPage: ReturnType<typeof useDriverAppShell>['closeSlidingPage']
-  },
-) {
-  const { workspaceScopeKey, routesState, openBottomSheet, closeSlidingPage } = dependencies
-  const routeId = notification.target.params.routeId
-  if (!workspaceScopeKey || typeof routeId !== 'number') {
-    closeSlidingPage()
-    return
-  }
-
-  const route = selectRouteByServerId(routeId)(routesState)
-  if (route?.client_id) {
-    selectRouteFlow({
-      workspaceScopeKey,
-      routeClientId: route.client_id,
-    })
-  }
-
-  openBottomSheet('route-workspace', undefined)
-  void refreshDriverRealtimeRoutes(workspaceScopeKey)
-
-  if (typeof notification.target.params.orderId === 'number') {
-    void refreshDriverRealtimeOrderCases(notification.target.params.orderId)
-  }
-
-  closeSlidingPage()
 }
 
 function formatRelativeTime(value: string) {

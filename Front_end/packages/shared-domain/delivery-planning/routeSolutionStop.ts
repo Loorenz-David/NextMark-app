@@ -20,6 +20,7 @@ export type RouteSolutionStop = {
   to_next_polyline?: string | null
   has_constraint_violation?: boolean
   constraint_warnings?: Array<Record<string, unknown>> | null
+  updated_at?: ISODateTime | null
 }
 
 export type RouteSolutionStopMap = {

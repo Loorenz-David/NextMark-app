@@ -12,12 +12,13 @@ import {
 } from '@/realtime/driverLive'
 import { useLocalDeliveryPlans } from '@/features/plan/planTypes/localDelivery/store/useLocalDeliveryPlan.selector'
 import { useRouteSolutions } from '@/features/plan/planTypes/localDelivery/store/useRouteSolution.selector'
+import type { PayloadBase } from '@/features/home/types/types'
 import { MAP_MARKER_LAYERS } from '@/shared/map'
 import { useBaseControlls, useMapManager } from '@/shared/resource-manager/useResourceManager'
 
 export const useOrderDriverLiveMapFlow = () => {
   const mapManager = useMapManager()
-  const baseControls = useBaseControlls<{ ordersPlanType: string | null; planId?: number | null }>()
+  const baseControls = useBaseControlls<PayloadBase>()
   const isBaseOpen = baseControls.isBaseOpen
   const openBase = baseControls.openBase
   const liveDriverPositions = useDriverLiveStore(useShallow(selectDriverLivePositions))

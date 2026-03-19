@@ -26,9 +26,12 @@ export function OverlaySurface() {
         />
       )
       : currentPage?.page === 'order-case-main'
-      ? (
+        ? (
           <OrderCaseMainPage
             onClose={closeOverlay}
+            freshAfter={currentPage.params.freshAfter}
+            initialOrderCaseClientId={currentPage.params.orderCaseClientId}
+            initialOrderCaseId={currentPage.params.orderCaseId}
             orderClientId={currentPage.params.orderClientId}
             orderId={currentPage.params.orderId}
             stopClientId={currentPage.params.stopClientId}

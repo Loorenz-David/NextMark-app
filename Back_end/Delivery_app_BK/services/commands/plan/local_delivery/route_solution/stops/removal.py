@@ -3,6 +3,10 @@ from __future__ import annotations
 from collections import defaultdict
 
 from Delivery_app_BK.models import RouteSolution, RouteSolutionStop, db
+from Delivery_app_BK.services.domain.local_delivery.route_lifecycle import (
+    normalize_route_solution_stop_ordering,
+    sync_route_solution_stop_count,
+)
 
 
 def remove_order_stops_for_local_delivery(
@@ -54,13 +58,9 @@ def remove_orders_stops_for_local_delivery(
     route_solutions = (
         db.session.query(RouteSolution)
         .filter(RouteSolution.id.in_(route_solution_ids))
+        .with_for_update()
         .all()
     )
-    for route_solution in route_solutions:
-        decrement = stop_counts.get(route_solution.id, 0)
-        if decrement:
-            current = route_solution.stop_count or 0
-            route_solution.stop_count = max(0, current - decrement)
 
     for stop in stops:
         db.session.delete(stop)
@@ -71,15 +71,13 @@ def remove_orders_stops_for_local_delivery(
             db.session.query(RouteSolutionStop)
             .filter(RouteSolutionStop.route_solution_id == route_solution.id)
             .order_by(RouteSolutionStop.stop_order)
+            .with_for_update()
             .all()
         )
-        for index, stop in enumerate(remaining, start=1):
-            if stop.stop_order != index:
-                stop.stop_order = index
-                updated_stops.append(stop)
-
-        if route_solution.stop_count != len(remaining):
-            route_solution.stop_count = len(remaining)
+        route_solution.stops = remaining
+        normalized_stops, _ = normalize_route_solution_stop_ordering(route_solution)
+        updated_stops.extend(normalized_stops)
+        sync_route_solution_stop_count(route_solution)
 
     affected_start_by_route: dict[int, int] = {}
     for route_solution in route_solutions:

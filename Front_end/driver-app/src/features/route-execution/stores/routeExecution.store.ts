@@ -1,13 +1,29 @@
 import type {
-  AssignedRouteViewModel,
   DriverCommandEnvelope,
   DriverRouteActionCommand,
   SyncExecutionState,
 } from '@/app/contracts/routeExecution.types'
+import type { DriverRouteRecord } from '@/features/routes'
+import type { DriverOrderRecord } from '@/features/routes/orders'
+import type { DriverRouteStopRecord } from '@/features/routes/stops'
+
+export type RouteExecutionOrdersCollection = {
+  byClientId: Record<string, DriverOrderRecord>
+  allIds: string[]
+}
+
+export type RouteExecutionStopsCollection = {
+  byClientId: Record<string, DriverRouteStopRecord>
+  allIds: string[]
+}
 
 export type RouteExecutionWorkspaceState = {
   status: 'idle' | 'loading' | 'ready' | 'error'
-  route: AssignedRouteViewModel | null
+  routeRecord: DriverRouteRecord | null
+  orders: RouteExecutionOrdersCollection
+  stops: RouteExecutionStopsCollection
+  hydratedRouteId: number | null
+  hydratedRouteFreshnessUpdatedAt: string | null
   error?: string
   lastCommand?: DriverCommandEnvelope<DriverRouteActionCommand>
   syncState: SyncExecutionState
@@ -22,10 +38,28 @@ export type RouteExecutionStore = ReturnType<typeof createRouteExecutionStore>
 type Listener = () => void
 type StateUpdater = RouteExecutionStoreState | ((state: RouteExecutionStoreState) => RouteExecutionStoreState)
 
+export function createEmptyRouteExecutionOrdersCollection(): RouteExecutionOrdersCollection {
+  return {
+    byClientId: {},
+    allIds: [],
+  }
+}
+
+export function createEmptyRouteExecutionStopsCollection(): RouteExecutionStopsCollection {
+  return {
+    byClientId: {},
+    allIds: [],
+  }
+}
+
 export function createInitialRouteExecutionWorkspaceState(): RouteExecutionWorkspaceState {
   return {
     status: 'idle',
-    route: null,
+    routeRecord: null,
+    orders: createEmptyRouteExecutionOrdersCollection(),
+    stops: createEmptyRouteExecutionStopsCollection(),
+    hydratedRouteId: null,
+    hydratedRouteFreshnessUpdatedAt: null,
     syncState: 'idle',
   }
 }

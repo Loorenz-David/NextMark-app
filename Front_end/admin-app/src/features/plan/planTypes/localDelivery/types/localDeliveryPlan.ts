@@ -10,6 +10,7 @@ export type LocalDeliveryPlan = {
   is_optimized?: boolean
   driver_id?: number | null
   delivery_plan_id?: number | null
+  updated_at?: string | null
   route_solutions_ids?: number[]
   is_loading?: LoadingScenarios
   optimization_started_at?: number | null

@@ -82,7 +82,10 @@ def apply_local_delivery_plan_change(
         instances.extend(stop_instances)
         instances.extend(updated_solutions)
         for stop_instance in stop_instances:
-            route_id = stop_instance.route_solution_id
+            route_id = (
+                stop_instance.route_solution_id
+                or getattr(getattr(stop_instance, "route_solution", None), "id", None)
+            )
             if route_id is None:
                 continue
             stop_order = stop_instance.stop_order or 1

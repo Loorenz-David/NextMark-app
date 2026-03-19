@@ -20,10 +20,14 @@ export const useCaseMainActions = ({ onClose }: { onClose?: () => void } = {}) =
   const searchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const openCaseDetails = useCallback(
-    (orderCaseClientId: string) => {
+    (
+      payload:
+        | string
+        | { orderCaseClientId?: string | null; orderCaseId?: number | null; freshAfter?: string | null },
+    ) => {
       sectionManager.open({
         key: 'orderCase.details',
-        payload: { orderCaseClientId },
+        payload: typeof payload === 'string' ? { orderCaseClientId: payload } : payload,
       })
     },
     [sectionManager],

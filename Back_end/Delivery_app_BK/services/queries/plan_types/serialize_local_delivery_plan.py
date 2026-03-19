@@ -9,6 +9,7 @@ def serialize_local_delivery_plan(instance: LocalDeliveryPlan, ctx: ServiceConte
         "client_id": instance.client_id,
         "actual_start_time": instance.actual_start_time,
         "actual_end_time": instance.actual_end_time,
+        "updated_at": instance.updated_at.isoformat() if instance.updated_at else None,
         "driver_id": instance.driver_id,
         "delivery_plan_id": instance.delivery_plan_id,
     }]
@@ -22,6 +23,7 @@ def serialize_local_delivery_plans(instances: list[LocalDeliveryPlan], ctx: Serv
         "client_id": instance.client_id,
         "actual_start_time": instance.actual_start_time,
         "actual_end_time": instance.actual_end_time,
+        "updated_at": instance.updated_at.isoformat() if instance.updated_at else None,
         "driver_id": instance.driver_id,
         "delivery_plan_id": instance.delivery_plan_id,
     } for instance in instances]

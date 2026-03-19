@@ -1,4 +1,5 @@
 import type { AssignedRouteViewModel, AssignedStopViewModel } from '@/app/contracts/routeExecution.types'
+import { formatIsoToTeamTime } from '@/app/utils/teamTimeZone'
 import type { DriverOrderStateIds } from '@/features/order-states'
 import type { StopDetailPageDisplay } from './stopDetailDisplay.types'
 import { buildStopPhoneCallOptions } from './buildStopPhoneCallOptions'
@@ -27,16 +28,7 @@ function formatExpectedArrivalTime(value: string | null) {
   if (!value) {
     return 'Unknown time'
   }
-
-  const parsed = new Date(value)
-  if (Number.isNaN(parsed.getTime())) {
-    return 'Unknown time'
-  }
-
-  return new Intl.DateTimeFormat('sv-SE', {
-    hour: '2-digit',
-    minute: '2-digit',
-  }).format(parsed)
+  return formatIsoToTeamTime(value, { locale: 'sv-SE' }) ?? 'Unknown time'
 }
 
 function formatItemCountLabel(itemCount: number) {

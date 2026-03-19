@@ -8,18 +8,22 @@ import { useOrderCaseChatRealtime } from '../../realtime/useOrderCaseChatRealtim
 import { DetailsCaseContext } from './caseDetails.context'
 
 type CaseDetailsPageProviderProps = PropsWithChildren<{
-  orderCaseClientId: string
+  orderCaseClientId: string | null
+  orderCaseId: number | null
+  freshAfter?: string | null
   onClose?: () => void
 }>
 
 export const CaseDetailsPageProvider = ({
   children,
   orderCaseClientId,
+  orderCaseId,
+  freshAfter,
   onClose,
 }: CaseDetailsPageProviderProps) => {
-  const { orderCase } = useOrderCaseDetailsFlow(orderCaseClientId)
+  const { orderCase, isRefreshing } = useOrderCaseDetailsFlow(orderCaseClientId, orderCaseId, freshAfter)
 
-  const detailsActions = useDetailsActions(orderCaseClientId, { onClose })
+  const detailsActions = useDetailsActions(orderCaseClientId ?? '', { onClose })
 
   useOrderCaseChatRealtime({
     orderId: orderCase?.order_id,
@@ -40,6 +44,7 @@ export const CaseDetailsPageProvider = ({
     orderCase,
     detailsActions,
     currentUserId,
+    isRefreshing,
   }
 
   return <DetailsCaseContext.Provider value={value}>{children}</DetailsCaseContext.Provider>

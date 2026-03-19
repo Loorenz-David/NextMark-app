@@ -5,14 +5,22 @@ import { useOrderCaseChatController } from './useOrderCaseChat.controller'
 type UseOrderCaseMainControllerOptions = {
   orderId: number
   closeOverlay: () => void
+  freshAfter?: string | null
+  initialOrderCaseClientId?: string
+  initialOrderCaseId?: number
 }
 
 export function useOrderCaseMainController({
   orderId,
   closeOverlay,
+  freshAfter,
+  initialOrderCaseClientId,
+  initialOrderCaseId,
 }: UseOrderCaseMainControllerOptions) {
-  const [selectedOrderCaseId, setSelectedOrderCaseId] = useState<number | null>(null)
-  const [selectedOrderCaseClientId, setSelectedOrderCaseClientId] = useState<string | null>(null)
+  const [selectedOrderCaseId, setSelectedOrderCaseId] = useState<number | null>(initialOrderCaseId ?? null)
+  const [selectedOrderCaseClientId, setSelectedOrderCaseClientId] = useState<string | null>(
+    initialOrderCaseClientId ?? null,
+  )
   const [direction, setDirection] = useState<1 | -1>(1)
 
   const listController = useOrderCaseListController({
@@ -25,6 +33,7 @@ export function useOrderCaseMainController({
   })
 
   const chatController = useOrderCaseChatController({
+    freshAfter,
     orderCaseClientId: selectedOrderCaseClientId ?? '',
     orderCaseId: selectedOrderCaseId ?? -1,
   })

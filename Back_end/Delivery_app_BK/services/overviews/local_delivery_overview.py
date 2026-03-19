@@ -27,7 +27,19 @@ def local_delivery_overview(ctx: ServiceContext, plan_id: int):
         None,
     )
     if not selected_route_solution:
-        raise ValidationFailed("Local delivery plan has no selected route solution.")
+        route_solutions = sorted(
+            list(local_delivery_plan.route_solutions or []),
+            key=lambda solution: (
+                getattr(solution, "id", 10**9),
+                getattr(solution, "client_id", ""),
+            ),
+        )
+        if not route_solutions:
+            raise ValidationFailed("Local delivery plan has no route solutions.")
+        selected_route_solution = route_solutions[0]
+        ctx.set_warning(
+            "Local delivery plan had no selected route solution. Falling back to the first available route."
+        )
 
     orders = list(plan.orders or [])
     stops = list(selected_route_solution.stops or [])

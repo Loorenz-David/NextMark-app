@@ -32,6 +32,7 @@ def serialize_order_cases(instances: List[OrderCase], ctx: ServiceContext):
             "id": instance.id,
             "state": instance.state,
             "creation_date": creation_date.isoformat() if creation_date else None,
+            "updated_at": instance.updated_at.isoformat() if instance.updated_at else None,
             "order_id": instance.order_id,
             "label": instance.label,
             "created_by": instance.created_by,

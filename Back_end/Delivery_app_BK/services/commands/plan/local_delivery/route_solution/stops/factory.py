@@ -7,6 +7,10 @@ from Delivery_app_BK.route_optimization.constants.is_optimized import (
     IS_OPTIMIZED_OPTIMIZE, IS_OPTIMIZED_PARTIAL
 )
 from Delivery_app_BK.services.commands.utils import generate_client_id
+from Delivery_app_BK.services.domain.local_delivery.route_lifecycle import (
+    get_next_route_stop_order,
+    lock_route_solution,
+)
 
 from Delivery_app_BK.services.context import ServiceContext
 
@@ -22,16 +26,18 @@ def build_route_solution_stops_for_order_ids(
     order_id_list = list(order_ids)
 
     for route_solution in route_solutions:
-        
-        current_stop = route_solution.stop_count or 0
+        if getattr(route_solution, "id", None) is not None:
+            lock_route_solution(route_solution.id)
+
+        current_stop = get_next_route_stop_order(getattr(route_solution, "id", None)) - 1
         for order_id in order_id_list:
             current_stop += 1
             stop_instance = RouteSolutionStop(
                 client_id=generate_client_id('route_stop'),
-                route_solution_id=route_solution.id,
                 stop_order=current_stop,
                 team_id=ctx.team_id,
             )
+            stop_instance.route_solution = route_solution
             if order_id is not None:
                 stop_instance.order_id = order_id
 

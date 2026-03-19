@@ -40,6 +40,7 @@ export type DriverOrderRecord = {
   preferred_time_start: string | null
   preferred_time_end: string | null
   creation_date: string | null
+  updated_at: string | null
   items_updated_at: string | null
   order_state_id: number | null
   delivery_plan_id: number | null

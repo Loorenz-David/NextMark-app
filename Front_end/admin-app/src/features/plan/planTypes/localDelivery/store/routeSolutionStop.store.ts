@@ -104,6 +104,47 @@ export const upsertRouteSolutionStops = (table: { byClientId: Record<string, Rou
   })
 }
 
+export const replaceRouteSolutionStopsForSolution = (
+  solutionId: number | null | undefined,
+  table: { byClientId: Record<string, RouteSolutionStop>; allIds: string[] } | null | undefined,
+) => {
+  if (solutionId == null) return
+
+  useRouteSolutionStopStore.setState((state) => {
+    const nextByClientId = { ...state.byClientId }
+    const nextAllIds = state.allIds.filter((clientId) => {
+      const stop = state.byClientId[clientId]
+      if (stop?.route_solution_id !== solutionId) {
+        return true
+      }
+      delete nextByClientId[clientId]
+      return false
+    })
+
+    const incomingIds = table?.allIds ?? []
+    for (const clientId of incomingIds) {
+      const incoming = table?.byClientId?.[clientId]
+      if (!incoming) continue
+      nextByClientId[clientId] = incoming
+      nextAllIds.push(clientId)
+    }
+
+    const nextIdIndex: Record<number, string> = {}
+    for (const clientId of nextAllIds) {
+      const stop = nextByClientId[clientId]
+      if (stop?.id !== null && stop?.id !== undefined) {
+        nextIdIndex[stop.id] = stop.client_id
+      }
+    }
+
+    return {
+      byClientId: nextByClientId,
+      allIds: nextAllIds,
+      idIndex: nextIdIndex,
+    }
+  })
+}
+
 export const updateRouteSolutionStop = (
   clientId: string,
   updater: (stop: RouteSolutionStop) => RouteSolutionStop,
