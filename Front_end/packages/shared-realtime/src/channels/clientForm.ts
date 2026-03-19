@@ -4,7 +4,7 @@ import type { SharedRealtimeClient } from '../core/client'
 /**
  * Channel for listening to client_form:submitted events in the admin-app.
  *
- * The event fires when a client completes the public form on the client-form-app.
+ * The event fires when a client completes the public form on the external operations app.
  * The admin must be subscribed to the team_admin channel to receive it.
  *
  * Usage:

@@ -32,8 +32,8 @@ export const normalizeFormStateForSave = (state: OrderFormState): OrderUpdateFie
     state.delivery_plan_id == null ? toNullableString(state.order_plan_objective) : null,
     reference_number: state.reference_number != null ? state.reference_number.trim() : null,
     external_source: toNullableString(state.external_source),
-    tracking_number: toNullableString(state.tracking_number),
-    tracking_link: toNullableString(state.tracking_link),
+    external_tracking_number: toNullableString(state.external_tracking_number),
+    external_tracking_link: toNullableString(state.external_tracking_link),
     client_first_name: state.client_first_name.trim(),
     client_last_name: state.client_last_name.trim(),
     client_email: state.client_email.trim(),
@@ -54,5 +54,6 @@ export const normalizeFormStateForSave = (state: OrderFormState): OrderUpdateFie
     preferred_time_end: state.preferred_time_end || null,
     delivery_windows: sortDeliveryWindowsUtc(state.delivery_windows),
     delivery_plan_id: state.delivery_plan_id ?? null,
+    order_notes: state.order_note.trim() ? [state.order_note.trim()] : [],
   }
 }

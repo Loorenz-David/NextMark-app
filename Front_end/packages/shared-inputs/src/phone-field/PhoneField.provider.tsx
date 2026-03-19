@@ -12,10 +12,12 @@ export const PhoneFieldProvider = ({
   children,
   phoneNumber,
   onChange,
+  storageNamespace,
 }: PhoneFieldProviderProps) => {
   const controllers = usePhoneFieldControllers({
     phoneNumber,
     onChange,
+    storageNamespace,
   })
 
   const value = {

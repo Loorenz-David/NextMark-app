@@ -7,6 +7,8 @@ export type PhoneFieldProps = {
   onChange: (value: Phone) => void
   containerClassName?: string
   containerStyle?: CSSProperties
+  prefixPopoverClassName?: string
+  storageNamespace?: string
 }
 
 export type PhoneFieldContextValue = {

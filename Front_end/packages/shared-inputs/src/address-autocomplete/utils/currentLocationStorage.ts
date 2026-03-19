@@ -1,5 +1,5 @@
 import type { address } from '@shared-domain/core/address'
-import { CURRENT_LOCATION_STORAGE_KEY } from '../constants/location.constants'
+import { resolveCurrentLocationStorageKey } from '../constants/location.constants'
 
 const isBrowser = typeof window !== 'undefined'
 
@@ -17,37 +17,37 @@ const isValidAddress = (value: unknown): value is address => {
   )
 }
 
-export function clearStoredCurrentLocation(): void {
+export function clearStoredCurrentLocation(storageNamespace?: string): void {
   if (!isBrowser) return
   try {
-    window.localStorage.removeItem(CURRENT_LOCATION_STORAGE_KEY)
+    window.localStorage.removeItem(resolveCurrentLocationStorageKey(storageNamespace))
   } catch {
     // Ignore storage remove failures.
   }
 }
 
-export function saveCurrentLocation(value: address): void {
+export function saveCurrentLocation(value: address, storageNamespace?: string): void {
   if (!isBrowser) return
   try {
-    window.localStorage.setItem(CURRENT_LOCATION_STORAGE_KEY, JSON.stringify(value))
+    window.localStorage.setItem(resolveCurrentLocationStorageKey(storageNamespace), JSON.stringify(value))
   } catch {
     // Ignore storage write failures.
   }
 }
 
-export function getStoredCurrentLocation(): address | null {
+export function getStoredCurrentLocation(storageNamespace?: string): address | null {
   if (!isBrowser) return null
   try {
-    const raw = window.localStorage.getItem(CURRENT_LOCATION_STORAGE_KEY)
+    const raw = window.localStorage.getItem(resolveCurrentLocationStorageKey(storageNamespace))
     if (!raw) return null
     const parsed = JSON.parse(raw) as unknown
     if (!isValidAddress(parsed)) {
-      clearStoredCurrentLocation()
+      clearStoredCurrentLocation(storageNamespace)
       return null
     }
     return parsed
   } catch {
-    clearStoredCurrentLocation()
+    clearStoredCurrentLocation(storageNamespace)
     return null
   }
 }

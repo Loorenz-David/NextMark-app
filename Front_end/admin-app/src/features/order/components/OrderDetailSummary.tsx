@@ -133,9 +133,71 @@ export const OrderDetailSummary = ({ order, orderState }: OrderDetailSummaryProp
                   )}
               </div>
 
-              <div className="text-sm">
-                <p className="text-xs text-[var(--color-muted)]">Tracking number</p>
-                  <p className="break-all">{asText(order?.tracking_number)}</p>
+              {/* ── Order notes ── */}
+              {order?.order_notes && order.order_notes.length > 0 && (
+                <div className="space-y-1">
+                  {order.order_notes.map((note, i) => (
+                    <div
+                      key={i}
+                      className="rounded-lg border border-yellow-400 bg-yellow-50 px-3 py-2 text-sm text-yellow-700"
+                    >
+                      {note}
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* ── Tracking info (system-managed, read-only) ── */}
+              <div className="space-y-2 rounded-lg border border-[var(--color-border)] bg-[var(--color-ligth-bg)] px-3 py-2 text-sm">
+                <div className="flex items-center justify-between gap-2">
+                  <div>
+                    <p className="text-xs text-[var(--color-muted)]">Tracking number</p>
+                    <p className="font-mono text-sm">{asText(order?.tracking_number)}</p>
+                  </div>
+                  {order?.tracking_number && (
+                    <button
+                      type="button"
+                      title="Copy tracking number"
+                      onClick={() => navigator.clipboard.writeText(order.tracking_number!)}
+                      className="shrink-0 rounded p-1 text-xs text-[var(--color-muted)] hover:text-[var(--color-text)] hover:bg-[var(--color-ligth-bg)] transition-colors"
+                    >
+                      Copy
+                    </button>
+                  )}
+                </div>
+                {order?.tracking_link && (
+                  <div className="flex items-center justify-between gap-2 border-t border-[var(--color-border)] pt-2">
+                    <div className="min-w-0">
+                      <p className="text-xs text-[var(--color-muted)]">Tracking link</p>
+                      <a
+                        href={order.tracking_link}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="block truncate text-xs text-[var(--color-primary)] hover:underline"
+                      >
+                        {order.tracking_link}
+                      </a>
+                    </div>
+                    <div className="flex shrink-0 gap-1">
+                      <button
+                        type="button"
+                        title="Copy tracking link"
+                        onClick={() => navigator.clipboard.writeText(order.tracking_link!)}
+                        className="rounded p-1 text-xs text-[var(--color-muted)] hover:text-[var(--color-text)] hover:bg-[var(--color-ligth-bg)] transition-colors"
+                      >
+                        Copy
+                      </button>
+                      <a
+                        href={order.tracking_link}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="rounded p-1 text-xs text-[var(--color-muted)] hover:text-[var(--color-text)] hover:bg-[var(--color-ligth-bg)] transition-colors"
+                      >
+                        Open
+                      </a>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* ── Client form link section ── */}

@@ -53,6 +53,7 @@ export type DriverOrderRecord = {
     window_type: string | null
   }>
   open_order_cases: number
+  order_notes: string[] | null
   items: ClientIdCollection<DriverOrderItemRecord>
 }
 

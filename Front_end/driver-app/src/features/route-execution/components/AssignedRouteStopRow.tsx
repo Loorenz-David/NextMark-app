@@ -32,6 +32,11 @@ export function AssignedRouteStopRow({
   stop,
   onOpenStopDetail,
 }: AssignedRouteStopRowProps) {
+  console.log('')
+  console.log('Debugging: ', 'stop.orderNotes')
+  console.log(stop.orderNotes)
+  console.log('finished -----------')
+  console.log('')
   return (
     <button
       className={`grid w-full grid-cols-[4rem_minmax(0,1fr)_5.5rem] gap-2 text-left transition active:scale-[0.995] ${
@@ -85,6 +90,12 @@ export function AssignedRouteStopRow({
           <p className="mt-4 truncate text-sm font-medium text-white/78 underline decoration-white/30 underline-offset-2">
             {stop.phoneLine}
           </p>
+        ) : null}
+
+        {stop.orderNotes && stop.orderNotes.length > 0 ? (
+          <div className="mt-3 rounded-md border border-yellow-400/70 bg-yellow-400/15 px-2 py-1.5">
+            <p className="line-clamp-2 text-xs font-medium text-yellow-300">{stop.orderNotes[0]}</p>
+          </div>
         ) : null}
       </div>
 

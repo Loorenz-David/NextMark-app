@@ -146,23 +146,33 @@ export const OrderFormFields = ({ model, compact = false }: OrderFormFieldsProps
               </Field>
             </div>
 
+            <div className={`border-t border-[var(--color-border-accent)] px-3 py-2`}>
+              <Field  warningPlacement ='besidesLabel' label="External source:">
+                <InputField
+                  value={formState.external_source}
+                  onChange={formSetters.handleExternalSource}
+                  fieldClassName={PLAIN_INPUT_CONTAINER_CLASS}
+                  inputClassName={PLAIN_INPUT_CLASS}
+                />
+              </Field>
+            </div>
+
             <SplitRow splitRowClass={'grid grid-cols-2 divide-x divide-[var(--color-border-accent)]'}>
               <Cell>
-                <Field  warningPlacement ='besidesLabel' label="External source:">
+                <Field warningPlacement='besidesLabel' label="Ext. tracking #:" info="Tracking number provided by Shopify or third-party courier.">
                   <InputField
-                    value={formState.external_source}
-                    onChange={formSetters.handleExternalSource}
+                    value={formState.external_tracking_number}
+                    onChange={formSetters.handleExternalTrackingNumber}
                     fieldClassName={PLAIN_INPUT_CONTAINER_CLASS}
                     inputClassName={PLAIN_INPUT_CLASS}
                   />
                 </Field>
               </Cell>
-
               <Cell>
-                <Field  warningPlacement ='besidesLabel' label="Tracking number:">
+                <Field warningPlacement='besidesLabel' label="Ext. tracking link:" info="Tracking URL provided by Shopify or third-party courier.">
                   <InputField
-                    value={formState.tracking_number}
-                    onChange={formSetters.handleTrackingNumber}
+                    value={formState.external_tracking_link}
+                    onChange={formSetters.handleExternalTrackingLink}
                     fieldClassName={PLAIN_INPUT_CONTAINER_CLASS}
                     inputClassName={PLAIN_INPUT_CLASS}
                   />
@@ -170,11 +180,11 @@ export const OrderFormFields = ({ model, compact = false }: OrderFormFieldsProps
               </Cell>
             </SplitRow>
 
-            <div className={`border-t border-[var(--color-border-accent)] px-3 py-2`}>
-              <Field  warningPlacement ='besidesLabel' label="Tracking link:">
+            <div className={`border-t border-[var(--color-border-accent)] cell-default`}>
+              <Field warningPlacement='besidesLabel' label="Note:" info="Short note visible to the driver.">
                 <InputField
-                  value={formState.tracking_link}
-                  onChange={formSetters.handleTrackingLink}
+                  value={formState.order_note}
+                  onChange={formSetters.handleOrderNote}
                   fieldClassName={PLAIN_INPUT_CONTAINER_CLASS}
                   inputClassName={PLAIN_INPUT_CLASS}
                 />

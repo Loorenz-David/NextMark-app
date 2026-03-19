@@ -19,6 +19,7 @@ export default defineConfig({
       { find: /^react$/, replacement: path.resolve(__dirname, './node_modules/react/index.js') },
       { find: /^react\/jsx-runtime$/, replacement: path.resolve(__dirname, './node_modules/react/jsx-runtime.js') },
       { find: /^framer-motion$/, replacement: path.resolve(__dirname, './node_modules/framer-motion/dist/es/index.mjs') },
+      { find: /^libphonenumber-js$/, replacement: path.resolve(__dirname, './node_modules/libphonenumber-js/index.cjs.js') },
       { find: '@shared-utils', replacement: path.resolve(__dirname, '../packages/shared-utils/src') },
       { find: '@shared-domain', replacement: path.resolve(__dirname, '../packages/shared-domain') },
       { find: '@shared-api', replacement: path.resolve(__dirname, '../packages/shared-api') },

@@ -24,6 +24,8 @@ export type OrderFormState = {
   operation_type: OrderOperationTypes
   reference_number: string | null
   external_source: string
+  external_tracking_number: string
+  external_tracking_link: string
   tracking_number: string
   tracking_link: string
   client_first_name: string
@@ -38,6 +40,7 @@ export type OrderFormState = {
   preferred_time_end: string
   delivery_windows: OrderDeliveryWindow[]
   delivery_plan_id?: number | null
+  order_note: string
 }
 
 export type OrderFormPayload = {

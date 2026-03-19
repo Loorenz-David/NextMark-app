@@ -28,6 +28,7 @@ type PropsConfrimPopup = {
    renderInPortal?: boolean
    strategy?: 'absolute' | 'fixed'
    placement?: Placement
+   floatingClassName?: string
 }
 
 export const FloatingPopover = ({
@@ -45,7 +46,14 @@ export const FloatingPopover = ({
     renderInPortal,
     strategy,
     placement,
+    floatingClassName,
 }: PropsConfrimPopup) => {
+    const floatingClasses = [
+        renderInPortal ? 'z-[130]' : 'z-50',
+        floatingClassName,
+    ]
+        .filter(Boolean)
+        .join(' ')
 
     const {
         refs,
@@ -85,7 +93,7 @@ export const FloatingPopover = ({
                     ref={refs.setFloating}
                     style={floatingStyles}
                     {...getFloatingProps()}
-                    className={renderInPortal ? 'z-[130]' : 'z-50'}
+                    className={floatingClasses}
                     onClick={(e) => {
                         if (!closeOnInsideClick) return
 

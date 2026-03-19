@@ -120,7 +120,7 @@ export const OrderDetailHeader = ({
 
 
 const HeaderTitle = ({order}:{order:Order | null})=>{
-  const title = order?.reference_number ?? 'reference number missing'
+  const title = `# ${order?.order_scalar_id ?? 'reference number missing'}` 
   return (
     <div className="flex flex-col ">
         <div className="flex gap-5">

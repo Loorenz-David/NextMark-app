@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { BasicButton } from '@/shared/buttons/BasicButton'
 import { useSectionManager, useMapManager, usePopupManager } from '@/shared/resource-manager/useResourceManager'
 
-import { ChevronDownIcon, SettingIcon } from '@/assets/icons'
+import { ArchiveIcon, ChevronDownIcon, SettingIcon } from '@/assets/icons'
 
 import { OrderPage } from '@/features/order/pages/order.page'
 import { OrderMapOverlay } from '@/features/order/components/OrderMapOverlay'
@@ -22,6 +22,7 @@ import { AdminNotificationsTrigger } from '@/realtime/notifications'
 
 import { SectionPanel } from '../../../shared/section-panel/SectionPanel'
 import { PlanDesktopShell } from '@/features/plan/views/PlanDesktopShell'
+import { useOrderCaseActions } from '@/features/orderCase/actions/orderCase.actions'
 
 const SAFE_GUTTER = 24
 const DEFAULT_VIEWPORT_INSETS = {
@@ -182,6 +183,8 @@ function HomeDesktopHeader({
   onToggleViewMode: () => void
 }) {
   const navigate = useNavigate()
+  const { openCaseMain } = useOrderCaseActions()
+
   return (
     <div
       ref={headerRef}
@@ -189,7 +192,7 @@ function HomeDesktopHeader({
     >
       <div className="flex items-center"></div>
       <div className="flex items-center gap-5 scale-95">
-         <BasicButton
+        <BasicButton
           params={{
             variant: 'secondary',
             ariaLabel: 'Toggle plan view mode',
@@ -198,6 +201,17 @@ function HomeDesktopHeader({
           }}
         >
           {viewMode === 'rail' ? 'Split View' : 'Rail View'}
+        </BasicButton>
+        <BasicButton
+          params={{
+            variant: 'secondary',
+            ariaLabel: 'Cases',
+            className: 'border-[var(--color-muted)]/30',
+            onClick: openCaseMain,
+          }}
+        >
+          <ArchiveIcon className="mr-2 h-4 w-4" />
+          Cases
         </BasicButton>
         <AdminNotificationsTrigger />
         <BasicButton

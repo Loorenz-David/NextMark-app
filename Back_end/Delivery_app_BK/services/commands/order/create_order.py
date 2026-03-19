@@ -39,6 +39,7 @@ from ...domain.order.delivery_windows import (
     validate_same_local_day_delivery_windows,
 )
 from ...domain.order.order_scalar_id import reserve_order_scalar_ids
+from .tracking.generate_tracking_identifiers import generate_tracking_identifiers
 
 
 def create_order(ctx: ServiceContext):
@@ -158,6 +159,10 @@ def create_order(ctx: ServiceContext):
                 if delivery_plan is not None:
                     touched_delivery_plans[delivery_plan.id] = delivery_plan
             order_instances.append(order_instance)
+
+            # Auto-generate public tracking identifiers (once, on creation).
+            if order_instance.tracking_token_hash is None:
+                generate_tracking_identifiers(order_instance)
 
             if normalized_windows is not None:
                 for window in normalized_windows:

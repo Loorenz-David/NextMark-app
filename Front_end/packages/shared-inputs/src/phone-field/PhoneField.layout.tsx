@@ -9,11 +9,13 @@ import { getFlagEmoji } from './phonePrefixes'
 type PhoneFieldLayoutProps = {
   containerClassName?: string
   containerStyle?: CSSProperties
+  prefixPopoverClassName?: string
 }
 
 export const PhoneFieldLayout = ({
   containerClassName,
   containerStyle,
+  prefixPopoverClassName,
 }: PhoneFieldLayoutProps) => {
   const {
     isOpen,
@@ -30,6 +32,10 @@ export const PhoneFieldLayout = ({
   const rootClassName = ['flex w-full items-center gap-2', containerClassName]
     .filter(Boolean)
     .join(' ')
+  const popoverClassName = [
+    'rounded-2xl border border-[var(--color-border)] bg-white p-2 shadow-xl',
+    prefixPopoverClassName,
+  ].filter(Boolean).join(' ')
 
   return (
     <div className={rootClassName} style={containerStyle}>
@@ -66,7 +72,7 @@ export const PhoneFieldLayout = ({
             </div>
           }
         >
-          <div className="rounded-2xl border border-[var(--color-border)] bg-white p-2 shadow-xl" style={{ width: '120px' }}>
+          <div className={popoverClassName} style={{ width: '120px' }}>
             <PhonePrefixList />
           </div>
         </FloatingPopover>

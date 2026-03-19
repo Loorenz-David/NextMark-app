@@ -112,6 +112,16 @@ export const useOrderFormSetters = ({
     updateFormState((prev) => ({ ...prev, external_source: value }))
   }
 
+  const handleExternalTrackingNumber = (event: ChangeEvent<HTMLInputElement>) => {
+    const value = event.target.value
+    updateFormState((prev) => ({ ...prev, external_tracking_number: value }))
+  }
+
+  const handleExternalTrackingLink = (event: ChangeEvent<HTMLInputElement>) => {
+    const value = event.target.value
+    updateFormState((prev) => ({ ...prev, external_tracking_link: value }))
+  }
+
   const handleTrackingNumber = (event: ChangeEvent<HTMLInputElement>) => {
     const value = event.target.value
     updateFormState((prev) => ({ ...prev, tracking_number: value }))
@@ -186,8 +196,7 @@ export const useOrderFormSetters = ({
     }))
   }
 
-  const handleDeliveryWindows = (windows: OrderDeliveryWindow[]) => {
-    const sorted = sortDeliveryWindowsUtc(windows)
+  const handleDeliveryWindows = (windows: OrderDeliveryWindow[]) => {    const sorted = sortDeliveryWindowsUtc(windows)
     const legacy = deriveLegacyFieldsFromDeliveryWindows(sorted, timeZone)
     updateFormState((prev) => ({
       ...prev,
@@ -199,11 +208,18 @@ export const useOrderFormSetters = ({
     }))
   }
 
+  const handleOrderNote = (event: ChangeEvent<HTMLInputElement>) => {
+    const value = event.target.value
+    updateFormState((prev) => ({ ...prev, order_note: value }))
+  }
+
   return {
     handleOrderPlanObjective,
     handleOperationType,
     handleReference,
     handleExternalSource,
+    handleExternalTrackingNumber,
+    handleExternalTrackingLink,
     handleTrackingNumber,
     handleTrackingLink,
     handleFirstName,
@@ -217,6 +233,7 @@ export const useOrderFormSetters = ({
     handlePreferredTimeStart,
     handlePreferredTimeEnd,
     handleDeliveryWindows,
+    handleOrderNote,
     mergeExternalClientData,
   }
 }

@@ -22,10 +22,17 @@ export type StopDetailInfoRowDisplay = {
   onPress?: () => void
 }
 
+export type StopDetailOrderNoteCardDisplay = {
+  firstNote: string
+  allNotes: string[]
+  onPress: (() => void) | null
+}
+
 export type StopDetailPageDisplay = {
   header: StopDetailHeaderDisplay
   headerMode: 'primary-actions' | 'terminal-status'
   primaryActions: StopDetailPrimaryActionDisplay[]
   terminalStatus: StopDetailTerminalStatusDisplay | null
   infoRows: StopDetailInfoRowDisplay[]
+  orderNoteCard: StopDetailOrderNoteCardDisplay | null
 }

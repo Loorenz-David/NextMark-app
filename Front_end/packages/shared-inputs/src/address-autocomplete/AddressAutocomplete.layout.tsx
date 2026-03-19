@@ -1,5 +1,5 @@
 import type { CSSProperties } from 'react'
-import { CurrentLocationIconSrc } from '@shared-icons'
+import { CurrentLocationIcon } from '@shared-icons'
 import { FloatingPopover } from '../floating-popover/FloatingPopover'
 import { InputField } from '../input-field/InputField'
 
@@ -15,6 +15,9 @@ type AddressAutocompleteLayoutProps = {
   inputStyle?: CSSProperties
   placeholder?: string
   renderInPortal?: boolean
+  popoverClassName?: string
+  currentLocationIconClassName?: string
+  embedCurrentLocationIcon?: boolean
 }
 
 export const AddressAutocompleteLayout = ({
@@ -24,6 +27,9 @@ export const AddressAutocompleteLayout = ({
   inputStyle,
   placeholder,
   renderInPortal,
+  popoverClassName,
+  currentLocationIconClassName,
+  embedCurrentLocationIcon,
 }: AddressAutocompleteLayoutProps) => {
   const {
     isOpen,
@@ -32,10 +38,15 @@ export const AddressAutocompleteLayout = ({
     inputValue,
     selectedAddress,
     handleBeginManualEntryFromCurrentLocation,
+    storageNamespace,
   } = useAddressAutocompleteContext()
 
-  const isCurrentLocationMode = Boolean(selectedAddress && isAddressCurrentLocation(selectedAddress))
+  const isCurrentLocationMode = Boolean(selectedAddress && isAddressCurrentLocation(selectedAddress, storageNamespace))
   const displayedValue = isCurrentLocationMode ? CURRENT_LOCATION_INPUT_LABEL : inputValue
+  const resolvedInputClassName = [
+    inputClassName ?? 'custom-input',
+    isCurrentLocationMode && embedCurrentLocationIcon ? 'pl-10' : null,
+  ].filter(Boolean).join(' ')
 
   return (
     <FloatingPopover
@@ -46,11 +57,17 @@ export const AddressAutocompleteLayout = ({
       removeFlip={true}
       renderInPortal={renderInPortal}
       strategy={renderInPortal ? 'fixed' : 'absolute'}
+      floatingClassName={popoverClassName}
       reference={
         <div className={`relative flex items-center ${containerClassName ?? ''}`}>
-          {isCurrentLocationMode ? (
-            <span className="pointer-events-none text-[var(--color-primary)]">
-              <img alt="Current location" className="h-4 w-4" src={CurrentLocationIconSrc} />
+          {isCurrentLocationMode && !embedCurrentLocationIcon ? (
+            <span className={`pointer-events-none ${currentLocationIconClassName ?? 'text-[var(--color-primary)]'}`}>
+              <CurrentLocationIcon className="h-4 w-4" />
+            </span>
+          ) : null}
+          {isCurrentLocationMode && embedCurrentLocationIcon ? (
+            <span className={`pointer-events-none absolute left-4 top-1/2 z-10 -translate-y-1/2 ${currentLocationIconClassName ?? 'text-[var(--color-primary)]'}`}>
+              <CurrentLocationIcon className="h-4 w-4" />
             </span>
           ) : null}
           <InputField
@@ -60,7 +77,7 @@ export const AddressAutocompleteLayout = ({
               handleToogle({ value: true })
             }}
             fieldClassName={fieldClassName}
-            inputClassName={inputClassName}
+            inputClassName={resolvedInputClassName}
             style={inputStyle}
             value={displayedValue}
             placeholder={placeholder}
@@ -69,7 +86,7 @@ export const AddressAutocompleteLayout = ({
       }
     >
       <div className="address-ac-dropdown bg-[var(--color-page)] border border-[var(--color-border-accent)] rounded-lg shadow-lg p-2">
-        <SuggestionsSelector />
+        <SuggestionsSelector currentLocationIconClassName={currentLocationIconClassName} />
       </div>
     </FloatingPopover>
   )

@@ -32,6 +32,8 @@ export type Order = {
   reference_number?: string | null
   external_order_id?: string | null
   external_source?: string | null
+  external_tracking_number?: string | null
+  external_tracking_link?: string | null
   tracking_number?: string | null
   tracking_link?: string | null
   client_first_name?: string | null
@@ -62,6 +64,7 @@ export type Order = {
   archive_at?: ISODateTime | null
   client_form_token_hash?: string | null
   client_form_submitted_at?: ISODateTime | null
+  order_notes?: string[] | null
   __optimistic?: boolean
 }
 

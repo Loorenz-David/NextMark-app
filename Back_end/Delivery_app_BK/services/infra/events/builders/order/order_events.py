@@ -24,15 +24,13 @@ def build_order_created_event(order_instance: Order) -> dict:
         "order_state_id": order_instance.order_state_id,
         "order_plan_objective": order_instance.order_plan_objective,
     }
-    event_name = OrderEvent.CREATED.value
     if order_instance.delivery_plan_id:
-        event_name = OrderEvent.CONFIRMED.value
         payload["delivery_plan_id"] = order_instance.delivery_plan_id
 
     return {
         "order_id": order_instance.id,
         "team_id": order_instance.team_id,
-        "event_name": event_name,
+        "event_name": OrderEvent.CREATED.value,
         "payload": payload,
     }
 

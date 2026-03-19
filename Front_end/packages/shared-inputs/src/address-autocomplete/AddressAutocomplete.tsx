@@ -19,6 +19,10 @@ type PropsAddressAutocomplete = {
   placeholder?: string
   onInputValueChange?: (value: string) => void
   renderInPortal?: boolean
+  popoverClassName?: string
+  currentLocationIconClassName?: string
+  embedCurrentLocationIcon?: boolean
+  storageNamespace?: string
 }
 
 export const AddressAutocomplete = ({
@@ -36,6 +40,10 @@ export const AddressAutocomplete = ({
   placeholder = 'Search address...',
   onInputValueChange,
   renderInPortal,
+  popoverClassName,
+  currentLocationIconClassName,
+  embedCurrentLocationIcon,
+  storageNamespace,
 }: PropsAddressAutocomplete) => {
   return (
     <AddressAutocompleteProvider
@@ -47,6 +55,7 @@ export const AddressAutocomplete = ({
       enableSavedLocations={enableSavedLocations}
       intentKey={intentKey}
       onInputValueChange={onInputValueChange}
+      storageNamespace={storageNamespace}
     >
       <AddressAutocompleteLayout
         fieldClassName={fieldClassName}
@@ -55,6 +64,9 @@ export const AddressAutocomplete = ({
         inputStyle={inputStyle}
         placeholder={placeholder}
         renderInPortal={renderInPortal}
+        popoverClassName={popoverClassName}
+        currentLocationIconClassName={currentLocationIconClassName}
+        embedCurrentLocationIcon={embedCurrentLocationIcon}
       />
     </AddressAutocompleteProvider>
   )
