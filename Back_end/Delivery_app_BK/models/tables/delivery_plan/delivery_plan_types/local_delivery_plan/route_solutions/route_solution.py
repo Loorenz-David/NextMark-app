@@ -108,6 +108,12 @@ class RouteSolution(
         ForeignKey("user.id")
     )
 
+    vehicle_id = Column(
+        Integer,
+        ForeignKey("vehicle.id"),
+        nullable=True,
+    )
+
     local_delivery_plan_id = Column(
         Integer,
         ForeignKey("local_delivery_plan.id", ondelete="CASCADE"),
@@ -128,6 +134,11 @@ class RouteSolution(
     driver = relationship(
         "User",
         back_populates="route_solutions",
+    )
+
+    vehicle = relationship(
+        "Vehicle",
+        lazy="selectin",
     )
 
     local_delivery_plan = relationship(

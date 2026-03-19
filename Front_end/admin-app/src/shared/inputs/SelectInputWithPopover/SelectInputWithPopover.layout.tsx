@@ -66,7 +66,7 @@ export const SelectInputWithPopoverLayout = <TValue,>({
       }
     >
       <div
-        className={`rounded-2xl border border-[var(--color-border)] bg-white p-2 shadow-xl ${dropdownClassName ?? ''}`.trim()}
+        className={`admin-glass-popover rounded-2xl border border-[var(--color-border-accent)] p-2 shadow-xl ${dropdownClassName ?? ''}`.trim()}
       >
         <SelectInputWithPopoverOptionsList
           filteredOptions={filteredOptions}

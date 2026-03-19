@@ -1,18 +1,42 @@
+import type { RefObject } from 'react'
 import { useCallback } from 'react'
 
-import { useMessageHandler } from '@shared-message-handler'
-import { getObjectDiff } from '@shared-utils'
-import { hasFormChanges } from '@shared-domain'
-import { buildClientId } from '@/lib/utils/clientId'
-
-import { useCreateItemProperty, useUpdateItemProperty } from '../../api/itemPropertyApi'
+import { useItemConfigActions } from '../../hooks/useItemConfigActions'
 import { useItemPropertyByClientId } from '../../hooks/useItemSelectors'
-import { useItemPopupController } from '../../hooks/useItemPopupController'
-import { upsertItemProperty } from '../../store/itemPropertyStore'
-import type { ItemPropertyPayload } from '../../types/itemProperty'
-
+import { upsertItemProperty, removeItemProperty } from '../../store/itemPropertyStore'
+import { upsertItemType, useItemTypeStore } from '../../store/itemTypeStore'
+import { useCreateItemProperty, useUpdateItemProperty, useDeleteItemProperty } from '../../api/itemPropertyApi'
+import { useItemConfigFormSubmit } from '../shared/useItemConfigFormSubmit'
+import type { ItemProperty, ItemPropertyPayload } from '../../types/itemProperty'
 import type { ItemPropertyFormPayload, ItemPropertyFormState } from './ItemPropertyForm.types'
 
+/** Sync all ItemType store records to reflect the updated property's `item_types` list. */
+const syncTypesToProperty = (savedProp: ItemProperty) => {
+  if (!savedProp.id) return
+  const allTypes = Object.values(useItemTypeStore.getState().byClientId)
+  const linkedTypeIds = savedProp.item_types ?? []
+  for (const type of allTypes) {
+    if (!type.id) continue
+    const isLinked = linkedTypeIds.includes(type.id)
+    const currentProps = type.properties ?? []
+    const alreadyLinked = currentProps.includes(savedProp.id)
+    if (isLinked && !alreadyLinked) {
+      upsertItemType({ ...type, properties: [...currentProps, savedProp.id] })
+    } else if (!isLinked && alreadyLinked) {
+      upsertItemType({ ...type, properties: currentProps.filter((p) => p !== savedProp.id) })
+    }
+  }
+}
+
+/** Remove a deleted property's ID from all ItemType store records. */
+const cleanupDeletedProperty = (deletedProp: ItemProperty) => {
+  if (!deletedProp.id) return
+  const allTypes = Object.values(useItemTypeStore.getState().byClientId)
+  for (const type of allTypes) {
+    if (!type.properties?.includes(deletedProp.id)) continue
+    upsertItemType({ ...type, properties: type.properties.filter((p) => p !== deletedProp.id) })
+  }
+}
 
 export const useItemPropertyFormSubmit = ({
   payload,
@@ -23,70 +47,40 @@ export const useItemPropertyFormSubmit = ({
   payload: ItemPropertyFormPayload
   formState: ItemPropertyFormState
   validateForm: () => boolean
-  initialFormRef: React.RefObject<ItemPropertyFormState | null>
+  initialFormRef: RefObject<ItemPropertyFormState | null>
 }) => {
-  const { showMessage } = useMessageHandler()
+  const { closePropertyForm } = useItemConfigActions()
+  const existing = useItemPropertyByClientId(payload.clientId ?? null)
   const createItemProperty = useCreateItemProperty()
   const updateItemProperty = useUpdateItemProperty()
-  const existing = useItemPropertyByClientId(payload.clientId ?? null)
-  const { closePropertyForm } = useItemPopupController()
+  const deleteItemProperty = useDeleteItemProperty()
 
-  const handleSave = useCallback(async () => {
-    if (!validateForm()) {
-      showMessage({ status: 400, message: 'Please fix the highlighted fields.' })
-      return
-    }
+  const onSuccess = useCallback((saved: ItemProperty) => syncTypesToProperty(saved), [])
+  const onDelete = useCallback((deleted: ItemProperty) => cleanupDeletedProperty(deleted), [])
 
-    if (!hasFormChanges(formState, initialFormRef)) {
-      showMessage({ status: 400, message: 'No changes to save.' })
-      return
-    }
-
-    const initialForm = initialFormRef.current
-    if (!initialForm) {
-      showMessage({ status: 400, message: 'Missing initial form snapshot.' })
-      return
-    }
-
-    const diff = getObjectDiff(initialForm, formState)
-    const createPayload: ItemPropertyPayload = {
-      client_id: existing?.client_id ?? buildClientId('item_property'),
-      name: formState.name,
-      field_type: formState.field_type,
-      options: formState.options,
-      required: formState.required,
-      item_types: formState.item_types,
-    }
-
-    try {
-      if (payload.mode === 'create') {
-        await createItemProperty(createPayload)
-        upsertItemProperty({ ...createPayload })
-      } else if (existing?.id) {
-        await updateItemProperty(existing.id, diff)
-        const nextItem = {
-          ...existing,
-          ...diff,
-          item_types: diff.item_types ?? formState.item_types,
-        }
-        upsertItemProperty(nextItem)
-      }
-      closePropertyForm()
-    } catch (error) {
-      console.error('Failed to save item property', error)
-      showMessage({ status: 500, message: 'Unable to save item property.' })
-    }
-  }, [
-    closePropertyForm,
-    createItemProperty,
-    existing,
+  return useItemConfigFormSubmit<ItemPropertyPayload, ItemPropertyFormState, ItemProperty>({
+    entityPrefix: 'item_property',
+    payload,
     formState,
-    initialFormRef,
-    payload.mode,
-    showMessage,
-    updateItemProperty,
     validateForm,
-  ])
-
-  return { handleSave }
+    initialFormRef,
+    existing: existing ?? null,
+    buildCreatePayload: (state, clientId) => ({
+      client_id: clientId,
+      name: state.name,
+      field_type: state.field_type,
+      options: state.options,
+      required: state.required,
+      item_types: state.item_types,
+    }),
+    createApi: createItemProperty,
+    updateApi: (id, diff) => updateItemProperty(id, diff),
+    deleteApi: deleteItemProperty,
+    upsertFn: upsertItemProperty,
+    removeFn: removeItemProperty,
+    closeForm: closePropertyForm,
+    onSuccess,
+    onDelete,
+  })
 }
+

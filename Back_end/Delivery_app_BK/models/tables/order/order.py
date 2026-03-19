@@ -3,7 +3,7 @@
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy import Index, text, JSON, UniqueConstraint
 from sqlalchemy.orm import relationship, validates
-from sqlalchemy import Column, Integer, String, Boolean, ForeignKey
+from sqlalchemy import Column, Integer, String, Boolean, ForeignKey, Float
 
 from datetime import datetime, timezone
 
@@ -77,7 +77,12 @@ class Order(
         onupdate=lambda: datetime.now(timezone.utc),
     )
     items_updated_at = Column(UTCDateTime)
-    
+
+    # Denormalized order totals — recomputed on every item mutation.
+    total_weight_g = Column(Float, nullable=True)
+    total_volume_cm3 = Column(Float, nullable=True)
+    total_item_count = Column(Integer, nullable=True)
+
     order_state_id = Column(
         Integer,
         ForeignKey("order_state.id", ondelete="SET NULL")

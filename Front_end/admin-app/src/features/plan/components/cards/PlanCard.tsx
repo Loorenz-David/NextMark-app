@@ -31,8 +31,8 @@ export const PlanCard = ({ plan, isOver, dropFeedback }: PropsPlanCard) => {
     const endDate = formatPlanDate(plan.end_date)
     const orderCount = plan.total_orders ?? 0
     const itemCount = plan.total_items ?? 0
-    const totalVolume = plan.total_volume ?? 0
-    const totalWeight = plan.total_weight ?? 0
+    const totalVolume = (plan.total_volume ?? 0) / 1_000_000   // cm³ → m³
+    const totalWeight = (plan.total_weight ?? 0) / 1000         // g → kg
     const DeliveryPlanState = useDeliveryPlanStateByServerId( plan.state_id ?? 1 )
 
     

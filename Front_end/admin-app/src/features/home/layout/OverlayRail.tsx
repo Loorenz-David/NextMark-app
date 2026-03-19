@@ -25,7 +25,7 @@ export function OverlayRail({
       <AnimatePresence mode="sync">
         {orderOverlay && (
           <motion.div
-            className="absolute inset-1 z-39 h-full w-full"
+            className="absolute inset-0 z-39 h-full w-full"
             key="for overlay"
             initial={{ x: 450 }}
             animate={{ x: 0 }}

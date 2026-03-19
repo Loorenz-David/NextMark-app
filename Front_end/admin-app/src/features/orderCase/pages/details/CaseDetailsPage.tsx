@@ -97,14 +97,14 @@ const CaseDetailsPageContent = () => {
 
   if (!orderCase) {
     return (
-      <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-page)] p-4 text-sm text-[var(--color-muted)]">
+      <div className="m-4 rounded-[22px] border border-[var(--color-border)] bg-[rgba(14,22,23,0.72)] p-4 text-sm text-[var(--color-muted)] backdrop-blur-xl">
         {isRefreshing ? 'Loading case details...' : 'Case not found.'}
       </div>
     )
   }
 
   return (
-    <div className="flex h-full w-full flex-col bg-[var(--color-page)] border-l-1 border-l-[var(--color-primary)]/30">
+    <div className="flex h-full w-full flex-col border-l-1 border-l-[var(--color-primary)]/30 bg-[var(--color-page)]">
       <OrderCaseDetailsHeader
         title={orderCase.label?.trim() ? orderCase.label : `Case #${orderCase.id}`}
         state={orderCase.state}
@@ -112,29 +112,29 @@ const CaseDetailsPageContent = () => {
         onClose={detailsActions.closeCaseDetails}
       />
 
-      <div ref={chatScrollRef} className="flex-1 overflow-y-auto scroll-thin p-3" onScroll={handleScroll}>
+      <div ref={chatScrollRef} className="flex-1 overflow-y-auto scroll-thin px-5 pb-2 pt-3" onScroll={handleScroll}>
         {isRefreshing ? (
-          <div className="mb-3 rounded-lg border border-[var(--color-border)] bg-[var(--color-page)] p-3 text-xs text-[var(--color-muted)]">
+          <div className="mb-3 rounded-[20px] border border-[var(--color-border)] bg-[rgba(14,22,23,0.72)] px-4 py-3 text-xs text-[var(--color-muted)] backdrop-blur-xl">
             Refreshing case details...
           </div>
         ) : null}
         <OrderCaseChatList chats={orderCase.chats} currentUserId={currentUserId} />
       </div>
 
-      <div className="flex justify-center px-3 pb-2">
+      <div className="flex justify-center px-5 pb-2">
         {showNewMessagesPill ? (
           <button
-            className="mb-2 flex w-max flex-col items-center rounded-full border border-[var(--color-primary)]/40 bg-[var(--color-primary)]/15 px-4 py-2 text-sm font-medium text-[var(--color-text)] transition hover:bg-[var(--color-primary)]/25"
+            className="mb-2 flex w-max items-center gap-2 rounded-full border border-[rgba(131,204,185,0.26)] bg-[linear-gradient(135deg,rgba(72,180,194,0.16),rgba(111,224,207,0.08))] px-4 py-2 text-sm font-medium text-[var(--color-text)] shadow-[0_12px_28px_rgba(0,0,0,0.14)] backdrop-blur-xl transition hover:bg-[linear-gradient(135deg,rgba(72,180,194,0.22),rgba(111,224,207,0.1))]"
             onClick={handleJumpToLatest}
             type="button"
           >
             <span>New messages</span>
-            <span className="text-lg font-bold leading-none">↓</span>
+            <span className="text-base font-bold leading-none">↓</span>
           </button>
         ) : null}
       </div>
 
-      <div className="p-3 pb-5">
+      <div className="px-5 pb-5">
         <OrderCaseChatComposer
           value={detailsActions.message}
           onChange={detailsActions.setMessage}
@@ -152,7 +152,7 @@ export const CaseDetailsPage = ({ payload, onClose }: StackComponentProps<OrderC
 
   if (!orderCaseClientId && typeof orderCaseId !== 'number') {
     return (
-      <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-page)] p-4 text-sm text-[var(--color-muted)]">
+      <div className="m-4 rounded-[22px] border border-[var(--color-border)] bg-[rgba(14,22,23,0.72)] p-4 text-sm text-[var(--color-muted)] backdrop-blur-xl">
         Missing case id.
       </div>
     )

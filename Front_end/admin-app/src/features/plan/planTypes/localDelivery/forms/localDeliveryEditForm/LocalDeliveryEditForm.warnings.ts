@@ -71,9 +71,12 @@ export const useLocalDeliveryEditFormWarnings = () => {
     },
   )
 
+  const vehicleBusyWarning = useInputWarning('Vehicle is unavailable during the selected dates.')
+
   return {
     planDateWarning,
     routeStartTimeWarning,
     routeEndTimeWarning,
+    vehicleBusyWarning,
   }
 }

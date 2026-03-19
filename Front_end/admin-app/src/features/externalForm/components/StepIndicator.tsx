@@ -17,41 +17,54 @@ export const StepIndicator = () => {
 
   return (
     <nav className="w-full" aria-label="External form steps">
-      <ol className="grid grid-cols-3 items-start gap-2 sm:gap-4">
+      <ol className="flex items-center justify-center gap-2">
         {EXTERNAL_FORM_STEPS.map((step, index) => {
           const isCurrent = step === currentStep
           const isCompleted = index < currentIndex && controller.canProceed(step, form)
+          const isClickable = isCompleted
 
           return (
-            <li key={step} className="relative">
+            <li key={step} className="flex items-center gap-2">
               <button
                 type="button"
+                disabled={!isClickable}
                 onClick={() => {
-                  goToStep(step)
+                  if (isClickable) goToStep(step)
                 }}
-                className="flex w-full flex-col items-center gap-2"
+                className="flex items-center gap-2"
               >
                 <span
-                  className={`flex h-10 w-10 items-center justify-center rounded-full border text-sm font-semibold transition ${
+                  className={`flex h-7 w-7 items-center justify-center rounded-full text-xs font-semibold transition-all ${
                     isCurrent
-                      ? 'border-[var(--color-primary)] bg-[var(--color-primary)] text-white'
+                      ? 'bg-[#83ccb9] text-[#0f2220] shadow-[0_0_14px_rgba(131,204,185,0.5)]'
                       : isCompleted
-                        ? 'border-emerald-600 bg-emerald-600 text-white'
-                        : 'border-[var(--color-border)] bg-white text-[var(--color-muted)]'
+                        ? 'cursor-pointer border border-[#83ccb9]/40 bg-[#83ccb9]/18 text-[#83ccb9] hover:bg-[#83ccb9]/28'
+                        : 'cursor-default border border-white/12 bg-white/[0.06] text-white/36'
                   }`}
                 >
-                  {index + 1}
+                  {isCompleted ? '✓' : index + 1}
                 </span>
                 <span
-                  className={`text-xs font-medium sm:text-sm ${
-                    isCurrent || isCompleted ? 'text-[var(--color-text)]' : 'text-[var(--color-muted)]'
+                  className={`hidden text-sm transition-colors sm:block ${
+                    isCurrent
+                      ? 'font-medium text-white/90'
+                      : isCompleted
+                        ? 'cursor-pointer text-[#83ccb9]/70 hover:text-[#83ccb9]'
+                        : 'text-white/28'
                   }`}
+                  onClick={() => {
+                    if (isClickable) goToStep(step)
+                  }}
                 >
                   {stepLabels[step]}
                 </span>
               </button>
               {index < EXTERNAL_FORM_STEPS.length - 1 && (
-                <span className="pointer-events-none absolute left-[calc(50%+1.25rem)] top-5 hidden h-[2px] w-[calc(100%-2.5rem)] bg-[var(--color-border)] sm:block" />
+                <div
+                  className={`h-px w-8 transition-colors ${
+                    isCompleted ? 'bg-[#83ccb9]/40' : 'bg-white/10'
+                  }`}
+                />
               )}
             </li>
           )

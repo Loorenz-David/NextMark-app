@@ -33,7 +33,9 @@ export const MainPopupLayout = ({ children }: PropsMainPopupLayout) => {
             {/* Popup element */}
             <motion.div
                 className={isMobile ?`relative z-100 pointer-events-auto flex h-full w-full  flex-col  bg-[var(--color-page)] text-[var(--color-text)]`:
-                parentParams && parentParams?.controllBodyLayout 
+                parentParams?.autoHeight
+                    ? 'relative z-10 pointer-events-auto flex w-full max-h-[calc(100vh-48px)] max-w-[600px] min-w-[500px] flex-col bg-[var(--color-page)] text-[var(--color-text)] rounded-none md:rounded-3xl'
+                : parentParams && parentParams?.controllBodyLayout
                     ? 'relative z-10 pointer-events-auto flex h-full  flex-col rounded-none   text-[var(--color-text)] md:rounded-3xl' 
                     :`relative z-10 pointer-events-auto flex h-full  max-h-[800px] max-w-[600px] min-w-[500px] bg-[var(--color-page)]  flex-col rounded-none   text-[var(--color-text)] md:rounded-3xl`
                 }

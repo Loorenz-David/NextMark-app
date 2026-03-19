@@ -20,7 +20,8 @@ export function AuthSwitch() {
   }, [location.pathname])
 
   return (
-    <div className="flex w-full items-center justify-between rounded-full border border-[var(--color-border)] bg-white p-1 shadow-sm">
+    <div className="rounded-[24px] border border-white/10 bg-white/[0.06] p-1.5 shadow-[0_18px_40px_rgba(0,0,0,0.18)]">
+      <div className="grid grid-cols-2 gap-2">
       {tabs.map((tab) => {
         const isActive = activePath === tab.path
         return (
@@ -28,15 +29,20 @@ export function AuthSwitch() {
             key={tab.path}
             params={{
               type: 'button',
-              variant: isActive ? 'darkGray' : 'ghost',
+              variant: isActive ? 'secondaryInvers' : 'ghost',
               onClick: () => navigate(tab.path),
-              className: `flex-1 rounded-full ${isActive ? '' : 'text-[var(--color-muted)]'}`,
+              className: `w-full rounded-[18px] py-2.5 text-sm ${
+                isActive
+                  ? 'border-[#83ccb9]/32 bg-[linear-gradient(135deg,rgba(131,204,185,0.18),rgba(94,209,215,0.10))] text-[#d8fff3] shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]'
+                  : 'text-white/72 hover:bg-white/[0.05]'
+              }`,
             }}
           >
             {tab.label}
           </BasicButton>
         )
       })}
+      </div>
     </div>
   )
 }

@@ -38,6 +38,7 @@ def serialize_route_solution(instance: RouteSolution) -> dict:
         "is_selected": instance.is_selected,
         "is_optimized": instance.is_optimized,
         "driver_id": instance.driver_id,
+        "vehicle_id": instance.vehicle_id,
         "route_end_strategy": instance.route_end_strategy,
         "local_delivery_plan_id":instance.local_delivery_plan_id,
         "created_at": created_at.isoformat() if created_at else None,

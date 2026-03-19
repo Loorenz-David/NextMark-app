@@ -6,15 +6,16 @@ export type VehicleFormPayload = {
 }
 
 export type VehicleFormState = {
-  name: string
-  icon: string
+  registration_number: string
+  label: string
+  fuel_type: string
   travel_mode: string
+  max_volume_load_cm3: string
+  max_weight_load_g: string
+  max_speed_kmh: string
+  cost_per_km: string
   cost_per_hour: string
-  cost_per_kilometer: string
-  travel_duration_limit: string
-  route_distance_limit: string
-  user_id: string
-  max_load: string
-  min_load: string
+  travel_distance_limit_km: string
+  travel_duration_limit_minutes: string
   is_system: boolean
 }

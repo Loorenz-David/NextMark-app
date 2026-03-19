@@ -6,10 +6,32 @@ export type ItemListResponse = {
   items: ItemMap
 }
 
+export type OrderTotalsEntry = {
+  id: number
+  total_weight: number | null
+  total_volume: number | null
+  total_items: number | null
+}
+
+export type PlanTotalsEntry = {
+  id: number
+  total_weight: number | null
+  total_volume: number | null
+  total_items: number | null
+  total_orders: number | null
+}
+
 export type ItemCreateResponse = {
   item: Record<string, number> & {
     ids_without_match?: number[]
   }
+  order_totals?: OrderTotalsEntry[]
+  plan_totals?: PlanTotalsEntry[]
+}
+
+export type ItemMutationResponse = {
+  order_totals?: OrderTotalsEntry[]
+  plan_totals?: PlanTotalsEntry[]
 }
 
 export type ItemUpdatePayload = {
@@ -42,15 +64,15 @@ export const createItemsApi = (client: Pick<HttpApiClient, 'request'>) => ({
 
   updateItem: (
     payload: ItemUpdatePayload | ItemUpdatePayload[],
-  ): Promise<ApiResult<Record<string, never>>> =>
-    client.request<Record<string, never>>({
+  ): Promise<ApiResult<ItemMutationResponse>> =>
+    client.request<ItemMutationResponse>({
       path: '/items/',
       method: 'PATCH',
       data: { target: payload },
     }),
 
-  deleteItem: (payload: ItemDeletePayload): Promise<ApiResult<Record<string, never>>> =>
-    client.request<Record<string, never>>({
+  deleteItem: (payload: ItemDeletePayload): Promise<ApiResult<ItemMutationResponse>> =>
+    client.request<ItemMutationResponse>({
       path: '/items/',
       method: 'DELETE',
       data: payload,

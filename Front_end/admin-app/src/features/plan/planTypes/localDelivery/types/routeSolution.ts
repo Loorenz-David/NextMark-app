@@ -1,6 +1,10 @@
 export type {
   RouteEndStrategy,
   RouteEndTimeExceededWarning,
+  VehicleMaxVolumeExceededWarning,
+  VehicleMaxWeightExceededWarning,
+  VehicleMaxDistanceExceededWarning,
+  VehicleMaxDurationExceededWarning,
   RouteSolution,
   RouteSolutionMap,
   RouteSolutionRepresentation,

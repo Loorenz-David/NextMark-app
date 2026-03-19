@@ -1,13 +1,11 @@
 import { useCallback, useEffect } from 'react'
 
 import { useMessageHandler } from '@shared-message-handler'
-import { useShallow } from 'zustand/react/shallow'
 
 import { useGetItemTypes } from '../api/itemTypeApi'
 import { useItemModel } from '../domain/useItemModel'
 import {
   insertItemTypes,
-  selectAllItemTypes,
   useItemTypeStore,
 } from '../store/itemTypeStore'
 
@@ -45,18 +43,4 @@ export const useItemTypeFlow = () => {
   }, [loadItemTypes])
 
   return { loadItemTypes }
-}
-
-export const useItemTypesOrFetch = () => {
-  const itemTypes = useItemTypeStore(useShallow(selectAllItemTypes))
-  const { loadItemTypes } = useItemTypeFlow()
-
-  useEffect(() => {
-    if (itemTypes.length) {
-      return
-    }
-    void loadItemTypes()
-  }, [itemTypes.length])
-
-  return itemTypes
 }

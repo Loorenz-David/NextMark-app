@@ -1,6 +1,11 @@
 import { BasicButton } from '@/shared/buttons/BasicButton'
 import { Switch } from '@/shared/inputs/Switch'
+import { InfoHover } from '@/shared/layout/InfoHover'
 
+import {
+  MESSAGE_TEMPLATE_ENABLED_INFO,
+  MESSAGE_TEMPLATE_PERMISSION_INFO,
+} from '@/features/messaging/info/templateToggles.info'
 import { useEmailMessageContext } from '../context/useEmailMessageContext'
 import { EmailTemplateEditor } from '../components/EmailTemplateEditor'
 
@@ -22,8 +27,8 @@ export const EmailTemplateEditorPage = () => {
   }
 
   return (
-    <div className="flex h-full flex-col">
-      <div className="flex items-center justify-between p-6 border-b border-[var(--color-border)]">
+    <div className="flex flex-col">
+      <div className="flex items-center justify-between border-b border-[var(--color-border)]/70 px-6 py-5">
         <BasicButton
           params={{
             variant: 'secondary',
@@ -34,16 +39,26 @@ export const EmailTemplateEditorPage = () => {
         >
           Back
         </BasicButton>
-        <div className="flex items-end gap-12">
+        <div className="flex items-end gap-10">
           <div className="flex flex-col gap-1">
-              <span className="text-sm">Ask for permission:</span>
-              <Switch
-                value={ permission }
-                onChange={ setPermission }
-              />
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-muted)]">
+                Ask for permission
+              </span>
+              <InfoHover content={MESSAGE_TEMPLATE_PERMISSION_INFO} />
+            </div>
+            <Switch
+              value={ permission }
+              onChange={ setPermission }
+            />
           </div>
           <div className="flex flex-col  gap-1">
-            <span className="text-xs text-[var(--color-muted)]">Enabled</span>
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-muted)]">
+                Enabled
+              </span>
+              <InfoHover content={MESSAGE_TEMPLATE_ENABLED_INFO} />
+            </div>
             <Switch value={enabled} onChange={setEnabled}  />
           </div>
            <BasicButton
@@ -58,9 +73,14 @@ export const EmailTemplateEditorPage = () => {
             </BasicButton>
         </div>
       </div>
-      <div className="min-h-0 flex-1 overflow-y-auto scroll-thin p-6">
-        <h2 className="text-base font-semibold text-[var(--color-text)]">{activeTrigger.label}</h2>
-        <p className="text-sm text-[var(--color-muted)]">{activeTrigger.description}</p>
+      <div className="p-6">
+        <div className="mb-6 flex flex-col gap-2">
+          <p className="text-[0.62rem] font-semibold uppercase tracking-[0.26em] text-[var(--color-muted)]">
+            Email trigger
+          </p>
+          <h2 className="text-xl font-semibold text-[var(--color-text)]">{activeTrigger.label}</h2>
+          <p className="max-w-3xl text-sm text-[var(--color-muted)]">{activeTrigger.description}</p>
+        </div>
 
       
         <EmailTemplateEditor value={value} onChange={setValue} />

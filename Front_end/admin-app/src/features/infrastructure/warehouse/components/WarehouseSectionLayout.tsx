@@ -20,7 +20,7 @@ export const WarehouseSectionLayout = ({
   onSearch,
   children,
 }: WarehouseSectionLayoutProps) => (
-  <section className="flex h-full flex-col gap-4">
+  <section className="flex h-full w-full flex-col gap-4 bg-[var(--color-page)] p-6">
     <div className="flex items-center justify-between">
       <div>
         <h2 className="text-base font-semibold text-[var(--color-text)]">{title}</h2>

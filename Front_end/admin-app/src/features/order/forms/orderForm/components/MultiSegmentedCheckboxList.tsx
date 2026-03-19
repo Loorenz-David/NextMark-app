@@ -7,7 +7,11 @@ type SegmentedSelectStyleConfig = {
   containerPadding?: string | number
   gap?: string | number
   containerBg?: string
+  containerBorder?: string
+  containerShadow?: string
   selectedBg?: string
+  selectedBorder?: string
+  selectedShadow?: string
   textColor?: string
   buttonPadding?: string
   selectedTextColor?: string
@@ -30,7 +34,11 @@ type MultiSegmentedCheckboxListProps = {
 
 const DEFAULT_STYLE: Required<SegmentedSelectStyleConfig> = {
   containerBg: 'var(--color-muted)',
+  containerBorder: 'transparent',
+  containerShadow: 'none',
   selectedBg: '#ffffff',
+  selectedBorder: 'transparent',
+  selectedShadow: 'none',
   textColor: '#555',
   selectedTextColor: '#007bff',
   containerPadding: '4px',
@@ -124,6 +132,8 @@ export const MultiSegmentedCheckboxList = ({
       style={{
         position: 'relative',
         background: styles.containerBg,
+        border: `1px solid ${styles.containerBorder}`,
+        boxShadow: styles.containerShadow,
         padding: toSizeValue(styles.containerPadding),
         gap: toSizeValue(styles.gap),
       }}
@@ -137,7 +147,8 @@ export const MultiSegmentedCheckboxList = ({
             onClick={() => handleToggle(option.value)}
             className="relative flex-1 cursor-pointer rounded-lg"
             style={{
-              border: 'none',
+              border: isSelected ? `1px solid ${styles.selectedBorder}` : 'none',
+              boxShadow: isSelected ? styles.selectedShadow : 'none',
               background: isSelected ? styles.selectedBg : 'transparent',
               padding: styles.buttonPadding,
               color: isSelected ? styles.selectedTextColor : styles.textColor,

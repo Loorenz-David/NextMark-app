@@ -3,6 +3,7 @@ from datetime import datetime, timezone
 from Delivery_app_BK.errors import ValidationFailed, NotFound
 from sqlalchemy.orm import selectinload
 from Delivery_app_BK.models import LocalDeliveryPlan, RouteSolution, DeliveryPlan, Order, db
+from Delivery_app_BK.models.tables.infrastructure.vehicle import Vehicle
 from Delivery_app_BK.route_optimization.domain.models import OptimizationContext
 from Delivery_app_BK.services.queries.get_instance import get_instance
 from Delivery_app_BK.services.context import ServiceContext
@@ -46,6 +47,10 @@ def load_optimization_context(ctx:ServiceContext) -> OptimizationContext:
                           ROUND_TRIP
                           )
 
+    vehicle = None
+    if getattr(route_solution, "vehicle_id", None):
+        vehicle = db.session.get(Vehicle, route_solution.vehicle_id)
+
     return OptimizationContext(
         local_delivery_plan=local_delivery_plan,
         delivery_plan=delivery_plan,
@@ -59,6 +64,7 @@ def load_optimization_context(ctx:ServiceContext) -> OptimizationContext:
         ),
         return_shape=str(incoming_data.get("return_shape") or "map_ids_object"),
         ctx=ctx,
+        vehicle=vehicle,
     )
 
 

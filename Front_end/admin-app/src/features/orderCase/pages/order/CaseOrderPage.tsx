@@ -15,7 +15,7 @@ const CaseOrderPageContent = ({ orderId, orderReference }: { orderId: number; or
   const { caseOrderActions, cases, casesStats } = useCaseOrderContext()
 
   return (
-    <div className="flex h-full w-full flex-col bg-[var(--color-page)] border-l-1 border-l-[var(--color-primary)]/30">
+    <div className="flex h-full w-full flex-col border-l-1 border-l-[var(--color-primary)]/30 bg-[var(--color-page)]">
       <OrderCaseOrderCasesHeader
         orderCaseStats={casesStats}
         onClose={caseOrderActions.closeCaseOrder}
@@ -24,7 +24,7 @@ const CaseOrderPageContent = ({ orderId, orderReference }: { orderId: number; or
         }}
       />
 
-      <div className="flex-1 overflow-y-auto scroll-thin p-3">
+      <div className="flex-1 overflow-y-auto scroll-thin px-5 pb-5 pt-3">
         <OrderCaseList
           cases={cases}
           onOpenCase={caseOrderActions.openCaseDetails}

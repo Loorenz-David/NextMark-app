@@ -32,11 +32,7 @@ export function AssignedRouteStopRow({
   stop,
   onOpenStopDetail,
 }: AssignedRouteStopRowProps) {
-  console.log('')
-  console.log('Debugging: ', 'stop.orderNotes')
-  console.log(stop.orderNotes)
-  console.log('finished -----------')
-  console.log('')
+
   return (
     <button
       className={`grid w-full grid-cols-[4rem_minmax(0,1fr)_5.5rem] gap-2 text-left transition active:scale-[0.995] ${

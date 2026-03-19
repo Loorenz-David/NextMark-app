@@ -75,7 +75,13 @@ def _serialize_order_instance(instance: Order, ctx: ServiceContext, include_item
             ctx=ctx,
         )
 
-    unpacked.update(calculate_order_metrics(instance))
+    # Read denormalized totals; fall back to computed metrics for unbackfilled rows
+    if instance.total_weight_g is not None or instance.total_volume_cm3 is not None or instance.total_item_count is not None:
+        unpacked["total_weight"] = instance.total_weight_g
+        unpacked["total_volume"] = instance.total_volume_cm3
+        unpacked["total_items"] = instance.total_item_count
+    else:
+        unpacked.update(calculate_order_metrics(instance))
     return unpacked
 
 

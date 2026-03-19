@@ -4,6 +4,7 @@ import {
   LocalDeliveryEditFormEtaToleranceField,
   LocalDeliveryEditFormPlanLabelField,
   LocalDeliveryEditFormStopsServiceTimeField,
+  LocalDeliveryEditFormVehicleField,
 } from '../../components'
 
 export const LocalDeliveryEditFormDesktopRightColumn = () => {
@@ -14,6 +15,7 @@ export const LocalDeliveryEditFormDesktopRightColumn = () => {
         <LocalDeliveryEditFormStopsServiceTimeField />
         <LocalDeliveryEditFormEtaToleranceField />
         <LocalDeliveryEditFormDriverField />
+        <LocalDeliveryEditFormVehicleField />
         <LocalDeliveryEditFormCreateVariantToggle />
       </div>
     </div>

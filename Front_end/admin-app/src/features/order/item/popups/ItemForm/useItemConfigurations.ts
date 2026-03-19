@@ -3,8 +3,8 @@ import type { ItemType } from "@/features/itemConfigurations/types/itemType"
 import { useEffect, useMemo, useState } from "react"
 
 import type { ItemProperty } from "@/features/itemConfigurations/types/itemProperty"
-import { useItemTypesOrFetch } from "@/features/itemConfigurations/hooks/useItemTypeFlow"
-import { useItemPropertiesOrFetch } from "@/features/itemConfigurations/hooks/useItemPropertyFlow"
+import { useItemTypesOrFetch } from "@/features/itemConfigurations/hooks/useItemConfigSelectors"
+import { useItemPropertiesOrFetch } from "@/features/itemConfigurations/hooks/useItemConfigSelectors"
 
 
 export type itemTypeOption = {

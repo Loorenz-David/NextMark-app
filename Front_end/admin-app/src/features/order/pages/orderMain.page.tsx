@@ -1,8 +1,9 @@
 import type { RefObject } from 'react'
-import { useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 import type { StackComponentProps } from '@/shared/stack-manager/types'
 import { BasicButton } from '@/shared/buttons/BasicButton'
+import { useScrollHideActionBar } from '@/shared/hooks/useScrollHideActionBar'
 
 import { OrderMainHeader } from '../components/pageHeaders/OrderMainHeader'
 import { OrderList } from '../components/lists/OrderList'
@@ -27,6 +28,47 @@ const OrderMainContent = ({ scrollContainerRef }: { scrollContainerRef: RefObjec
     isLoadingNextPage,
     loadNextPage,
   } = useOrderContext()
+  const actionStackRef = useRef<HTMLDivElement | null>(null)
+  const [actionStackHeight, setActionStackHeight] = useState(0)
+
+  useEffect(() => {
+    const element = actionStackRef.current
+    if (!element) {
+      setActionStackHeight(0)
+      return
+    }
+
+    const updateHeight = () => {
+      setActionStackHeight(element.getBoundingClientRect().height)
+    }
+
+    updateHeight()
+
+    if (typeof ResizeObserver === 'undefined') {
+      return
+    }
+
+    const observer = new ResizeObserver(() => {
+      updateHeight()
+    })
+
+    observer.observe(element)
+
+    return () => {
+      observer.disconnect()
+    }
+  }, [query.filters, isSelectionMode])
+
+  const {
+    isActionBarVisible,
+    actionBarReservedHeight,
+    isDesktopActionBarBehaviorEnabled,
+    handleScroll,
+  } = useScrollHideActionBar({
+    enabled: true,
+    expandedHeight: actionStackHeight,
+    collapsedHeight: 0,
+  })
 
   const handleOpenOrder = (order: Order) => {
     orderActions.openOrderDetail(
@@ -36,7 +78,7 @@ const OrderMainContent = ({ scrollContainerRef }: { scrollContainerRef: RefObjec
   }
 
   return (
-    <div className="flex h-full w-full flex-col bg-[var(--color-primary)]/5">
+    <div className="relative flex h-full w-full flex-col bg-[var(--color-primary)]/5">
       <OrderMainHeader 
         onCreate={() => orderActions.openOrderForm({ mode: 'create' })}
         onEnterSelectionMode={orderSelectionActions.handleEnterSelectionMode}
@@ -50,33 +92,46 @@ const OrderMainContent = ({ scrollContainerRef }: { scrollContainerRef: RefObjec
         updateFilters={orderActions.updateFilters}
         deleteFilter={orderActions.deleteFilter}
         orderStats={orderStats}
-
+        actionStackRef={actionStackRef}
+        useFloatingActionStack={isDesktopActionBarBehaviorEnabled}
+        isActionStackVisible={isActionBarVisible}
       />
-      <div ref={scrollContainerRef} className="flex-1 overflow-y-auto scroll-thin ">
-        <OrderList
-          orders={orders}
-          scrollContainerRef={scrollContainerRef}
-          isSelectionMode={isSelectionMode}
-          isOrderSelected={isOrderSelected}
-          onToggleSelection={orderSelectionActions.handleToggleOrderSelection}
-          onOpenOrder={handleOpenOrder}
-          onArchive={orderActions.handleArchiveOrder}
-          onUnarchive={orderActions.handleUnarchiveOrder}
-          hoveredClientId={hoveredClientId}
-          onOrderMouseEnter={handleOrderRowMouseEnter}
-          onOrderMouseLeave={handleOrderRowMouseLeave}
-        />
-        <div className="flex justify-center pb-6 pt-2">
-          <BasicButton
-            params={{
-              onClick: () => { void loadNextPage() },
-              disabled: isLoadingNextPage || !hasMorePages,
-              variant: 'secondary',
-              ariaLabel: 'Load next page of orders',
-            }}
-          >
-            {isLoadingNextPage ? 'Loading…' : hasMorePages ? `Next Page (${currentPage + 1})` : 'No more orders'}
-          </BasicButton>
+      <div
+        ref={scrollContainerRef}
+        className="flex-1 overflow-y-auto scroll-thin"
+        onScroll={handleScroll}
+      >
+        <div
+          style={{
+            paddingTop: isDesktopActionBarBehaviorEnabled ? `${actionBarReservedHeight}px` : undefined,
+            transition: 'padding-top 220ms cubic-bezier(0.22, 1, 0.36, 1)',
+          }}
+        >
+          <OrderList
+            orders={orders}
+            scrollContainerRef={scrollContainerRef}
+            isSelectionMode={isSelectionMode}
+            isOrderSelected={isOrderSelected}
+            onToggleSelection={orderSelectionActions.handleToggleOrderSelection}
+            onOpenOrder={handleOpenOrder}
+            onArchive={orderActions.handleArchiveOrder}
+            onUnarchive={orderActions.handleUnarchiveOrder}
+            hoveredClientId={hoveredClientId}
+            onOrderMouseEnter={handleOrderRowMouseEnter}
+            onOrderMouseLeave={handleOrderRowMouseLeave}
+          />
+          <div className="flex justify-center pb-6 pt-2">
+            <BasicButton
+              params={{
+                onClick: () => { void loadNextPage() },
+                disabled: isLoadingNextPage || !hasMorePages,
+                variant: 'secondary',
+                ariaLabel: 'Load next page of orders',
+              }}
+            >
+              {isLoadingNextPage ? 'Loading…' : hasMorePages ? `Next Page (${currentPage + 1})` : 'No more orders'}
+            </BasicButton>
+          </div>
         </div>
       </div>
     </div>

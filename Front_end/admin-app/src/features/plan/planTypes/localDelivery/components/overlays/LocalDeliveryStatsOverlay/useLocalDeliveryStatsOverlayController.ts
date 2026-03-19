@@ -18,6 +18,7 @@ import {
 } from '@/features/plan/planTypes/localDelivery/store/routeSolutionStop.store'
 import { useSelectedRouteSolutionByLocalDeliveryPlanId } from '@/features/plan/planTypes/localDelivery/store/useRouteSolution.selector'
 import { useTeamMemberByServerId } from '@/features/team/members/hooks/useTeamMemberSelectors'
+import { selectVehicleByServerId, useVehicleStore } from '@/features/infrastructure/vehicle/store/vehicleStore'
 import { useBaseControlls } from '@/shared/resource-manager/useResourceManager'
 
 import type {
@@ -171,6 +172,8 @@ const buildGaussianCards = ({
   totalVolumeCubicCentimeters,
   completedOrders,
   failedOrders,
+  vehicleMaxVolumeCm3,
+  vehicleMaxWeightG,
 }: {
   totalStops: number
   onTimeStops: number
@@ -180,10 +183,16 @@ const buildGaussianCards = ({
   totalVolumeCubicCentimeters: number
   completedOrders: number
   failedOrders: number
+  vehicleMaxVolumeCm3?: number | null
+  vehicleMaxWeightG?: number | null
 }): LocalDeliveryGaussianMetricCard[] => {
   const seed = totalStops + completedOrders + failedOrders
-  const volumeRatio = clampPercent(52 + ((seed * 5) % 33))
-  const weightRatio = clampPercent(38 + ((seed * 7) % 41))
+  const volumeRatio = vehicleMaxVolumeCm3 != null && vehicleMaxVolumeCm3 > 0
+    ? clampPercent((totalVolumeCubicCentimeters / vehicleMaxVolumeCm3) * 100)
+    : clampPercent(52 + ((seed * 5) % 33))
+  const weightRatio = vehicleMaxWeightG != null && vehicleMaxWeightG > 0
+    ? clampPercent((totalWeightGrams / vehicleMaxWeightG) * 100)
+    : clampPercent(38 + ((seed * 7) % 41))
 
   return [
     {
@@ -242,7 +251,7 @@ const buildGaussianCards = ({
           animation: {
             numericValue: volumeRatio,
             valueType: 'percent',
-            sourceType: 'estimated',
+            sourceType: vehicleMaxVolumeCm3 != null ? 'derived' : 'estimated',
             compareMode: 'threshold',
             threshold: 1,
           },
@@ -256,7 +265,7 @@ const buildGaussianCards = ({
           animation: {
             numericValue: weightRatio,
             valueType: 'percent',
-            sourceType: 'estimated',
+            sourceType: vehicleMaxWeightG != null ? 'derived' : 'estimated',
             compareMode: 'threshold',
             threshold: 1,
           },
@@ -320,6 +329,11 @@ const buildStatsData = ({
   arrivalEarlySeconds,
   completedOrders,
   failedOrders,
+  vehicleMaxVolumeCm3,
+  vehicleMaxWeightG,
+  vehicleCostPerKm,
+  vehicleFuelType,
+  vehicleRegistrationNumber,
 }: {
   routeId: number | null
   routeClientId?: string | null
@@ -343,6 +357,11 @@ const buildStatsData = ({
   arrivalEarlySeconds: number
   completedOrders: number
   failedOrders: number
+  vehicleMaxVolumeCm3?: number | null
+  vehicleMaxWeightG?: number | null
+  vehicleCostPerKm?: number | null
+  vehicleFuelType?: string | null
+  vehicleRegistrationNumber?: string | null
 }): LocalDeliveryStatsOverlayData => {
   const seed = routeId ?? 0
   const distanceKm = Math.max(0, (distanceMeters ?? 0) / 1000)
@@ -351,8 +370,15 @@ const buildStatsData = ({
   const drivingSeconds = travelTimeSeconds ?? 0
   const serviceSeconds = serviceTimeSeconds ?? 0
   const totalSeconds = drivingSeconds + serviceSeconds
-  const fuelCost = Math.max(8.5, distanceKm * 0.15 + 4 + (seed % 3))
-  const co2Value = Math.max(3.2, distanceKm * 0.115)
+
+  const CO2_FACTORS: Record<string, number> = {
+    bensine: 0.21,
+    diesel: 0.19,
+    electric: 0.05,
+  }
+  const fuelCost = vehicleCostPerKm != null ? distanceKm * vehicleCostPerKm : null
+  const co2Factor = vehicleFuelType != null ? (CO2_FACTORS[vehicleFuelType] ?? null) : null
+  const co2Value = co2Factor != null ? distanceKm * co2Factor : null
 
   return {
     routeScopeKey: routeClientId || `route-${routeId ?? 'unknown'}`,
@@ -468,7 +494,7 @@ const buildStatsData = ({
     driver: {
       initials: getInitials(driverName),
       name: driverName,
-      registration: `LD-${String((seed % 900) + 100).padStart(3, '0')}`,
+      registration: vehicleRegistrationNumber ?? null,
     },
     gaussianCards: buildGaussianCards({
       totalStops,
@@ -479,6 +505,8 @@ const buildStatsData = ({
       totalVolumeCubicCentimeters,
       completedOrders,
       failedOrders,
+      vehicleMaxVolumeCm3,
+      vehicleMaxWeightG,
     }),
     consumptionMetrics: [
       {
@@ -494,34 +522,72 @@ const buildStatsData = ({
           decimals: 1,
         },
       },
-      {
-        id: 'fuel-cost',
-        label: 'Fuel cost',
-        displayValue: `${fuelCost.toFixed(1)} €`,
-        animation: {
-          numericValue: fuelCost,
-          valueType: 'currency',
-          unitSuffix: '€',
-          sourceType: 'estimated',
-          compareMode: 'epsilon',
-          epsilon: 0.1,
-          decimals: 1,
-        },
-      },
-      {
-        id: 'co2',
-        label: 'Co2',
-        displayValue: `${co2Value.toFixed(1)} kg`,
-        animation: {
-          numericValue: co2Value,
-          valueType: 'decimal',
-          unitSuffix: 'kg',
-          sourceType: 'estimated',
-          compareMode: 'epsilon',
-          epsilon: 0.1,
-          decimals: 1,
-        },
-      },
+      ...(fuelCost != null
+        ? [
+            {
+              id: 'fuel-cost',
+              label: 'Fuel cost',
+              displayValue: `${fuelCost.toFixed(1)} €`,
+              animation: {
+                numericValue: fuelCost,
+                valueType: 'currency' as const,
+                unitSuffix: '€',
+                sourceType: 'derived' as const,
+                compareMode: 'epsilon' as const,
+                epsilon: 0.1,
+                decimals: 1,
+              },
+            },
+          ]
+        : [
+            {
+              id: 'fuel-cost',
+              label: 'Fuel cost',
+              displayValue: '—',
+              animation: {
+                numericValue: 0,
+                valueType: 'currency' as const,
+                unitSuffix: '€',
+                sourceType: 'estimated' as const,
+                compareMode: 'epsilon' as const,
+                epsilon: 0.1,
+                decimals: 1,
+              },
+            },
+          ]),
+      ...(co2Value != null
+        ? [
+            {
+              id: 'co2',
+              label: 'Co2',
+              displayValue: `${co2Value.toFixed(1)} kg`,
+              animation: {
+                numericValue: co2Value,
+                valueType: 'decimal' as const,
+                unitSuffix: 'kg',
+                sourceType: 'derived' as const,
+                compareMode: 'epsilon' as const,
+                epsilon: 0.1,
+                decimals: 1,
+              },
+            },
+          ]
+        : [
+            {
+              id: 'co2',
+              label: 'Co2',
+              displayValue: '—',
+              animation: {
+                numericValue: 0,
+                valueType: 'decimal' as const,
+                unitSuffix: 'kg',
+                sourceType: 'estimated' as const,
+                compareMode: 'epsilon' as const,
+                epsilon: 0.1,
+                decimals: 1,
+              },
+            },
+          ]),
     ],
     timingAnalytics: {
       unclassifiedStopCount: unclassifiedStops,
@@ -542,6 +608,7 @@ export const useLocalDeliveryStatsOverlayController = () => {
   const orders = useOrdersByPlanId(planId)
   const orderStateRegistry = useOrderStateRegistry()
   const driver = useTeamMemberByServerId(selectedRouteSolution?.driver_id ?? null)
+  const vehicle = useVehicleStore(selectVehicleByServerId(selectedRouteSolution?.vehicle_id ?? null))
   const [hidden, setHidden] = useState(false)
   const [layoutMode, setLayoutMode] = useState<LocalDeliveryStatsLayoutMode>('wide')
   const overlayRef = useRef<HTMLDivElement | null>(null)
@@ -632,6 +699,11 @@ export const useLocalDeliveryStatsOverlayController = () => {
       arrivalEarlySeconds,
       completedOrders,
       failedOrders,
+      vehicleMaxVolumeCm3: vehicle?.max_volume_load_cm3 ?? null,
+      vehicleMaxWeightG: vehicle?.max_weight_load_g ?? null,
+      vehicleCostPerKm: vehicle?.cost_per_km ?? null,
+      vehicleFuelType: vehicle?.fuel_type ?? null,
+      vehicleRegistrationNumber: vehicle?.registration_number ?? null,
     })
   }, [
     driver?.email,

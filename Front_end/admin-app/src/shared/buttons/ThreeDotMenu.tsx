@@ -89,7 +89,7 @@ export const ThreeDotMenu = ({
     >
       <div
         style={{ width: `${width}px`}}
-        className="rounded-md border border-[var(--color-border)] bg-white py-1 px-1 shadow-md"
+        className="admin-glass-popover rounded-lg border border-[var(--color-border-accent)] py-1 px-1 shadow-md"
       >
         {options.map((option) => (
           <div
@@ -106,10 +106,13 @@ export const ThreeDotMenu = ({
               flex w-full items-center gap-3
               px-3 py-2
               text-left
-              hover:bg-gray-100
+              text-[var(--color-text)]
+              hover:bg-white/[0.08]
               disabled:cursor-not-allowed
               disabled:opacity-50
               cursor-pointer
+              rounded-lg
+              transition-colors
             "
           >
             <div className="flex h-5 w-5 items-center justify-center">{option.icon ?? null}</div>

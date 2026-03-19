@@ -24,8 +24,8 @@ export const ItemSectionLayout = ({
   bodyClassName,
   children,
 }: ItemSectionLayoutProps) => (
-  <section className="flex h-full flex-col">
-    <div className="flex flex-col shadow-md p-4 gap-8 pb-5 pt-1">
+  <section className="admin-glass-panel-strong flex h-full flex-col overflow-hidden rounded-[28px] shadow-none">
+    <div className="flex flex-col gap-6 border-b border-[var(--color-border)]/70 p-5 pb-6">
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-base font-semibold text-[var(--color-text)]">{title}</h2>
@@ -41,7 +41,7 @@ export const ItemSectionLayout = ({
       {showSearch && onSearch ? (
         <SearchBar
           onChange={(value) => onSearch(value.input ?? '')}
-          className="w-full rounded-full border border-[var(--color-muted)]/40 px-3 py-2 text-sm"
+          className="w-full rounded-full border border-[var(--color-border)]/70 bg-white/[0.04] px-3 py-2 text-sm"
           placeholder={"search"}
         />
       ) : null}
@@ -50,7 +50,7 @@ export const ItemSectionLayout = ({
 
     <div
       className={
-        bodyClassName ?? 'flex flex-col gap-4 bg-[var(--color-muted)]/15 h-full p-2 pt-8 px-4'
+        bodyClassName ?? 'flex h-full flex-col gap-4 bg-[var(--color-page)]/30 p-4 pt-6'
       }
     >
       {children}

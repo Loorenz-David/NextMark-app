@@ -65,7 +65,7 @@ export function CollapsibleSection({
                     animate={{ height: 'auto', opacity: 1, y: 0 }}
                     exit={{ height: 0, opacity: 0, y: -4 }}
                     transition={{ duration: 0.18, ease: 'easeOut' }}
-                    className=" border border-[var(--color-border-accent)] px-2 bg-[var(--color-page)] rounded-xl shadow-md"
+                    className="admin-glass-popover rounded-xl border border-[var(--color-border-accent)] px-2 shadow-md"
                 >
                 <div className="py-3">
                     {children}

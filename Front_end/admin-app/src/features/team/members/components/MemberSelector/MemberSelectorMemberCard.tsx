@@ -16,7 +16,7 @@ export const MemberSelectorMemberCard = ({
     <li>
       <button
         type="button"
-        className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left hover:bg-[var(--color-page)]"
+        className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left hover:bg-white/[0.08]"
         onMouseDown={(event) => event.preventDefault()}
         onClick={() => onSelectMember(teamMember)}
       >

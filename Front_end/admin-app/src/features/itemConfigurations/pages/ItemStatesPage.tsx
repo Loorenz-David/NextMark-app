@@ -45,7 +45,7 @@ export const ItemStatesPage = () => {
       description="Manage item workflow states."
       onCreate={openCreate}
       showSearch={false}
-      bodyClassName={"flex flex-col gap-4 bg-[var(--color-muted)]/15 h-full items-center justify-start p-2 pt-8 px-4"}
+      bodyClassName={"flex h-full flex-col items-center justify-start gap-4 bg-[var(--color-page)]/30 p-4 pt-6"}
     >
       {isReorderEnabled ? (
         <DndContext

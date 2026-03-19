@@ -1,9 +1,9 @@
 import { Children, useMemo, useState } from 'react'
 
+import { BoldArrowIcon } from '@/assets/icons'
 
 import { SlideCarouselDots } from './SlideCarouselDots'
 import type { SlideCarouselProps } from './types'
-import { BoldArrowIcon } from '@/assets/icons'
 
 export const SlideCarousel = ({ children, initialIndex = 0 }: SlideCarouselProps) => {
   const slides = useMemo(() => Children.toArray(children), [children])
@@ -21,57 +21,51 @@ export const SlideCarousel = ({ children, initialIndex = 0 }: SlideCarouselProps
   }
 
   return (
-    <div className="relative flex h-full w-full flex-col">
-      <div className="relative flex min-h-0 flex-1 overflow-hidden">
+    <div className="relative flex w-full flex-col gap-1">
+      <div className="relative w-full overflow-hidden">
         <div
-          className="flex h-full w-full transition-transform duration-300 ease-out"
+          className="flex w-full items-start transition-transform duration-300 ease-out"
           style={{ transform: `translateX(-${index * 100}%)` }}
         >
           {slides.map((child, childIndex) => (
-            <div key={childIndex} className="w-full flex-shrink-0">
+            <div key={childIndex} className="w-full flex-shrink-0 self-start">
               {child}
             </div>
           ))}
         </div>
-
-        
       </div>
 
-        <div className="flex w-full items-center gap-1">
-          <div className="flex flex-2 justify-end">
-            {index > 0 ? (
-              <button
-                type="button"
-                onClick={prev}
-                className=" p-2 shadow-md cursor-pointer rounded-full  "
+      <div className="flex w-full items-center gap-1">
+        <div className="flex flex-2 justify-end">
+          {index > 0 ? (
+            <button
+              type="button"
+              onClick={prev}
+              className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/[0.04] shadow-[0_10px_22px_rgba(0,0,0,0.12)] transition-colors hover:bg-white/[0.08]"
+              aria-label="Previous slide"
+            >
+              <BoldArrowIcon className="h-3 w-3 rotate-180 text-[var(--color-text)]" />
+            </button>
+          ) : null}
+        </div>
 
-                aria-label="Previous slide"
-              >
-                <BoldArrowIcon className="h-3 w-3 rotate-180"/>
-              </button>
-            ) : null}
-          </div>
-          <div className="flex flex-1 justify-center">
-              <SlideCarouselDots index={index} total={total} />
-          </div>
-          <div className="flex flex-2 justify-start">
-            {index < total - 1 ? (
+        <div className="flex flex-1 justify-center">
+          <SlideCarouselDots index={index} total={total} />
+        </div>
+
+        <div className="flex flex-2 justify-start">
+          {index < total - 1 ? (
             <button
               type="button"
               onClick={next}
-              className=" bg-white p-2 shadow-md cursor-pointer rounded-full"
-
+              className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/[0.04] shadow-[0_10px_22px_rgba(0,0,0,0.12)] transition-colors hover:bg-white/[0.08]"
               aria-label="Next slide"
             >
-              <BoldArrowIcon className="h-3 w-3 "/>
-              
+              <BoldArrowIcon className="h-3 w-3 text-[var(--color-text)]" />
             </button>
           ) : null}
-          </div>
-          
         </div>
-      
+      </div>
     </div>
   )
 }
-

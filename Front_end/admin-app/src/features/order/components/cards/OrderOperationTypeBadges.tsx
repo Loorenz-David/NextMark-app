@@ -1,3 +1,4 @@
+import { BoldArrowIcon } from '@/assets/icons'
 import { resolveOrderOperationBadgeDirections } from '@/features/order/domain/orderOperationBadgeDirections'
 
 type OrderOperationTypeBadgesProps = {
@@ -5,20 +6,15 @@ type OrderOperationTypeBadgesProps = {
 }
 
 const DirectionArrow = ({ direction }: { direction: 'up' | 'down' }) => {
-  if (direction === 'up') {
-    return (
-      <span
-        aria-hidden
-        className="h-0 w-0 border-x-[3px] border-b-[5px] border-x-transparent border-b-[var(--color-border-accent)]"
-      />
-    )
-  }
+  const rotationClass = direction === 'up' ? '-rotate-90' : 'rotate-90'
 
   return (
-    <span
-      aria-hidden
-      className="h-0 w-0 border-x-[3px] border-t-[5px] border-x-transparent border-t-[var(--color-border-accent)]"
-    />
+    <span className="inline-flex h-5 w-5 items-center justify-center rounded-full border border-[rgb(var(--color-light-blue-r),0.10)]  ">
+      <BoldArrowIcon
+        aria-hidden
+        className={`h-2.5 w-2.5 ${rotationClass} text-[rgb(var(--color-light-blue-r))]`}
+      />
+    </span>
   )
 }
 
@@ -27,16 +23,10 @@ export const OrderOperationTypeBadges = ({ operationType }: OrderOperationTypeBa
   if (!directions.length) return null
 
   return (
-    <span className="inline-flex items-center gap-1">
+    <span className="inline-flex items-center gap-1 rounded-full  px-1 py-0.5 backdrop-blur-md">
       {directions.map((direction) => (
-        <span
-          key={direction}
-          className="inline-flex h-4 w-4 items-center justify-center rounded-full border border-[var(--color-border-accent)] bg-white"
-        >
-          <DirectionArrow direction={direction} />
-        </span>
+        <DirectionArrow key={direction} direction={direction} />
       ))}
     </span>
   )
 }
-

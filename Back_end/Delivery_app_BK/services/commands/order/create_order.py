@@ -40,6 +40,8 @@ from ...domain.order.delivery_windows import (
 )
 from ...domain.order.order_scalar_id import reserve_order_scalar_ids
 from .tracking.generate_tracking_identifiers import generate_tracking_identifiers
+from Delivery_app_BK.services.domain.order.recompute_order_totals import recompute_order_totals
+from Delivery_app_BK.services.domain.plan.recompute_plan_totals import recompute_plan_totals
 
 
 def create_order(ctx: ServiceContext):
@@ -184,6 +186,10 @@ def create_order(ctx: ServiceContext):
 
             if order_request.items:
                 order_instance.items_updated_at = datetime.now(timezone.utc)
+                recompute_order_totals(order_instance)
+
+            if delivery_plan is not None:
+                recompute_plan_totals(delivery_plan)
 
             if delivery_plan:
                 objective_result = apply_order_plan_objective(
@@ -244,7 +250,18 @@ def create_order(ctx: ServiceContext):
     if pending_events:
         emit_order_events(ctx, pending_events)
 
-    return {"created": created_bundles}
+    plan_totals = [
+        {
+            "id": plan.id,
+            "total_weight": plan.total_weight_g,
+            "total_volume": plan.total_volume_cm3,
+            "total_items": plan.total_item_count,
+            "total_orders": plan.total_orders,
+        }
+        for plan in touched_delivery_plans.values()
+        if plan.id is not None
+    ]
+    return {"created": created_bundles, "plan_totals": plan_totals}
 
 
 def _load_delivery_plans_by_id(

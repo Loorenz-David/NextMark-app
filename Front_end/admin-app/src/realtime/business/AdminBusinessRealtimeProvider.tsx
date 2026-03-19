@@ -34,7 +34,7 @@ import { useOrderCaseListStore } from '@/features/orderCase/store/orderCaseList.
 import { useOrderCaseQueryStore } from '@/features/orderCase/store/orderCaseQueryStore'
 import { planApi } from '@/features/plan/api/plan.api'
 import type { DeliveryPlan } from '@/features/plan/types/plan'
-import { addVisiblePlan, upsertPlan } from '@/features/plan/store/plan.slice'
+import { addVisiblePlan, upsertPlan, patchPlanTotals } from '@/features/plan/store/plan.slice'
 import { normalizeEntityMap, type EntityMap } from '@/lib/utils/entities/normalizeEntityMap'
 import {
   markAdminBusinessEventHandled,
@@ -231,6 +231,22 @@ export function AdminBusinessRealtimeProvider({ children }: PropsWithChildren) {
       }
     }
 
+    const handlePlanEvent = (event: BusinessEventEnvelope<BusinessPayload>) => {
+      if (event.event_name !== 'delivery_plan.updated') {
+        return
+      }
+      const payload = event.payload ?? {}
+      const planId = getPayloadNumber(payload, 'delivery_plan_id') ?? event.entity_id
+      if (!planId) return
+
+      patchPlanTotals(planId, {
+        total_weight: payload.total_weight as number | null,
+        total_volume: payload.total_volume as number | null,
+        total_items: payload.total_items as number | null,
+        total_orders: payload.total_orders as number | null,
+      })
+    }
+
     const handleRouteSolutionEvent = (event: BusinessEventEnvelope<BusinessPayload>) => {
       if (event.event_name !== 'route_solution.created') {
         return
@@ -268,6 +284,7 @@ export function AdminBusinessRealtimeProvider({ children }: PropsWithChildren) {
       handleOrderCaseEvent(event)
       handleOrderChatEvent(event)
       handleRouteSolutionEvent(event)
+      handlePlanEvent(event)
     })
 
     subscribeToClientFormSubmitted(handleClientFormSubmitted)

@@ -19,8 +19,7 @@ export const useTeamMemberActions = () => {
   const currentUserId = apiClient.getSessionUserId()
 
   const openInvitePopup = useCallback(() => {
-
-    popupManager.open({ key: 'team.invite.create' })
+    popupManager.open({ key: 'team.invite.create', parentParams: { autoHeight: true } })
   }, [popupManager])
 
   const kickMember = useCallback(async (memberId: number) => {

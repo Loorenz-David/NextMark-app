@@ -17,29 +17,31 @@ const toStringValue = (value: number | string | null | undefined) =>
 const buildInitialForm = (
   payload: VehicleFormPayload,
   state?: {
-    name?: string
-    icon?: string | null
+    registration_number?: string
+    label?: string | null
+    fuel_type?: string | null
     travel_mode?: string | null
+    max_volume_load_cm3?: number | null
+    max_weight_load_g?: number | null
+    max_speed_kmh?: number | null
+    cost_per_km?: number | null
     cost_per_hour?: number | null
-    cost_per_kilometer?: number | null
-    travel_duration_limit?: number | null
-    route_distance_limit?: number | null
-    user_id?: number | null
-    max_load?: number | null
-    min_load?: number | null
+    travel_distance_limit_km?: number | null
+    travel_duration_limit_minutes?: number | null
     is_system?: boolean
   },
 ): VehicleFormState => ({
-  name: state?.name ?? '',
-  icon: state?.icon ?? '',
+  registration_number: state?.registration_number ?? '',
+  label: state?.label ?? '',
+  fuel_type: state?.fuel_type ?? '',
   travel_mode: state?.travel_mode ?? '',
+  max_volume_load_cm3: toStringValue(state?.max_volume_load_cm3),
+  max_weight_load_g: toStringValue(state?.max_weight_load_g),
+  max_speed_kmh: toStringValue(state?.max_speed_kmh),
+  cost_per_km: toStringValue(state?.cost_per_km),
   cost_per_hour: toStringValue(state?.cost_per_hour),
-  cost_per_kilometer: toStringValue(state?.cost_per_kilometer),
-  travel_duration_limit: toStringValue(state?.travel_duration_limit),
-  route_distance_limit: toStringValue(state?.route_distance_limit),
-  user_id: toStringValue(state?.user_id),
-  max_load: toStringValue(state?.max_load),
-  min_load: toStringValue(state?.min_load),
+  travel_distance_limit_km: toStringValue(state?.travel_distance_limit_km),
+  travel_duration_limit_minutes: toStringValue(state?.travel_duration_limit_minutes),
   is_system: state?.is_system ?? false,
 })
 

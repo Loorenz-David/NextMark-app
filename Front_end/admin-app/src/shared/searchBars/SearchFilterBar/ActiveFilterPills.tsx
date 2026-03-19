@@ -81,7 +81,7 @@ export const ActiveFilterPills = ({
         return (
           <div
             key={`${parentKey}-${itemKey}`}
-            className="inline-flex items-center gap-2 rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-xs font-medium text-blue-700"
+            className="inline-flex items-center gap-2 rounded-full border border-[rgba(var(--color-light-blue-r),0.32)] bg-[rgba(var(--color-light-blue-r),0.14)] px-3 py-1 text-xs font-medium text-[rgb(var(--color-light-blue-r))] shadow-[0_8px_18px_rgba(0,0,0,0.14)] backdrop-blur-md"
           >
             <span className="whitespace-nowrap">
               {type === 'array'
@@ -97,7 +97,7 @@ export const ActiveFilterPills = ({
                   ? removeFilter(itemKey)
                   : removeFilter(parentKey)
               }
-              className="inline-flex items-center justify-center rounded-full p-0.5 text-blue-600 transition-colors hover:bg-blue-100 hover:text-blue-700"
+              className="inline-flex items-center justify-center rounded-full p-0.5 text-[rgb(var(--color-light-blue-r))] transition-colors hover:bg-[rgba(var(--color-light-blue-r),0.18)] hover:text-white"
             >
               <CloseIcon className="h-3 w-3" />
             </button>

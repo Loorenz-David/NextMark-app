@@ -3,12 +3,12 @@ import { useMemo, useState } from 'react'
 import { filterItemTypes } from '../domain/useItemRules'
 import { useItemTypeFlow } from './useItemTypeFlow'
 import { useItemTypes } from './useItemSelectors'
-import { useItemActions } from './useItemActions'
+import { useItemConfigActions } from './useItemConfigActions'
 
 export const useItemTypeController = () => {
   useItemTypeFlow()
   const items = useItemTypes()
-  const actions = useItemActions()
+  const actions = useItemConfigActions()
   const [query, setQuery] = useState('')
 
   const filtered = useMemo(() => filterItemTypes(items, query), [items, query])

@@ -71,7 +71,7 @@ export const AddressAutocompleteLayout = ({
                 </div>
             }
         >
-            <div className="bg-[var(--color-page)] border border-[var(--color-border-accent)] rounded-lg shadow-lg p-2">
+            <div className="admin-glass-popover rounded-2xl p-2 shadow-xl">
                 <SuggestionsSelector />
             </div>
         </FloatingPopover>

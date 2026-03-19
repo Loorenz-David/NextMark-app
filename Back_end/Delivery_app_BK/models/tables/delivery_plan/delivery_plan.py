@@ -3,7 +3,7 @@ from sqlalchemy.orm import validates
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy import Index, text, JSON
 from sqlalchemy.orm import relationship
-from sqlalchemy import Column, Integer, String, Boolean, ForeignKey
+from sqlalchemy import Column, Integer, String, Boolean, ForeignKey, Float
 
 from datetime import datetime, timezone
 
@@ -41,6 +41,11 @@ class DeliveryPlan(db.Model, TeamScopedMixin):
         Integer,
         ForeignKey("plan_state.id", ondelete="SET NULL"),
     )
+
+    total_weight_g   = Column(Float, nullable=True)
+    total_volume_cm3 = Column(Float, nullable=True)
+    total_item_count = Column(Integer, nullable=True)
+    total_orders     = Column(Integer, nullable=True)
 
     state = relationship(
         "DeliveryPlanState",

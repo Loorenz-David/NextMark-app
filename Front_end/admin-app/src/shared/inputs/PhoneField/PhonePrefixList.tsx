@@ -6,7 +6,7 @@ export const PhonePrefixList = () => {
 
   if (!filteredPrefixes.length) {
     return (
-      <div className="px-3 py-2 text-sm text-[var(--color-muted)]">
+      <div className="px-3 py-2 text-sm text-white/46">
         No prefixes found.
       </div>
     )

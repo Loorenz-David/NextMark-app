@@ -12,7 +12,7 @@ import { useItemTypeFormSetters } from './useItemTypeFormSetters'
 import { useItemTypePropertyQuery } from './queries/useItemTypePropertyQuery'
 
 export const ItemTypeFormLayout = () => {
-  const { payload, formState, warnings, setFormState, handleSave, initialFormRef } = useItemTypeForm()
+  const { payload, formState, warnings, setFormState, handleSave, handleDelete, initialFormRef } = useItemTypeForm()
 
   const setters = useItemTypeFormSetters({ setFormState, warnings })
   const propertyQuery = useItemTypePropertyQuery(formState.properties)
@@ -22,8 +22,9 @@ export const ItemTypeFormLayout = () => {
   const footerConfig = useMemo(
     () => ({
       saveButton: { label: payload.mode === 'create' ? 'Create' : 'Save', action: handleSave },
+      ...(payload.mode === 'edit' ? { deleteButton: { label: 'Delete', action: handleDelete } } : {}),
     }),
-    [handleSave, payload.mode],
+    [handleSave, handleDelete, payload.mode],
   )
 
   return (

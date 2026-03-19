@@ -12,6 +12,7 @@ export type PropsHeaderConfig = {
 export type parentParams ={
     controllBodyLayout?: boolean
     layoutVariant?: PopupLayoutVariant
+    autoHeight?: boolean
 }
 
 export type FooterButton = {
@@ -24,5 +25,4 @@ export type PropsFooterConfig = {
     saveButton?: FooterButton
     deleteButton?: FooterButton
 }
-
 

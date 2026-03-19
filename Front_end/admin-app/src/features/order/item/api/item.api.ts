@@ -6,6 +6,7 @@ export type {
   ItemCreateResponse,
   ItemDeletePayload,
   ItemListResponse,
+  ItemMutationResponse,
   ItemUpdatePayload,
 } from '@shared-api'
 

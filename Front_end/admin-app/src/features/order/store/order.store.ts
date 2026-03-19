@@ -156,6 +156,16 @@ export const upsertOrder = (order: Order) => {
   syncOrdersByCostumerIdIndex()
 }
 
+export const patchOrderTotals = (
+  orderId: number,
+  totals: { total_weight?: number | null; total_volume?: number | null; total_items?: number | null },
+) => {
+  const state = useOrderStore.getState()
+  const clientId = state.idIndex[orderId]
+  if (!clientId) return
+  state.update(clientId, (existing) => ({ ...existing, ...totals }))
+}
+
 export const upsertOrders = (table: OrderMap) => {
   table.allIds.forEach((clientId) => {
     const order = table.byClientId[clientId]

@@ -100,7 +100,7 @@ export const SearchBar = ({
           }
         >
           {children ?? (
-            <div className="flex flex-col gap-2 p-2 bg-[var(--color-page)] shadow-md border-1 border-[var(--color-border)] rounded-sm">
+            <div className="admin-glass-popover flex flex-col gap-2 rounded-xl border border-[var(--color-border-accent)] p-2 shadow-md">
               {options.map((option) => {
                 const isSelected = selectedSet.has(option.value)
                 return (
@@ -108,9 +108,9 @@ export const SearchBar = ({
                   key={String(option.value)}
                   type="button"
                   onClick={() => toggleFilter(option.value)}
-                  className="flex w-full items-center justify-between rounded-md px-2 py-1 text-sm hover:bg-[var(--color-muted)]/10"
+                  className="flex w-full items-center justify-between rounded-md px-2 py-1 text-sm hover:bg-white/[0.08]"
                 >
-                  <span className={` ${isSelected ? "text-[var(--color-blue-500)]": "text-[var(--color-text)]"}`}>{option.label}</span>
+                  <span className={` ${isSelected ? "text-[rgb(var(--color-light-blue-r))]": "text-[var(--color-text)]"}`}>{option.label}</span>
                   
                 </button>
               )})}

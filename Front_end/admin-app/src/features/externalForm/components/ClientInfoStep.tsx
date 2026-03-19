@@ -10,8 +10,8 @@ export const ClientInfoStep = () => {
   return (
     <div className="space-y-5">
       <div>
-        <h2 className="text-xl font-semibold text-[var(--color-text)]">Client Info</h2>
-        <p className="mt-1 text-sm text-[var(--color-muted)]">Enter the customer basic identity details.</p>
+        <h2 className="text-xl font-semibold text-white">Client Info</h2>
+        <p className="mt-1 text-sm text-white/46">Enter the customer basic identity details.</p>
       </div>
 
       <Field
@@ -44,7 +44,7 @@ export const ClientInfoStep = () => {
         />
       </Field>
 
-      <div className="pt-2">
+      <div className="pt-3">
         <StepButton label="Next" onClick={next} />
       </div>
     </div>

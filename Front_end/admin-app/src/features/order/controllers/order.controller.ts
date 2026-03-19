@@ -27,6 +27,7 @@ import {
   createOrderOptimisticSnapshot,
   restoreOrderOptimisticSnapshot,
 } from '../utils/orderOptimisticSnapshot'
+import { patchPlanTotals } from '@/features/plan/store/plan.slice'
 
 export type SaveOrderParams = {
   mode: 'create' | 'edit'
@@ -89,6 +90,16 @@ export const useOrderController = () => {
                 addVisibleOrder(fallback.client_id)
               }
             }
+
+            // Server-authoritative plan totals after order creation
+            response.data?.plan_totals?.forEach((p) => {
+              patchPlanTotals(p.id, {
+                total_weight: p.total_weight,
+                total_volume: p.total_volume,
+                total_items: p.total_items,
+                total_orders: p.total_orders,
+              })
+            })
           },
           rollback: restoreOrderOptimisticSnapshot,
           onError: (error) => {

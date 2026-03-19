@@ -20,7 +20,7 @@ const renderTextNode = (node: SlateTextNode, key: string): ReactNode => {
         href={node.link}
         target="_blank"
         rel="noreferrer"
-        className="text-blue-600 underline transition-colors hover:text-blue-700"
+        className="text-[#94f0e7] underline transition-colors hover:text-[#b8fff5]"
       >
         {content}
       </a>
@@ -37,14 +37,14 @@ const renderBlock = (block: SlateBlock, key: string): ReactNode => {
 
   if (block.type === 'title') {
     return (
-      <h4 key={key} className="text-sm font-semibold text-slate-900">
+      <h4 key={key} className="text-sm font-semibold text-white/95">
         {children}
       </h4>
     )
   }
 
   return (
-    <p key={key} className="text-sm leading-6 text-slate-600">
+    <p key={key} className="text-sm leading-6 text-white/72">
       {children}
     </p>
   )

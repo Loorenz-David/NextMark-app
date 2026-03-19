@@ -3,7 +3,14 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from types import SimpleNamespace
 
-from Delivery_app_BK.route_optimization.domain.models import OptimizationResult, SkippedShipment, StopResult
+from Delivery_app_BK.route_optimization.domain.models import (
+    OptimizationRequest,
+    OptimizationResult,
+    Shipment,
+    ShipmentMember,
+    SkippedShipment,
+    StopResult,
+)
 from Delivery_app_BK.route_optimization.providers.google.mapper import (
     GoogleRequestMapper,
     GoogleResponseMapper,
@@ -35,6 +42,25 @@ def _make_order(
     )
 
 
+def _make_route_stop(stop_id: int, order_id: int, stop_order: int):
+    return SimpleNamespace(
+        id=stop_id,
+        client_id=f"route_stop_{stop_id}",
+        order_id=order_id,
+        stop_order=stop_order,
+        eta_status="valid",
+        service_time=None,
+        expected_arrival_time=None,
+        expected_departure_time=None,
+        expected_service_duration_seconds=None,
+        in_range=None,
+        reason_was_skipped=None,
+        has_constraint_violation=False,
+        constraint_warnings=None,
+        to_next_polyline=None,
+    )
+
+
 def _make_context(*, with_existing_stops: bool) -> SimpleNamespace:
     order_1 = _make_order(order_id=101, lat=57.7, lng=11.97)
     order_2 = _make_order(
@@ -63,9 +89,9 @@ def _make_context(*, with_existing_stops: bool) -> SimpleNamespace:
     route_stops = []
     if with_existing_stops:
         route_stops = [
-            SimpleNamespace(order_id=101, stop_order=1, eta_status="valid", service_time=None),
-            SimpleNamespace(order_id=102, stop_order=2, eta_status="valid", service_time=None),
-            SimpleNamespace(order_id=103, stop_order=3, eta_status="valid", service_time=None),
+            _make_route_stop(201, 101, 1),
+            _make_route_stop(202, 102, 2),
+            _make_route_stop(203, 103, 3),
         ]
 
     delivery_plan = SimpleNamespace(
@@ -117,6 +143,7 @@ def _make_context(*, with_existing_stops: bool) -> SimpleNamespace:
         return_shape="map_ids_object",
         route_end_strategy="round_trip",
         ctx=None,
+        vehicle=None,
     )
 
 
@@ -130,11 +157,11 @@ def test_build_request_groups_same_address_orders_and_dedupes_injected_routes():
     singleton_shipment = request.shipments[1]
 
     assert [member.order_id for member in grouped_shipment.members] == [101, 102]
-    assert grouped_shipment.service_duration_seconds == 600
+    assert grouped_shipment.service_duration_seconds == 10
     assert grouped_shipment.time_windows == []
 
     assert [member.order_id for member in singleton_shipment.members] == [103]
-    assert singleton_shipment.service_duration_seconds == 300
+    assert singleton_shipment.service_duration_seconds == 5
     assert len(singleton_shipment.time_windows) == 1
 
     assert request.injected_routes == [
@@ -251,7 +278,7 @@ def test_persist_solution_expands_grouped_shipments_and_applies_time_warnings(mo
     assert [stop.order_id for stop in stops] == [101, 102, 103]
     assert [stop.stop_order for stop in stops] == [1, 2, 3]
     assert stops[0].expected_arrival_time.isoformat() == "2026-03-08T08:00:00+00:00"
-    assert stops[1].expected_arrival_time.isoformat() == "2026-03-08T08:05:00+00:00"
+    assert stops[1].expected_arrival_time.isoformat() == "2026-03-08T08:00:05+00:00"
     assert stops[2].expected_arrival_time.isoformat() == "2026-03-08T08:30:00+00:00"
     assert stops[0].to_next_polyline is None
     assert stops[1].to_next_polyline == "between-poly"
@@ -324,3 +351,140 @@ def test_persist_solution_applies_pre_skipped_optimization_window_warning(monkey
     assert skipped_stop.constraint_warnings[0]["type"] == "optimization_window_excluded"
     assert skipped_stop.constraint_warnings[0]["allowed_start"] == "2026-03-08T08:30:00+00:00"
     assert skipped_stop.constraint_warnings[0]["allowed_end"] == "2026-03-08T09:30:00+00:00"
+
+
+def test_persist_solution_temporarily_displaces_existing_stop_orders_before_swap(monkeypatch):
+    order_1 = _make_order(order_id=101, lat=57.7, lng=11.97)
+    order_2 = _make_order(order_id=102, lat=57.71, lng=11.98)
+    delivery_plan = SimpleNamespace(
+        id=10,
+        start_date=datetime(2026, 3, 8, 8, 0, tzinfo=timezone.utc),
+        end_date=datetime(2026, 3, 8, 18, 0, tzinfo=timezone.utc),
+    )
+    local_delivery_plan = SimpleNamespace(id=20, team_id=3, delivery_plan=delivery_plan)
+    route_solution = SimpleNamespace(
+        id=30,
+        client_id="route_solution_30",
+        label="Route 30",
+        is_selected=False,
+        stops=[_make_route_stop(201, 101, 1), _make_route_stop(202, 102, 2)],
+        start_location={
+            "street_address": "Depot Street 1",
+            "country": "Sweden",
+            "coordinates": {"lat": 57.69, "lng": 11.96},
+        },
+        end_location=None,
+        stops_service_time={"time": 5, "per_item": 0},
+        set_start_time=None,
+        set_end_time=None,
+        start_leg_polyline=None,
+        end_leg_polyline=None,
+        total_distance_meters=None,
+        total_travel_time_seconds=None,
+        expected_start_time=None,
+        expected_end_time=None,
+        score=None,
+        algorithm=None,
+        is_optimized=None,
+        has_route_warnings=False,
+        route_warnings=None,
+        stop_count=0,
+        driver_id=None,
+        local_delivery_plan_id=20,
+        local_delivery_plan=local_delivery_plan,
+        start_location_id=None,
+        vehicle_id=None,
+    )
+    context = SimpleNamespace(
+        delivery_plan=delivery_plan,
+        local_delivery_plan=local_delivery_plan,
+        route_solution=route_solution,
+        orders=[order_1, order_2],
+        identity={},
+        incoming_data={},
+        interpret_injected_solutions_using_labels=True,
+        return_shape="map_ids_object",
+        route_end_strategy="round_trip",
+        ctx=None,
+    )
+    request = OptimizationRequest(
+        delivery_plan_id=10,
+        local_delivery_plan_id=20,
+        route_solution_id=30,
+        shipments=[
+            Shipment(
+                label="group:30:first",
+                location={"latitude": 57.70, "longitude": 11.97},
+                members=[ShipmentMember(order_id=101, service_duration_seconds=0)],
+                service_duration_seconds=0,
+            ),
+            Shipment(
+                label="group:30:second",
+                location={"latitude": 57.71, "longitude": 11.98},
+                members=[ShipmentMember(order_id=102, service_duration_seconds=0)],
+                service_duration_seconds=0,
+            ),
+        ],
+        start_location=route_solution.start_location,
+        end_location=route_solution.end_location,
+        start_coordinates={"latitude": 57.69, "longitude": 11.96},
+        end_coordinates={"latitude": 57.69, "longitude": 11.96},
+        global_start_time=None,
+        global_end_time=None,
+        consider_traffic=False,
+        route_modifiers={},
+        objectives=[],
+        travel_mode="DRIVE",
+        cost_per_kilometer=1.0,
+        populate_transition_polylines=False,
+    )
+
+    flush_snapshots = []
+
+    monkeypatch.setattr(persister_module.db.session, "add", lambda *args, **kwargs: None)
+
+    def _flush(*args, **kwargs):
+        flush_snapshots.append(
+            [(stop.id, stop.order_id, stop.stop_order) for stop in route_solution.stops]
+        )
+
+    monkeypatch.setattr(persister_module.db.session, "flush", _flush)
+    monkeypatch.setattr(persister_module.db.session, "commit", lambda *args, **kwargs: None)
+
+    persister_module.persist_solution(
+        context=context,
+        request=request,
+        result=OptimizationResult(
+            total_distance_meters=100,
+            total_duration_seconds=200,
+            expected_start_time=datetime(2026, 3, 8, 8, 0, tzinfo=timezone.utc),
+            expected_end_time=datetime(2026, 3, 8, 8, 10, tzinfo=timezone.utc),
+            stops=[
+                StopResult(
+                    shipment_label="group:30:second",
+                    stop_order=1,
+                    expected_arrival_time=datetime(2026, 3, 8, 8, 0, tzinfo=timezone.utc),
+                    in_range=True,
+                ),
+                StopResult(
+                    shipment_label="group:30:first",
+                    stop_order=2,
+                    expected_arrival_time=datetime(2026, 3, 8, 8, 5, tzinfo=timezone.utc),
+                    in_range=True,
+                ),
+            ],
+            skipped=[],
+            transition_polylines=[],
+        ),
+        provider_name="google",
+    )
+
+    assert len(flush_snapshots) >= 2
+    first_flush_orders = [stop_order for _, _, stop_order in flush_snapshots[0]]
+    assert all(stop_order >= 1000 for stop_order in first_flush_orders)
+
+    final_stops = sorted(route_solution.stops, key=lambda stop: stop.stop_order or 0)
+    assert [(stop.order_id, stop.stop_order) for stop in final_stops] == [
+        (102, 1),
+        (101, 2),
+    ]

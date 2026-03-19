@@ -10,7 +10,7 @@ import { useItemStateFormConfig } from './useItemStateFormConfig'
 import { useItemStateFormSetters } from './useItemStateFormSetters'
 
 export const ItemStateFormLayout = () => {
-  const { payload, formState, warnings, setFormState, handleSave, initialFormRef } = useItemStateForm()
+  const { payload, formState, warnings, setFormState, handleSave, handleDelete, initialFormRef } = useItemStateForm()
 
   const setters = useItemStateFormSetters({ setFormState, warnings })
 
@@ -19,8 +19,9 @@ export const ItemStateFormLayout = () => {
   const footerConfig = useMemo(
     () => ({
       saveButton: { label: payload.mode === 'create' ? 'Create' : 'Save', action: handleSave },
+      ...(payload.mode === 'edit' ? { deleteButton: { label: 'Delete', action: handleDelete } } : {}),
     }),
-    [handleSave, payload.mode],
+    [handleSave, handleDelete, payload.mode],
   )
 
   return (

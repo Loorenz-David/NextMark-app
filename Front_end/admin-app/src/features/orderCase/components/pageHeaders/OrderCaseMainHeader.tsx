@@ -51,7 +51,7 @@ export const OrderCaseMainHeader = ({
           <div className="inline-flex items-center justify-center rounded-xl bg-[var(--color-muted)]/10 px-3 py-3">
             <ArchiveIcon className="h-6 w-6 text-[var(--color-muted)]" />
           </div>
-          <HeaderTitle orderCaseStats={orderCaseStats}/>
+          <HeaderTitle orderCaseStats={orderCaseStats} />
         </div>
         <BasicButton
           params={{
@@ -65,7 +65,7 @@ export const OrderCaseMainHeader = ({
       </div>
 
       <div className="flex flex-col">
-        <div className="p-4 pb-3">
+        <div className="flex gap-4 px-4 pb-3 pt-4 max-h-[60px]">
           <SearchFilterBar
             placeholder="Search cases..."
             applySearch={applySearch}
@@ -74,12 +74,15 @@ export const OrderCaseMainHeader = ({
             filters={query.filters}
           />
         </div>
-        <ActiveFilterPills
-          className="px-4"
-          filters={query.filters}
-          removeFilter={deleteFilter}
-          formatFilterLabel={(key) => filterLabelMap[key] ?? key}
-        />
+
+        <div className="flex w-full px-2">
+          <ActiveFilterPills
+            className="px-4"
+            filters={query.filters}
+            removeFilter={deleteFilter}
+            formatFilterLabel={(key) => filterLabelMap[key] ?? key}
+          />
+        </div>
       </div>
     </>
   )
@@ -91,16 +94,14 @@ const HeaderTitle = ({orderCaseStats}:{orderCaseStats?:OrderCaseStats})=>{
   const openCount = orderCaseStats?.open_cases.total ?? 0
   const resolvingCount = orderCaseStats?.resolving_cases.total  ?? 0
   return (
-    <div className="flex gap-2">
-      <div className="flex flex-col">
-        <span className="font-semibold text-lg text-[var(--color-muted)]/80">
-          Cases
-        </span>
-        <div className="text-xs flex text-[var(--color-muted)] font-normal flex gap-1">
-          <span > {caseCount} {pluralLabel('case',caseCount)} •  </span>
-          <span > {openCount} {pluralLabel('open',openCount)} •  </span>
-          <span > {resolvingCount} {pluralLabel('resolving',resolvingCount)}  </span>
-        </div>
+    <div className="flex min-w-0 flex-col">
+      <span className="text-[0.98rem] font-semibold tracking-tight text-[var(--color-text)]">
+        Order Cases
+      </span>
+      <div className="mt-0.5 flex flex-wrap items-center gap-1 text-[0.72rem] text-[var(--color-muted)]">
+        <span>{caseCount} {pluralLabel('case',caseCount)} •</span>
+        <span>{openCount} {pluralLabel('open',openCount)} •</span>
+        <span>{resolvingCount} {pluralLabel('resolving',resolvingCount)}</span>
       </div>
     </div>
   )

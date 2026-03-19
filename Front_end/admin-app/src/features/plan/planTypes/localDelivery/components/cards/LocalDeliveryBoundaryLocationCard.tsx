@@ -29,22 +29,24 @@ export const LocalDeliveryBoundaryLocationCard = ({
   const streetAddress = address?.street_address ?? '—'
   
   return (
-    <div className={`flex justify-between rounded-2xl border border-[var(--color-muted)]/30 bg-white p-4 ${containerClassName}`}>
-      <div className="flex flex-col gap-1 ">
-        <span className="text-[0.6rem] font-semibold uppercase tracking-wide text-[var(--color-text)]/80">
+    <div
+      className={`admin-glass-panel admin-surface-compact flex justify-between rounded-2xl border border-white/10 p-4 transition-all duration-200 hover:border-white/18 hover:bg-white/[0.08] ${containerClassName ?? ''}`}
+    >
+      <div className="flex min-w-0 flex-col gap-1">
+        <span className="text-[0.6rem] font-semibold uppercase tracking-wide text-[var(--color-text)]/78">
           {label}
         </span>
-        <span className="truncate text-xs text-[var(--color-muted)]">{streetAddress}</span>
+        <span className="truncate text-xs text-[var(--color-muted)]/95">{streetAddress}</span>
       </div>
-      <div className="flex flex-col justify-end text-xs text-[var(--color-muted)]">
-        <div className="flex items-center gap-2">
+      <div className="flex shrink-0 flex-col justify-end text-xs text-[var(--color-muted)]">
+        <div className="flex items-center gap-2 rounded-full border border-white/8 bg-white/[0.04] px-2 py-1">
           <RouteSolutionWarnings
             warnings={warnings}
             planStartDate={planStartDate}
             registry={warningRegistry}
             localDeliveryActions={localDeliveryActions}
           />
-          <TimeIcon className="h-3 w-3 app-icon" />
+          <TimeIcon className="h-3 w-3 text-[var(--color-light-blue)]" />
           {time}
         </div>
       </div>

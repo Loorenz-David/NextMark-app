@@ -1,228 +1,146 @@
+import type { ReactNode } from 'react'
+
 import { formatPhone } from '@/shared/data-validation/phoneValidation'
-import { StateCard } from '@/shared/layout/StateCard'
-import { useEffect, useState } from 'react'
 
 import type { Order } from '../types/order'
 import type { OrderState } from '../types/orderState'
-import { AccordionSection } from '@/shared/layout/AccordionSection'
-import type { PropsWithChildren } from 'react'
-import { formatIsoDate } from '@/shared/utils/formatIsoDate'
-import { ClientFormLinkButton } from './clientFormLink/ClientFormLinkButton'
-import { ClientFormLinkStatus } from './clientFormLink/ClientFormLinkStatus'
 
 type OrderDetailSummaryProps = {
   order: Order | null
   orderState: OrderState | null
 }
 
-type SummarySectionKey = 'details' | 'client' | 'dates'
-const ORDER_DETAIL_LAST_OPEN_SECTION_STORAGE_KEY = 'orderDetail.lastOpenSection'
-const isBrowser = typeof window !== 'undefined'
-
-const isSummarySectionKey = (value: string): value is SummarySectionKey =>
-  value === 'details' || value === 'client' || value === 'dates'
-
-const persistLastOpenSection = (section: SummarySectionKey) => {
-  if (!isBrowser) return
-  try {
-    window.localStorage.setItem(ORDER_DETAIL_LAST_OPEN_SECTION_STORAGE_KEY, section)
-  } catch {
-    // Ignore storage failures to keep detail rendering stable.
-  }
-}
-
-const getLastOpenSection = (): SummarySectionKey | null => {
-  if (!isBrowser) return null
-  try {
-    const storedSection = window.localStorage.getItem(ORDER_DETAIL_LAST_OPEN_SECTION_STORAGE_KEY)
-    if (!storedSection) return null
-    return isSummarySectionKey(storedSection) ? storedSection : null
-  } catch {
-    return null
-  }
+type DetailCardProps = {
+  label: string
+  value: ReactNode
+  className?: string
 }
 
 const asText = (value?: string | null) => value || '—'
 
+const detailLinkClassName =
+  'text-[var(--color-text)] transition-colors hover:text-[var(--color-primary)]'
+
 export const OrderDetailSummary = ({ order, orderState }: OrderDetailSummaryProps) => {
-  const [openSection, setOpenSection] = useState<SummarySectionKey | null>(null)
-
-  const toggleSection = (section: SummarySectionKey) => {
-    setOpenSection((current) => {
-      const nextSection = current === section ? null : section
-      if (nextSection) {
-        persistLastOpenSection(nextSection)
-      }
-      return nextSection
-    })
-  }
-
-  useEffect(() => {
-    const lastSection = getLastOpenSection()
-    if (!lastSection) return
-    setOpenSection(lastSection)
-  }, [])
+  const fullName = `${asText(order?.client_first_name)} ${asText(order?.client_last_name)}`.trim()
+  const stateColor = orderState?.color ?? 'var(--color-primary)'
+  const stateName = orderState?.name ?? null
 
   return (
-    <>
-      <div className="border-1 rounded-lg border-[var(--color-muted)]/40  px-4 py-4 min-h-[300px] ">
-          <SummaryCard>
-            <>
-              <div className="grid grid-cols-2 gap-3 text-sm ">
-                <div>
-                  <p className="text-xs text-[var(--color-muted)]">Customer</p>
-                  <p className="text-wrap">{`${asText(order?.client_first_name)} ${asText(order?.client_last_name)}`.trim()}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-[var(--color-muted)] ">Email</p>
-                    {order?.client_email ? (
-                      <a
-                        href={`mailto:${order.client_email}`}
-                        className="break-all"
-                      >
-                        {order.client_email}
-                      </a>
-                    ) : (
-                      <p>—</p>
-                    )}
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-3 text-sm">
-                <div>
-                  <p className="text-xs text-[var(--color-muted)]">Phone</p>
-                  {order?.client_primary_phone ? (
-                    <a
-                      href={`tel:${order.client_primary_phone}`}
-                      className="underline text-blue-800"
-                    >
-                      {formatPhone(order.client_primary_phone)}
-                    </a>
-                  ) : (
-                    <p>—</p>
-                  )}
-                </div>
-                <div>
-                  <p className="text-xs text-[var(--color-muted)]">Second Phone</p>
-                  {order?.client_secondary_phone ? (
-                    <a
-                      href={`tel:${order.client_secondary_phone}`}
-                      className="underline text-blue-800"
-                    >
-                      {formatPhone(order.client_secondary_phone)}
-                    </a>
-                  ) : (
-                    <p>—</p>
-                  )}
-                </div>
-              </div>
-              <div className="text-sm">
-                <p className="text-xs text-[var(--color-muted)]">Address</p>
-                  {order?.client_address?.street_address ? (
-                    <a
-                      href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-                        order.client_address.street_address
-                      )}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-wrap"
-                    >
-                      {order.client_address.street_address}
-                    </a>
-                  ) : (
-                    <p>—</p>
-                  )}
-              </div>
-
-              {/* ── Order notes ── */}
-              {order?.order_notes && order.order_notes.length > 0 && (
-                <div className="space-y-1">
-                  {order.order_notes.map((note, i) => (
-                    <div
-                      key={i}
-                      className="rounded-lg border border-yellow-400 bg-yellow-50 px-3 py-2 text-sm text-yellow-700"
-                    >
-                      {note}
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {/* ── Tracking info (system-managed, read-only) ── */}
-              <div className="space-y-2 rounded-lg border border-[var(--color-border)] bg-[var(--color-ligth-bg)] px-3 py-2 text-sm">
-                <div className="flex items-center justify-between gap-2">
-                  <div>
-                    <p className="text-xs text-[var(--color-muted)]">Tracking number</p>
-                    <p className="font-mono text-sm">{asText(order?.tracking_number)}</p>
-                  </div>
-                  {order?.tracking_number && (
-                    <button
-                      type="button"
-                      title="Copy tracking number"
-                      onClick={() => navigator.clipboard.writeText(order.tracking_number!)}
-                      className="shrink-0 rounded p-1 text-xs text-[var(--color-muted)] hover:text-[var(--color-text)] hover:bg-[var(--color-ligth-bg)] transition-colors"
-                    >
-                      Copy
-                    </button>
-                  )}
-                </div>
-                {order?.tracking_link && (
-                  <div className="flex items-center justify-between gap-2 border-t border-[var(--color-border)] pt-2">
-                    <div className="min-w-0">
-                      <p className="text-xs text-[var(--color-muted)]">Tracking link</p>
-                      <a
-                        href={order.tracking_link}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="block truncate text-xs text-[var(--color-primary)] hover:underline"
-                      >
-                        {order.tracking_link}
-                      </a>
-                    </div>
-                    <div className="flex shrink-0 gap-1">
-                      <button
-                        type="button"
-                        title="Copy tracking link"
-                        onClick={() => navigator.clipboard.writeText(order.tracking_link!)}
-                        className="rounded p-1 text-xs text-[var(--color-muted)] hover:text-[var(--color-text)] hover:bg-[var(--color-ligth-bg)] transition-colors"
-                      >
-                        Copy
-                      </button>
-                      <a
-                        href={order.tracking_link}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="rounded p-1 text-xs text-[var(--color-muted)] hover:text-[var(--color-text)] hover:bg-[var(--color-ligth-bg)] transition-colors"
-                      >
-                        Open
-                      </a>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* ── Client form link section ── */}
-              {typeof order?.id === 'number' && (
-                <div className="space-y-2 border-t border-[var(--color-border)] pt-3">
-                  <ClientFormLinkStatus
-                    clientFormSubmittedAt={order.client_form_submitted_at}
-                    tokenHash={order.client_form_token_hash}
-                  />
-                  <ClientFormLinkButton orderId={order.id} />
-                </div>
-              )}
-            </>
-          </SummaryCard>
-
+    <div
+      className="admin-glass-panel flex h-[420px] flex-col overflow-hidden rounded-[26px] border-white/10"
+      style={{ boxShadow: 'none' }}
+    >
+      <div className="admin-glass-divider flex flex-wrap items-center justify-between gap-3 border-b px-5 py-4">
+        <div>
+          <p className="text-[10px] font-medium uppercase tracking-[0.22em] text-[var(--color-muted)]">
+            Customer Details
+          </p>
+        </div>
+        {stateName ? (
+          <span
+            className="inline-flex items-center rounded-full border px-2.5 py-1 text-[0.64rem] font-medium uppercase tracking-[0.16em]"
+            style={{
+              color: stateColor,
+              borderColor: `${stateColor}55`,
+              backgroundColor: `${stateColor}18`,
+            }}
+          >
+            {stateName}
+          </span>
+        ) : null}
       </div>
-         
-    </>
+
+      <div className="flex flex-1 flex-col gap-4 overflow-y-auto px-5 py-4.5 scroll-thin">
+        <div className="grid gap-3 sm:grid-cols-2">
+          <DetailCard label="Customer" value={fullName} />
+          <DetailCard
+            label="Email"
+            value={
+              order?.client_email ? (
+                <a href={`mailto:${order.client_email}`} className={detailLinkClassName}>
+                  {order.client_email}
+                </a>
+              ) : (
+                '—'
+              )
+            }
+          />
+          <DetailCard
+            label="Phone"
+            value={
+              order?.client_primary_phone ? (
+                <a href={`tel:${order.client_primary_phone}`} className={detailLinkClassName}>
+                  {formatPhone(order.client_primary_phone)}
+                </a>
+              ) : (
+                '—'
+              )
+            }
+          />
+          <DetailCard
+            label="Second phone"
+            value={
+              order?.client_secondary_phone ? (
+                <a href={`tel:${order.client_secondary_phone}`} className={detailLinkClassName}>
+                  {formatPhone(order.client_secondary_phone)}
+                </a>
+              ) : (
+                '—'
+              )
+            }
+          />
+          <DetailCard
+            className="sm:col-span-2"
+            label="Address"
+            value={
+              order?.client_address?.street_address ? (
+                <a
+                  href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+                    order.client_address.street_address
+                  )}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={detailLinkClassName}
+                >
+                  {order.client_address.street_address}
+                </a>
+              ) : (
+                '—'
+              )
+            }
+          />
+        </div>
+
+        {order?.order_notes && order.order_notes.length > 0 ? (
+          <div className="space-y-2">
+            {order.order_notes.map((note, index) => (
+              <div
+                key={index}
+                className="rounded-[20px] border border-amber-300/25 bg-[linear-gradient(135deg,rgba(255,201,71,0.14),rgba(255,201,71,0.04))] px-4 py-3 text-sm text-amber-50"
+              >
+                <p className="mb-1 text-[10px] font-medium uppercase tracking-[0.2em] text-amber-200/75">
+                  Order Note
+                </p>
+                <p className="text-sm leading-6 text-amber-50/95">{note}</p>
+              </div>
+            ))}
+          </div>
+        ) : null}
+      </div>
+    </div>
   )
 }
 
-const SummaryCard = ({children}:PropsWithChildren)=>{
+const DetailCard = ({ label, value, className }: DetailCardProps) => {
   return (
-    <div className="flex flex-col gap-4 p-1">
-      {children}
+    <div className={`rounded-[20px] border border-white/10 bg-white/[0.035] px-4 py-3 ${className ?? ''}`}>
+      <p className="text-[10px] font-medium uppercase tracking-[0.2em] text-[var(--color-muted)]">
+        {label}
+      </p>
+      <div className="mt-1 break-words text-[0.98rem] leading-7 text-[var(--color-text)]">
+        {value}
+      </div>
     </div>
   )
 }

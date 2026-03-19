@@ -12,6 +12,7 @@ export type LocalDeliveryEditFormPreferences = {
   start_location: address | null
   end_location: address | null
   driver_id: number | null
+  vehicle_id: number | null
   stops_service_time: ServiceTime | null
 }
 
@@ -26,6 +27,7 @@ const DEFAULT_PREFERENCES: LocalDeliveryEditFormPreferences = {
   start_location: null,
   end_location: null,
   driver_id: null,
+  vehicle_id: null,
   stops_service_time: null,
 }
 
@@ -77,6 +79,12 @@ const normalizeDriverId = (value: unknown): number | null => {
   return value > 0 ? value : null
 }
 
+const normalizeVehicleId = (value: unknown): number | null => {
+  if (typeof value !== 'number') return null
+  if (!Number.isInteger(value)) return null
+  return value > 0 ? value : null
+}
+
 const normalizeEtaToleranceMinutes = (value: unknown): number => {
   if (typeof value !== 'number' || !Number.isInteger(value)) return 0
   return Math.max(0, Math.min(120, value))
@@ -110,6 +118,7 @@ const sanitizePreferences = (raw: unknown): LocalDeliveryEditFormPreferences => 
     start_location: isValidAddress(candidate.start_location) ? candidate.start_location : null,
     end_location: isValidAddress(candidate.end_location) ? candidate.end_location : null,
     driver_id: normalizeDriverId(candidate.driver_id),
+    vehicle_id: normalizeVehicleId(candidate.vehicle_id),
     stops_service_time: normalizeServiceTime(candidate.stops_service_time),
   }
 }
@@ -188,6 +197,12 @@ export const saveEndLocationPreference = (value: address | null): void => {
 export const saveDriverIdPreference = (value: number | null): void => {
   persistPreferences({
     driver_id: normalizeDriverId(value),
+  })
+}
+
+export const saveVehicleIdPreference = (value: number | null): void => {
+  persistPreferences({
+    vehicle_id: normalizeVehicleId(value),
   })
 }
 

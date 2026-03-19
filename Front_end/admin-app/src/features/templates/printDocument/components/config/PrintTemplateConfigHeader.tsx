@@ -16,23 +16,23 @@ export const PrintTemplateConfigHeader = ({
   onTogglePermission,
   onToggleEnable,
 }: PrintTemplateConfigHeaderProps) => (
-  <div className="mb-4 flex items-center justify-between items-start gap-3">
+  <div className="mb-5 flex items-start justify-between gap-3 border-b border-[var(--color-border)]/70 pb-5">
     <BasicButton
       params={{
-        variant: 'text',
+        variant: 'secondary',
         onClick: onBack,
         ariaLabel: 'Back to channel templates',
       }}
     >
       Back
     </BasicButton>
-    <div className="flex gap-12 items-end">
+    <div className="flex items-end gap-10">
       <div className="flex flex-col gap-2">
-        <span className="text-xs">Ask for permission:</span>
+        <span className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-muted)]">Ask for permission</span>
         <Switch value={askPermission} onChange={onTogglePermission} />
       </div>
       <div className="flex flex-col gap-2">
-        <span className="text-xs text-[var(--color-text)]">Template is {enabled ? 'Enabled' : 'Disabled'}</span>
+        <span className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-muted)]">Template is {enabled ? 'Enabled' : 'Disabled'}</span>
         <Switch value={enabled} onChange={onToggleEnable} />
       </div>
     </div>

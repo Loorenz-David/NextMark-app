@@ -6,7 +6,7 @@ export const useUserActions = () => {
   const popupManager = usePopupManager()
 
   const openEditProfile = useCallback(() => {
-    popupManager.open({ key: 'user.edit' })
+    popupManager.open({ key: 'user.edit', parentParams: { autoHeight: true } })
   }, [popupManager])
 
   return { openEditProfile }

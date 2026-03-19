@@ -27,9 +27,11 @@ export const TimePickerPopover = ({
       classes="w-full"
       offSetNum={6}
       crossOffSetNum={0}
+      renderInPortal
+      floatingClassName="z-[220]"
     >
       <div
-        className="rounded-xl border border-[var(--color-border-accent)] bg-[var(--color-page)] shadow-2xl"
+        className="admin-glass-popover rounded-xl border border-[var(--color-border-accent)] shadow-2xl"
         style={{
           width,
           minHeight: height,

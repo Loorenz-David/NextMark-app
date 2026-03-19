@@ -10,6 +10,7 @@ import { useLocalDeliveryEditFormSetters } from './localDeliveryEditForm.setters
 import { useLocalDeliveryEditFormValidation } from './LocalDeliveryEditForm.validation'
 import { useLocalDeliveryEditFormActions } from './localDeliveryEditForm.actions'
 import { buildFormState, initialLocalDeliveryEditForm } from './localDeliveryEditForm.bootstrap'
+import { useVehicleAvailabilityCheck } from '../../flows/useVehicleAvailabilityCheck.flow'
 
 import type { LocalDeliveryEditFormState, PopupPayload } from './LocalDeliveryEditForm.types'
 
@@ -40,6 +41,8 @@ export const LocalDeliveryEditFormProvider = ({
 
   const formWarnings = useLocalDeliveryEditFormWarnings()
   const formSetters = useLocalDeliveryEditFormSetters({ setFormState, formWarnings })
+
+  useVehicleAvailabilityCheck({ formState, formWarnings })
 
   const { validateForm } = useLocalDeliveryEditFormValidation({
     formWarnings,

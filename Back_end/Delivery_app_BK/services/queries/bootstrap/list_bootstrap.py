@@ -5,6 +5,7 @@ from ..plan_states.list_plan_states import list_plan_states
 from ..team_members.list_team_members import list_team_members
 from ..content_templates.label.list_label_templates import list_label_templates_bootstrap
 from ..content_templates.messages.list_message_templates import list_message_templates_bootstrap
+from ..infrastructure.vehicle.list_vehicles import list_vehicles
 
 def list_bootstrap(ctx: ServiceContext):
     ctx.query_params = {}
@@ -15,6 +16,9 @@ def list_bootstrap(ctx: ServiceContext):
     payload["order_states"] = list_order_states(ctx)["order_states"]
     payload["plan_states"] = list_plan_states(ctx)["plan_states"]
     payload['label_templates'] = list_label_templates_bootstrap(ctx)['label_templates']
+
+    ctx.query_params = {}
+    payload["vehicles"] = list_vehicles(ctx)["vehicles"]
     
     ctx.query_params = {"channel":'email'}
     payload['message_templates_email'] = list_message_templates_bootstrap(ctx)['message_templates']

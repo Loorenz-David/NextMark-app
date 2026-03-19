@@ -15,8 +15,8 @@ export const ConfirmActionPopup = ({ onConfirm, onCancel, message }: PropsConfir
         transition={{ duration: 0.2 }}
         onClick={onCancel}
     >
-      <div className="rounded-xl bg-white p-7 flex flex-col gap-5">
-        <p className="text-lg"> {
+      <div className="admin-glass-popover flex max-w-[min(520px,calc(100vw-48px))] flex-col gap-5 rounded-[28px] p-7 shadow-2xl">
+        <p className="text-lg text-[var(--color-text)]"> {
         message 
         ? message 
         :"Are you sure you want to perform that action? "
@@ -33,7 +33,7 @@ export const ConfirmActionPopup = ({ onConfirm, onCancel, message }: PropsConfir
               </BasicButton>
           <BasicButton params={{
             variant:'secondary',
-            className:"py-3 px-5 shadow-md",
+            className:"py-3 px-5",
             onClick:onCancel
             }}>
                 No

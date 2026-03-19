@@ -109,6 +109,7 @@ class GoogleResponseMapper:
         route = routes[0]
         visits = route.get("visits", [])
         transitions = route.get("transitions", [])
+        route_metrics = route.get("metrics", {}) if isinstance(route.get("metrics"), dict) else {}
 
         total_distance = 0
         total_duration = 0
@@ -133,7 +134,13 @@ class GoogleResponseMapper:
                 elif isinstance(transition_polyline, str):
                     encoded = transition_polyline
                 polyline_parts.append(encoded)
-        
+
+        if total_distance <= 0:
+            total_distance = int(route_metrics.get("travel_distance_meters", 0) or 0)
+
+        if total_duration <= 0:
+            total_duration = _seconds_from_duration(route_metrics.get("total_duration"))
+
         stops: List[StopResult] = []
         for idx, visit in enumerate(visits):
             shipment_label = _parse_shipment_label(visit)

@@ -91,8 +91,18 @@ export type OrderCreateBundle = {
   route_solution?: RouteSolution[]
 }
 
+/** Plan-level totals returned by mutating endpoints (backend Phase A.9). */
+export type PlanTotalsEntry = {
+  id: number
+  total_weight: number | null
+  total_volume: number | null
+  total_items: number | null
+  total_orders: number | null
+}
+
 export type OrderCreateResponse = {
   created: OrderCreateBundle[]
+  plan_totals?: PlanTotalsEntry[]
 }
 
 export type OrderPlanUpdateBundle = {
@@ -103,6 +113,7 @@ export type OrderPlanUpdateBundle = {
 
 export type OrderPlanUpdateResponse = {
   updated: OrderPlanUpdateBundle[]
+  plan_totals?: PlanTotalsEntry[]
 }
 
 export type OrderUpdateResponse = {

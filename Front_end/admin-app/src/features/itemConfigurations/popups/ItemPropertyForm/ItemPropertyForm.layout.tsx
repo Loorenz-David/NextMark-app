@@ -12,14 +12,15 @@ import { useItemPropertyForm } from './ItemPropertyForm.context'
 import { OptionPopoverSelect } from '@/shared/inputs/OptionPopoverSelect'
 
 export const ItemPropertyFormLayout = () => {
-  const { payload, formState, warnings, setters, itemTypeQuery, handleSave } = useItemPropertyForm()
+  const { payload, formState, warnings, setters, itemTypeQuery, handleSave, handleDelete } = useItemPropertyForm()
 
 
   const footerConfig = useMemo(
     () => ({
       saveButton: { label: payload.mode === 'create' ? 'Create' : 'Save', action: handleSave },
+      ...(payload.mode === 'edit' ? { deleteButton: { label: 'Delete', action: handleDelete } } : {}),
     }),
-    [handleSave, payload.mode],
+    [handleSave, handleDelete, payload.mode],
   )
 
   return (

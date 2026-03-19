@@ -10,12 +10,12 @@ export const EmailMessageMainPage = (_: StackComponentProps<undefined>) => {
   const navigate = useNavigate()
   const hasEmailIntegration = useIsIntegrationActive('email')
 
-  if (!hasEmailIntegration) {
+  if (hasEmailIntegration) {
     return (
-      <div className="flex  px-6 text-sm text-[var(--color-muted)]">
-        <div className="max-h-100 flex flex-col items-start gap-6 pt-10">
-          <div className="flex flex-col gap-6 pb-10">
-            <span className="text-lg font-semibold text-[var(--color-text)]  ">
+      <div className="flex h-full w-full items-start px-6 py-6 text-sm text-[var(--color-muted)]">
+        <div className="admin-glass-panel-strong max-h-100 flex max-w-2xl flex-col items-start gap-6 rounded-[28px] p-8 shadow-none">
+          <div className="flex flex-col gap-6">
+            <span className="text-lg font-semibold text-[var(--color-text)]">
                 Set up Email integration to manage email templates.
             </span>
             <span className="max-w-md text-sm text-[var(--color-muted)]">
@@ -34,7 +34,7 @@ export const EmailMessageMainPage = (_: StackComponentProps<undefined>) => {
           >
             Set up integration
           </BasicButton>
-         </div>
+        </div>
       </div>
     )
   }

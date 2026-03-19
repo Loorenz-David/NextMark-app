@@ -1,7 +1,7 @@
 export type LocalDeliveryDriverOverlayStats = {
   initials: string
   name: string
-  registration: string
+  registration: string | null
 }
 
 export type LocalDeliverySummaryMetric = {

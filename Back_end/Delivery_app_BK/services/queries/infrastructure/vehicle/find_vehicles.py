@@ -24,9 +24,13 @@ def find_vehicles(
     if "client_id" in params:
         query = query.filter(Vehicle.client_id == params.get("client_id"))
 
-    if "name" in params:
-        name = params.get("name").strip()
-        query = query.filter(Vehicle.name.ilike(f"{name}%"))
+    if "registration_number" in params:
+        registration_number = params.get("registration_number").strip()
+        query = query.filter(Vehicle.registration_number.ilike(f"{registration_number}%"))
+
+    if "label" in params:
+        label = params.get("label").strip()
+        query = query.filter(Vehicle.label.ilike(f"{label}%"))
 
     if "travel_mode" in params:
         query = query.filter(Vehicle.travel_mode == params.get("travel_mode"))

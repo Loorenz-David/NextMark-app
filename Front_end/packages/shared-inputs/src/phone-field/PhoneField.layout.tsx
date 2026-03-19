@@ -33,7 +33,7 @@ export const PhoneFieldLayout = ({
     .filter(Boolean)
     .join(' ')
   const popoverClassName = [
-    'rounded-2xl border border-[var(--color-border)] bg-white p-2 shadow-xl',
+    'rounded-2xl border border-white/10 bg-[#172122]/88 p-2 shadow-xl backdrop-blur-xl',
     prefixPopoverClassName,
   ].filter(Boolean).join(' ')
 

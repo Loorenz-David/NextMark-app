@@ -21,6 +21,7 @@ import {
   setOrderPlanId,
   useOrderStore,
 } from '../store/order.store'
+import { patchPlanTotals, selectPlanByServerId, usePlanStore } from '@/features/plan/store/plan.slice'
 
 export const useOrderMutations = () => {
   const updateOrderDeliveryPlanApi = useUpdateOrderDeliveryPlanApi()
@@ -55,16 +56,85 @@ export const useOrderMutations = () => {
         return false
       }
 
+      // Capture plan total snapshots before the optimistic transaction so both
+      // snapshot() and mutate() share the same pre-mutation baseline.
+      type PlanTotalsSnapshot = {
+        total_weight: number | null
+        total_volume: number | null
+        total_items: number | null
+        total_orders: number | null
+      }
+      const planStoreState = usePlanStore.getState()
+      const oldPlanId = order.delivery_plan_id ?? null
+      const oldPlan = oldPlanId != null ? selectPlanByServerId(oldPlanId)(planStoreState) : null
+      const newPlan = selectPlanByServerId(parsedPlanId)(planStoreState)
+
+      const oldPlanTotalSnapshot: PlanTotalsSnapshot | null =
+        oldPlan?.id != null
+          ? {
+              total_weight: oldPlan.total_weight ?? null,
+              total_volume: oldPlan.total_volume ?? null,
+              total_items: oldPlan.total_items ?? null,
+              total_orders: oldPlan.total_orders ?? null,
+            }
+          : null
+
+      const newPlanTotalSnapshot: PlanTotalsSnapshot | null =
+        newPlan?.id != null
+          ? {
+              total_weight: newPlan.total_weight ?? null,
+              total_volume: newPlan.total_volume ?? null,
+              total_items: newPlan.total_items ?? null,
+              total_orders: newPlan.total_orders ?? null,
+            }
+          : null
+
       return optimisticTransaction({
         snapshot: () => ({
           previousPlanId: order.delivery_plan_id ?? null,
           previousStops: selectRouteSolutionStopsByOrderId(orderServerId)(
             useRouteSolutionStopStore.getState(),
           ),
+          oldPlanId: oldPlan?.id ?? null,
+          oldPlanTotals: oldPlanTotalSnapshot,
+          newPlanId: parsedPlanId,
+          newPlanTotals: newPlanTotalSnapshot,
         }),
         mutate: () => {
           setOrderPlanId(order.client_id, parsedPlanId)
           removeRouteSolutionStopsByOrderId(orderServerId)
+
+          // Optimistic: subtract this order's weight/volume/items from the old plan
+          if (oldPlan?.id != null && oldPlanTotalSnapshot != null) {
+            patchPlanTotals(oldPlan.id, {
+              total_weight: Math.max(
+                0,
+                (oldPlanTotalSnapshot.total_weight ?? 0) - (order.total_weight ?? 0),
+              ),
+              total_volume: Math.max(
+                0,
+                (oldPlanTotalSnapshot.total_volume ?? 0) - (order.total_volume ?? 0),
+              ),
+              total_items: Math.max(
+                0,
+                (oldPlanTotalSnapshot.total_items ?? 0) - (order.total_items ?? 0),
+              ),
+              total_orders: Math.max(0, (oldPlanTotalSnapshot.total_orders ?? 1) - 1),
+            })
+          }
+
+          // Optimistic: add this order's weight/volume/items to the new plan
+          if (newPlan?.id != null) {
+            patchPlanTotals(newPlan.id, {
+              total_weight:
+                (newPlanTotalSnapshot?.total_weight ?? 0) + (order.total_weight ?? 0),
+              total_volume:
+                (newPlanTotalSnapshot?.total_volume ?? 0) + (order.total_volume ?? 0),
+              total_items:
+                (newPlanTotalSnapshot?.total_items ?? 0) + (order.total_items ?? 0),
+              total_orders: (newPlanTotalSnapshot?.total_orders ?? 0) + 1,
+            })
+          }
         },
         request: () => updateOrderDeliveryPlanApi(orderServerId, parsedPlanId),
         commit: (response) => {
@@ -87,12 +157,33 @@ export const useOrderMutations = () => {
               }
             })
           })
+
+          // Server-authoritative plan totals override the optimistic deltas
+          response.data?.plan_totals?.forEach((p) => {
+            patchPlanTotals(p.id, {
+              total_weight: p.total_weight,
+              total_volume: p.total_volume,
+              total_items: p.total_items,
+              total_orders: p.total_orders,
+            })
+          })
         },
         rollback: (snapshot) => {
           const {
             previousPlanId,
             previousStops,
-          } = snapshot as { previousPlanId: number | null; previousStops: RouteSolutionStop[] }
+            oldPlanId: snapOldPlanId,
+            oldPlanTotals: snapOldTotals,
+            newPlanId: snapNewPlanId,
+            newPlanTotals: snapNewTotals,
+          } = snapshot as {
+            previousPlanId: number | null
+            previousStops: RouteSolutionStop[]
+            oldPlanId: number | null
+            oldPlanTotals: PlanTotalsSnapshot | null
+            newPlanId: number
+            newPlanTotals: PlanTotalsSnapshot | null
+          }
           setOrderPlanId(order.client_id, previousPlanId)
           if (previousStops.length) {
             const rollbackStops = {
@@ -108,6 +199,14 @@ export const useOrderMutations = () => {
             if (rollbackStops.allIds.length) {
               upsertRouteSolutionStops(rollbackStops)
             }
+          }
+
+          // Restore plan total snapshots
+          if (snapOldPlanId != null && snapOldTotals != null) {
+            patchPlanTotals(snapOldPlanId, snapOldTotals)
+          }
+          if (snapNewTotals != null) {
+            patchPlanTotals(snapNewPlanId, snapNewTotals)
           }
         },
         onError: (error) => {

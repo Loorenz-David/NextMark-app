@@ -18,6 +18,7 @@ export const useLocalDeliveryEditFormValidation = ({
   initialFormRef,
 }: Props) => {
   const validateForm = () => {
+    const isVehicleBusy = formWarnings.vehicleBusyWarning.hasWarningActive()
     const valid = [
       formWarnings.planDateWarning.validate({
         start_date: formState.delivery_plan.start_date,
@@ -35,6 +36,7 @@ export const useLocalDeliveryEditFormValidation = ({
         start_time: formState.route_solution.set_start_time,
         end_time: formState.route_solution.set_end_time,
       }),
+      !isVehicleBusy,
     ]
     return valid.every((entry) => entry === true)
   }

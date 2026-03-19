@@ -1,15 +1,17 @@
-import {  CloseIcon, OrderIcon, PlusIcon } from '@/assets/icons'
+import { CloseIcon, OrderIcon, PlusIcon } from '@/assets/icons'
 import { BasicButton } from '@/shared/buttons/BasicButton'
 import { SectionHeader } from '@/shared/section-panel/SectionHeader'
 import type { OrderQueryFilters, OrderQueryStringQueries, OrderStats } from '../../types/orderMeta'
 import { ActiveFilterPills, SearchFilterBar } from '@/shared/searchBars'
 import { filterConfig } from '../../domain/orderFilterConfig'
 import { useSectionPanel } from '@/shared/section-panel/SectionPanelContext'
-import { useEffect } from 'react'
+import { type RefObject, useEffect } from 'react'
 import { pluralLabel } from '@shared-utils'
 import { ThreeDotMenu } from '@/shared/buttons/ThreeDotMenu'
 import { InfoHover } from '@/shared/layout/InfoHover'
 import { ORDER_MAIN_HEADER_INFO } from '../../info/orderMainHeader.info'
+import { motion } from 'framer-motion'
+import { cn } from '@/lib/utils/cn'
 
 
 
@@ -29,6 +31,9 @@ type OrderMainHeaderProps = {
     q: string
     filters: OrderQueryFilters
   }
+  actionStackRef?: RefObject<HTMLDivElement | null>
+  useFloatingActionStack?: boolean
+  isActionStackVisible?: boolean
 }
 
 export const OrderMainHeader = ({
@@ -43,6 +48,9 @@ export const OrderMainHeader = ({
   updateFilters,
   query,
   orderStats,
+  actionStackRef,
+  useFloatingActionStack = false,
+  isActionStackVisible = true,
 }: OrderMainHeaderProps) => {
   const { setHeader } = useSectionPanel()
   const filterLabelMap = filterConfig.reduce<Record<string, string>>((acc, filter) => {
@@ -80,8 +88,24 @@ export const OrderMainHeader = ({
 
   return (
     <>
-      <div className="flex flex-col">
-        <div className="flex gap-4 p-4 pb-3 max-h-[60px]">
+      <motion.div
+        ref={actionStackRef}
+        initial={false}
+        animate={{
+          opacity: useFloatingActionStack ? (isActionStackVisible ? 1 : 0) : 1,
+          y: useFloatingActionStack ? (isActionStackVisible ? 0 : -18) : 0,
+        }}
+        transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
+        className={cn(
+          'flex flex-col',
+          useFloatingActionStack ? 'absolute inset-x-0 top-0 z-20' : undefined,
+        )}
+        style={{
+          pointerEvents:
+            !useFloatingActionStack || isActionStackVisible ? 'auto' : 'none',
+        }}
+      >
+        <div className="flex gap-4 p-4 pb-3 max-h-[65px] bg-[var(--color-page)]">
           <SearchFilterBar
             placeholder="Search orders..."
             applySearch={applySearch}
@@ -156,7 +180,7 @@ export const OrderMainHeader = ({
             </BasicButton>
           </div>
         }
-      </div>
+      </motion.div>
     </>
 
   )

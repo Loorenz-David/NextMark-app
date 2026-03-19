@@ -10,7 +10,7 @@ type EmailBodyEditorProps = {
 
 export const EmailBodyEditor = ({ value, onChange }: EmailBodyEditorProps) => (
   <section className="flex flex-col gap-2">
-    <h3 className="text-sm font-semibold text-[var(--color-text)]">Body</h3>
+    <h3 className="text-[0.7rem] font-semibold uppercase tracking-[0.22em] text-[var(--color-muted)]">Body</h3>
     <TemplateEditor
       allowedLabels={allowedLabels}
       value={value}

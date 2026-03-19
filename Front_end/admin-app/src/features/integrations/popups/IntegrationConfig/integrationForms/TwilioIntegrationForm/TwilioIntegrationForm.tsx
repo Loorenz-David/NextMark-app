@@ -49,8 +49,9 @@ export const TwilioIntegrationForm = ({
             </Field>
             <CustomInstructions
                 steps={getTwilioSetupInstructions()}
-                className="rounded-lg border border-[var(--color-muted)]/30 bg-white p-3"
-                stepCardClassName="max-w-[50px] bg-[var(--color-page)]"
+                className="rounded-2xl border border-white/[0.08] bg-white/[0.03] p-4"
+                stepCardClassName="min-w-[320px]"
+                stepCardMaxWidth={360}
                 scrollable={true}
             />
         </div>
