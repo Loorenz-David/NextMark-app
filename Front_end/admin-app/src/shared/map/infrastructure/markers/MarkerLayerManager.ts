@@ -28,6 +28,13 @@ const markerZIndex = (status?: string) => {
 
 const getInteractionVariant = (order: MapOrder) => order.interactionVariant ?? 'default'
 
+const addClassTokens = (el: HTMLElement, className?: string | null) => {
+  if (!className) return
+  const tokens = className.split(/\s+/).filter(Boolean)
+  if (!tokens.length) return
+  el.classList.add(...tokens)
+}
+
 const applyBaseMarkerAppearance = (el: HTMLElement, order: MapOrder) => {
   const interactionVariant = getInteractionVariant(order)
   el.className = 'map-marker'
@@ -46,7 +53,7 @@ const applyBaseMarkerAppearance = (el: HTMLElement, order: MapOrder) => {
   }
 
   if (order.className) {
-    el.classList.add(order.className)
+    addClassTokens(el, order.className)
   }
 
   applyMarkerContent(el, order.label)

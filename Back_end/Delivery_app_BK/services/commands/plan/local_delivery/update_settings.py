@@ -1,9 +1,13 @@
 import logging
+from datetime import datetime, timezone
+from uuid import uuid4
 
 from Delivery_app_BK.models import db
+from Delivery_app_BK.sockets.notifications import notify_delivery_planning_event
 from Delivery_app_BK.services.commands.plan.local_delivery.route_solution.update_route_solution_from_plan import (
     update_route_solution_from_plan,
 )
+from Delivery_app_BK.services.domain.plan.route_freshness import touch_route_freshness
 from Delivery_app_BK.services.context import ServiceContext
 from Delivery_app_BK.services.requests.plan.local_delivery.update_settings import (
     LocalDeliverySettingsRequest,
@@ -21,6 +25,7 @@ from .event_helpers import (
     create_route_solution_stop_event,
 )
 from Delivery_app_BK.sockets.contracts.realtime import (
+    BUSINESS_EVENT_DELIVERY_PLAN_UPDATED,
     BUSINESS_EVENT_LOCAL_DELIVERY_PLAN_UPDATED,
     BUSINESS_EVENT_ROUTE_SOLUTION_UPDATED,
     BUSINESS_EVENT_ROUTE_SOLUTION_STOP_UPDATED,
@@ -98,6 +103,8 @@ def apply_local_delivery_settings_request(
         or stops_changed
         or reset_route_execution_timing
     )
+    if plan_window_changed or request.delivery_plan.has_label or route_solution_changed:
+        touch_route_freshness(delivery_plan)
 
     db.session.add(delivery_plan)
     db.session.add(local_delivery_plan)
@@ -112,6 +119,23 @@ def apply_local_delivery_settings_request(
 
     # Emit real-time events after commit
     team_id = ctx.team_id
+
+    if plan_window_changed or request.delivery_plan.has_label:
+        notify_delivery_planning_event(
+            event_id=str(uuid4()),
+            event_name=BUSINESS_EVENT_DELIVERY_PLAN_UPDATED,
+            team_id=team_id,
+            entity_type="delivery_plan",
+            entity_id=delivery_plan.id,
+            payload={
+                "delivery_plan_id": delivery_plan.id,
+                "label": delivery_plan.label,
+                "plan_type": delivery_plan.plan_type,
+                "route_freshness_updated_at": delivery_plan.updated_at.isoformat() if delivery_plan.updated_at else None,
+            },
+            occurred_at=delivery_plan.updated_at or datetime.now(timezone.utc),
+            actor=None,
+        )
     
     # Emit event if route_solution driver changed (CRITICAL: driver assignment)
     if route_solution.driver_id != old_route_solution_driver_id:

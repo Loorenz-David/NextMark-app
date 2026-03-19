@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime, time as time_cls, timezone, timedelta
+import logging
 from typing import Any, Dict, List, Optional, Tuple
 
 from Delivery_app_BK.errors import ValidationFailed
@@ -37,6 +38,8 @@ DEFAULT_ROUTE_MODIFIERS = {
     "avoid_highways": False,
     "avoid_ferries": False,
 }
+
+logger = logging.getLogger(__name__)
 
 
 def build_directions_request(
@@ -408,6 +411,7 @@ def _resolve_departure_time(
     time_zone: str = None
 ) -> Optional[datetime]:
     now = datetime.now(timezone.utc)
+    min_start = now + timedelta(minutes=5)
 
     plan_start = None
     timezone_plan = None
@@ -425,16 +429,24 @@ def _resolve_departure_time(
     if route_solution.set_start_time:
         parsed = _coerce_datetime(route_solution.set_start_time)
         if parsed:
-            return parsed
+            return parsed if parsed >= min_start else min_start
         time_only = parse_hhmm(route_solution.set_start_time)
         if time_only:
-            return combine_plan_date_and_local_hhmm_to_utc(
+            resolved_departure = combine_plan_date_and_local_hhmm_to_utc(
                 plan_date=plan_start or now,
                 hhmm=route_solution.set_start_time,
                 tz=request_timezone,
             )
+            if resolved_departure >= min_start:
+                return resolved_departure
+            logger.info(
+                "Clamping past local-delivery departure time route_id=%s requested_departure=%s clamped_departure=%s",
+                getattr(route_solution, "id", None),
+                resolved_departure.isoformat() if resolved_departure else None,
+                min_start.isoformat(),
+            )
+            return min_start
 
-    min_start = now + timedelta(minutes=5)
     if plan_start:
         plan_start = ensure_utc_datetime(plan_start)
         return plan_start if plan_start > min_start else min_start

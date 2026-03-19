@@ -34,6 +34,10 @@ import type {
 } from '../api'
 import {
   applyRouteActionResult,
+  applyAssignedRouteOrderCommandDeltas,
+  createAssignedRouteOrdersSnapshotByServerIds,
+  patchAssignedRouteOrderStateByServerIds,
+  restoreAssignedRouteOrdersSnapshot,
   setRouteActionFailure,
   setRouteActionSubmitting,
 } from '../stores/routeExecution.mutations'
@@ -140,12 +144,17 @@ export async function submitRouteActionFlow({
     : null
 
   const didSucceed = await optimisticTransaction({
-    snapshot: () => createOrdersSnapshotByServerIds(
-      typeof command.orderId === 'number' ? [command.orderId] : [],
-    ),
+    snapshot: () => {
+      const orderIds = typeof command.orderId === 'number' ? [command.orderId] : []
+      return {
+        sharedOrders: createOrdersSnapshotByServerIds(orderIds),
+        assignedRouteOrders: createAssignedRouteOrdersSnapshotByServerIds(store, orderIds),
+      }
+    },
     mutate: () => {
       if (typeof command.orderId === 'number' && optimisticOrderStateId != null) {
         patchOrderStateByServerIds([command.orderId], optimisticOrderStateId)
+        patchAssignedRouteOrderStateByServerIds(store, [command.orderId], optimisticOrderStateId)
       }
 
       if (optimisticOrderCase) {
@@ -164,6 +173,7 @@ export async function submitRouteActionFlow({
       if (isOrderCommandResult(requestResult)) {
         const mappedOrders = mapOrderCommandDeltas(requestResult.orders)
         applyOrderCommandDeltas(mappedOrders)
+        applyAssignedRouteOrderCommandDeltas(store, mappedOrders)
       }
 
       if (
@@ -192,7 +202,12 @@ export async function submitRouteActionFlow({
       }
     },
     rollback: (snapshot) => {
-      restoreOrdersSnapshot(snapshot as ReturnType<typeof createOrdersSnapshotByServerIds>)
+      const optimisticSnapshot = snapshot as {
+        sharedOrders: ReturnType<typeof createOrdersSnapshotByServerIds>
+        assignedRouteOrders: ReturnType<typeof createAssignedRouteOrdersSnapshotByServerIds>
+      }
+      restoreOrdersSnapshot(optimisticSnapshot.sharedOrders)
+      restoreAssignedRouteOrdersSnapshot(store, optimisticSnapshot.assignedRouteOrders)
 
       if (command.type === 'fail-stop') {
         if (command.orderCaseClientId) {

@@ -9,13 +9,15 @@ import { useCaseDetailsContext } from '../../context/details/caseDetails.context
 import { CaseDetailsPageProvider } from '../../context/details/caseDetails.provider'
 
 type OrderCaseDetailsPayload = {
-  orderCaseClientId: string
+  orderCaseClientId?: string
+  orderCaseId?: number
+  freshAfter?: string | null
 }
 
 const BOTTOM_STICKY_THRESHOLD_PX = 48
 
 const CaseDetailsPageContent = () => {
-  const { orderCase, detailsActions, currentUserId } = useCaseDetailsContext()
+  const { orderCase, detailsActions, currentUserId, isRefreshing } = useCaseDetailsContext()
 
   const chatScrollRef = useRef<HTMLDivElement | null>(null)
   const shouldStickToBottomRef = useRef(true)
@@ -96,7 +98,7 @@ const CaseDetailsPageContent = () => {
   if (!orderCase) {
     return (
       <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-page)] p-4 text-sm text-[var(--color-muted)]">
-        Case not found.
+        {isRefreshing ? 'Loading case details...' : 'Case not found.'}
       </div>
     )
   }
@@ -111,6 +113,11 @@ const CaseDetailsPageContent = () => {
       />
 
       <div ref={chatScrollRef} className="flex-1 overflow-y-auto scroll-thin p-3" onScroll={handleScroll}>
+        {isRefreshing ? (
+          <div className="mb-3 rounded-lg border border-[var(--color-border)] bg-[var(--color-page)] p-3 text-xs text-[var(--color-muted)]">
+            Refreshing case details...
+          </div>
+        ) : null}
         <OrderCaseChatList chats={orderCase.chats} currentUserId={currentUserId} />
       </div>
 
@@ -141,8 +148,9 @@ const CaseDetailsPageContent = () => {
 
 export const CaseDetailsPage = ({ payload, onClose }: StackComponentProps<OrderCaseDetailsPayload>) => {
   const orderCaseClientId = payload?.orderCaseClientId
+  const orderCaseId = payload?.orderCaseId
 
-  if (!orderCaseClientId) {
+  if (!orderCaseClientId && typeof orderCaseId !== 'number') {
     return (
       <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-page)] p-4 text-sm text-[var(--color-muted)]">
         Missing case id.
@@ -151,7 +159,12 @@ export const CaseDetailsPage = ({ payload, onClose }: StackComponentProps<OrderC
   }
 
   return (
-    <CaseDetailsPageProvider orderCaseClientId={orderCaseClientId} onClose={onClose}>
+    <CaseDetailsPageProvider
+      orderCaseClientId={orderCaseClientId ?? null}
+      orderCaseId={orderCaseId ?? null}
+      freshAfter={payload?.freshAfter ?? null}
+      onClose={onClose}
+    >
       <CaseDetailsPageContent />
     </CaseDetailsPageProvider>
   )

@@ -4,6 +4,13 @@ import type { MapMarkerOperationDirection } from '../domain/entities/MapOrder'
 const CONTENT_CLASS = 'map-marker__content'
 const BADGES_CLASS = 'map-marker__operation-badges'
 
+const addClassTokens = (el: HTMLElement, className?: string | null) => {
+  if (!className) return
+  const tokens = className.split(/\s+/).filter(Boolean)
+  if (!tokens.length) return
+  el.classList.add(...tokens)
+}
+
 const ensureMarkerContentElement = (el: HTMLElement): HTMLElement => {
   const existing = el.querySelector(`.${CONTENT_CLASS}`) as HTMLElement | null
   if (existing) return existing
@@ -72,7 +79,7 @@ export function createMarkerElement(order: MapOrder) {
   }
 
   if (order.className) {
-    el.classList.add(order.className)
+    addClassTokens(el, order.className)
   }
 
   applyMarkerContent(el, order.label)

@@ -1,9 +1,13 @@
+from datetime import datetime, timezone
+from uuid import uuid4
+
 from sqlalchemy.exc import InvalidRequestError
 
 from Delivery_app_BK.models import db, DeliveryPlan, RouteSolution, DeliveryPlanState, Team, Order
 from Delivery_app_BK.services.domain.plan.plan_states import PlanStateId
 from Delivery_app_BK.services.infra.events.emiters.order import emit_order_events
 from Delivery_app_BK.sockets.emitters.route_solution_events import emit_route_solution_created
+from Delivery_app_BK.sockets.notifications import notify_delivery_planning_event
 from Delivery_app_BK.services.commands.order.update_order_delivery_plan import (
     apply_orders_delivery_plan_change,
 )
@@ -116,6 +120,29 @@ def create_plan(ctx: ServiceContext):
 
     for route_solution in created_route_solutions:
         emit_route_solution_created(route_solution)
+
+    for bundle in created_bundles:
+        delivery_plan = bundle.get("delivery_plan") or {}
+        if delivery_plan.get("plan_type") != "local_delivery":
+            continue
+        plan_id = delivery_plan.get("id")
+        if not isinstance(plan_id, int):
+            continue
+        notify_delivery_planning_event(
+            event_id=str(uuid4()),
+            event_name="delivery_plan.created",
+            team_id=ctx.team_id,
+            entity_type="delivery_plan",
+            entity_id=plan_id,
+            payload={
+                "delivery_plan_id": plan_id,
+                "label": delivery_plan.get("label"),
+                "plan_type": delivery_plan.get("plan_type"),
+                "route_freshness_updated_at": delivery_plan.get("updated_at"),
+            },
+            occurred_at=datetime.now(timezone.utc),
+            actor=None,
+        )
 
     return {"created": created_bundles}
 

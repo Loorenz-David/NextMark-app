@@ -37,23 +37,46 @@ def build_order_created_event(order_instance: Order) -> dict:
     }
 
 
+def build_order_edited_event(
+    order_instance: Order,
+    *,
+    changed_sections: list[str] | None = None,
+) -> dict:
+    payload = {}
+    if changed_sections:
+        payload["changed_sections"] = changed_sections
+
+    return {
+        "order_id": order_instance.id,
+        "team_id": order_instance.team_id,
+        "event_name": OrderEvent.EDITED.value,
+        "payload": payload,
+    }
+
+
 def build_delivery_window_rescheduled_by_user_event(
     order_instance: Order,
     old_earliest: datetime | None,
     old_latest: datetime | None,
     new_earliest: datetime | None,
     new_latest: datetime | None,
+    *,
+    changed_sections: list[str] | None = None,
 ) -> dict:
+    payload = {
+        "old_earliest_delivery_date": old_earliest.isoformat() if old_earliest else None,
+        "old_latest_delivery_date": old_latest.isoformat() if old_latest else None,
+        "new_earliest_delivery_date": new_earliest.isoformat() if new_earliest else None,
+        "new_latest_delivery_date": new_latest.isoformat() if new_latest else None,
+    }
+    if changed_sections:
+        payload["changed_sections"] = changed_sections
+
     return {
         "order_id": order_instance.id,
         "team_id": order_instance.team_id,
         "event_name": OrderEvent.DELIVERY_WINDOW_RESCHEDULED_BY_USER.value,
-        "payload": {
-            "old_earliest_delivery_date": old_earliest.isoformat() if old_earliest else None,
-            "old_latest_delivery_date": old_latest.isoformat() if old_latest else None,
-            "new_earliest_delivery_date": new_earliest.isoformat() if new_earliest else None,
-            "new_latest_delivery_date": new_latest.isoformat() if new_latest else None,
-        },
+        "payload": payload,
     }
 
 

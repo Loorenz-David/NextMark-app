@@ -1,20 +1,9 @@
 import type { AssignedRouteViewModel } from '@/app/contracts/routeExecution.types'
+import { formatIsoToTeamTime } from '@/app/utils/teamTimeZone'
 import type { AssignedRoutePageDisplay } from './assignedRouteDisplay.types'
 
 function formatTimeLabel(value: string | null | undefined) {
-  if (!value) {
-    return null
-  }
-
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) {
-    return null
-  }
-
-  return new Intl.DateTimeFormat('sv-SE', {
-    hour: '2-digit',
-    minute: '2-digit',
-  }).format(date)
+  return formatIsoToTeamTime(value, { locale: 'sv-SE' })
 }
 
 function formatDistanceLabel(distanceMeters: number | null | undefined) {

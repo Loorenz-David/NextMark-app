@@ -7,6 +7,10 @@ from Delivery_app_BK.directions import refresh_route_solution_incremental
 from Delivery_app_BK.models import RouteSolutionStop
 from Delivery_app_BK.services.context import ServiceContext
 from Delivery_app_BK.services.domain.local_delivery import clear_expected_stop_schedule
+from Delivery_app_BK.services.domain.local_delivery.route_lifecycle import (
+    INCREMENTAL_RECOMPUTE,
+    refresh_local_delivery_route_execution,
+)
 
 
 def build_incremental_route_sync_action(
@@ -20,27 +24,26 @@ def build_incremental_route_sync_action(
 ) -> Callable[[], None]:
     def _sync() -> None:
         for route_id, start_position in starts_by_route_id.items():
-            route_solution = route_solutions_by_id.get(route_id)
-            if not route_solution:
+            if route_id not in route_solutions_by_id:
                 continue
 
-            orders_by_id = (
-                orders_by_route_solution_resolver(route_solution)
-                if orders_by_route_solution_resolver
-                else _default_orders_by_route_solution(route_solution)
-            )
-
             try:
-                changed_stops = refresh_route_solution_incremental(
-                    route_solution=route_solution,
-                    orders_by_id=orders_by_id,
+                route_solution, changed_stops = refresh_local_delivery_route_execution(
+                    route_id,
+                    recompute_mode=INCREMENTAL_RECOMPUTE,
                     recompute_from_position=start_position,
                     time_zone=ctx.time_zone,
+                    warning_sink=ctx,
                 )
+                if route_solution is None:
+                    continue
                 synced_stops.extend(changed_stops or [])
                 if changed_route_solutions is not None:
                     changed_route_solutions.append(route_solution)
             except Exception as exc:
+                route_solution = route_solutions_by_id.get(route_id)
+                if not route_solution:
+                    continue
                 synced_stops.extend(mark_route_stops_stale(route_solution, start_position))
                 if changed_route_solutions is not None:
                     changed_route_solutions.append(route_solution)

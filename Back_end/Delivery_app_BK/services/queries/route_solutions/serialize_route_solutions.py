@@ -41,6 +41,7 @@ def serialize_route_solution(instance: RouteSolution) -> dict:
         "route_end_strategy": instance.route_end_strategy,
         "local_delivery_plan_id":instance.local_delivery_plan_id,
         "created_at": created_at.isoformat() if created_at else None,
+        "updated_at": instance.updated_at.isoformat() if instance.updated_at else None,
     }
 
 
@@ -54,6 +55,7 @@ def serialize_route_solution_partial(instance: RouteSolution) -> dict:
         "score": instance.score,
         "total_distance_meters": instance.total_distance_meters,
         "total_travel_time_seconds": instance.total_travel_time_seconds,
+        "updated_at": instance.updated_at.isoformat() if instance.updated_at else None,
     }
 
 

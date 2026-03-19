@@ -3,6 +3,7 @@ import { LocalDeliveryPageContent } from './LocalDeliveryPageContent.page'
 
 type PlanOrdersPagePayload = {
   planId?: number 
+  freshAfter?: string | null
 }
 
 type LocalDeliveryPageProps = {

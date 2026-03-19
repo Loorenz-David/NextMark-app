@@ -80,6 +80,7 @@ export default defineConfig({
       { find: /^framer-motion$/, replacement: path.resolve(__dirname, './node_modules/framer-motion/dist/es/index.mjs') },
       { find: '@shared-domain', replacement: path.resolve(__dirname, '../packages/shared-domain') },
       { find: '@shared-api', replacement: path.resolve(__dirname, '../packages/shared-api') },
+      { find: '@shared-utils', replacement: path.resolve(__dirname, '../packages/shared-utils/src') },
       { find: '@shared-store', replacement: path.resolve(__dirname, '../packages/shared-store/src') },
       { find: '@shared-optimistic', replacement: path.resolve(__dirname, '../packages/shared-optimistic/src') },
       { find: '@shared-message-handler', replacement: path.resolve(__dirname, '../packages/shared-message-handler/src') },

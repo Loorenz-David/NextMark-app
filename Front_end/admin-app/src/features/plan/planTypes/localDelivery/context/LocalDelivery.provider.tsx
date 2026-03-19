@@ -20,6 +20,7 @@ import { useMobile } from '@/app/contexts/MobileContext'
 import { useBaseControlls, usePopupManager, useSectionManager } from '@/shared/resource-manager/useResourceManager'
 import { useRouteSolutionWarningRegistry } from '@/features/plan/planTypes/localDelivery/hooks/useRouteSolutionWarningRegistry'
 import { useLoadingController } from '../controllers/useLoadingController'
+import type { PayloadBase } from '@/features/home/types/types'
 
 type LocalDeliveryProviderProps = {
   planId: number
@@ -30,7 +31,7 @@ export function LocalDeliveryProvider({ planId, children }: LocalDeliveryProvide
   const { isMobile } = useMobile()
   const sectionManager = useSectionManager()
   const popupManager = usePopupManager()
-  const baseControls = useBaseControlls<{ ordersPlanType: string | null; planId?: number | null }>()
+  const baseControls = useBaseControlls<PayloadBase>()
   
   const isLocalDeliveryActive =
     baseControls.isBaseOpen && baseControls.payload?.ordersPlanType === 'local_delivery'
@@ -88,7 +89,7 @@ export function LocalDeliveryProvider({ planId, children }: LocalDeliveryProvide
   })
   useLocalDeliveryCircleSelectionFlow(isLocalDeliveryActive)
 
-  useLocalDeliveryBootstrapFlow(planId)
+  useLocalDeliveryBootstrapFlow(planId, baseControls.payload?.freshAfter ?? null)
   useLocalDeliveryEscapeFlow({
     isMobile,
     baseControls,

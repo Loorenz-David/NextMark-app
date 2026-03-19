@@ -1,31 +1,27 @@
-import { useMemo } from 'react'
+import { useMemo, useSyncExternalStore } from 'react'
 import { useDriverOrderStateRegistry } from '@/features/order-states'
+import { useRouteExecutionShell } from '../providers/routeExecutionShell.context'
 import {
-  selectAllOrders,
-  selectSelectedRoute,
-  selectStopsByRouteRecord,
-  useOrdersStore,
-  useRoutesSelectionStore,
-  useRoutesStore,
-  useStopsStore,
-} from '@/features/routes'
-import { createDriverOrderLookup, mapDriverRouteRecordToAssignedRouteViewModel } from '../domain/mapActiveRoutesToAssignedRouteViewModel'
+  selectAssignedRoute,
+  selectRouteExecutionWorkspaceState,
+} from '../stores/routeExecution.selectors'
 
 export function useSelectedAssignedRoute() {
+  const { store } = useRouteExecutionShell()
   const orderStateRegistry = useDriverOrderStateRegistry()
-  const routesState = useRoutesStore((state) => state)
-  const routesSelectionState = useRoutesSelectionStore((state) => state)
-  const ordersState = useOrdersStore((state) => state)
-  const stopsState = useStopsStore((state) => state)
+  const orderStateIds = {
+    processingId: orderStateRegistry.getStateIdByName('Processing'),
+    completedId: orderStateRegistry.getStateIdByName('Completed'),
+    failId: orderStateRegistry.getStateIdByName('Fail'),
+  }
+  const workspaceState = useSyncExternalStore(
+    store.subscribe,
+    () => selectRouteExecutionWorkspaceState(store.getState()),
+    () => selectRouteExecutionWorkspaceState(store.getState()),
+  )
 
-  return useMemo(() => {
-    const selectedRoute = selectSelectedRoute(routesSelectionState, routesState)
-    const orderLookup = createDriverOrderLookup(selectAllOrders(ordersState))
-    const routeStops = selectStopsByRouteRecord(stopsState, selectedRoute)
-    return mapDriverRouteRecordToAssignedRouteViewModel(selectedRoute, orderLookup, routeStops, {
-      processingId: orderStateRegistry.getStateIdByName('Processing'),
-      completedId: orderStateRegistry.getStateIdByName('Completed'),
-      failId: orderStateRegistry.getStateIdByName('Fail'),
-    })
-  }, [orderStateRegistry, ordersState, routesSelectionState, routesState, stopsState])
+  return useMemo(
+    () => selectAssignedRoute({ workspace: workspaceState }, orderStateIds),
+    [orderStateIds, workspaceState],
+  )
 }

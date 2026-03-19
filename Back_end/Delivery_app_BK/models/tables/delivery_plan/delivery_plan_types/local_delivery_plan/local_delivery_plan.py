@@ -26,6 +26,11 @@ class LocalDeliveryPlan(db.Model, TeamScopedMixin):
     # record of the actual start and end time after completion.
     actual_start_time = Column(UTCDateTime)
     actual_end_time = Column(UTCDateTime)
+    updated_at = Column(
+        UTCDateTime,
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
+    )
  
     
 

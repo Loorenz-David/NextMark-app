@@ -5,8 +5,11 @@ import { OrderCaseMainProvider, useOrderCaseMainContext } from '../providers'
 
 type OrderCaseMainPageProps = {
   orderId: number
-  orderClientId: string
-  stopClientId: string
+  orderClientId?: string
+  stopClientId?: string
+  initialOrderCaseId?: number
+  initialOrderCaseClientId?: string
+  freshAfter?: string | null
   onClose: () => void
 }
 
@@ -50,10 +53,19 @@ function OrderCaseMainPageContent() {
 
 export function OrderCaseMainPage({
   orderId,
+  freshAfter,
+  initialOrderCaseClientId,
+  initialOrderCaseId,
   onClose,
 }: OrderCaseMainPageProps) {
   return (
-    <OrderCaseMainProvider closeOverlay={onClose} orderId={orderId}>
+    <OrderCaseMainProvider
+      closeOverlay={onClose}
+      freshAfter={freshAfter}
+      initialOrderCaseClientId={initialOrderCaseClientId}
+      initialOrderCaseId={initialOrderCaseId}
+      orderId={orderId}
+    >
       <OrderCaseMainPageContent />
     </OrderCaseMainProvider>
   )

@@ -63,6 +63,11 @@ class RouteSolutionStop(db.Model, TeamScopedMixin, ServiceTimeJSONValidationMixi
     # Future: used to compute service duration
     # service_duration_seconds = actual_departure_time - actual_arrival_time
     actual_departure_time = Column(UTCDateTime)
+    updated_at = Column(
+        UTCDateTime,
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
+    )
     to_next_polyline = Column(JSONB, nullable=True)
 
     route_solution = relationship(

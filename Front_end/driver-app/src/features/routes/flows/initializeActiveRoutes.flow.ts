@@ -2,8 +2,6 @@ import type { DriverWorkspaceScopeKey } from '@/app/contracts/driverSession.type
 import { loadActiveRoutesQuery } from '../actions/loadActiveRoutes.query'
 import { hydrateRoutesSelectionFlow } from './hydrateRoutesSelection.flow'
 import { clearRoutes, setRoutes } from '../stores'
-import { clearOrders, setOrders } from '../orders/stores'
-import { clearStops, setStops } from '../stops/stores'
 
 type InitializeActiveRoutesFlowDependencies = {
   workspaceScopeKey: DriverWorkspaceScopeKey
@@ -17,11 +15,7 @@ async function runInitializeActiveRoutesFlow({
   const payload = await loadActiveRoutesQuery()
 
   clearRoutes()
-  clearOrders()
-  clearStops()
   setRoutes(payload.routes)
-  setOrders(payload.orders)
-  setStops(payload.stops)
   hydrateRoutesSelectionFlow({ workspaceScopeKey })
 
   return payload

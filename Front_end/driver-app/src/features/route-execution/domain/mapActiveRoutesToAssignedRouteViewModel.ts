@@ -6,8 +6,10 @@ import type {
 } from '@/app/contracts/routeExecution.types'
 import type { DriverOrderStateIds } from '@/features/order-states'
 import type { RouteSolution, RouteSolutionStop, Order, Phone, address } from '@shared-domain'
-import type { ActiveRoutesQueryResult, DriverOrderRecord, DriverRouteRecord } from '@/features/routes'
+import type { ActiveRoutesPayload, DriverOrderRecord, DriverRouteRecord } from '@/features/routes'
+import type { RouteOrdersPayload } from '@/features/routes/orders/domain/orders.types'
 import type { DriverRouteStopRecord } from '@/features/routes/stops'
+import type { RouteStopsPayload } from '@/features/routes/stops/domain/stops.types'
 
 function mapPhone(value: unknown): Phone | null {
   if (
@@ -348,26 +350,26 @@ function mapRoute(route: DriverRouteRecord): RouteSolution {
     id: route.id,
     client_id: route.client_id,
     _representation: route._representation,
-    score: route.score,
-    label: route.label,
+    score: route.score ?? null,
+    label: route.label ?? null,
     is_selected: route.is_selected,
-    is_optimized: route.is_optimized,
+    is_optimized: route.is_optimized ?? null,
     start_leg_polyline: typeof route.start_leg_polyline === 'string' ? route.start_leg_polyline : null,
     end_leg_polyline: typeof route.end_leg_polyline === 'string' ? route.end_leg_polyline : null,
-    total_distance_meters: route.total_distance_meters,
-    total_travel_time_seconds: route.total_travel_time_seconds,
-    expected_start_time: route.expected_start_time,
-    expected_end_time: route.expected_end_time,
-    actual_start_time: route.actual_start_time,
-    actual_end_time: route.actual_end_time,
+    total_distance_meters: route.total_distance_meters ?? null,
+    total_travel_time_seconds: route.total_travel_time_seconds ?? null,
+    expected_start_time: route.expected_start_time ?? null,
+    expected_end_time: route.expected_end_time ?? null,
+    actual_start_time: route.actual_start_time ?? null,
+    actual_end_time: route.actual_end_time ?? null,
     created_at: route.created_at,
-    start_location: mapAddress(route.start_location),
-    end_location: mapAddress(route.end_location),
+    start_location: mapAddress(route.start_location ?? null),
+    end_location: mapAddress(route.end_location ?? null),
     route_end_strategy: (route.route_end_strategy ?? 'end_at_last_stop') as RouteSolution['route_end_strategy'],
-    set_start_time: route.set_start_time,
-    set_end_time: route.set_end_time,
-    eta_tolerance_seconds: route.eta_tolerance_seconds,
-    stops_service_time: route.stops_service_time as RouteSolution['stops_service_time'],
+    set_start_time: route.set_start_time ?? null,
+    set_end_time: route.set_end_time ?? null,
+    eta_tolerance_seconds: route.eta_tolerance_seconds ?? null,
+    stops_service_time: (route.stops_service_time ?? null) as RouteSolution['stops_service_time'],
     driver_id: route.driver_id,
     local_delivery_plan_id: route.local_delivery_plan_id,
     has_route_warnings: route.has_route_warnings ?? undefined,
@@ -456,7 +458,7 @@ function buildAssignedStops(
 }
 
 export function mapActiveRoutesToAssignedRouteViewModel(
-  payload: ActiveRoutesQueryResult,
+  payload: ActiveRoutesPayload & RouteOrdersPayload & RouteStopsPayload,
   orderStateIds: DriverOrderStateIds,
 ): AssignedRouteViewModel | null {
   const route =
@@ -498,11 +500,11 @@ export function mapDriverRouteRecordToAssignedRouteViewModel(
   return {
     routeClientId: route.client_id,
     label: route.label ?? route.delivery_plan?.label ?? 'Assigned route',
-    score: route.score,
+    score: route.score ?? null,
     deliveryPlanStartDate: route.delivery_plan?.start_date ?? null,
     deliveryPlanEndDate: route.delivery_plan?.end_date ?? null,
-    startLocation: mapAddress(route.start_location),
-    endLocation: mapAddress(route.end_location),
+    startLocation: mapAddress(route.start_location ?? null),
+    endLocation: mapAddress(route.end_location ?? null),
     activeStopClientId: assignedStops.activeStopClientId,
     completedStops: assignedStops.completedStops,
     totalStops: assignedStops.stops.length,

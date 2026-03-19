@@ -46,6 +46,7 @@ export type DeliveryPlan = {
   start_date?: string | null
   end_date?: string | null
   created_at?: string | null
+  updated_at?: string | null
   orders_ids?: number[]
   state_id?: number | null
   total_orders?: number | null

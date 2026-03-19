@@ -17,6 +17,7 @@ export type OrderCase = {
   label?: string | null
   state: OrderCaseState
   creation_date: string
+  updated_at?: string | null
   created_by?: number | null
   unseen_chats: number
   order_reference?: string | number

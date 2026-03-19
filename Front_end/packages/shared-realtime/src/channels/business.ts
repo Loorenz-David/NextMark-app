@@ -85,7 +85,8 @@ export const createRouteOrdersChannel = (client: SharedRealtimeClient) => ({
       }
 
       if (
-        event.event_name === 'order.updated'
+        event.event_name === 'order.created'
+        || event.event_name === 'order.updated'
         || event.event_name === 'order.state_changed'
         || event.event_name === 'order_case.created'
         || event.event_name === 'order_case.updated'
@@ -136,6 +137,8 @@ export const createTeamMembersChannel = (client: SharedRealtimeClient) => ({
       if (
         event.event_name === 'route_solution.created'
         || event.event_name === 'route_solution.updated'
+        || event.event_name === 'route_solution.deleted'
+        || event.event_name === 'route_solution_stop.updated'
         || event.event_name === 'local_delivery_plan.updated'
       ) {
         handler(event)

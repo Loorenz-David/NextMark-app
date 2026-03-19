@@ -1,13 +1,18 @@
 from __future__ import annotations
 
 from datetime import datetime
+import logging
 from typing import Tuple
 
-from Delivery_app_BK.directions import refresh_route_solution
 from Delivery_app_BK.models import RouteSolution
 from Delivery_app_BK.route_optimization.constants.is_optimized import (
     IS_OPTIMIZED_NOT_OPTIMIZED,
     IS_OPTIMIZED_PARTIAL,
+)
+from Delivery_app_BK.services.domain.local_delivery.route_lifecycle import (
+    FULL_RECOMPUTE,
+    refresh_local_delivery_route_execution,
+    refresh_local_delivery_route_execution_instance,
 )
 
 from .clone import clone_route_solution
@@ -19,6 +24,8 @@ from .plan_sync.expectations import (
 )
 from .plan_sync.stop_window_updates import apply_time_window_update
 from .plan_sync.window import resolve_window, validate_window
+
+logger = logging.getLogger(__name__)
 
 
 def update_route_solution_from_plan(
@@ -73,12 +80,6 @@ def update_route_solution_from_plan(
     if has_address_change or has_service_time_change:
         if route_solution.is_optimized != IS_OPTIMIZED_NOT_OPTIMIZED:
             route_solution.is_optimized = IS_OPTIMIZED_PARTIAL
-            refresh_route_solution(
-                route_solution,
-                time_zone=time_zone,
-                orders_by_id=_orders_by_id(route_solution),
-            )
-            stops_changed = True
 
     if has_time_change and route_solution.is_optimized != IS_OPTIMIZED_NOT_OPTIMIZED:
         route_solution.is_optimized = IS_OPTIMIZED_PARTIAL
@@ -122,6 +123,32 @@ def update_route_solution_from_plan(
 
     allowed_end = new_window[1] if new_window else None
     sync_route_end_warning(route_solution, allowed_end)
+
+    requires_route_refresh = bool(
+        any(getattr(stop, "order_id", None) for stop in (route_solution.stops or []))
+        and (has_address_change or has_service_time_change or has_time_change or window_changed)
+    )
+    if requires_route_refresh:
+        if route_solution.id is not None:
+            route_solution, refreshed_stops = refresh_local_delivery_route_execution(
+                route_solution.id,
+                recompute_mode=FULL_RECOMPUTE,
+                recompute_from_position=1,
+                time_zone=time_zone,
+            )
+        else:
+            route_solution, refreshed_stops = refresh_local_delivery_route_execution_instance(
+                route_solution,
+                recompute_mode=FULL_RECOMPUTE,
+                recompute_from_position=1,
+                time_zone=time_zone,
+            )
+        stops_changed = stops_changed or bool(refreshed_stops)
+        logger.info(
+            "Refreshed local-delivery route timings route_id=%s mode=%s",
+            getattr(route_solution, "id", None),
+            FULL_RECOMPUTE,
+        )
 
     return route_solution, stops_changed, original_route_solution
 

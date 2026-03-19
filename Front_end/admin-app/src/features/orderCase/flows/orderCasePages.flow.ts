@@ -1,4 +1,5 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import { shouldRefreshForFreshness } from '@shared-utils'
 
 import { useOrderCaseByClientId,   useOrderCasesByOrderId, useVisibleOrderCases } from '../store/orderCaseStore'
 import { useOrderCaseFlow } from './orderCase.flow'
@@ -53,18 +54,55 @@ export const useOrderCasesByOrderFlow = (orderId: number | null) => {
   }
 }
 
-export const useOrderCaseDetailsFlow = (orderCaseClientId: string ) => {
+export const useOrderCaseDetailsFlow = (
+  orderCaseClientId: string | null,
+  orderCaseIdFromPayload: number | null,
+  freshAfter?: string | null,
+) => {
   const { loadCaseDetails } = useOrderCaseFlow()
   const { markCaseChatsAsRead } = useDetailsControllers()
+  const [isRefreshing, setIsRefreshing] = useState(false)
+  const lastRefreshAttemptRef = useRef<string | null>(null)
 
   const orderCase = useOrderCaseByClientId(orderCaseClientId)
-  const orderCaseId = orderCase?.id
+  const orderCaseId = orderCase?.id ?? orderCaseIdFromPayload
+  const shouldRefresh = orderCase == null || shouldRefreshForFreshness(orderCase.updated_at ?? null, freshAfter)
 
   useEffect(() => {
-    if (orderCase == null || !orderCaseId ) return
-    
-    void loadCaseDetails(orderCaseId)
-  }, [orderCaseId])
+    if (!orderCaseId) {
+      lastRefreshAttemptRef.current = null
+      return
+    }
+    if (!shouldRefresh) {
+      lastRefreshAttemptRef.current = null
+      return
+    }
+
+    const refreshKey = `${orderCaseId}:${freshAfter ?? ''}`
+    if (lastRefreshAttemptRef.current === refreshKey) {
+      return
+    }
+    lastRefreshAttemptRef.current = refreshKey
+
+    let cancelled = false
+
+    const refreshCase = async () => {
+      setIsRefreshing(true)
+      try {
+        await loadCaseDetails(orderCaseId)
+      } finally {
+        if (!cancelled) {
+          setIsRefreshing(false)
+        }
+      }
+    }
+
+    void refreshCase()
+
+    return () => {
+      cancelled = true
+    }
+  }, [freshAfter, loadCaseDetails, orderCaseId, shouldRefresh])
 
   useEffect(() => {
     if (!orderCase || !orderCaseId || orderCase.unseen_chats <= 0) return
@@ -73,5 +111,6 @@ export const useOrderCaseDetailsFlow = (orderCaseClientId: string ) => {
 
   return {
     orderCase,
+    isRefreshing,
   }
 }

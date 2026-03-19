@@ -11,6 +11,7 @@ type openOrderDetailProps ={
   clientId?: string; 
   serverId?: number; 
   mode?: 'view' | 'edit' 
+  freshAfter?: string | null
 }
 type parentParamsProps ={
   borderLeft?:string
@@ -150,4 +151,3 @@ export const useOrderActions = () => {
     handleOrderMarkerClick
   }
 }
-

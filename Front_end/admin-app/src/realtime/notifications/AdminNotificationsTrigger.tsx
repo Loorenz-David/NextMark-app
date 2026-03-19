@@ -1,17 +1,20 @@
 import { useMemo, useState, useSyncExternalStore } from 'react'
-import { ArchiveIcon } from '@/assets/icons'
+import { BellIcon, CloseIcon } from '@/assets/icons'
 import { useOrderActions } from '@/features/order/actions/order.actions'
 import { useCaseOrderActions } from '@/features/orderCase/pages/order/order.actions'
 import { BasicButton } from '@/shared/buttons/BasicButton'
 import { FloatingPopover } from '@/shared/popups/FloatingPopover/FloatingPopover'
+import { useBaseControlls } from '@/shared/resource-manager/useResourceManager'
 import { formatIsoDateRelative } from '@/shared/utils/formatIsoDate'
-import { createNotificationsChannel, type NotificationItem } from '@shared-realtime'
+import { createNotificationsChannel } from '@shared-realtime'
 import { adminRealtimeClient } from '@/realtime/client'
+import type { PayloadBase } from '@/features/home/types/types'
 import {
   getAdminNotificationSnapshot,
   markAdminNotificationsReadLocally,
   subscribeAdminNotifications,
 } from './notification.store'
+import { openAdminNotificationTarget } from './adminNotificationTargets'
 
 const notificationsChannel = createNotificationsChannel(adminRealtimeClient)
 
@@ -24,6 +27,7 @@ export function AdminNotificationsTrigger() {
   )
   const { openOrderDetail } = useOrderActions()
   const { openCaseDetails } = useCaseOrderActions()
+  const baseControls = useBaseControlls<PayloadBase>()
 
   const content = useMemo(() => {
     if (items.length === 0) {
@@ -41,41 +45,58 @@ export function AdminNotificationsTrigger() {
         </div>
         <div className="divide-y divide-[var(--color-muted)]/10">
           {items.map((notification) => (
-            <button
+            <div
               key={notification.notification_id}
-              className="flex w-full flex-col gap-2 px-3 py-3 text-left transition hover:bg-[var(--color-page)]/70"
-              data-popover-close
-              onClick={() => {
-                openAdminNotification(notification, {
-                  openOrderDetail,
-                  openCaseDetails,
-                })
-                setIsOpen(false)
-                markAdminNotificationsReadLocally([notification.notification_id])
-                notificationsChannel.markRead([notification.notification_id])
-              }}
-              type="button"
+              className="group flex gap-3 px-3 py-3 transition hover:bg-[var(--color-page)]/70"
             >
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <p className="text-sm font-semibold text-[var(--color-text)]">{notification.title}</p>
-                  <p className="text-sm text-[var(--color-muted)]">{notification.description}</p>
+              <button
+                className="flex min-w-0 flex-1 flex-col gap-2 text-left"
+                data-popover-close
+                onClick={() => {
+                  openAdminNotificationTarget(notification, {
+                    openLocalDeliveryWorkspace: baseControls.openBase,
+                    openOrderDetail,
+                    openCaseDetails,
+                  })
+                  setIsOpen(false)
+                  markAdminNotificationsReadLocally([notification.notification_id])
+                  notificationsChannel.markRead([notification.notification_id])
+                }}
+                type="button"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold text-[var(--color-text)]">{notification.title}</p>
+                    <p className="text-sm text-[var(--color-muted)]">{notification.description}</p>
+                  </div>
+                  <span className="shrink-0 text-xs text-[var(--color-muted)]">
+                    {formatIsoDateRelative(notification.occurred_at) ?? notification.occurred_at}
+                  </span>
                 </div>
-                <span className="shrink-0 text-xs text-[var(--color-muted)]">
-                  {formatIsoDateRelative(notification.occurred_at) ?? notification.occurred_at}
-                </span>
-              </div>
-              {notification.actor_username ? (
-                <span className="text-xs font-medium text-[var(--color-text)]/70">
-                  {notification.actor_username}
-                </span>
-              ) : null}
-            </button>
+                {notification.actor_username ? (
+                  <span className="text-xs font-medium text-[var(--color-text)]/70">
+                    {notification.actor_username}
+                  </span>
+                ) : null}
+              </button>
+
+              <button
+                aria-label="Mark notification as read"
+                className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[var(--color-muted)] opacity-70 transition hover:bg-[var(--color-muted)]/10 hover:opacity-100"
+                onClick={() => {
+                  markAdminNotificationsReadLocally([notification.notification_id])
+                  notificationsChannel.markRead([notification.notification_id])
+                }}
+                type="button"
+              >
+                <CloseIcon className="h-3.5 w-3.5" />
+              </button>
+            </div>
           ))}
         </div>
       </div>
     )
-  }, [items, openCaseDetails, openOrderDetail])
+  }, [baseControls.openBase, items, openCaseDetails, openOrderDetail])
 
   return (
     <FloatingPopover
@@ -94,7 +115,7 @@ export function AdminNotificationsTrigger() {
               onClick: () => setIsOpen((current) => !current),
             }}
           >
-            <ArchiveIcon className="h-5 w-5 " />
+            <BellIcon className="h-5 w-5 " />
           </BasicButton>
           {unreadCount > 0 ? (
             <span className="absolute -right-1 -top-1 inline-flex min-h-5 min-w-5 items-center justify-center rounded-full bg-[rgb(var(--color-danger-r))] px-1 text-[10px] font-semibold text-white">
@@ -107,33 +128,4 @@ export function AdminNotificationsTrigger() {
       {content}
     </FloatingPopover>
   )
-}
-
-function openAdminNotification(
-  notification: NotificationItem,
-  actions: {
-    openOrderDetail: ReturnType<typeof useOrderActions>['openOrderDetail']
-    openCaseDetails: ReturnType<typeof useCaseOrderActions>['openCaseDetails']
-  },
-) {
-  const { target } = notification
-
-  if (target.kind === 'order_detail' && typeof target.params.orderId === 'number') {
-    actions.openOrderDetail(
-      { serverId: target.params.orderId, mode: 'view' },
-      {
-        pageClass: 'bg-[var(--color-muted)]/10',
-        borderLeft: 'rgb(var(--color-light-blue-r),0.7)',
-      },
-    )
-    return
-  }
-
-  if (
-    (target.kind === 'order_case_detail' || target.kind === 'order_case_chat')
-    && typeof target.params.orderCaseClientId === 'string'
-    && target.params.orderCaseClientId
-  ) {
-    actions.openCaseDetails(target.params.orderCaseClientId)
-  }
 }

@@ -22,10 +22,14 @@ export const useCaseOrderActions = ({ onClose }: { onClose?: () => void } = {}) 
   }, [])
 
   const openCaseDetails = useCallback(
-    (orderCaseClientId: string) => {
+    (
+      payload:
+        | string
+        | { orderCaseClientId?: string | null; orderCaseId?: number | null; freshAfter?: string | null },
+    ) => {
       sectionManager.open({
         key: 'orderCase.details',
-        payload: { orderCaseClientId },
+        payload: typeof payload === 'string' ? { orderCaseClientId: payload } : payload,
       })
     },
     [sectionManager],
@@ -50,7 +54,7 @@ export const useCaseOrderActions = ({ onClose }: { onClose?: () => void } = {}) 
       return
     }
 
-    openCaseDetails(newCase.client_id)
+    openCaseDetails({ orderCaseClientId: newCase.client_id })
   }
 
   const removeCase = async (caseClientId: string) => {

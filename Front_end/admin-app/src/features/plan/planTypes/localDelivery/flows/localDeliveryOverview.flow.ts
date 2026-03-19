@@ -11,7 +11,10 @@ import {
   setSelectedRouteSolution,
   upsertRouteSolutions,
 } from '@/features/plan/planTypes/localDelivery/store/routeSolution.store'
-import { upsertRouteSolutionStops } from '@/features/plan/planTypes/localDelivery/store/routeSolutionStop.store'
+import {
+  replaceRouteSolutionStopsForSolution,
+  upsertRouteSolutionStops,
+} from '@/features/plan/planTypes/localDelivery/store/routeSolutionStop.store'
 import { upsertLocalDeliveryPlans } from '@/features/plan/planTypes/localDelivery/store/localDelivery.slice'
 
 const applyOverviewPayload = (
@@ -29,11 +32,18 @@ const applyOverviewPayload = (
     const selected = payload.route_solution.allIds
       .map((clientId) => payload.route_solution.byClientId[clientId])
       .find((solution) => solution.is_selected)
+      ?? payload.route_solution.allIds
+        .map((clientId) => payload.route_solution.byClientId[clientId])
+        .find((solution) => solution?._representation === 'full')
+      ?? payload.route_solution.allIds
+        .map((clientId) => payload.route_solution.byClientId[clientId])
+        .find(Boolean)
     if (selected?.id) {
       setSelectedRouteSolution(selected.id, selected.local_delivery_plan_id ?? null)
+      replaceRouteSolutionStopsForSolution(selected.id, payload.route_solution_stop ?? null)
     }
   }
-  if (payload.route_solution_stop) {
+  if (payload.route_solution_stop && !payload.route_solution) {
     upsertRouteSolutionStops(payload.route_solution_stop)
   }
 }

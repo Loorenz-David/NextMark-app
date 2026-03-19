@@ -1,4 +1,5 @@
 export { initializeActiveRoutesFlow } from './initializeActiveRoutes.flow'
+export { hydrateDriverRouteByIdFlow } from './hydrateDriverRouteById.flow'
 export { hydrateRoutesSelectionFlow } from './hydrateRoutesSelection.flow'
 export { resolveStoredRouteSelectionFlow } from './resolveStoredRouteSelection.flow'
 export { selectRouteFlow } from './selectRoute.flow'

@@ -1,3 +1,5 @@
+from Delivery_app_BK.models import Order, db
+from Delivery_app_BK.services.domain.plan.route_freshness import get_route_freshness_updated_at
 from Delivery_app_BK.services.domain.order.order_events import OrderEvent as StoredOrderEventName
 from Delivery_app_BK.sockets.contracts.realtime import (
     BUSINESS_EVENT_ORDER_CREATED,
@@ -6,7 +8,7 @@ from Delivery_app_BK.sockets.contracts.realtime import (
 )
 from Delivery_app_BK.sockets.emitters.common import build_business_event_envelope, emit_business_event
 from Delivery_app_BK.sockets.notifications import notify_order_event
-from Delivery_app_BK.sockets.emitters.route_orders import emit_route_order_event
+from Delivery_app_BK.sockets.emitters.route_orders import emit_route_order_event, resolve_route_ids_for_order
 from Delivery_app_BK.sockets.rooms.names import build_team_admin_room
 
 ORDER_REALTIME_EVENT_BY_NAME = {
@@ -31,12 +33,23 @@ def fanout_order_event(event_row) -> None:
     if not realtime_event_name or not event_row.team_id:
         return
 
+    order = db.session.get(Order, event_row.order_id) if event_row.order_id else None
+    route_freshness_updated_at = get_route_freshness_updated_at(getattr(order, "delivery_plan", None)) if order else None
     payload = {
         "order_id": event_row.order_id,
         "actor_id": event_row.actor_id,
         "original_event_name": event_row.event_name,
         **(event_row.payload or {}),
     }
+    if route_freshness_updated_at is not None:
+        payload["route_freshness_updated_at"] = route_freshness_updated_at
+
+    route_ids = resolve_route_ids_for_order(event_row.order_id, event_row.team_id)
+    driver_event_name = (
+        BUSINESS_EVENT_ORDER_CREATED
+        if event_row.event_name == StoredOrderEventName.CONFIRMED.value and route_ids
+        else realtime_event_name
+    )
 
     envelope = build_business_event_envelope(
         event_id=event_row.event_id or f"order-event:{event_row.id}",
@@ -53,13 +66,20 @@ def fanout_order_event(event_row) -> None:
         envelope=envelope,
     )
     emit_route_order_event(
-        team_id=event_row.team_id,
-        order_id=event_row.order_id,
-        envelope=envelope,
+        route_ids=route_ids,
+        envelope=(
+            envelope
+            if driver_event_name == realtime_event_name
+            else {
+                **envelope,
+                "event_name": driver_event_name,
+            }
+        ),
     )
     notify_order_event(
         event_id=envelope["event_id"],
         event_name=realtime_event_name,
+        driver_event_name=driver_event_name,
         team_id=event_row.team_id,
         order_id=event_row.order_id,
         payload=payload,

@@ -20,6 +20,7 @@ export class GoogleMapAdapter implements MapAdapter {
   private readonly markerSelectionManager: MarkerSelectionManager
   private readonly routeRenderer: RouteRenderer
   private readonly viewportManager: ViewportManager
+  private currentRoute: MapRoute | null = null
   private boundsChangedListeners = new Set<(bounds: MapBounds | null) => void>()
   private idleListener: { remove?: () => void } | null = null
 
@@ -48,6 +49,7 @@ export class GoogleMapAdapter implements MapAdapter {
     this.markerLayerManager.replayLayerSnapshots((points) => {
       this.viewportManager.fitBounds(points)
     })
+    this.routeRenderer.drawRoute(this.currentRoute)
 
     this.markerSelectionManager.reconcileSelectionState()
     this.markerSelectionManager.reapplySelectionStyles()
@@ -79,6 +81,7 @@ export class GoogleMapAdapter implements MapAdapter {
   }
 
   drawRoute(route: MapRoute | null) {
+    this.currentRoute = route
     this.routeRenderer.drawRoute(route)
   }
 
@@ -121,6 +124,7 @@ export class GoogleMapAdapter implements MapAdapter {
     this.idleListener = null
     this.boundsChangedListeners.clear()
     this.clearMarkers()
+    this.currentRoute = null
     this.routeRenderer.destroy()
     this.mapInstanceManager.destroy()
   }

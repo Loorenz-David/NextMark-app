@@ -28,6 +28,7 @@ export default defineConfig({
       { find: '@shared-google-maps', replacement: path.resolve(__dirname, '../packages/shared-google-maps') },
       { find: '@shared-icons', replacement: path.resolve(__dirname, '../packages/shared-icons') },
       { find: '@shared-realtime', replacement: path.resolve(__dirname, '../packages/shared-realtime/src') },
+      { find: '@shared-inputs', replacement: path.resolve(__dirname, '../packages/shared-inputs/src') },
       { find: /^socket\.io-client$/, replacement: path.resolve(__dirname, './node_modules/socket.io-client/build/esm/index.js') },
     ],
   },

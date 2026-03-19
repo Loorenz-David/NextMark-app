@@ -17,6 +17,7 @@ export type OrderDetailContextValue = {
   order: Order | null
   orderState: OrderState | null
   orderServerId: number | null
+  isRefreshing: boolean
   openOrderForm: OpenOrderForm
   openOrderCases: OpenOrderCases
   closeOrderDetail: CloseOrderDetail

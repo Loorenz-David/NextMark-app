@@ -64,6 +64,11 @@ class Order(
     preferred_time_end   = Column(String)  # "20:00"
 
     creation_date = Column(UTCDateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(
+        UTCDateTime,
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
+    )
     items_updated_at = Column(UTCDateTime)
     
     order_state_id = Column(

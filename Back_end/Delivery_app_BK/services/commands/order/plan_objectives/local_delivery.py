@@ -48,7 +48,10 @@ def apply_local_delivery_objective(
     ]
     starts_by_route_id: dict[int, int] = {}
     for stop in stop_instances:
-        route_id = stop.route_solution_id
+        route_id = (
+            stop.route_solution_id
+            or getattr(getattr(stop, "route_solution", None), "id", None)
+        )
         if route_id is None:
             continue
         stop_order = stop.stop_order or 1
@@ -60,20 +63,20 @@ def apply_local_delivery_objective(
         for route_solution in route_solutions
         if getattr(route_solution, "id", None) is not None
     }
-    post_flush_actions.append(
-        build_incremental_route_sync_action(
-            ctx=ctx,
-            starts_by_route_id=starts_by_route_id,
-            route_solutions_by_id=route_solutions_by_id,
-            synced_stops=synced_stops,
-            changed_route_solutions=changed_route_solutions,
-            orders_by_route_solution_resolver=lambda _route_solution, created_order=order_instance, plan=delivery_plan: _resolve_orders_for_incremental_sync(
-                plan,
-                created_order,
-            ),
+    if starts_by_route_id:
+        post_flush_actions.append(
+            build_incremental_route_sync_action(
+                ctx=ctx,
+                starts_by_route_id=starts_by_route_id,
+                route_solutions_by_id=route_solutions_by_id,
+                synced_stops=synced_stops,
+                changed_route_solutions=changed_route_solutions,
+                orders_by_route_solution_resolver=lambda _route_solution, created_order=order_instance, plan=delivery_plan: _resolve_orders_for_incremental_sync(
+                    plan,
+                    created_order,
+                ),
+            )
         )
-    )
-
 
     return PlanObjectiveCreateResult(
         instances=stop_instances + updated_solutions,

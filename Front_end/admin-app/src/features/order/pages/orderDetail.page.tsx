@@ -13,6 +13,7 @@ export type OrderDetailPayload = {
   clientId?: string
   serverId?: number
   mode?: 'view' | 'edit'
+  freshAfter?: string | null
 }
 
 const OrderDetailContent = () => {
@@ -20,6 +21,7 @@ const OrderDetailContent = () => {
     order,
     orderState,
     orderServerId,
+    isRefreshing,
     openOrderForm,
     openOrderCases,
     closeOrderDetail,
@@ -44,7 +46,11 @@ const OrderDetailContent = () => {
     <div className="flex w-full flex-col gap-6 bg-[var(--color-page)] pt-3">
         <div className="flex flex-col gap-4 px-5 ">
           <SlideCarousel>
-            {order ? (
+            {isRefreshing && !order ? (
+              <div className="rounded-xl border border-[var(--color-border)] bg-white p-4 text-sm text-[var(--color-muted)]">
+                Loading order details...
+              </div>
+            ) : order ? (
               <OrderDetailSummary order={order} orderState={orderState} />
             ) : (
               <div className="rounded-xl border border-[var(--color-border)] bg-white p-4 text-sm text-[var(--color-muted)]">
@@ -57,6 +63,12 @@ const OrderDetailContent = () => {
             ) : null}
           </SlideCarousel>
         </div>
+
+        {isRefreshing && order ? (
+          <div className="px-5 pt-2 text-xs text-[var(--color-muted)]">
+            Refreshing order details...
+          </div>
+        ) : null}
 
         { orderServerId !== null ? 
           <div className="flex w-full flex-col bg-[var(--color-muted)]/10"

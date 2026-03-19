@@ -79,6 +79,7 @@ export const ADMIN_BUSINESS_EVENT_NAMES = [
 ] as const satisfies readonly BusinessEventName[]
 
 export const DRIVER_BUSINESS_EVENT_NAMES = [
+  'order.created',
   'order.updated',
   'order.state_changed',
   'order_case.created',
@@ -88,6 +89,7 @@ export const DRIVER_BUSINESS_EVENT_NAMES = [
   'local_delivery_plan.updated',
   'route_solution.created',
   'route_solution.updated',
+  'route_solution.deleted',
   'route_solution_stop.updated',
 ] as const satisfies readonly BusinessEventName[]
 
@@ -170,11 +172,17 @@ export type NotificationTargetKind =
   | 'order_case_detail'
   | 'order_case_chat'
   | 'route_execution'
+  | 'local_delivery_workspace'
+  | 'driver_order_case_chat'
 
 export type NotificationTarget = {
   kind: NotificationTargetKind
   route: string
   params: {
+    planId?: number
+    localDeliveryPlanId?: number
+    routeSolutionId?: number
+    routeSolutionStopId?: number
     orderId?: number
     orderCaseId?: number
     orderCaseClientId?: string
@@ -186,8 +194,20 @@ export type NotificationItem = {
   notification_id: string
   event_id: string
   kind: BusinessEventName
-  entity_type: 'order' | 'order_case' | 'order_chat'
+  entity_type:
+    | 'order'
+    | 'order_case'
+    | 'order_chat'
+    | 'delivery_plan'
+    | 'local_delivery_plan'
+    | 'route_solution'
+    | 'route_solution_stop'
   entity_id: number | null
+  plan_id?: number
+  local_delivery_plan_id?: number
+  route_solution_id?: number
+  route_solution_stop_id?: number
+  route_freshness_updated_at?: string
   order_id?: number
   order_case_id?: number
   team_id: number | null

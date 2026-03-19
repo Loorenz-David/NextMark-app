@@ -44,6 +44,7 @@ def _serialize_order_instance(instance: Order, ctx: ServiceContext, include_item
         "preferred_time_start": instance.preferred_time_start,
         "preferred_time_end": instance.preferred_time_end,
         "creation_date": creation_date.isoformat() if creation_date else None,
+        "updated_at": instance.updated_at.isoformat() if instance.updated_at else None,
         "items_updated_at": instance.items_updated_at.isoformat() if instance.items_updated_at else None,
         "order_state_id": instance.order_state_id,
         "delivery_plan_id": instance.delivery_plan_id,

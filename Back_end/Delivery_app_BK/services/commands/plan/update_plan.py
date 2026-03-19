@@ -1,7 +1,10 @@
-from datetime import datetime
+from datetime import datetime, timezone
+from uuid import uuid4
 
 from Delivery_app_BK.errors import ValidationFailed
 from Delivery_app_BK.models import DeliveryPlan
+from Delivery_app_BK.sockets.notifications import notify_delivery_planning_event
+from Delivery_app_BK.services.domain.plan.route_freshness import touch_route_freshness
 from Delivery_app_BK.services.infra.events.builders.delivery_plan import (
     build_delivery_plan_rescheduled_event,
 )
@@ -46,10 +49,6 @@ def apply_delivery_plan_patch(
         )
 
     return previous_start, previous_end, pending_events
-
-
-
-
 from Delivery_app_BK.errors import ValidationFailed
 from Delivery_app_BK.models import db, DeliveryPlan, Team, Order, DeliveryPlanState
 from ...context import ServiceContext
@@ -143,6 +142,7 @@ def update_plan(ctx: ServiceContext):
     }
     ctx.set_relationship_map(relationship_map)
     instances = []
+    updated_plans: list[DeliveryPlan] = []
     
 
     for target in extract_targets(ctx):
@@ -161,6 +161,27 @@ def update_plan(ctx: ServiceContext):
         )
 
         instance = update_instance(ctx, DeliveryPlan, plan_fields, target["target_id"])
+        touch_route_freshness(instance)
         instances.append(instance.id)
+        updated_plans.append(instance)
     db.session.commit()
+
+    for instance in updated_plans:
+        if instance.plan_type != "local_delivery":
+            continue
+        notify_delivery_planning_event(
+            event_id=str(uuid4()),
+            event_name="delivery_plan.updated",
+            team_id=instance.team_id,
+            entity_type="delivery_plan",
+            entity_id=instance.id,
+            payload={
+                "delivery_plan_id": instance.id,
+                "label": instance.label,
+                "plan_type": instance.plan_type,
+                "route_freshness_updated_at": instance.updated_at.isoformat() if instance.updated_at else None,
+            },
+            occurred_at=instance.updated_at or datetime.now(timezone.utc),
+            actor=None,
+        )
     return instances

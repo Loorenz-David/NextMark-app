@@ -21,7 +21,9 @@ export function RoutesListProvider({ children, onSelectRoute }: RoutesListProvid
 
   const routesState = useRoutesStore((state) => state)
   const selectedRouteClientId = useRoutesSelectionStore(selectSelectedRouteClientId)
-  const routes = useMemo(() => selectAllRoutes(routesState), [routesState])
+  const routes = useMemo(() => (
+    [...selectAllRoutes(routesState)].sort(compareRoutesForList)
+  ), [routesState])
 
   const refreshRoutes = useCallback(async () => {
     if (!workspace) {
@@ -101,4 +103,14 @@ export function RoutesListProvider({ children, onSelectRoute }: RoutesListProvid
       {children}
     </RoutesListContext.Provider>
   )
+}
+
+function compareRoutesForList(left: ReturnType<typeof selectAllRoutes>[number], right: ReturnType<typeof selectAllRoutes>[number]) {
+  const rightTimestamp = Date.parse(right.delivery_plan?.updated_at ?? right.created_at ?? '') || 0
+  const leftTimestamp = Date.parse(left.delivery_plan?.updated_at ?? left.created_at ?? '') || 0
+  if (rightTimestamp !== leftTimestamp) {
+    return rightTimestamp - leftTimestamp
+  }
+
+  return (right.id ?? 0) - (left.id ?? 0)
 }

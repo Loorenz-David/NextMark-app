@@ -7,6 +7,12 @@ from Delivery_app_BK.services.context import ServiceContext
 from Delivery_app_BK.services.queries.drivers.list_active_routes import (
     list_active_routes as list_active_routes_service,
 )
+from Delivery_app_BK.services.queries.drivers.get_active_route import (
+    get_active_route as get_active_route_service,
+)
+from Delivery_app_BK.services.queries.drivers.get_active_route_freshness import (
+    get_active_route_freshness as get_active_route_freshness_service,
+)
 from Delivery_app_BK.services.queries.drivers.get_driver_bootstrap import (
     get_driver_bootstrap as get_driver_bootstrap_service,
 )
@@ -60,6 +66,50 @@ def list_active_routes():
     )
 
     outcome = run_service(lambda c: list_active_routes_service(c), ctx)
+    response = Response()
+
+    if outcome.error:
+        return response.build_unsuccessful_response(outcome.error)
+
+    return response.build_successful_response(
+        outcome.data,
+        warnings=ctx.warnings,
+    )
+
+
+@drivers_bp.route("/routes/<int:route_id>", methods=["GET"])
+@jwt_required()
+@role_required([ADMIN, DRIVER])
+def get_active_route(route_id: int):
+    identity = get_jwt()
+    ctx = ServiceContext(
+        query_params=request.args,
+        identity=identity,
+    )
+
+    outcome = run_service(lambda c: get_active_route_service(route_id, c), ctx)
+    response = Response()
+
+    if outcome.error:
+        return response.build_unsuccessful_response(outcome.error)
+
+    return response.build_successful_response(
+        outcome.data,
+        warnings=ctx.warnings,
+    )
+
+
+@drivers_bp.route("/routes/<int:route_id>/freshness", methods=["GET"])
+@jwt_required()
+@role_required([ADMIN, DRIVER])
+def get_active_route_freshness(route_id: int):
+    identity = get_jwt()
+    ctx = ServiceContext(
+        query_params=request.args,
+        identity=identity,
+    )
+
+    outcome = run_service(lambda c: get_active_route_freshness_service(route_id, c), ctx)
     response = Response()
 
     if outcome.error:

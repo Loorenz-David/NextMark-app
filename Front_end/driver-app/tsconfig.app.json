@@ -12,6 +12,8 @@
       "@shared-domain/*": ["../packages/shared-domain/*"],
       "@shared-api": ["../packages/shared-api/index.ts"],
       "@shared-api/*": ["../packages/shared-api/*"],
+      "@shared-utils": ["../packages/shared-utils/src/index.ts"],
+      "@shared-utils/*": ["../packages/shared-utils/src/*"],
       "@shared-store": ["../packages/shared-store/src/index.ts"],
       "@shared-store/*": ["../packages/shared-store/src/*"],
       "@shared-optimistic": ["../packages/shared-optimistic/src/index.ts"],

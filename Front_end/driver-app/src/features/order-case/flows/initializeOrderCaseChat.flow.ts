@@ -1,3 +1,4 @@
+import { shouldRefreshForFreshness } from '@shared-utils'
 import { selectCaseChatsByOrderCaseId, selectOrderCaseByServerId, updateOrderCaseUnseenCount, upsertCaseChats, useCaseChatsStore, useOrderCasesStore } from '../stores'
 import { loadCaseChatsQuery, markOrderCaseChatsReadAction } from '../actions'
 
@@ -6,13 +7,14 @@ const initializedOrderCaseChats = new Set<number>()
 
 type InitializeOrderCaseChatFlowOptions = {
   force?: boolean
+  freshAfter?: string | null
 }
 
 export async function initializeOrderCaseChatFlow(
   orderCaseId: number,
   options: InitializeOrderCaseChatFlowOptions = {},
 ) {
-  const { force = false } = options
+  const { force = false, freshAfter = null } = options
 
   if (orderCaseId <= 0) {
     return true
@@ -21,12 +23,13 @@ export async function initializeOrderCaseChatFlow(
   const existingChats = selectCaseChatsByOrderCaseId(useCaseChatsStore.getState(), orderCaseId)
   const orderCase = selectOrderCaseByServerId(orderCaseId)(useOrderCasesStore.getState())
   const unseenChats = orderCase?.unseen_chats
+  const staleByFreshness = shouldRefreshForFreshness(orderCase?.updated_at ?? null, freshAfter)
 
-  if (!force && initializedOrderCaseChats.has(orderCaseId) && unseenChats === 0) {
+  if (!force && !staleByFreshness && initializedOrderCaseChats.has(orderCaseId) && unseenChats === 0) {
     return true
   }
 
-  if (!force && existingChats.length > 0 && unseenChats === 0) {
+  if (!force && !staleByFreshness && existingChats.length > 0 && unseenChats === 0) {
     initializedOrderCaseChats.add(orderCaseId)
     return true
   }

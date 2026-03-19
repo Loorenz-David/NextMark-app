@@ -1,1 +1,1 @@
-export { PhoneField } from './PhoneField'
+export { PhoneField } from '@shared-inputs'
