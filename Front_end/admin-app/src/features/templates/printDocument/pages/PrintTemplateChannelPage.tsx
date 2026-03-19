@@ -14,7 +14,7 @@ export const PrintTemplateChannelPage = () => {
   const channelParam = params.channel
   if (!channelParam || !isTemplateChannel(channelParam)) {
     return (
-      <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-page)] p-4 text-sm text-[var(--color-muted)]">
+      <div className="rounded-[24px] border border-white/[0.08] bg-white/[0.04] p-5 text-sm text-[var(--color-muted)]">
         Invalid channel.
       </div>
     )
@@ -42,7 +42,7 @@ export const PrintTemplateChannelPage = () => {
             />
           ))
         ) : (
-          <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-page)] p-4 text-sm text-[var(--color-muted)]">
+          <div className="rounded-[24px] border border-dashed border-white/[0.08] bg-white/[0.03] p-5 text-sm text-[var(--color-muted)]">
             No events configured for this channel yet.
           </div>
         )}

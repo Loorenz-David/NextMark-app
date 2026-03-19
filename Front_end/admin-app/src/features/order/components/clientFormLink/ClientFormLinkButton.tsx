@@ -42,7 +42,7 @@ export const ClientFormLinkButton = ({ orderId }: Props) => {
         type="button"
         onClick={callApi}
         disabled={isLoading}
-        className="inline-flex items-center gap-1.5 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-1.5 text-xs font-medium text-[var(--color-text)] transition-opacity hover:opacity-80 disabled:cursor-not-allowed disabled:opacity-50"
+        className="inline-flex items-center gap-1.5 rounded-xl border border-white/10 bg-white/[0.05] px-3.5 py-2 text-sm font-medium text-[var(--color-text)] shadow-[0_10px_24px_rgba(0,0,0,0.14)] transition-colors hover:bg-white/[0.09] disabled:cursor-not-allowed disabled:opacity-50"
       >
         {isLoading ? (
           <>
@@ -70,7 +70,7 @@ export const ClientFormLinkButton = ({ orderId }: Props) => {
       </button>
 
       {error && (
-        <p className="mt-1 text-xs text-red-500">{error}</p>
+        <p className="mt-1 text-xs text-rose-300">{error}</p>
       )}
 
       {modalData && (

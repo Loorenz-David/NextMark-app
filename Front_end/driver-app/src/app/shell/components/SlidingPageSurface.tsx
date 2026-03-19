@@ -8,6 +8,7 @@ import {
   StopCustomerPage,
   StopFailureFormPage,
   StopOrderItemsPage,
+  StopOrderNotesPage,
 } from '@/features/route-execution'
 import { useDriverAppShell } from '../providers/driverAppShell.context'
 import { selectSlidingPageState } from '../stores/shell.selectors'
@@ -102,6 +103,12 @@ export function SlidingPageSurface() {
         ) : null}
         {slidingPageState.currentPage?.page === 'route-three-dot-menu' ? (
           <RouteThreeDotMenuPage onClose={closeSlidingPage} />
+        ) : null}
+        {slidingPageState.currentPage?.page === 'route-stop-order-notes' ? (
+          <StopOrderNotesPage
+            notes={slidingPageState.currentPage.params.notes}
+            onClose={closeSlidingPage}
+          />
         ) : null}
       </div>
     </section>

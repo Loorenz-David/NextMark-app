@@ -1,13 +1,11 @@
 import { useCallback, useEffect } from 'react'
 
 import { useMessageHandler } from '@shared-message-handler'
-import { useShallow } from 'zustand/react/shallow'
 
 import { useGetItemProperties } from '../api/itemPropertyApi'
 import { useItemModel } from '../domain/useItemModel'
 import {
   insertItemProperties,
-  selectAllItemProperties,
   useItemPropertyStore,
 } from '../store/itemPropertyStore'
 
@@ -45,18 +43,4 @@ export const useItemPropertyFlow = () => {
   }, [loadItemProperties])
 
   return { loadItemProperties }
-}
-
-export const useItemPropertiesOrFetch = () => {
-  const itemProperties = useItemPropertyStore(useShallow(selectAllItemProperties))
-  const { loadItemProperties } = useItemPropertyFlow()
-
-  useEffect(() => {
-    if (itemProperties.length) {
-      return
-    }
-    void loadItemProperties()
-  }, [itemProperties.length])
-
-  return itemProperties
 }

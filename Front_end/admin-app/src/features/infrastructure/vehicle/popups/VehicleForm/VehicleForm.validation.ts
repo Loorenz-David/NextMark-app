@@ -8,7 +8,7 @@ export const useVehicleFormValidation = ({
   formState: VehicleFormState
   warnings: VehicleFormWarnings
 }) => {
-  const validateForm = () => warnings.nameWarning.validate(formState.name)
+  const validateForm = () => warnings.registrationNumberWarning.validate(formState.registration_number)
 
   return { validateForm }
 }

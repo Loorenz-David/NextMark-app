@@ -43,7 +43,7 @@ export const DeliveryWindowCalendarDayPopover = ({
       outsidePressEvent="click"
     >
       <div
-        className="w-64 rounded-xl border border-[var(--color-border-accent)] bg-[var(--color-page)] p-2 shadow-lg"
+        className="admin-glass-popover w-64 rounded-xl border border-[var(--color-border-accent)] p-2 shadow-lg"
         onMouseEnter={onMouseEnterContent}
         onMouseLeave={onMouseLeaveContent}
       >
@@ -63,7 +63,7 @@ export const DeliveryWindowCalendarDayPopover = ({
                   {rows.map((row) => (
                     <div
                       key={row.key}
-                      className="flex items-center justify-between  border-b border-b-[var(--color-border-accent)] px-2 py-2 last:border-b-0 "
+                      className="flex items-center justify-between border-b border-b-white/[0.08] px-2 py-2 last:border-b-0 "
                     >
                       <span className="text-[11px] text-[var(--color-text)]">
                         {row.start} - {row.end}
@@ -86,7 +86,7 @@ export const DeliveryWindowCalendarDayPopover = ({
                             onClick: () => onRemoveWindow(row),
                             style:{padding:'5px 8px'},
                             className:
-                              'text-[10px] border-none font-normal normal-case tracking-normal text-red-500 hover:hover:bg-red-100 ',
+                              'text-[10px] border-none font-normal normal-case tracking-normal text-red-400 hover:bg-red-500/12 ',
                           }}
                         >
                           Remove
@@ -104,7 +104,7 @@ export const DeliveryWindowCalendarDayPopover = ({
                 type="button"
                 disabled={disableAdd}
                 onClick={() => onAddWindow(localDate)}
-                className="rounded-md w-full border-1 border-[var(--color-border-accent)] border-dashed px-2 py-1 text-[10px] text-[var(--color-text)] disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer hover:hover:bg-gray-100"
+                className="w-full rounded-md border-1 border-[var(--color-border-accent)] border-dashed px-2 py-1 text-[10px] text-[var(--color-text)] disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer hover:bg-white/[0.08]"
               >
                 Add time window
               </button>

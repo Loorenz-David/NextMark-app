@@ -32,6 +32,9 @@ def _serialize_order_instance(instance: Order, ctx: ServiceContext, include_item
         "external_order_id": instance.external_order_id,
         "external_source": instance.external_source,
         "tracking_number": instance.tracking_number,
+        "tracking_link": instance.tracking_link,
+        "external_tracking_number": instance.external_tracking_number,
+        "external_tracking_link": instance.external_tracking_link,
         "client_first_name": instance.client_first_name,
         "client_last_name": instance.client_last_name,
         "client_email": instance.client_email,
@@ -61,6 +64,7 @@ def _serialize_order_instance(instance: Order, ctx: ServiceContext, include_item
         ],
         "open_order_cases": _count_open_order_cases(instance),
         "client_form_submitted_at": instance.client_form_submitted_at.isoformat() if instance.client_form_submitted_at else None,
+        "order_notes": list(instance.order_notes) if instance.order_notes else [],
     }
     if instance.archive_at is not None:
         unpacked['archive_at'] = instance.archive_at
@@ -71,7 +75,13 @@ def _serialize_order_instance(instance: Order, ctx: ServiceContext, include_item
             ctx=ctx,
         )
 
-    unpacked.update(calculate_order_metrics(instance))
+    # Read denormalized totals; fall back to computed metrics for unbackfilled rows
+    if instance.total_weight_g is not None or instance.total_volume_cm3 is not None or instance.total_item_count is not None:
+        unpacked["total_weight"] = instance.total_weight_g
+        unpacked["total_volume"] = instance.total_volume_cm3
+        unpacked["total_items"] = instance.total_item_count
+    else:
+        unpacked.update(calculate_order_metrics(instance))
     return unpacked
 
 

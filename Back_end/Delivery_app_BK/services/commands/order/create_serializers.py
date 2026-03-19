@@ -6,12 +6,27 @@ from Delivery_app_BK.services.domain.order.delivery_windows import (
 from Delivery_app_BK.services.queries.utils import calculate_order_metrics
 
 
+def _order_totals(instance: Order) -> dict:
+    """Read denormalized totals; fall back to computed for unbackfilled rows."""
+    if (
+        instance.total_weight_g is not None
+        or instance.total_volume_cm3 is not None
+        or instance.total_item_count is not None
+    ):
+        return {
+            "total_weight": instance.total_weight_g,
+            "total_volume": instance.total_volume_cm3,
+            "total_items": instance.total_item_count,
+        }
+    return calculate_order_metrics(instance)
+
+
 def serialize_created_order(instance: Order) -> dict:
     creation_date = instance.creation_date
     earliest_delivery_date = instance.earliest_delivery_date
     latest_delivery_date = instance.latest_delivery_date
     archive_at = instance.archive_at
-    metrics = calculate_order_metrics(instance)
+    metrics = _order_totals(instance)
     delivery_windows = sort_delivery_window_instances(
         list(getattr(instance, "delivery_windows", None) or []),
     )

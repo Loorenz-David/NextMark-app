@@ -7,9 +7,9 @@ type EmailPreviewProps = {
 }
 
 export const EmailPreview = ({ html, isLoading, onRefresh }: EmailPreviewProps) => (
-  <section className="flex min-h-[360px] flex-col gap-3">
+  <section className="admin-glass-panel-strong flex min-h-[360px] flex-col gap-4 rounded-[28px] p-5 shadow-none">
     <div className="flex items-center justify-between">
-      <h3 className="text-sm font-semibold text-[var(--color-text)]">Preview</h3>
+      <h3 className="text-[0.7rem] font-semibold uppercase tracking-[0.22em] text-[var(--color-muted)]">Preview</h3>
       <BasicButton
         params={{
           variant: 'secondary',
@@ -22,7 +22,7 @@ export const EmailPreview = ({ html, isLoading, onRefresh }: EmailPreviewProps) 
         {isLoading ? 'Loading...' : 'Refresh preview'}
       </BasicButton>
     </div>
-    <div className="h-full overflow-hidden rounded-lg border border-[var(--color-border)] bg-white">
+    <div className="h-full overflow-hidden rounded-[24px] border border-white/[0.08] bg-white">
       <iframe
         title="Email template preview"
         srcDoc={html}

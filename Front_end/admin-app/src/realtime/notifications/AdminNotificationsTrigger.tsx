@@ -32,22 +32,22 @@ export function AdminNotificationsTrigger() {
   const content = useMemo(() => {
     if (items.length === 0) {
       return (
-        <div className="rounded-2xl border border-[var(--color-muted)]/15 bg-white p-4 text-sm text-[var(--color-muted)] shadow-xl">
+        <div className="admin-glass-popover admin-surface-compact rounded-2xl p-4 text-sm text-[var(--color-muted)]">
           No unread notifications.
         </div>
       )
     }
 
     return (
-      <div className="max-h-[420px] w-[360px] overflow-y-auto rounded-2xl border border-[var(--color-muted)]/15 bg-white p-2 shadow-2xl">
-        <div className="border-b border-[var(--color-muted)]/10 px-3 py-3">
+      <div className="admin-glass-popover admin-surface-compact max-h-[420px] w-[360px] overflow-y-auto rounded-2xl p-2">
+        <div className="admin-glass-divider border-b px-3 py-3">
           <h3 className="text-sm font-semibold text-[var(--color-text)]">Notifications</h3>
         </div>
-        <div className="divide-y divide-[var(--color-muted)]/10">
+        <div className="divide-y divide-white/8">
           {items.map((notification) => (
             <div
               key={notification.notification_id}
-              className="group flex gap-3 px-3 py-3 transition hover:bg-[var(--color-page)]/70"
+              className="group flex gap-3 rounded-xl px-3 py-3 transition hover:bg-white/[0.05]"
             >
               <button
                 className="flex min-w-0 flex-1 flex-col gap-2 text-left"
@@ -82,7 +82,7 @@ export function AdminNotificationsTrigger() {
 
               <button
                 aria-label="Mark notification as read"
-                className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[var(--color-muted)] opacity-70 transition hover:bg-[var(--color-muted)]/10 hover:opacity-100"
+                className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[var(--color-muted)] opacity-70 transition hover:bg-white/[0.07] hover:opacity-100"
                 onClick={() => {
                   markAdminNotificationsReadLocally([notification.notification_id])
                   notificationsChannel.markRead([notification.notification_id])
@@ -105,17 +105,18 @@ export function AdminNotificationsTrigger() {
       placement="bottom-end"
       renderInPortal
       closeOnInsideClick
+      floatingClassName="drop-shadow-[0_24px_50px_rgba(0,0,0,0.3)]"
       reference={(
         <div className="relative">
           <BasicButton
             params={{
-              variant: 'secondary',
+              variant: 'toolbarSecondary',
               ariaLabel: 'Notifications',
-              className: 'border-[var(--color-muted)]/30',
+              className: 'border-[var(--color-muted)]/30 px-2.5',
               onClick: () => setIsOpen((current) => !current),
             }}
           >
-            <BellIcon className="h-5 w-5 " />
+            <BellIcon className="h-4.5 w-4.5" />
           </BasicButton>
           {unreadCount > 0 ? (
             <span className="absolute -right-1 -top-1 inline-flex min-h-5 min-w-5 items-center justify-center rounded-full bg-[rgb(var(--color-danger-r))] px-1 text-[10px] font-semibold text-white">

@@ -41,10 +41,9 @@ export const MapMultiSelectOverlay = ({
       <div className="pointer-events-auto absolute left-4 top-4 z-0">
         <BasicButton
           params={{
-            variant: 'secondary',
+            variant: 'secondaryInvers',
             onClick: enableSelectionMode,
             ariaLabel: enableSelectionAriaLabel,
-            className: 'border-[var(--color-muted)]/50',
           }}
         >
           {enableLabel}

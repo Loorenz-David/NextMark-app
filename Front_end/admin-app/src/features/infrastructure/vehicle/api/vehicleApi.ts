@@ -5,6 +5,18 @@ import type { ApiResult } from '@/lib/api/types'
 
 import type { Vehicle, VehicleInput, VehicleMap } from '../types/vehicle'
 
+export type VehicleConflict = {
+  route_solution_id: number
+  delivery_plan_id: number
+  delivery_plan_label: string | null
+  start_date: string
+  end_date: string
+}
+
+export type VehicleAvailabilityResponse = {
+  conflicts: VehicleConflict[]
+}
+
 export type VehicleListResponse = {
   vehicle: VehicleMap
   vehicle_pagination: {
@@ -60,6 +72,24 @@ export const vehicleApi = {
       path: '/infrastructures/vehicle/',
       method: 'DELETE',
       data: payload,
+    }),
+
+  checkAvailability: (params: {
+    vehicleId: number
+    startDate: string
+    endDate: string
+    excludeRouteSolutionId?: number | null
+  }): Promise<ApiResult<VehicleAvailabilityResponse>> =>
+    apiClient.request<VehicleAvailabilityResponse>({
+      path: `/infrastructures/vehicle/${params.vehicleId}/availability`,
+      method: 'GET',
+      query: {
+        start_date: params.startDate,
+        end_date: params.endDate,
+        ...(params.excludeRouteSolutionId != null
+          ? { exclude_route_solution_id: String(params.excludeRouteSolutionId) }
+          : {}),
+      },
     }),
 }
 

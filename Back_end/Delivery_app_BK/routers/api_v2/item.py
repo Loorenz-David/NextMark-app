@@ -10,6 +10,8 @@ from Delivery_app_BK.routers.utils.role_decorator import (
 from Delivery_app_BK.routers.http.response import Response
 from Delivery_app_BK.services.context import ServiceContext
 from Delivery_app_BK.services.run_service import run_service
+from Delivery_app_BK.models import DeliveryPlan
+from Delivery_app_BK.models import db
 from Delivery_app_BK.services.queries.item.list_items import list_items as list_items_service
 from Delivery_app_BK.services.commands.item.create.create_item import (
     create_item as create_item_service,
@@ -29,6 +31,40 @@ from Delivery_app_BK.services.commands.item.delete.delete_item import (
 
 
 item_bp = Blueprint("api_v2_item_bp", __name__)
+
+
+def _serialize_order_totals(orders):
+    return [
+        {
+            "id": o.id,
+            "total_weight": o.total_weight_g,
+            "total_volume": o.total_volume_cm3,
+            "total_items": o.total_item_count,
+        }
+        for o in orders
+        if o is not None and o.id is not None
+    ]
+
+
+def _serialize_plan_totals(orders):
+    seen_plan_ids = set()
+    result = []
+    for o in (orders or []):
+        plan_id = getattr(o, "delivery_plan_id", None)
+        if plan_id is None or plan_id in seen_plan_ids:
+            continue
+        seen_plan_ids.add(plan_id)
+        plan = getattr(o, "delivery_plan", None) or db.session.get(DeliveryPlan, plan_id)
+        if plan is None or plan.id is None:
+            continue
+        result.append({
+            "id": plan.id,
+            "total_weight": plan.total_weight_g,
+            "total_volume": plan.total_volume_cm3,
+            "total_items": plan.total_item_count,
+            "total_orders": plan.total_orders,
+        })
+    return result
 
 
 @item_bp.route("/", methods=["GET"])
@@ -68,8 +104,11 @@ def create_item():
     if outcome.error:
         return response.build_unsuccessful_response(outcome.error)
 
+    affected_orders = outcome.data.pop("_affected_orders", [])
+    order_totals = _serialize_order_totals(affected_orders)
+    plan_totals = _serialize_plan_totals(affected_orders)
     return response.build_successful_response(
-        outcome.data,
+        {"item": outcome.data["item"], "order_totals": order_totals, "plan_totals": plan_totals},
         warnings=ctx.warnings,
     )
 
@@ -90,8 +129,11 @@ def update_item():
     if outcome.error:
         return response.build_unsuccessful_response(outcome.error)
 
+    affected_orders = outcome.data.pop("_affected_orders", []) if isinstance(outcome.data, dict) else []
+    order_totals = _serialize_order_totals(affected_orders)
+    plan_totals = _serialize_plan_totals(affected_orders)
     return response.build_successful_response(
-        {},
+        {"order_totals": order_totals, "plan_totals": plan_totals},
         warnings=ctx.warnings,
     )
 
@@ -113,8 +155,11 @@ def delete_item():
     if outcome.error:
         return response.build_unsuccessful_response(outcome.error)
 
+    affected_orders = outcome.data.pop("_affected_orders", []) if isinstance(outcome.data, dict) else []
+    order_totals = _serialize_order_totals(affected_orders)
+    plan_totals = _serialize_plan_totals(affected_orders)
     return response.build_successful_response(
-        {},
+        {"order_totals": order_totals, "plan_totals": plan_totals},
         warnings=ctx.warnings,
     )
 

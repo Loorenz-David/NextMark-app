@@ -7,14 +7,14 @@ import { useMessageHandler } from '@shared-message-handler'
 import { useUpdateItemStateIndex } from '../api/itemStateApi'
 import { useItemStateFlow } from './useItemStateFlow'
 import { useItemStates } from './useItemSelectors'
-import { useItemActions } from './useItemActions'
+import { useItemConfigActions } from './useItemConfigActions'
 import { upsertItemState } from '../store/itemStateStore'
 import type { ItemState } from '../types/itemState'
 
 export const useItemStateController = () => {
   useItemStateFlow()
   const items = useItemStates()
-  const actions = useItemActions()
+  const actions = useItemConfigActions()
   const updateItemStateIndex = useUpdateItemStateIndex()
   const { showMessage } = useMessageHandler()
 

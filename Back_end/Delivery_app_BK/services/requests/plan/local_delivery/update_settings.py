@@ -57,6 +57,7 @@ class RouteSolutionPatchRequest:
     eta_tolerance_seconds: int = 0
     route_end_strategy: str | None = None
     driver_id: int | None = None
+    vehicle_id: int | None = None
     stops_service_time: dict | None = None
     has_start_location: bool = False
     has_end_location: bool = False
@@ -65,6 +66,7 @@ class RouteSolutionPatchRequest:
     has_eta_tolerance_seconds: bool = False
     has_route_end_strategy: bool = False
     has_driver_id: bool = False
+    has_vehicle_id: bool = False
     has_stops_service_time: bool = False
 
 
@@ -252,6 +254,13 @@ def _parse_route_solution_patch(
         patch.driver_id = _validate_nullable_int(
             route_solution_raw.get("driver_id"),
             field="route_solution.driver_id",
+        )
+
+    if "vehicle_id" in route_solution_raw:
+        patch.has_vehicle_id = True
+        patch.vehicle_id = _validate_nullable_int(
+            route_solution_raw.get("vehicle_id"),
+            field="route_solution.vehicle_id",
         )
 
     if "stops_service_time" in route_solution_raw:

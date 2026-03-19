@@ -14,7 +14,7 @@ export const HomeMobileView = () => {
     const SelectedOrdersPlanType = useSelectedPlanOrders(ordersPlanType)
     const windowWidth = window.innerWidth
     return ( 
-        <div className="flex flex-1 relative min-w-0 overflow-hidden">
+        <div className="relative flex min-w-0 flex-1 overflow-hidden">
             
 
                 <PlanDesktopShell showCloseButton={false} 

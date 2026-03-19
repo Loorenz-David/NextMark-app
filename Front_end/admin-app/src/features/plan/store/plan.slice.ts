@@ -90,3 +90,13 @@ export const setDeliveryPlanStateId = (clientId: string, stateId: number | null)
     ...plan,
     state_id: stateId ?? null,
   }))
+
+export const patchPlanTotals = (
+  planId: number,
+  totals: Partial<Pick<DeliveryPlan, 'total_weight' | 'total_volume' | 'total_items' | 'total_orders'>>,
+) => {
+  const state = usePlanStore.getState()
+  const clientId = state.idIndex[planId]
+  if (!clientId) return
+  state.update(clientId, (existing) => ({ ...existing, ...totals }))
+}

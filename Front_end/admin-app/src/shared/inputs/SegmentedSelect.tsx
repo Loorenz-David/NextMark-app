@@ -9,7 +9,11 @@ type SegmentedOption = {
 type SegmentedSelectStyleConfig = {
   containerPadding?: string | number
   containerBg?: string
+  containerBorder?: string
+  containerShadow?: string
   selectedBg?: string
+  selectedBorder?: string
+  selectedShadow?: string
   textColor?: string
   buttonPadding?:string
   selectedTextColor?: string
@@ -25,7 +29,11 @@ type SegmentedSelectProps = {
 
 const DEFAULT_STYLE: Required<SegmentedSelectStyleConfig> = {
   containerBg: 'var(--color-muted)',
+  containerBorder: 'transparent',
+  containerShadow: 'none',
   selectedBg: '#ffffff',
+  selectedBorder: 'transparent',
+  selectedShadow: 'none',
   textColor: '#555',
   selectedTextColor: '#007bff',
   containerPadding: '4px',
@@ -55,6 +63,8 @@ const SegmentedSelect = ({
       style={{
         position: 'relative',
         background: styles.containerBg,
+        border: `1px solid ${styles.containerBorder}`,
+        boxShadow: styles.containerShadow,
         padding: toSizeValue(styles.containerPadding),
       }}
     >
@@ -82,6 +92,8 @@ const SegmentedSelect = ({
                 className="absolute inset-0 rounded-lg"
                 style={{
                   background: styles.selectedBg,
+                  border: `1px solid ${styles.selectedBorder}`,
+                  boxShadow: styles.selectedShadow,
                   zIndex: 0,
                 }}
                 transition={{ type: 'spring', stiffness: 500, damping: 40 }}

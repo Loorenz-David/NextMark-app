@@ -23,6 +23,7 @@ export type SlidingPagePageId =
   | 'map-app-chooser'
   | 'phone-call-chooser'
   | 'route-three-dot-menu'
+  | 'route-stop-order-notes'
 
 export type OverlayPageId =
   | 'shell-overlay-placeholder'
@@ -47,6 +48,7 @@ export type SlidingPagePageParamsMap = {
   'map-app-chooser': { destination: MapNavigationDestination }
   'phone-call-chooser': { options: PhoneCallOption[] }
   'route-three-dot-menu': undefined
+  'route-stop-order-notes': { notes: string[] }
 }
 
 export type OverlayPageParamsMap = {

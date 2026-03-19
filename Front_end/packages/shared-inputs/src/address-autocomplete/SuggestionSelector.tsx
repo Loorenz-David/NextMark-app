@@ -46,7 +46,11 @@ export const SuggestionCard = ({
 }
 
 
-export const SuggestionsSelector = () => {
+type SuggestionsSelectorProps = {
+  currentLocationIconClassName?: string
+}
+
+export const SuggestionsSelector = ({ currentLocationIconClassName }: SuggestionsSelectorProps) => {
     const {
       isLoading,
       suggestions,
@@ -55,6 +59,7 @@ export const SuggestionsSelector = () => {
       enableCurrentLocation,
       enableSavedLocations,
       intentKey,
+      storageNamespace,
       handleUseCurrentLocation,
       handleSelectSavedLocation,
       savedLocationsRevision,
@@ -64,8 +69,8 @@ export const SuggestionsSelector = () => {
 
     const savedLocations = useMemo(() => {
       if (!enableSavedLocations || !intentKey?.trim()) return []
-      return getSavedLocations(intentKey)
-    }, [enableSavedLocations, intentKey, savedLocationsRevision, isOpen])
+      return getSavedLocations(intentKey, storageNamespace)
+    }, [enableSavedLocations, intentKey, savedLocationsRevision, isOpen, storageNamespace])
 
     const handleSavedLocationSelect = (saved: SavedLocation) => {
       requestAnimationFrame(() => {
@@ -79,7 +84,10 @@ export const SuggestionsSelector = () => {
         return ( 
             <ul>
                 {enableCurrentLocation ? (
-                  <CurrentLocationCard onSelect={handleUseCurrentLocation} />
+                  <CurrentLocationCard
+                    onSelect={handleUseCurrentLocation}
+                    iconClassName={currentLocationIconClassName}
+                  />
                 ) : null}
                 {savedLocations.map((saved) => (
                   <SavedLocationCard
@@ -119,7 +127,12 @@ export const SuggestionsSelector = () => {
         <div className="px-3 py-2.5 text-xs text-[var(--color-muted)]">
           No matches. Try refining your search.
         </div>
-        {enableCurrentLocation ? <CurrentLocationCard onSelect={handleUseCurrentLocation} /> : null}
+        {enableCurrentLocation ? (
+          <CurrentLocationCard
+            onSelect={handleUseCurrentLocation}
+            iconClassName={currentLocationIconClassName}
+          />
+        ) : null}
         {savedLocations.length ? (
           <ul>
             {savedLocations.map((saved) => (

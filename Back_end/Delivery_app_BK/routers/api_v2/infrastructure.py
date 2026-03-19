@@ -1,3 +1,5 @@
+from datetime import date as date_type
+
 from flask import Blueprint, request
 from flask_jwt_extended import jwt_required, get_jwt
 
@@ -25,6 +27,10 @@ from Delivery_app_BK.services.commands.infrastructure.update.update_vehicle impo
 from Delivery_app_BK.services.commands.infrastructure.delete.delete_vehicle import (
     delete_vehicle as delete_vehicle_service,
 )
+from Delivery_app_BK.services.queries.infrastructure.vehicle.check_vehicle_availability import (
+    check_vehicle_availability as check_vehicle_availability_service,
+)
+from Delivery_app_BK.errors import DomainError, ValidationFailed
 from Delivery_app_BK.services.queries.infrastructure.warehouse.list_warehouses import (
     list_warehouses as list_warehouses_service,
 )
@@ -151,6 +157,47 @@ def get_vehicle(vehicle_id: int):
         outcome.data,
         warnings=ctx.warnings,
     )
+
+
+@infrastructure_bp.route("/vehicles/<int:vehicle_id>/availability", methods=["GET"])
+@jwt_required()
+@role_required([ADMIN, ASSISTANT])
+def get_vehicle_availability(vehicle_id: int):
+    response = Response()
+    start_date_str = request.args.get("start_date")
+    end_date_str = request.args.get("end_date")
+    exclude_id_str = request.args.get("exclude_route_solution_id")
+
+    if not start_date_str or not end_date_str:
+        return response.build_unsuccessful_response(
+            ValidationFailed("start_date and end_date are required.")
+        )
+
+    try:
+        start_date = date_type.fromisoformat(start_date_str)
+        end_date = date_type.fromisoformat(end_date_str)
+    except ValueError:
+        return response.build_unsuccessful_response(
+            ValidationFailed("Invalid date format. Use YYYY-MM-DD.")
+        )
+
+    exclude_id = None
+    if exclude_id_str:
+        try:
+            exclude_id = int(exclude_id_str)
+        except ValueError:
+            pass  # ignore malformed optional param; treat as not provided
+
+    try:
+        conflicts = check_vehicle_availability_service(
+            vehicle_id=vehicle_id,
+            start_date=start_date,
+            end_date=end_date,
+            exclude_route_solution_id=exclude_id,
+        )
+        return response.build_successful_response({"conflicts": conflicts})
+    except Exception as e:
+        return response.build_unsuccessful_response(DomainError(str(e)))
 
 
 @infrastructure_bp.route("/warehouses/", methods=["GET"])

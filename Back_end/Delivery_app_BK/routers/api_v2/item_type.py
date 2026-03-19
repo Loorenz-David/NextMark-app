@@ -136,3 +136,21 @@ def get_item_type(type_id: int):
         outcome.data,
         warnings=ctx.warnings,
     )
+
+
+@item_type_bp.route("/<int:type_id>", methods=["DELETE"])
+@jwt_required()
+@role_required([ADMIN, ASSISTANT])
+def delete_item_type_by_id(type_id: int):
+    identity = get_jwt()
+    ctx = ServiceContext(
+        incoming_data={"target_id": type_id},
+        identity=identity,
+    )
+    outcome = run_service(lambda c: delete_item_type_service(c), ctx)
+    response = Response()
+
+    if outcome.error:
+        return response.build_unsuccessful_response(outcome.error)
+
+    return response.build_successful_response({}, warnings=ctx.warnings)

@@ -66,7 +66,7 @@ const HeaderButtons = ({ onRequestClose }: ButtonsProps) => {
 
       <div className="absolute top-0 right-0">
         <BasicButton params = {{ onClick: onRequestClose, variant: "ghost", ariaLabel: "Toggle delivery plan" , 
-          style:{padding:'29px 6px',borderRadius:'10px 0 0 10px', } 
+          style:{padding:'24px 6px',borderRadius:'10px 0 0 10px', } 
           }}>
             <div className="flex gap-1 items-center justify-center">
               <span className="font-semibold uppercase tracking-[0.2em] text-[var(--color-muted)]/90 text-[9px]">fold </span>

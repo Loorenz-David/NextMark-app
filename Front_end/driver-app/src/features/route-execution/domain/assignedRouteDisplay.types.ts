@@ -21,6 +21,7 @@ export type AssignedRouteStopRowDisplay = {
   itemSummary: string | null
   itemCountLabel: string | null
   phoneLine: string | null
+  orderNotes: string[] | null
   badgeLabel: string | null
   isActive: boolean
   isCompleted: boolean

@@ -11,7 +11,7 @@ import { useItemPositionFormConfig } from './useItemPositionFormConfig'
 import { useItemPositionFormSetters } from './useItemPositionFormSetters'
 
 export const ItemPositionFormLayout = () => {
-  const { payload, formState, warnings, setFormState, handleSave, initialFormRef } = useItemPositionForm()
+  const { payload, formState, warnings, setFormState, handleSave, handleDelete, initialFormRef } = useItemPositionForm()
 
   const setters = useItemPositionFormSetters({ setFormState, warnings })
 
@@ -20,8 +20,9 @@ export const ItemPositionFormLayout = () => {
   const footerConfig = useMemo(
     () => ({
       saveButton: { label: payload.mode === 'create' ? 'Create' : 'Save', action: handleSave },
+      ...(payload.mode === 'edit' ? { deleteButton: { label: 'Delete', action: handleDelete } } : {}),
     }),
-    [handleSave, payload.mode],
+    [handleSave, handleDelete, payload.mode],
   )
 
   return (

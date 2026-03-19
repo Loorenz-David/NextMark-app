@@ -15,14 +15,17 @@ const normalizePhone = (value: Phone): Phone | null => {
   return value.number.trim() ? value : null
 }
 
+const phoneFieldContainerClassName =
+  'rounded-[1.45rem] border border-white/10 bg-white/[0.04] px-4 py-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]'
+
 export const ContactInfoStep = () => {
   const { form, setters, next, warnings } = useExternalForm()
 
   return (
     <div className="space-y-5">
       <div>
-        <h2 className="text-xl font-semibold text-[var(--color-text)]">Contact Information</h2>
-        <p className="mt-1 text-sm text-[var(--color-muted)]">Add reachable phone numbers and an email.</p>
+        <h2 className="text-xl font-semibold text-white">Contact Information</h2>
+        <p className="mt-1 text-sm text-white/46">Add reachable phone numbers and an email.</p>
       </div>
 
       <Field
@@ -32,6 +35,7 @@ export const ContactInfoStep = () => {
       >
         <PhoneField
           phoneNumber={form.client_primary_phone ?? emptyPhone}
+          containerClassName={phoneFieldContainerClassName}
           onChange={(value) => {
             setters.setPrimaryPhone(normalizePhone(value))
           }}
@@ -43,6 +47,7 @@ export const ContactInfoStep = () => {
       >
         <PhoneField
           phoneNumber={form.client_secondary_phone ?? emptyPhone}
+          containerClassName={phoneFieldContainerClassName}
           onChange={(value) => {
             setters.setSecondaryPhone(normalizePhone(value))
           }}
@@ -65,7 +70,7 @@ export const ContactInfoStep = () => {
         />
       </Field>
 
-      <div className="pt-2">
+      <div className="pt-3">
         <StepButton label="Next" onClick={next} />
       </div>
     </div>

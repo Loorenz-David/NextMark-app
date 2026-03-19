@@ -1,17 +1,22 @@
+export type FuelType = 'bensine' | 'diesel' | 'electric'
+export type TravelMode = 'DRIVING' | 'TWO_WHEELER' | 'BICYCLING' | 'WALKING'
+
 export type Vehicle = {
   id?: number
   client_id: string
-  name: string
-  icon?: string | null
-  travel_mode?: string | null
+  registration_number: string
+  label?: string | null
+  fuel_type?: FuelType | null
+  travel_mode?: TravelMode | null
+  max_volume_load_cm3?: number | null
+  max_weight_load_g?: number | null
+  max_speed_kmh?: number | null
+  cost_per_km?: number | null
   cost_per_hour?: number | null
-  cost_per_kilometer?: number | null
-  travel_duration_limit?: number | null
-  route_distance_limit?: number | null
-  user_id?: number | null
-  max_load?: number | null
-  min_load?: number | null
+  travel_distance_limit_km?: number | null
+  travel_duration_limit_minutes?: number | null
   is_system?: boolean
+  team_id?: number | null
 }
 
 export type VehicleMap = {
@@ -20,10 +25,6 @@ export type VehicleMap = {
 }
 
 export type VehicleInput = Omit<Vehicle, 'id'>
-
-export type ClientIdMap = Record<string, number> & {
-  ids_without_match?: number[]
-}
 
 export type VehicleUpdatePayload = {
   target_id: number | string

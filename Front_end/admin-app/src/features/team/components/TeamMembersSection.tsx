@@ -46,12 +46,14 @@ export const TeamMembersSection = ({
   }
 
   return (
-    <section className="flex flex-col  h-full">
-      <div className="flex flex-col shadow-md pb-8 gap-5 p-6">
+    <section className="admin-glass-panel-strong flex h-full flex-col overflow-hidden rounded-[28px] shadow-none">
+      <div className="flex flex-col gap-5 border-b border-[var(--color-border)]/70 px-6 pb-8 pt-6">
         <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-base font-semibold text-[var(--color-text)]">Members</h2>
-            <p className="text-xs text-[var(--color-muted)]">Manage your team members.</p>
+          <div className="flex flex-col gap-2">
+            <div>
+              <h2 className="text-base font-semibold text-[var(--color-text)]">Members</h2>
+              <p className="text-xs text-[var(--color-muted)]">Manage your team members.</p>
+            </div>
             <TeamNameEditorRow teamName={teamName} teamNameEditor={teamNameEditor} />
           </div>
           <div className="flex items-center gap-4">
@@ -77,14 +79,14 @@ export const TeamMembersSection = ({
         <SearchBar
           options={FILTER_OPTIONS}
           onChange={handleSearchChange}
-          className="w-full rounded-lg border-1 border-[var(--color-muted)]/40"
+          className="w-full rounded-2xl border border-[var(--color-border)]/70 bg-white/[0.04]"
           inputClassName="w-full  px-3 py-2 text-sm"
           iconClassName="p-2 pr-3 cursor-pointer"
           placeholder="Search for members"
         />
       </div>
 
-      <div className="flex flex-col gap-3 bg-[var(--color-muted)]/10 h-full p-6 pt-10 ">
+      <div className="flex h-full flex-col gap-3 bg-[var(--color-page)]/30 p-6 pt-8">
         {filteredMembers.map((member) => (
           <TeamMemberCard
             key={member.client_id}
@@ -94,7 +96,9 @@ export const TeamMembersSection = ({
           />
         ))}
         {!filteredMembers.length ? (
-          <p className="text-sm text-[var(--color-muted)]">No members found.</p>
+          <div className="rounded-2xl border border-dashed border-white/[0.08] bg-white/[0.03] px-4 py-8 text-center text-sm text-[var(--color-muted)]">
+            No members found.
+          </div>
         ) : null}
       </div>
     </section>

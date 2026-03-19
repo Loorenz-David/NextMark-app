@@ -57,13 +57,6 @@ class User(
 
    
     
-    vehicle = relationship(
-        "Vehicle",
-        back_populates="user",
-        lazy="selectin"
-    )
-
-
     team = relationship(
         "Team",
         backref="members",

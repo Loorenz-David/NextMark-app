@@ -84,6 +84,7 @@ export function mapAssignedRouteToPageDisplay(
         itemSummary: stop.itemSummary,
         itemCountLabel: stop.orderItems.length > 0 ? formatItemCountLabel(stop.orderItems.length) : null,
         phoneLine: stop.phoneLine,
+        orderNotes: stop.order?.order_notes ?? null,
         badgeLabel: stop.badgeLabel,
         isActive: stop.isActive,
         isCompleted: stop.isCompleted,

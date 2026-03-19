@@ -25,6 +25,7 @@ from Delivery_app_BK.route_optimization.constants.route_end_strategy import ROUN
 from Delivery_app_BK.route_optimization.constants.skip_reasons import (
     OUTSIDE_OPTIMIZATION_WINDOW,
 )
+from Delivery_app_BK.domain.vehicle.travel_mode import map_to_google_travel_mode
 
 DEFAULT_ROUTE_MODIFIERS = {
     "avoid_tolls": False,
@@ -103,6 +104,14 @@ def build_request(context: OptimizationContext) -> OptimizationRequest:
     cost_per_kilometer = vehicle_config.get(
         "cost_per_kilometer", DEFAULT_VEHICLE_VALUES["cost_per_kilometer"]
     )
+
+    # Override with canonical vehicle data when the route solution has an assigned vehicle
+    if context.vehicle is not None:
+        vehicle = context.vehicle
+        if getattr(vehicle, "travel_mode", None):
+            travel_mode = map_to_google_travel_mode(vehicle.travel_mode)
+        if getattr(vehicle, "cost_per_km", None) is not None:
+            cost_per_kilometer = float(vehicle.cost_per_km)
 
     return OptimizationRequest(
         delivery_plan_id=context.delivery_plan.id,

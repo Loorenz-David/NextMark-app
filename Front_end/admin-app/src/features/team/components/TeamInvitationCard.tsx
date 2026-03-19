@@ -20,15 +20,15 @@ export const TeamInvitationCard = (props: TeamInvitationCardProps) => {
   const inviteId = invite.id ?? null
 
   return (
-    <div className="rounded-lg border border-[var(--color-border)] bg-white px-4 py-3">
-      <div className="flex items-center justify-between">
+    <div className="rounded-[24px] border border-white/[0.08] bg-white/[0.04] px-5 py-4 shadow-none">
+      <div className="flex items-start justify-between gap-4">
         <div>
           <p className="text-sm font-semibold text-[var(--color-text)]">
             {variant === 'received'
               ? capitalize(invite.from_team_name ?? '')
               : invite.target_username}
           </p>
-          <p className="text-xs text-[var(--color-muted)]">{invite.user_role_name}</p>
+          <p className="mt-1 text-xs text-[var(--color-muted)]">{invite.user_role_name}</p>
         </div>
         {variant === 'received' ? (
           <div className="flex items-center gap-4">
@@ -59,7 +59,7 @@ export const TeamInvitationCard = (props: TeamInvitationCardProps) => {
           </div>
         ) : null}
       </div>
-      <p className="mt-2 text-xs text-[var(--color-muted)]">
+      <p className="mt-4 text-xs text-[var(--color-muted)]">
         {formatIsoDate(invite.creation_date) ?? '—'}
       </p>
     </div>

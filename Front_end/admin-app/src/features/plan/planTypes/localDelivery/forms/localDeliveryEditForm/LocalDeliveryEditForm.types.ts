@@ -31,6 +31,7 @@ export type LocalDeliveryEditFormState = {
     stops_service_time: ServiceTime | null
     route_end_strategy: 'round_trip' | 'custom_end_address' | 'end_at_last_stop'
     driver_id: number | null
+    vehicle_id: number | null
     created_at?: string | null
     is_optimized?: string | null
   }

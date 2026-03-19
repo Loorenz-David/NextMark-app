@@ -1,14 +1,15 @@
 const applySharedButtonStyles = (button: HTMLButtonElement) => {
   button.style.width = '42px'
   button.style.height = '42px'
-  button.style.border = 'none'
+  button.style.border = '1px solid rgba(255, 255, 255, 0.12)'
   button.style.borderRadius = '9999px'
-  button.style.background = '#ffffff'
-  button.style.boxShadow = '0 4px 10px rgba(0, 0, 0, 0.18)'
+  button.style.background = 'rgba(14, 22, 23, 0.72)'
+  button.style.boxShadow = '0 12px 28px rgba(0, 0, 0, 0.18)'
   button.style.cursor = 'pointer'
   button.style.display = 'flex'
   button.style.alignItems = 'center'
   button.style.justifyContent = 'center'
+  button.style.transition = 'background-color 160ms ease, border-color 160ms ease, color 160ms ease'
 }
 
 export const createDriverVisibilityControlButton = ({
@@ -46,10 +47,12 @@ export const createDriverVisibilityControlButton = ({
     button.title = visible ? 'Hide driver locations' : 'Show driver locations'
     button.setAttribute('aria-label', button.title)
     button.setAttribute('aria-pressed', visible ? 'true' : 'false')
-    button.style.color = visible ? '#0f766e' : '#64748b'
-    button.style.background = '#ffffff'
-    button.style.outline = visible ? '2px solid rgba(15, 118, 110, 0.18)' : '2px solid rgba(100, 116, 139, 0.14)'
-    button.style.outlineOffset = '0px'
+    button.style.color = visible ? 'rgb(184, 255, 242)' : 'rgba(248, 251, 252, 0.72)'
+    button.style.borderColor = visible ? 'rgba(104, 214, 195, 0.28)' : 'rgba(255, 255, 255, 0.12)'
+    button.style.background = visible
+      ? 'rgba(24, 58, 60, 0.96)'
+      : 'rgba(14, 22, 23, 0.72)'
+    button.style.outline = 'none'
   }
 
   syncState(isVisible)

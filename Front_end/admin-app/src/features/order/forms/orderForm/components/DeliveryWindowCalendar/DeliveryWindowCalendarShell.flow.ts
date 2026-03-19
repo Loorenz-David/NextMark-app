@@ -165,7 +165,7 @@ const DELIVERY_WINDOW_CALENDAR_SHELL_PRESETS: Record<
       controlsRowClassName:
         'flex items-start justify-between gap-3',
       pickerClassName:
-        'w-[85px]  rounded-full border border-[var(--color-border-accent)] bg-white px-2 py-1',
+        'w-[85px] rounded-full border border-[var(--color-border-accent)] bg-[linear-gradient(180deg,rgba(33,45,46,0.96),rgba(24,34,35,0.94))] px-2 py-1 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]',
       betweenLabelClassName: 'text-xs text-[var(--color-muted)]',
       actionsClassName: 'flex  flex-col items-stretch gap-2 pr-2 ',
       cancelButtonClassName:
@@ -248,7 +248,7 @@ const DELIVERY_WINDOW_CALENDAR_SHELL_PRESETS: Record<
       controlsRowClassName:
         'flex items-start justify-between gap-4',
       pickerClassName:
-        'min-w-[140px] max-w-[170px] rounded-full border border-[var(--color-border-accent)] bg-white px-3 py-1.5',
+        'min-w-[140px] max-w-[170px] rounded-full border border-[var(--color-border-accent)] bg-[linear-gradient(180deg,rgba(33,45,46,0.96),rgba(24,34,35,0.94))] px-3 py-1.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]',
       betweenLabelClassName: 'text-2xl text-[var(--color-muted)]',
       actionsClassName: 'flex min-w-[150px] flex-col items-stretch gap-3',
       cancelButtonClassName:
@@ -331,7 +331,7 @@ const DELIVERY_WINDOW_CALENDAR_SHELL_PRESETS: Record<
       controlsRowClassName:
         'flex items-start justify-between gap-3',
       pickerClassName:
-        'min-w-[104px] max-w-[130px] rounded-full border border-[var(--color-border-accent)] bg-white px-2.5 py-1',
+        'min-w-[104px] max-w-[130px] rounded-full border border-[var(--color-border-accent)] bg-[linear-gradient(180deg,rgba(33,45,46,0.96),rgba(24,34,35,0.94))] px-2.5 py-1 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]',
       betweenLabelClassName: 'text-lg text-[var(--color-muted)]',
       actionsClassName: 'flex min-w-[116px] flex-col items-stretch gap-2',
       cancelButtonClassName:

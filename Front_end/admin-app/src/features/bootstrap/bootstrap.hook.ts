@@ -4,6 +4,7 @@ import { useMessageHandler } from '@shared-message-handler'
 import { ApiError } from '@/lib/api/ApiClient'
 import { insertOrderStates } from '@/features/order/store/orderState.store'
 import { insertTeamMembers } from '@/features/team/members/store/teamMemberStore'
+import { insertVehicles } from '@/features/infrastructure/vehicle/store/vehicleStore'
 
 import { bootstrapApi } from './bootstrp.api'
 import { insertItemStates } from '../itemConfigurations/store/itemStateStore'
@@ -56,6 +57,10 @@ export function useBootstrap() {
 
         if (payload.plan_states) {
           insertDeliveryPlanStates(payload.plan_states)
+        }
+
+        if (payload.vehicles) {
+          insertVehicles(payload.vehicles)
         }
 
         return payload

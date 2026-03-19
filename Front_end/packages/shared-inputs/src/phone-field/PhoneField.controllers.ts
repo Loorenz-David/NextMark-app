@@ -10,26 +10,32 @@ import type { PhonePrefixOption } from './phonePrefixes'
 const DEFAULT_PREFIX = '+93'
 const PHONE_PREFIX_STORAGE_KEY = 'defaultPhonePrefix'
 
+const resolvePhonePrefixStorageKey = (storageNamespace?: string): string =>
+  storageNamespace?.trim()
+    ? `${storageNamespace.trim()}:${PHONE_PREFIX_STORAGE_KEY}`
+    : PHONE_PREFIX_STORAGE_KEY
+
 type PhoneFieldControllerProps = {
   phoneNumber: Phone
   onChange: (value: Phone) => void
+  storageNamespace?: string
 }
 
 const isBrowser = typeof window !== 'undefined'
 
-const getStoredPrefix = (): string | null => {
+const getStoredPrefix = (storageNamespace?: string): string | null => {
   if (!isBrowser) return null
   try {
-    return window.localStorage.getItem(PHONE_PREFIX_STORAGE_KEY)
+    return window.localStorage.getItem(resolvePhonePrefixStorageKey(storageNamespace))
   } catch {
     return null
   }
 }
 
-const persistPrefix = (prefix: string) => {
+const persistPrefix = (prefix: string, storageNamespace?: string) => {
   if (!isBrowser) return
   try {
-    window.localStorage.setItem(PHONE_PREFIX_STORAGE_KEY, prefix)
+    window.localStorage.setItem(resolvePhonePrefixStorageKey(storageNamespace), prefix)
   } catch {
     // Ignore storage write errors to keep the field usable.
   }
@@ -38,6 +44,7 @@ const persistPrefix = (prefix: string) => {
 export const usePhoneFieldControllers = ({
   phoneNumber,
   onChange,
+  storageNamespace,
 }: PhoneFieldControllerProps) => {
   const inputRef = useRef<HTMLInputElement>(null)
   const [isOpen, setIsOpen] = useState(false)
@@ -65,7 +72,7 @@ export const usePhoneFieldControllers = ({
   }, [isOpen, phoneNumber.prefix, selectedPrefix?.display])
 
   useEffect(() => {
-    const storedPrefix = getStoredPrefix()
+    const storedPrefix = getStoredPrefix(storageNamespace)
     if (!storedPrefix) return
 
     const hasValidStoredPrefix = phonePrefixes.some((option) => option.value === storedPrefix)
@@ -77,7 +84,7 @@ export const usePhoneFieldControllers = ({
     if (!String(phoneNumber.number ?? '').trim()) return
 
     onChange({ ...phoneNumber, prefix: storedPrefix })
-  }, [onChange, phoneNumber])
+  }, [onChange, phoneNumber, storageNamespace])
 
   const handleOpenChange = useCallback(
     (open: boolean) => {
@@ -102,7 +109,7 @@ export const usePhoneFieldControllers = ({
 
   const handleSelectPrefix = useCallback(
     (prefixOption: PhonePrefixOption) => {
-      persistPrefix(prefixOption.value)
+      persistPrefix(prefixOption.value, storageNamespace)
       onChange({ ...phoneNumber, prefix: prefixOption.value })
       setInputValue(prefixOption.display)
       requestAnimationFrame(() => {
@@ -110,7 +117,7 @@ export const usePhoneFieldControllers = ({
         inputRef.current?.blur()
       })
     },
-    [onChange, phoneNumber],
+    [onChange, phoneNumber, storageNamespace],
   )
 
   const handleNumberChange = useCallback(

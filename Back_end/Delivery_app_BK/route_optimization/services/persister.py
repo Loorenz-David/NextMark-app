@@ -16,6 +16,10 @@ from Delivery_app_BK.models import RouteSolutionStop, RouteSolution,db
 from Delivery_app_BK.models.mixins.validation_mixins.time_warning_validation import (
     TimeWarningFactory,
 )
+from Delivery_app_BK.models.tables.infrastructure.vehicle import Vehicle
+from Delivery_app_BK.services.domain.vehicle.apply_vehicle_warnings import (
+    apply_vehicle_warnings_to_route_solution,
+)
 from Delivery_app_BK.route_optimization.domain.models import (
     OptimizationContext,
     OptimizationRequest,
@@ -56,6 +60,7 @@ def persist_solution(
     route_solution.route_warnings = None
 
     stop_lookup = {stop.order_id: stop for stop in (route_solution.stops or [])}
+    _temporarily_displace_existing_stop_orders(route_solution, stop_lookup.values())
     shipment_lookup = {
         shipment.label: shipment
         for shipment in [*(request.shipments or []), *(request.excluded_shipments or [])]
@@ -161,6 +166,21 @@ def persist_solution(
         )
 
     route_solution.stop_count = len(stop_payloads) + len(skipped_payloads)
+
+    # Apply vehicle warnings after distance/duration are finalised on the
+    # route_solution.  route_warnings was reset to None at the top of this
+    # function so we start from a clean slate — no stale vehicle entries.
+    _opt_vehicle = (
+        db.session.get(Vehicle, route_solution.vehicle_id)
+        if getattr(route_solution, "vehicle_id", None)
+        else None
+    )
+    apply_vehicle_warnings_to_route_solution(
+        route_solution,
+        _opt_vehicle,
+        orders=list(context.orders),
+        flush=False,
+    )
 
     db.session.add(route_solution)
     db.session.flush()
@@ -308,6 +328,40 @@ def _ensure_route_stop_instance(
     if not stop_instance.client_id:
         stop_instance.client_id = generate_client_id('route_stop')
     return stop_instance
+
+
+def _temporarily_displace_existing_stop_orders(
+    route_solution: RouteSolution,
+    stops,
+) -> None:
+    persisted_stops = [
+        stop
+        for stop in stops
+        if getattr(stop, "id", None) is not None and getattr(stop, "stop_order", None) is not None
+    ]
+    if not persisted_stops:
+        return
+
+    current_max = max(
+        (int(getattr(stop, "stop_order", 0) or 0) for stop in persisted_stops),
+        default=0,
+    )
+    temp_base = current_max + len(persisted_stops) + 1000
+
+    for index, stop in enumerate(
+        sorted(
+            persisted_stops,
+            key=lambda candidate: (
+                int(getattr(candidate, "stop_order", 0) or 0),
+                int(getattr(candidate, "id", 0) or 0),
+            ),
+        ),
+        start=1,
+    ):
+        stop.stop_order = temp_base + index
+
+    db.session.add(route_solution)
+    db.session.flush()
 
 
 def _build_stop_payload(

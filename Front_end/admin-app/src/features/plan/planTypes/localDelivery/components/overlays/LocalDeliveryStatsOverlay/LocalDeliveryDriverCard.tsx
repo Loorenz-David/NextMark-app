@@ -30,7 +30,9 @@ export const LocalDeliveryDriverCard = ({ driver }: LocalDeliveryDriverCardProps
           />
           <div className="min-w-0 text-left">
             <div className="truncate text-sm font-semibold text-white">{driver.name}</div>
-            <div className="mt-1 text-sm font-medium text-white/82">{driver.registration}</div>
+            {driver.registration != null && (
+              <div className="mt-1 text-sm font-medium text-white/82">{driver.registration}</div>
+            )}
           </div>
         </div>
       </button>

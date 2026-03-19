@@ -73,7 +73,7 @@ export const PhoneFieldLayout = ({
             </div>
           }
         >
-          <div className="rounded-2xl border border-[var(--color-border)] bg-white p-2 shadow-xl "
+          <div className="admin-glass-popover rounded-2xl p-2 shadow-xl"
             style={{width:'120px'}}
           >
             <PhonePrefixList />

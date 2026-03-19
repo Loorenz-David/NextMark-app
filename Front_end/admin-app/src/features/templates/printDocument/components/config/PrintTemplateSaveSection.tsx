@@ -6,7 +6,7 @@ type PrintTemplateSaveSectionProps = {
 }
 
 export const PrintTemplateSaveSection = ({ isExisting, onSave }: PrintTemplateSaveSectionProps) => (
-  <div className="mt-4 flex justify-end items-end gap-6">
+  <div className="mt-5 flex items-end justify-end gap-6 border-t border-[var(--color-border)]/70 pt-5">
     <BasicButton
       params={{
         variant: 'primary',

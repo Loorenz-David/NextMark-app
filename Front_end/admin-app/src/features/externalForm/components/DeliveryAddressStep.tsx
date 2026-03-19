@@ -10,8 +10,8 @@ export const DeliveryAddressStep = () => {
   return (
     <div className="space-y-5">
       <div>
-        <h2 className="text-xl font-semibold text-[var(--color-text)]">Delivery Address</h2>
-        <p className="mt-1 text-sm text-[var(--color-muted)]">Choose where this order should be delivered.</p>
+        <h2 className="text-xl font-semibold text-white">Delivery Address</h2>
+        <p className="mt-1 text-sm text-white/46">Choose where this order should be delivered.</p>
       </div>
 
       <Field
@@ -27,7 +27,7 @@ export const DeliveryAddressStep = () => {
         />
       </Field>
 
-      <div className="pt-2">
+      <div className="pt-3">
         <StepButton label="Submit" onClick={submit} />
       </div>
     </div>

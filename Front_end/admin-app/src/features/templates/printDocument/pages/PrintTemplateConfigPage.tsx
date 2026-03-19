@@ -12,7 +12,7 @@ export const PrintTemplateConfigPage = () => {
 
   if (!viewModel) {
     return (
-      <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-page)] p-4 text-sm text-[var(--color-muted)]">
+      <div className="rounded-[24px] border border-white/[0.08] bg-white/[0.04] p-5 text-sm text-[var(--color-muted)]">
         Invalid channel/event path.
       </div>
     )
@@ -26,7 +26,7 @@ export const PrintTemplateConfigPage = () => {
         animate={{ opacity: 1, x: 0 }}
         exit={{ opacity: 0, x: 24 }}
         transition={{ duration: 0.2, ease: 'easeOut' }}
-        className="rounded-xl border border-[var(--color-border)] bg-[var(--color-page)] p-4"
+        className="admin-glass-panel-strong rounded-[28px] p-5 shadow-none"
       >
         <PrintTemplateConfigHeader
           enabled={viewModel.formState.enable}

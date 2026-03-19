@@ -33,7 +33,7 @@ export const EmailFooterEditor = ({ buttons, onChange }: EmailFooterEditorProps)
   return (
     <section className="flex flex-col gap-6">
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-semibold text-[var(--color-text)]">Footer Buttons</h3>
+        <h3 className="text-[0.7rem] font-semibold uppercase tracking-[0.22em] text-[var(--color-muted)]">Footer Buttons</h3>
         <BasicButton
           params={{
             variant: 'primary',
@@ -50,7 +50,7 @@ export const EmailFooterEditor = ({ buttons, onChange }: EmailFooterEditorProps)
         {buttons.map((button) => (
           <div
             key={button.id}
-            className="flex gap-2 rounded-lg border border-[var(--color-border)]/70 bg-white p-3 border border-[var(--color-muted)]/30 "
+            className="flex gap-2 rounded-[20px] border border-white/[0.08] bg-white/[0.05] p-3"
           >
             <InputField
               value={button.label}

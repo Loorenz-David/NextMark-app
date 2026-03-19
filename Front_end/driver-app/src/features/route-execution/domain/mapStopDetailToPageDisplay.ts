@@ -16,6 +16,7 @@ type StopDetailPageDisplayDependencies = {
   callOrderPhone: () => void
   completeStop: () => void
   undoTerminal: () => void
+  openOrderNotes: (() => void) | null
   activeCasesCount: number
   orderStateIds: DriverOrderStateIds
 }
@@ -115,5 +116,14 @@ export function mapStopDetailToPageDisplay(
         onPress: deps.openOrderCases,
       },
     ],
+    orderNoteCard: (() => {
+      const notes = stop.order?.order_notes
+      if (!notes || notes.length === 0) return null
+      return {
+        firstNote: notes[0],
+        allNotes: notes,
+        onPress: notes.length > 1 ? deps.openOrderNotes : null,
+      }
+    })(),
   }
 }

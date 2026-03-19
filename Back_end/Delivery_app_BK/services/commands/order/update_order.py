@@ -60,8 +60,8 @@ MUTABLE_FIELDS = {
     "reference_number",
     "external_order_id",
     "external_source",
-    "tracking_number",
-    "tracking_link",
+    "external_tracking_number",
+    "external_tracking_link",
     "client_first_name",
     "client_last_name",
     "client_email",
@@ -74,6 +74,7 @@ MUTABLE_FIELDS = {
     "preferred_time_start",
     "preferred_time_end",
     "delivery_windows",
+    "order_notes",
 }
 
 ADDRESS_FIELDS = {"client_address"}

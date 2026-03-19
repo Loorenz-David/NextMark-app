@@ -4,8 +4,8 @@ import { getStoredCurrentLocation } from './currentLocationStorage'
 
 const normalize = (value: number): number => Number(value.toFixed(6))
 
-export function isAddressCurrentLocation(addr: address): boolean {
-  const stored = getStoredCurrentLocation()
+export function isAddressCurrentLocation(addr: address, storageNamespace?: string): boolean {
+  const stored = getStoredCurrentLocation(storageNamespace)
   if (!stored) return false
 
   const latDiff = Math.abs(normalize(addr.coordinates.lat) - normalize(stored.coordinates.lat))

@@ -105,13 +105,13 @@ export const SearchFilterBar = ({
                   className: 'pr-3',
                 }}
               >
-                <FilteredIcon className="h-4 w-4" />
+                <FilteredIcon className="h-4 w-4 text-[rgb(var(--color-light-blue-r))]" />
               </BasicButton>
             ) : null}
           </div>
         )}
       >
-        <div className="flex max-h-[320px] flex-col gap-2 overflow-y-auto scroll-thin rounded-xl border border-[var(--color-border)] bg-[var(--color-page)] p-2 shadow-md">
+        <div className="admin-glass-popover flex max-h-[320px] flex-col gap-2 overflow-y-auto scroll-thin rounded-xl border border-[var(--color-border-accent)] p-2 shadow-md">
           {config.length === 0 ? (
             <div className="px-2 py-1 text-xs text-[var(--color-muted)]">
               No filters configured.
@@ -127,11 +127,11 @@ export const SearchFilterBar = ({
                   type="button"
                   data-popover-close="true"
                   onClick={() => updateFilter?.(filter.key, filter.value)}
-                  className="flex w-full items-center justify-between rounded-md px-2 py-2 text-left text-sm transition-colors hover:bg-[var(--color-muted)]/10"
+                  className="flex w-full items-center justify-between rounded-md px-2 py-2 text-left text-sm transition-colors hover:bg-white/[0.08]"
                 >
                   <span>{filter.label}</span>
                   {selected ? (
-                    <span className="rounded-full bg-[var(--color-muted)]/20 px-2 py-0.5 text-[10px] text-[var(--color-muted)]">
+                    <span className="rounded-full border border-[rgb(var(--color-light-blue-r),0.22)] bg-[rgb(var(--color-light-blue-r),0.12)] px-2 py-0.5 text-[10px] text-[rgb(var(--color-light-blue-r))]">
                       Selected
                     </span>
                   ) : null}
@@ -143,7 +143,7 @@ export const SearchFilterBar = ({
             return (
               <div
                 key={`${filter.type}-${filter.keyStart}-${filter.keyEnd}-${index}`}
-                className="flex flex-col gap-2 rounded-md border border-[var(--color-border)] p-2"
+                className="flex flex-col gap-2 rounded-md border border-white/[0.08] bg-white/[0.04] p-2"
               >
                 <span className="text-xs font-semibold text-[var(--color-muted)]">
                   {filter.label}

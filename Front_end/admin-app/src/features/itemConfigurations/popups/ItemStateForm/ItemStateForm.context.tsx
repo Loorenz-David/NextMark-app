@@ -11,6 +11,7 @@ type ItemStateFormContextValue = {
   initialFormRef: RefObject<ItemStateFormState | null>
   warnings: ItemStateFormWarnings
   handleSave: () => void
+  handleDelete: () => void
 }
 
 const ItemStateFormContext = createContext<ItemStateFormContextValue | null>(null)

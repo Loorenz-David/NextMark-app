@@ -7,13 +7,13 @@ export type VehicleFormWarnings = ReturnType<typeof useVehicleFormWarnings>
 export const useVehicleFormWarnings = () => {
   const validation = useVehicleValidation()
 
-  const nameWarning = useInputWarning('Name is required.', (value, setMessage) => {
-    const isValid = validation.validateName(String(value ?? ''))
+  const registrationNumberWarning = useInputWarning('Registration number is required.', (value, setMessage) => {
+    const isValid = validation.validateRegistrationNumber(String(value ?? ''))
     if (!isValid) {
-      setMessage('Name is required.')
+      setMessage('Registration number is required.')
     }
     return isValid
   })
 
-  return { nameWarning }
+  return { registrationNumberWarning }
 }

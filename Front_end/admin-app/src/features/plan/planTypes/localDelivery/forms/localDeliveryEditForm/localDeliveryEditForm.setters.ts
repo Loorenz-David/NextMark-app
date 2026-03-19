@@ -11,6 +11,7 @@ import {
   saveStartLocationPreference,
   saveStartTimePreference,
   saveStopsServiceTimePreference,
+  saveVehicleIdPreference,
 } from './localDeliveryEditForm.storage'
 
 type SetFormState = Dispatch<SetStateAction<LocalDeliveryEditFormState>>
@@ -205,6 +206,14 @@ export const useLocalDeliveryEditFormSetters = ({ setFormState, formWarnings }: 
     }))
   }
 
+  const handleVehicleSelection = (value: number | null) => {
+    saveVehicleIdPreference(value)
+    setFormState((prev) => ({
+      ...prev,
+      route_solution: { ...prev.route_solution, vehicle_id: value },
+    }))
+  }
+
   const handleCreateVariantToggle = (value: boolean) => {
     setFormState((prev) => ({
       ...prev,
@@ -253,6 +262,7 @@ export const useLocalDeliveryEditFormSetters = ({ setFormState, formWarnings }: 
     handleRouteEndLocation,
     handleRouteEndStrategy,
     handleDriverSelection,
+    handleVehicleSelection,
     handleCreateVariantToggle,
     handleStopsServiceTimeTime,
     handleStopsServiceTimePerItem,

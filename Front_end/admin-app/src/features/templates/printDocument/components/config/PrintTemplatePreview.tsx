@@ -15,9 +15,9 @@ export const PrintTemplatePreview = ({
   const SelectedComponentTemplate = selectedVariantDefinition.component
 
   return (
-    <div className="mt-4 rounded-lg border border-[var(--color-border)] bg-[var(--color-muted)]/8 p-3">
-      <p className="text-xs font-semibold text-[var(--color-text)]">{selectedVariantDefinition.previewTitle}</p>
-      <p className="mt-1 text-xs text-[var(--color-muted)]">{selectedVariantDefinition.previewBody}</p>
+    <div className="mt-5 rounded-[24px] border border-white/[0.08] bg-white/[0.04] p-4">
+      <p className="text-[0.7rem] font-semibold uppercase tracking-[0.22em] text-[var(--color-muted)]">{selectedVariantDefinition.previewTitle}</p>
+      <p className="mt-2 text-xs leading-5 text-[var(--color-muted)]">{selectedVariantDefinition.previewBody}</p>
       <div className="flex justify-center items-start overflow-auto scroll-thin py-6 ">
         <div className="relative inline-block" style={{ paddingLeft: '2.4rem', paddingTop: '1.8rem' }}>
           <div

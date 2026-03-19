@@ -3,20 +3,54 @@ import { LocalDeliveryOrderList, MainHeaderLocalDeliveryPage } from '../componen
 import { OptimizationLoading } from '../components/spinners/Optimization.spinner'
 import { MIN_LOADER_VISIBLE_MS } from '../constants/optimization.constants'
 import { useLocalDeliveryContext } from '../context/useLocalDeliveryContext'
+import { useLocalDeliveryActionBarVisibility } from '../hooks/useLocalDeliveryActionBarVisibility'
+
+const ACTION_BAR_HEIGHT_WITH_OPTIMIZE = 138
+const ACTION_BAR_HEIGHT_WITHOUT_OPTIMIZE = 82
+const ACTION_BAR_COLLAPSED_HEIGHT = 12
 
 
 export const LocalDeliveryPageContent = () => {
-  const { orderCount, localDeliveryPlan } = useLocalDeliveryContext()
+  const { orderCount, localDeliveryPlan, selectedRouteSolution } = useLocalDeliveryContext()
 
   const isLoading = localDeliveryPlan?.is_loading
   const optimizationStartedAt = localDeliveryPlan?.optimization_started_at ?? null
+  const showOptimizeRow =
+    !isLoading &&
+    orderCount > 0 &&
+    (selectedRouteSolution?.is_optimized === 'not optimize' ||
+      selectedRouteSolution?.has_route_warnings === true)
+
+  const {
+    isActionBarVisible,
+    actionBarReservedHeight,
+    isDesktopActionBarBehaviorEnabled,
+    handleScroll,
+  } = useLocalDeliveryActionBarVisibility({
+    enabled: !isLoading,
+    expandedHeight: showOptimizeRow
+      ? ACTION_BAR_HEIGHT_WITH_OPTIMIZE
+      : ACTION_BAR_HEIGHT_WITHOUT_OPTIMIZE,
+    collapsedHeight: ACTION_BAR_COLLAPSED_HEIGHT,
+  })
 
   return (
-    <div className="w-full h-full flex flex-col bg-[var(--color-primary)]/5">
-      <MainHeaderLocalDeliveryPage />
+    <div className="relative flex h-full w-full flex-col bg-[var(--color-primary)]/5">
+      <MainHeaderLocalDeliveryPage
+        useFloatingActionBar={isDesktopActionBarBehaviorEnabled}
+        isActionBarVisible={isActionBarVisible}
+        showOptimizeRow={showOptimizeRow}
+      />
      
       {!isLoading 
-        ? <LocalDeliveryOrderList/>
+        ? (
+          <LocalDeliveryOrderList
+            onScrollContainer={handleScroll}
+            topReservedOffset={
+              isDesktopActionBarBehaviorEnabled ? actionBarReservedHeight : 0
+            }
+          />
+        )
         : isLoading == 'isOptimizing' 
           ? <OptimizationLoading message={
             <>

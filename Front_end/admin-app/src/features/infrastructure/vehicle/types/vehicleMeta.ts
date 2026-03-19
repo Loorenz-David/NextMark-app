@@ -11,9 +11,9 @@ export type VehiclePagination = {
 export type VehicleQueryFilters = {
   team_id?: number | string
   client_id?: string
-  name?: string
+  registration_number?: string
+  label?: string
   travel_mode?: string
-  user_id?: number
   is_system?: boolean
   sort?: 'id_asc' | 'id_desc'
   after_id?: number

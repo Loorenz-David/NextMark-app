@@ -79,34 +79,47 @@ export const SettingsDesktopView = () => {
     apiClient.clearSession()
     navigate('/auth/login', { replace: true })
   }
- 
+
+  const isRouteActive = (key: SectionKey | 'no-section') => {
+    if (key === 'no-section') {
+      return false
+    }
+
+    const route = SETTINGS_ROUTE_MAP[key]
+    return location.pathname === route || location.pathname.startsWith(`${route}/`)
+  }
 
   return (
-    <div className="flex h-full w-full">
-      <aside className="h-full w-64 min-w-64 border-r border-[var(--color-border)] bg-white px-4 py-6 flex flex-col">
+    <div className="flex h-full w-full bg-[var(--color-page)]">
+      <aside className="admin-glass-panel-strong relative flex h-full w-72 min-w-72 flex-col border-r border-[var(--color-border)]/70 px-4 py-6">
+        <div className="pointer-events-none absolute inset-y-0 right-0 w-px bg-white/[0.05]" />
         <button
           type="button"
           onClick={() => navigate('/')}
-          className="w-full flex items-center gap-2 text-sm text-[var(--color-muted)] hover:text-[var(--color-text)] cursor-pointer"
+          className="flex w-full cursor-pointer items-center gap-2 rounded-xl border border-transparent px-3 py-2 text-sm text-[var(--color-muted)] transition-colors hover:border-white/[0.08] hover:bg-white/[0.04] hover:text-[var(--color-text)]"
         >
           <BackArrowIcon2 className="h-4 w-4" />
           Back
         </button>
 
-        <div className="mt-6 flex flex-col gap-2 flex-1">
+        <div className="mt-6 flex flex-1 flex-col gap-2">
           {sidebarOptions.map((option) => (
             <div key={option.key} className="flex flex-col gap-1">
               <button
                 type="button"
                 onClick={() => handleToggleSection(option)}
-                className="flex w-full items-center justify-between cursor-pointer rounded-lg px-3 py-2 text-left text-sm text-[var(--color-text)] hover:bg-[var(--color-muted)]/10"
+                className={`flex w-full cursor-pointer items-center justify-between rounded-xl border px-3 py-2.5 text-left text-sm transition-colors ${
+                  isRouteActive(option.key)
+                    ? 'border-[var(--color-border)] bg-white/[0.07] text-[var(--color-text)] shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]'
+                    : 'border-transparent text-[var(--color-text)] hover:border-white/[0.08] hover:bg-white/[0.04]'
+                }`}
               >
                 {option.label}
               </button>
               <AnimatePresence>
                 {expandedKey === option.key && option.sections?.length ? (
                   <motion.div
-                    className="flex flex-col flex-1 gap-1 pl-4"
+                    className="flex flex-1 flex-col gap-1 pl-4"
                     initial={{ height: 0, opacity: 0 }}
                     animate={{ height: 'auto', opacity: 1 }}
                     exit={{ height: 0, opacity: 0 }}
@@ -117,7 +130,11 @@ export const SettingsDesktopView = () => {
                         key={subSection.key}
                         type="button"
                         onClick={() => handleSelectSection(subSection.key)}
-                        className="flex w-full items-center justify-between cursor-pointer rounded-lg px-3 py-2 text-left text-xs text-[var(--color-muted)] hover:bg-[var(--color-muted)]/10"
+                        className={`flex w-full cursor-pointer items-center justify-between rounded-xl border px-3 py-2 text-left text-xs transition-colors ${
+                          isRouteActive(subSection.key)
+                            ? 'border-[var(--color-light-blue-r)]/40 bg-[rgb(var(--color-light-blue-r),0.12)] text-[rgb(var(--color-light-blue-r))]'
+                            : 'border-transparent text-[var(--color-muted)] hover:border-white/[0.06] hover:bg-white/[0.03] hover:text-[var(--color-text)]'
+                        }`}
                       >
                         {subSection.label}
                       </button>
@@ -129,18 +146,18 @@ export const SettingsDesktopView = () => {
           ))}
         </div>
 
-        <div className="pt-4 border-t border-[var(--color-border)]">
+        <div className="border-t border-[var(--color-border)]/70 pt-4">
           <button
             type="button"
             onClick={handleLogout}
-            className="flex w-full items-center justify-between cursor-pointer rounded-lg px-3 py-2 text-left text-sm text-[var(--color-text)] hover:bg-[var(--color-muted)]/10"
+            className="flex w-full cursor-pointer items-center justify-between rounded-xl border border-transparent px-3 py-2 text-left text-sm text-[var(--color-text)] transition-colors hover:border-red-400/20 hover:bg-red-500/[0.06] hover:text-red-200"
           >
             Log out
           </button>
         </div>
       </aside>
 
-      <main className="flex min-h-0 flex-1 overflow-hidden">
+      <main className="flex min-h-0 flex-1 overflow-hidden bg-[var(--color-page)]">
         <AnimatePresence >
           <motion.div
             key={location.pathname}
@@ -148,7 +165,7 @@ export const SettingsDesktopView = () => {
             animate={{ opacity: 1, x: 0 }}
 
             transition={{ duration: 0.2, ease: 'easeOut' }}
-            className="flex h-full w-full min-h-0 flex-col"
+            className="flex h-full w-full min-h-0 flex-col bg-[var(--color-page)]"
           >
             <Outlet />
           </motion.div>

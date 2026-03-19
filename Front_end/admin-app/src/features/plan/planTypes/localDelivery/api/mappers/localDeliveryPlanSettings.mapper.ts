@@ -25,6 +25,7 @@ export const normalizeLocalDeliveryEditFormToSettingsPayload = (
     end_location: formState.route_solution.end_location,
     route_end_strategy: formState.route_solution.route_end_strategy,
     driver_id: formState.route_solution.driver_id,
+    vehicle_id: formState.route_solution.vehicle_id,
   },
   create_variant_on_save: formState.create_variant_on_save,
 })

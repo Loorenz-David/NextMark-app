@@ -30,7 +30,8 @@ export const OrderCaseChatComposer = ({
 
 
   return (
-    <div className="flex items-center gap-2 border-t border-[var(--color-border)] bg-[var(--color-page)] pt-3">
+    <div className="admin-glass-panel rounded-[24px] border-white/10 p-3" style={{ boxShadow: 'none' }}>
+      <div className="flex items-end gap-3">
       <div className="flex-1">
         <div className={fieldContainer}>
           <textarea
@@ -49,10 +50,12 @@ export const OrderCaseChatComposer = ({
           onClick: onSend,
           disabled,
           ariaLabel: 'Send case message',
+          className: 'h-11 rounded-[1.35rem] px-5',
         }}
       >
         Send
       </BasicButton>
+      </div>
     </div>
   )
 }

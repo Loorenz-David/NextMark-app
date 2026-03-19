@@ -7,6 +7,7 @@ import type { PrintTemplateMap } from '../templates/printDocument/types'
 import type { EmailMessageTemplateMap } from '../messaging/emailMessage/types'
 import type { SmsMessageTemplateMap } from '../messaging/smsMessage/types'
 import type { DeliveryPlanStateMap } from '../plan/types/planState'
+import type { VehicleMap } from '../infrastructure/vehicle/types/vehicle'
 
 
 export type BootstrapResponse = {
@@ -17,6 +18,7 @@ export type BootstrapResponse = {
   message_templates_email: EmailMessageTemplateMap 
   message_templates_sms: SmsMessageTemplateMap
   plan_states: DeliveryPlanStateMap
+  vehicles?: VehicleMap
 }
 
 export const bootstrapApi = {

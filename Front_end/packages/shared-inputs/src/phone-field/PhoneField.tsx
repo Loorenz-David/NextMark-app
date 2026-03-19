@@ -7,12 +7,19 @@ export const PhoneField = ({
   onChange,
   containerClassName,
   containerStyle,
+  prefixPopoverClassName,
+  storageNamespace,
 }: PhoneFieldProps) => {
   return (
-    <PhoneFieldProvider phoneNumber={phoneNumber} onChange={onChange}>
+    <PhoneFieldProvider
+      phoneNumber={phoneNumber}
+      onChange={onChange}
+      storageNamespace={storageNamespace}
+    >
       <PhoneFieldLayout
         containerClassName={containerClassName}
         containerStyle={containerStyle}
+        prefixPopoverClassName={prefixPopoverClassName}
       />
     </PhoneFieldProvider>
   )

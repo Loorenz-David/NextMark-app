@@ -14,6 +14,7 @@ def apply_route_solution_field_updates(
     has_set_end = "set_end_time" in updates
     has_eta_tolerance_seconds = "eta_tolerance_seconds" in updates
     has_driver = "driver_id" in updates
+    has_vehicle = "vehicle_id" in updates
     has_route_end_strategy = "route_end_strategy" in updates
     has_stops_service_time = "stops_service_time" in updates
 
@@ -24,6 +25,7 @@ def apply_route_solution_field_updates(
     set_end_time = normalize_time_value(updates.get("set_end_time"))
     eta_tolerance_seconds = updates.get("eta_tolerance_seconds", route_solution.eta_tolerance_seconds)
     driver_id = updates.get("driver_id")
+    vehicle_id = updates.get("vehicle_id")
     route_end_strategy = updates.get("route_end_strategy")
     stops_service_time = updates.get("stops_service_time")
 
@@ -53,6 +55,9 @@ def apply_route_solution_field_updates(
 
     if has_driver:
         route_solution.driver_id = driver_id
+
+    if has_vehicle:
+        route_solution.vehicle_id = vehicle_id
 
     has_service_time_change = False
     if has_stops_service_time and stops_service_time != route_solution.stops_service_time:

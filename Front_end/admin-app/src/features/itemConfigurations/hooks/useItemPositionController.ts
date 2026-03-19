@@ -3,12 +3,12 @@ import { useMemo, useState } from 'react'
 import { filterItemPositions } from '../domain/useItemRules'
 import { useItemPositionFlow } from './useItemPositionFlow'
 import { useItemPositions } from './useItemSelectors'
-import { useItemActions } from './useItemActions'
+import { useItemConfigActions } from './useItemConfigActions'
 
 export const useItemPositionController = () => {
   useItemPositionFlow()
   const items = useItemPositions()
-  const actions = useItemActions()
+  const actions = useItemConfigActions()
   const [query, setQuery] = useState('')
 
   const filtered = useMemo(() => filterItemPositions(items, query), [items, query])

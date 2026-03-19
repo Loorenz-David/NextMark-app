@@ -53,7 +53,7 @@ export function LoginForm() {
       </div>
 
       {error && (
-        <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
+        <div className="rounded-2xl border border-rose-300/24 bg-rose-400/10 px-4 py-3 text-sm text-rose-100">
           {error}
         </div>
       )}
@@ -63,7 +63,7 @@ export function LoginForm() {
           type: 'submit',
           variant: 'primary',
           disabled: isLoading || !email || !password,
-          className: 'h-11 w-full text-base',
+          className: 'h-12 w-full text-base shadow-[0_18px_38px_rgba(131,204,185,0.24)]',
         }}
       >
         {isLoading ? 'Signing in...' : 'Sign in'}

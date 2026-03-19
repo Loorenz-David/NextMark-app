@@ -29,7 +29,9 @@ def optimize_local_delivery_plan(
         context = load_optimization_context(ctx)
         request = build_request(context)
         provider = provider or GoogleRouteOptimizationProvider()
+     
         result = provider.optimize(request)
+       
        
         data = persist_solution(context, request, result, provider.name)
         return StatusOutcome(data=data)

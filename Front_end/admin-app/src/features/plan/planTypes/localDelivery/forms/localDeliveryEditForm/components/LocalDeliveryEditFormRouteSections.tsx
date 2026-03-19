@@ -75,7 +75,19 @@ export const LocalDeliveryEditFormRouteSections = () => {
             ]}
             selectedValue={formState.route_solution.route_end_strategy}
             onSelect={formSetters.handleRouteEndStrategy}
-            styleConfig={{ textSize: '12px', containerBg: '#eaeaea' }}
+            styleConfig={{
+              textSize: '12px',
+              containerBg: 'rgba(255,255,255,0.045)',
+              containerBorder: 'rgba(255,255,255,0.14)',
+              containerShadow: 'inset 0 1px 0 rgba(255,255,255,0.04)',
+              selectedBg: 'linear-gradient(180deg, rgba(113, 205, 233, 0.22), rgba(84, 146, 209, 0.16))',
+              selectedBorder: 'rgba(113, 205, 233, 0.42)',
+              selectedShadow: 'inset 0 1px 0 rgba(255,255,255,0.14)',
+              textColor: 'rgba(255,255,255,0.68)',
+              selectedTextColor: 'rgb(213, 247, 255)',
+              containerPadding: '6px',
+              buttonPadding: '12px 14px',
+            }}
           />
         </Field>
         <AnimatePresence initial={false}>

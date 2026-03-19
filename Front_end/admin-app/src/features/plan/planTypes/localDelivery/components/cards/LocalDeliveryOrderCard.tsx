@@ -2,7 +2,7 @@
 import type { Order } from '@/features/order/types/order'
 import { ItemIcon, TimeIcon } from '@/assets/icons'
 import { StateCard } from '@/shared/layout/StateCard'
-import { useSectionManager, useMapManager } from '@/shared/resource-manager/useResourceManager'
+import { useMapManager } from '@/shared/resource-manager/useResourceManager'
 import { useOrderStateByServerId } from '@/features/order/store/orderStateHooks.store'
 import type { RouteSolutionStop } from '@/features/plan/planTypes/localDelivery/types/routeSolutionStop'
 import { RouteStopWarnings } from '../warnings/RouteStopWarnings'
@@ -44,15 +44,16 @@ export const LocalDeliveryOrderCard = ({ order, stop, displayStopOrder, planStar
     
 
     return ( 
-        <div className="flex flex-col gap-3 rounded-2xl border border-[var(--color-muted)]/30 bg-white p-4 pl-2 "
+        <div className="admin-glass-panel admin-surface-compact relative flex flex-col gap-2.5 overflow-hidden rounded-lg border border-white/10 p-4 pl-2 transition-all duration-200 hover:border-white/18 hover:bg-white/[0.08] hover:shadow-[0_16px_38px_rgba(0,0,0,0.16)]"
             onClick={openOrder}
         >
+            <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,rgba(255,255,255,0.05),transparent_26%,transparent_72%,rgba(0,0,0,0.04))]" />
 
-            <div className="flex gap-3 w-full">
+            <div className="relative z-10 flex w-full gap-3">
                 <StopOrderAvatar stopOrder={stopOrder} />
                 <div className="flex min-w-0 flex-col gap-2 flex-1 pl-1">
                         <div className="flex justify-between">
-                            <div className="flex gap-3">
+                            <div className="flex min-w-0 gap-3">
                                 <div className="flex items-center gap-2 min-w-0">
                                     <span className="text-base font-semibold text-[var(--color-text)]">
                                         {orderLabel}
@@ -61,7 +62,7 @@ export const LocalDeliveryOrderCard = ({ order, stop, displayStopOrder, planStar
                                 </div>
                                 {order.external_source && (
                                 <div className="flex items-center justify-center">
-                                    <span className="shrink-0 rounded-full border border-[var(--color-border)] px-2 py-0.5 text-[0.5rem] uppercase tracking-wide text-[var(--color-muted)]">
+                                    <span className="shrink-0 rounded-full border border-white/10 bg-white/[0.04] px-2 py-0.5 text-[0.55rem] uppercase tracking-[0.16em] text-[var(--color-muted)]">
                                         {order.external_source}
                                     </span>
                                 </div>
@@ -74,19 +75,19 @@ export const LocalDeliveryOrderCard = ({ order, stop, displayStopOrder, planStar
                                 </div>
                             }
                         </div>
-                        <div className="flex justify-between w-full items-center ">
-                            <span className="truncate text-xs text-[var(--color-muted)] pr-1">
+                        <div className="flex w-full items-center justify-between">
+                            <span className="truncate pr-1 text-xs text-[var(--color-muted)]/95">
                                 {streetAddress}
                             </span>
-                            <div className="flex items-center justify-end gap-5 text-xs text-[var(--color-muted)]">
-                                <div className="flex items-center gap-2">
-                                    <ItemIcon className="h-3 w-3 app-icon" />
+                            <div className="flex items-center justify-end gap-3 text-xs text-[var(--color-muted)]">
+                                <div className="flex items-center gap-2 rounded-full border border-white/8 bg-white/[0.04] px-2 py-1">
+                                    <ItemIcon className="h-3 w-3 text-[var(--color-primary)]/85" />
                                     <span>{itemCount}</span>
                                 </div>
-                                <div className="flex items-center gap-2 ">
+                                <div className="flex min-w-[72px] items-center justify-center gap-2 rounded-full border border-white/8 bg-white/[0.04] px-2 py-1">
                                     { expectedArrival ? 
                                         <>
-                                            <TimeIcon className="h-3 w-3 app-icon" />
+                                            <TimeIcon className="h-3 w-3 text-[var(--color-light-blue)]" />
                                             <span className="whitespace-nowrap">
                                                     {expectedArrival}
                                             </span>

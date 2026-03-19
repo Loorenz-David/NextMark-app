@@ -39,6 +39,10 @@ from Delivery_app_BK.sockets.emitters.route_solution_events import (
 from Delivery_app_BK.sockets.emitters.route_solution_stop_events import (
     emit_route_solution_stop_updated,
 )
+from Delivery_app_BK.services.domain.vehicle.apply_vehicle_warnings import (
+    apply_vehicle_warnings_to_route_solution,
+)
+from Delivery_app_BK.models.tables.infrastructure.vehicle import Vehicle
 
 logger = logging.getLogger(__name__)
 
@@ -90,6 +94,20 @@ def apply_local_delivery_settings_request(
         route_solution.actual_end_time_source = None
         local_delivery_plan.actual_start_time = None
         local_delivery_plan.actual_end_time = None
+
+    # Recompute vehicle warnings after all route-solution fields are settled.
+    # This runs unconditionally so that a vehicle_id change, a distance refresh,
+    # or a vehicle-limit change is always reflected before the commit.
+    _vehicle = (
+        db.session.get(Vehicle, route_solution.vehicle_id)
+        if route_solution.vehicle_id
+        else None
+    )
+    apply_vehicle_warnings_to_route_solution(
+        route_solution,
+        _vehicle,
+        flush=False,
+    )
 
     plan_window_changed = (
         previous_start != delivery_plan.start_date
@@ -220,6 +238,8 @@ def _build_route_solution_updates(route_patch: RouteSolutionPatchRequest) -> dic
         updates["route_end_strategy"] = route_patch.route_end_strategy
     if route_patch.has_driver_id:
         updates["driver_id"] = route_patch.driver_id
+    if route_patch.has_vehicle_id:
+        updates["vehicle_id"] = route_patch.vehicle_id
     if route_patch.has_stops_service_time:
         updates["stops_service_time"] = route_patch.stops_service_time
 
@@ -249,6 +269,7 @@ def _has_route_solution_patch(route_patch: RouteSolutionPatchRequest) -> bool:
             route_patch.has_eta_tolerance_seconds,
             route_patch.has_route_end_strategy,
             route_patch.has_driver_id,
+            route_patch.has_vehicle_id,
             route_patch.has_stops_service_time,
         ]
     )

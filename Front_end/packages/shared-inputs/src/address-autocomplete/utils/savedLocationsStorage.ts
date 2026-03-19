@@ -3,8 +3,8 @@ import type { SavedLocation } from '../types'
 import {
   CURRENT_LOCATION_COORD_TOLERANCE,
   SAVED_LOCATIONS_MAX,
-  SAVED_LOCATIONS_STORAGE_KEY,
   SAVED_LOCATIONS_WRITE_THROTTLE_MS,
+  resolveSavedLocationsStorageKey,
 } from '../constants/location.constants'
 
 type SavedLocationsMap = Record<string, SavedLocation[]>
@@ -43,10 +43,10 @@ const isValidSavedLocation = (value: unknown): value is SavedLocation => {
 const makeAddressId = (value: address): string =>
   `${normalize(value.coordinates.lat).toFixed(6)},${normalize(value.coordinates.lng).toFixed(6)}`
 
-const readStore = (): SavedLocationsMap => {
+const readStore = (storageNamespace?: string): SavedLocationsMap => {
   if (!isBrowser) return {}
   try {
-    const raw = window.localStorage.getItem(SAVED_LOCATIONS_STORAGE_KEY)
+    const raw = window.localStorage.getItem(resolveSavedLocationsStorageKey(storageNamespace))
     if (!raw) return {}
     const parsed = JSON.parse(raw) as unknown
     if (!parsed || typeof parsed !== 'object') return {}
@@ -61,10 +61,10 @@ const readStore = (): SavedLocationsMap => {
   }
 }
 
-const writeStore = (value: SavedLocationsMap): void => {
+const writeStore = (value: SavedLocationsMap, storageNamespace?: string): void => {
   if (!isBrowser) return
   try {
-    window.localStorage.setItem(SAVED_LOCATIONS_STORAGE_KEY, JSON.stringify(value))
+    window.localStorage.setItem(resolveSavedLocationsStorageKey(storageNamespace), JSON.stringify(value))
   } catch {
     // Ignore storage write failures.
   }
@@ -76,25 +76,25 @@ const areSameAddress = (left: address, right: address): boolean => {
   return latDiff < CURRENT_LOCATION_COORD_TOLERANCE && lngDiff < CURRENT_LOCATION_COORD_TOLERANCE
 }
 
-export const getSavedLocations = (intentKey: string): SavedLocation[] => {
+export const getSavedLocations = (intentKey: string, storageNamespace?: string): SavedLocation[] => {
   if (!intentKey.trim()) return []
-  const map = readStore()
+  const map = readStore(storageNamespace)
   return map[intentKey] ?? []
 }
 
-export const clearSavedLocations = (intentKey: string): void => {
+export const clearSavedLocations = (intentKey: string, storageNamespace?: string): void => {
   if (!intentKey.trim()) return
-  const map = readStore()
+  const map = readStore(storageNamespace)
   if (!(intentKey in map)) return
   delete map[intentKey]
-  writeStore(map)
+  writeStore(map, storageNamespace)
 }
 
-export const recordSavedLocation = (intentKey: string, value: address): void => {
+export const recordSavedLocation = (intentKey: string, value: address, storageNamespace?: string): void => {
   if (!intentKey.trim()) return
 
   const now = Date.now()
-  const map = readStore()
+  const map = readStore(storageNamespace)
   const current = map[intentKey] ?? []
 
   const existingIndex = current.findIndex((item) => areSameAddress(item.address, value))
@@ -130,5 +130,5 @@ export const recordSavedLocation = (intentKey: string, value: address): void => 
   })
 
   map[intentKey] = current.slice(0, SAVED_LOCATIONS_MAX)
-  writeStore(map)
+  writeStore(map, storageNamespace)
 }

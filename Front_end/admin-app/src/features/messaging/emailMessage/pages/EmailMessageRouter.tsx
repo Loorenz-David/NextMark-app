@@ -11,7 +11,7 @@ export const EmailMessageRouter = () => {
     <AnimatePresence mode="wait" initial={false}>
       <motion.div
         key={activeTrigger ? 'editor' : 'list'}
-        className="flex h-full w-full min-h-0 flex-col"
+        className="flex w-full flex-col"
         initial={{ opacity: 0, x: -20 }}
         animate={{ opacity: 1, x: 0 }}
         exit={{ opacity: 0, x: -20 }}

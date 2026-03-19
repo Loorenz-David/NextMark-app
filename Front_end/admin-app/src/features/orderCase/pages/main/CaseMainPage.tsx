@@ -10,7 +10,7 @@ const CaseMainPageContent = () => {
   const { cases,casesStats, caseMainActions, query } = useCaseMainContext()
   
   return (
-    <div className="flex h-full w-full flex-col bg-[var(--color-page)] border-l-1 border-l-[var(--color-primary)]/30">
+    <div className="flex h-full w-full flex-col border-l-1 border-l-[var(--color-primary)]/30 bg-[var(--color-page)]">
       <OrderCaseMainHeader
         applySearch={caseMainActions.applySearch}
         updateFilters={caseMainActions.updateFilters}
@@ -20,7 +20,7 @@ const CaseMainPageContent = () => {
         orderCaseStats={casesStats}
         query={query}
       />
-      <div className="flex-1 overflow-y-auto scroll-thin p-3">
+      <div className="flex-1 overflow-y-auto scroll-thin px-5 pb-5 pt-3">
         <OrderCaseList cases={cases} onOpenCase={caseMainActions.openCaseDetails} />
       </div>
     </div>

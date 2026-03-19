@@ -29,14 +29,23 @@ export const RouteOptimizationDropdownButton = ({
       className={className}
       borderColor={borderColor}
       fullWidth
+      floatingClassName="z-[220]"
+      renderInPortal={true}
       label={
-        <div className="flex gap-2 items-center w-full py-1 justify-center">
-          <ThunderIcon className="h-5 w-5 text-blue-500" />
-          <span className="text-sm text-blue-500">{primaryLabel}</span>
+        <div className="flex w-full items-center justify-center gap-3 py-1.5">
+          <ThunderIcon className="h-5 w-5 text-[rgb(208,255,248)]" />
+          <span className="text-sm font-medium text-[rgb(226,255,251)]">{primaryLabel}</span>
         </div>
       }
 
       variant="secondary"
+      style={{
+        background:
+          'linear-gradient(135deg, rgba(72, 180, 194, 0.18), rgba(111, 224, 207, 0.08))',
+        borderColor: 'rgba(112, 222, 208, 0.24)',
+        boxShadow: '0 16px 34px rgba(0, 0, 0, 0.18)',
+        color: 'rgb(226,255,251)',
+      }}
       onClick={localDeliveryActions.optimizeRoute}
     >
       <div className="w-full">
@@ -50,19 +59,19 @@ export const RouteOptimizationDropdownButton = ({
                 <button
                   key={solution.client_id}
                   type="button"
-                  className="w-full flex items-center justify-between px-2 py-2 rounded-md hover:bg-[var(--color-muted)]/10"
+                  className="flex w-full items-center justify-between rounded-[16px] px-3 py-2.5 transition-colors hover:bg-white/[0.06]"
                   onClick={() => solution.id && localDeliveryActions.selectRouteSolution(solution.id)}
                 >
                   <div className="flex items-center gap-2">
-                    <span className="text-sm text-left">{label}</span>
+                    <span className="text-left text-sm text-[var(--color-text)]">{label}</span>
                     {isBest ? (
-                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-[var(--color-muted)]/20 text-[var(--color-muted)]">
+                      <span className="rounded-full border border-[rgba(112,222,208,0.24)] bg-[rgba(72,180,194,0.14)] px-2 py-0.5 text-[10px] text-[rgb(214,255,248)]">
                         Best
                       </span>
                     ) : null}
                   </div>
                   {isSelected ? (
-                    <CheckMarkIcon className="h-4 w-4" />
+                    <CheckMarkIcon className="h-4 w-4 text-[var(--color-primary)]" />
                   ) : null}
                 </button>
               )
@@ -78,7 +87,7 @@ export const RouteOptimizationDropdownButton = ({
           <div className="pt-2 mt-2 border-t border-[var(--color-border)]">
             <BasicButton
               params={{
-                variant: 'secondary',
+                variant: 'toolbarSecondary',
                 onClick: localDeliveryActions.reOptimizeRoute,
                 className: 'w-full',
               }}

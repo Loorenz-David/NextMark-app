@@ -25,7 +25,7 @@ export const ClientFormLinkStatus = ({ clientFormSubmittedAt, tokenHash }: Props
     const label = [date, time].filter(Boolean).join(' at ')
 
     return (
-      <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700">
+      <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-300/20 bg-emerald-400/[0.12] px-2.5 py-1 text-xs font-medium text-emerald-100">
         <svg
           xmlns="http://www.w3.org/2000/svg"
           className="h-3 w-3 shrink-0"
@@ -45,7 +45,7 @@ export const ClientFormLinkStatus = ({ clientFormSubmittedAt, tokenHash }: Props
 
   if (tokenHash) {
     return (
-      <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-700">
+      <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-300/20 bg-amber-400/[0.12] px-2.5 py-1 text-xs font-medium text-amber-100">
         <svg
           xmlns="http://www.w3.org/2000/svg"
           className="h-3 w-3 shrink-0"

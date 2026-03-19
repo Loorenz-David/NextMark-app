@@ -136,3 +136,21 @@ def get_item_property(property_id: int):
         outcome.data,
         warnings=ctx.warnings,
     )
+
+
+@item_property_bp.route("/<int:property_id>", methods=["DELETE"])
+@jwt_required()
+@role_required([ADMIN, ASSISTANT])
+def delete_item_property_by_id(property_id: int):
+    identity = get_jwt()
+    ctx = ServiceContext(
+        incoming_data={"target_id": property_id},
+        identity=identity,
+    )
+    outcome = run_service(lambda c: delete_item_property_service(c), ctx)
+    response = Response()
+
+    if outcome.error:
+        return response.build_unsuccessful_response(outcome.error)
+
+    return response.build_successful_response({}, warnings=ctx.warnings)

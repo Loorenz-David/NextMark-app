@@ -68,11 +68,11 @@ export const TimeColumn = ({
         {label}
       </div>
       <div
-        className="relative overflow-hidden rounded-lg border border-[var(--color-border-accent)]/60 bg-[var(--color-page)]"
+        className="relative overflow-hidden rounded-lg border border-white/[0.08] bg-[linear-gradient(180deg,rgba(23,35,36,0.92),rgba(18,27,28,0.9))]"
         style={{ height: itemHeight * visibleCount }}
       >
         <div
-          className="pointer-events-none absolute inset-x-1 z-10 rounded-md border border-[var(--color-dark-blue)]/20 bg-[var(--color-dark-blue)]/5"
+          className="pointer-events-none absolute inset-x-1 z-10 rounded-md border border-[rgb(var(--color-light-blue-r),0.18)] bg-[rgb(var(--color-light-blue-r),0.08)]"
           style={{
             top: topBottomPadding,
             height: itemHeight,

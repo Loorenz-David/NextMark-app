@@ -19,9 +19,9 @@ export const PrintTemplateVariantSelector = ({
   onChangeVariant,
   onChangeOrientation,
 }: PrintTemplateVariantSelectorProps) => (
-  <div className="grid gap-3 md:grid-cols-2">
+  <div className="grid gap-4 md:grid-cols-2">
     <div className="flex flex-col gap-2">
-      <span className="text-xs font-medium text-[var(--color-muted)]">Variant</span>
+      <span className="text-[0.7rem] font-semibold uppercase tracking-[0.22em] text-[var(--color-muted)]">Variant</span>
       <OptionPopoverSelect<availableVariants>
         value={selectedVariant || null}
         onChange={onChangeVariant}
@@ -30,7 +30,7 @@ export const PrintTemplateVariantSelector = ({
       />
     </div>
     <div className="flex flex-col gap-2">
-      <span className="text-xs font-medium text-[var(--color-muted)]">Orientation</span>
+      <span className="text-[0.7rem] font-semibold uppercase tracking-[0.22em] text-[var(--color-muted)]">Orientation</span>
       <OptionPopoverSelect<availableOrientations>
         value={orientation}
         onChange={onChangeOrientation}

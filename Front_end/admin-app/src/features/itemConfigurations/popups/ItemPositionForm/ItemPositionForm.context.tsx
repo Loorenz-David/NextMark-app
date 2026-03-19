@@ -11,6 +11,7 @@ type ItemPositionFormContextValue = {
   initialFormRef: RefObject<ItemPositionFormState | null>
   warnings: ItemPositionFormWarnings
   handleSave: () => void
+  handleDelete: () => void
 }
 
 const ItemPositionFormContext = createContext<ItemPositionFormContextValue | null>(null)

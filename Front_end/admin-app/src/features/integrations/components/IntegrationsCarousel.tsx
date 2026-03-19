@@ -16,9 +16,8 @@ export const IntegrationsCarousel = ({
   onEdit,
   onRemove,
 }: IntegrationsCarouselProps) => (
-  <div className="flex h-full w-full overflow-hidden justify-center   bg-[var(--color-muted)]/10 ">
-
-    <div className='flex gap-8 overflow-x-auto px-6 py-10'>
+  <section className="admin-glass-panel-strong flex min-h-[420px] w-full overflow-hidden rounded-[28px] shadow-none">
+    <div className='flex w-full gap-8 overflow-x-auto px-6 py-8'>
       {integrations.map(({ definition }) => (
         <IntegrationCard
           key={definition.key}
@@ -30,5 +29,5 @@ export const IntegrationsCarousel = ({
         />
       ))}
     </div>
-  </div>
+  </section>
 )

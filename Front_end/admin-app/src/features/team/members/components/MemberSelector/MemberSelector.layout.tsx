@@ -24,6 +24,7 @@ export const MemberSelectorLayout = () => {
       onOpenChange={handleOpenChange}
       classes="relative w-full"
       matchReferenceWidth
+      floatingClassName="z-[180]"
       reference={
         <div className="custom-field-container rounded-xl " onClick={handleInputFocus}>
 
@@ -56,7 +57,7 @@ export const MemberSelectorLayout = () => {
       }
     > 
       
-      <div className="rounded-2xl border border-[var(--color-border)] bg-white p-2 shadow-xl">
+      <div className="admin-glass-popover rounded-2xl p-2 shadow-xl">
         <MemberSelectorMemberList />
       </div>
     </FloatingPopover>

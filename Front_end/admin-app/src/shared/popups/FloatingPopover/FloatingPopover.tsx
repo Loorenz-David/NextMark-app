@@ -17,6 +17,7 @@ type PropsConfrimPopup = {
    open: boolean
    onOpenChange: (b:boolean)=> void
    classes?: string
+   floatingClassName?: string
    children: ReactNode
    reference: ReactNode
    offSetNum?: number
@@ -34,6 +35,7 @@ export const FloatingPopover = ({
     open,
     onOpenChange,
     classes,
+    floatingClassName,
     children,
     reference,
     offSetNum,
@@ -85,7 +87,7 @@ export const FloatingPopover = ({
                     ref={refs.setFloating}
                     style={floatingStyles}
                     {...getFloatingProps()}
-                    className={renderInPortal ? 'z-[130]' : 'z-50'}
+                    className={`${renderInPortal ? 'z-[130]' : 'z-50'} ${floatingClassName ?? ''}`.trim()}
                     onClick={(e) => {
                         if (!closeOnInsideClick) return
 

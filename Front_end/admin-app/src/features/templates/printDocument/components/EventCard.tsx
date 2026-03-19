@@ -20,15 +20,15 @@ export const EventCard = ({ channel, templates, eventDefinition }: EventCardProp
     <button
       type="button"
       onClick={() => navigate(`/settings/print-templates/${channel}/${eventDefinition.eventName}`)}
-      className="w-full rounded-xl border border-[var(--color-muted)]/40 bg-[var(--color-page)] p-4 text-left transition-colors hover:bg-[var(--color-light-blue)]/5 cursor-pointer"
+      className="w-full cursor-pointer rounded-[24px] border border-white/[0.08] bg-white/[0.04] p-5 text-left transition-colors hover:border-[rgb(var(--color-light-blue-r),0.24)] hover:bg-white/[0.05]"
     >
       <div className="flex items-center justify-between gap-3">
         <h4 className="text-sm font-semibold text-[var(--color-text)]">{eventDefinition.title}</h4>
-        <span className="rounded-full bg-[var(--color-muted)]/15 px-2 py-0.5 text-xs text-[var(--color-muted)]">
+        <span className="rounded-full border border-white/[0.08] bg-white/[0.05] px-2.5 py-1 text-xs text-[var(--color-muted)]">
           {status}
         </span>
       </div>
-      <p className="mt-2 text-xs text-[var(--color-muted)]">{eventDefinition.description}</p>
+      <p className="mt-2 text-xs leading-5 text-[var(--color-muted)]">{eventDefinition.description}</p>
     </button>
   )
 }

@@ -14,6 +14,7 @@ if TYPE_CHECKING:
     from Delivery_app_BK.models import (
         RouteSolution,
     )
+    from Delivery_app_BK.models.tables.infrastructure.vehicle import Vehicle
 from Delivery_app_BK.route_optimization.constants.route_end_strategy import ROUND_TRIP, CUSTOM_END_ADDRESS
 
 
@@ -80,8 +81,8 @@ class SkippedShipment:
 class OptimizationResult:
     total_distance_meters: int
     total_duration_seconds: int
-    expected_start_time: Optional[str]
-    expected_end_time: Optional[str]
+    expected_start_time: Optional[datetime]
+    expected_end_time: Optional[datetime]
     stops: List[StopResult]
     skipped: List[SkippedShipment]
     transition_polylines: Optional[List[Optional[str]]] = None
@@ -99,3 +100,4 @@ class OptimizationContext:
     return_shape: str = "map_ids_object"
     route_end_strategy: str =  ROUND_TRIP or CUSTOM_END_ADDRESS
     ctx: "ServiceContext | None" = None
+    vehicle: "Vehicle | None" = None

@@ -49,6 +49,8 @@ export const buildInitialOrderForm = ({
   operation_type: order?.operation_type ?? 'dropoff',
   reference_number: order?.reference_number ?? (mode === 'create' ? buildReferenceNumber() : null),
   external_source: order?.external_source ?? '',
+  external_tracking_number: order?.external_tracking_number ?? '',
+  external_tracking_link: order?.external_tracking_link ?? '',
   tracking_number: order?.tracking_number ?? '',
   tracking_link: order?.tracking_link ?? '',
   client_first_name: order?.client_first_name ?? '',
@@ -63,6 +65,7 @@ export const buildInitialOrderForm = ({
   preferred_time_end: order?.preferred_time_end ?? '',
   delivery_windows: sortDeliveryWindowsUtc(order?.delivery_windows ?? []),
   delivery_plan_id: order?.delivery_plan_id ?? deliveryPlanId ?? null,
+  order_note: order?.order_notes?.[0] ?? '',
 })
 
 export const buildOrderFormInitialState = ({

@@ -59,16 +59,17 @@ export const useVehicleFormSubmit = ({
     const diff = getObjectDiff(initialForm, formState)
     const basePayload: VehicleInput = {
       client_id: existing?.client_id ?? buildClientId('vehicle'),
-      name: diff.name ?? formState.name,
-      icon: toOptionalString(diff.icon ?? formState.icon),
-      travel_mode: toOptionalString(diff.travel_mode ?? formState.travel_mode),
+      registration_number: diff.registration_number ?? formState.registration_number,
+      label: toOptionalString(diff.label ?? formState.label),
+      fuel_type: toOptionalString(diff.fuel_type ?? formState.fuel_type) as VehicleInput['fuel_type'],
+      travel_mode: toOptionalString(diff.travel_mode ?? formState.travel_mode) as VehicleInput['travel_mode'],
+      max_volume_load_cm3: toNumberOrNull(diff.max_volume_load_cm3 ?? formState.max_volume_load_cm3),
+      max_weight_load_g: toNumberOrNull(diff.max_weight_load_g ?? formState.max_weight_load_g),
+      max_speed_kmh: toNumberOrNull(diff.max_speed_kmh ?? formState.max_speed_kmh),
+      cost_per_km: toNumberOrNull(diff.cost_per_km ?? formState.cost_per_km),
       cost_per_hour: toNumberOrNull(diff.cost_per_hour ?? formState.cost_per_hour),
-      cost_per_kilometer: toNumberOrNull(diff.cost_per_kilometer ?? formState.cost_per_kilometer),
-      travel_duration_limit: toNumberOrNull(diff.travel_duration_limit ?? formState.travel_duration_limit),
-      route_distance_limit: toNumberOrNull(diff.route_distance_limit ?? formState.route_distance_limit),
-      user_id: toNumberOrNull(diff.user_id ?? formState.user_id),
-      max_load: toNumberOrNull(diff.max_load ?? formState.max_load),
-      min_load: toNumberOrNull(diff.min_load ?? formState.min_load),
+      travel_distance_limit_km: toNumberOrNull(diff.travel_distance_limit_km ?? formState.travel_distance_limit_km),
+      travel_duration_limit_minutes: toNumberOrNull(diff.travel_duration_limit_minutes ?? formState.travel_duration_limit_minutes),
       is_system: diff.is_system ?? formState.is_system,
     }
 

@@ -10,36 +10,34 @@ export const useVehicleFormSetters = ({
   setFormState: Dispatch<SetStateAction<VehicleFormState>>
   warnings: VehicleFormWarnings
 }) => {
-  const handleName = (value: string) => {
-    warnings.nameWarning.validate(value)
-    setFormState((prev) => ({ ...prev, name: value }))
+  const handleRegistrationNumber = (value: string) => {
+    warnings.registrationNumberWarning.validate(value)
+    setFormState((prev) => ({ ...prev, registration_number: value }))
   }
-
-  const handleIcon = (value: string) => setFormState((prev) => ({ ...prev, icon: value }))
+  const handleLabel = (value: string) => setFormState((prev) => ({ ...prev, label: value }))
+  const handleFuelType = (value: string) => setFormState((prev) => ({ ...prev, fuel_type: value }))
   const handleTravelMode = (value: string) => setFormState((prev) => ({ ...prev, travel_mode: value }))
+  const handleMaxVolumeLoadCm3 = (value: string) => setFormState((prev) => ({ ...prev, max_volume_load_cm3: value }))
+  const handleMaxWeightLoadG = (value: string) => setFormState((prev) => ({ ...prev, max_weight_load_g: value }))
+  const handleMaxSpeedKmh = (value: string) => setFormState((prev) => ({ ...prev, max_speed_kmh: value }))
+  const handleCostPerKm = (value: string) => setFormState((prev) => ({ ...prev, cost_per_km: value }))
   const handleCostPerHour = (value: string) => setFormState((prev) => ({ ...prev, cost_per_hour: value }))
-  const handleCostPerKilometer = (value: string) =>
-    setFormState((prev) => ({ ...prev, cost_per_kilometer: value }))
-  const handleTravelDurationLimit = (value: string) =>
-    setFormState((prev) => ({ ...prev, travel_duration_limit: value }))
-  const handleRouteDistanceLimit = (value: string) =>
-    setFormState((prev) => ({ ...prev, route_distance_limit: value }))
-  const handleUserId = (value: string) => setFormState((prev) => ({ ...prev, user_id: value }))
-  const handleMaxLoad = (value: string) => setFormState((prev) => ({ ...prev, max_load: value }))
-  const handleMinLoad = (value: string) => setFormState((prev) => ({ ...prev, min_load: value }))
+  const handleTravelDistanceLimitKm = (value: string) => setFormState((prev) => ({ ...prev, travel_distance_limit_km: value }))
+  const handleTravelDurationLimitMinutes = (value: string) => setFormState((prev) => ({ ...prev, travel_duration_limit_minutes: value }))
   const handleIsSystem = (value: boolean) => setFormState((prev) => ({ ...prev, is_system: value }))
 
   return {
-    handleName,
-    handleIcon,
+    handleRegistrationNumber,
+    handleLabel,
+    handleFuelType,
     handleTravelMode,
+    handleMaxVolumeLoadCm3,
+    handleMaxWeightLoadG,
+    handleMaxSpeedKmh,
+    handleCostPerKm,
     handleCostPerHour,
-    handleCostPerKilometer,
-    handleTravelDurationLimit,
-    handleRouteDistanceLimit,
-    handleUserId,
-    handleMaxLoad,
-    handleMinLoad,
+    handleTravelDistanceLimitKm,
+    handleTravelDurationLimitMinutes,
     handleIsSystem,
   }
 }

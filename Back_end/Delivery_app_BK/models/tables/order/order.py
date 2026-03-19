@@ -3,7 +3,7 @@
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy import Index, text, JSON, UniqueConstraint
 from sqlalchemy.orm import relationship, validates
-from sqlalchemy import Column, Integer, String, Boolean, ForeignKey
+from sqlalchemy import Column, Integer, String, Boolean, ForeignKey, Float
 
 from datetime import datetime, timezone
 
@@ -42,11 +42,18 @@ class Order(
     reference_number = Column( String, index= True )
     external_order_id = Column( String, index = True )
     external_source = Column( String, index = True )
+    # External tracking supplied by Shopify / third-party couriers (writable).
+    external_tracking_number = Column( String, index = True )
+    external_tracking_link = Column( String, index = True )
 
+    # System-managed immutable tracking fields (auto-generated on creation).
     tracking_number = Column( String, index = True )
-
-    
     tracking_link = Column( String, index = True )
+
+    # Public order-tracking secure-token fields
+    tracking_token_hash = Column(String(64), unique=True, nullable=True, index=True)
+    tracking_token_created_at = Column(UTCDateTime, nullable=True)
+
     client_first_name = Column(String, index=True)
     client_last_name = Column(String, index=True)
     client_email = Column(String, index=True)
@@ -70,7 +77,12 @@ class Order(
         onupdate=lambda: datetime.now(timezone.utc),
     )
     items_updated_at = Column(UTCDateTime)
-    
+
+    # Denormalized order totals — recomputed on every item mutation.
+    total_weight_g = Column(Float, nullable=True)
+    total_volume_cm3 = Column(Float, nullable=True)
+    total_item_count = Column(Integer, nullable=True)
+
     order_state_id = Column(
         Integer,
         ForeignKey("order_state.id", ondelete="SET NULL")
@@ -93,7 +105,10 @@ class Order(
     client_form_token_hash = Column(String(64), unique=True, nullable=True, index=True)
     client_form_token_expires_at = Column(UTCDateTime, nullable=True)
     client_form_submitted_at = Column(UTCDateTime, nullable=True)
-    
+
+    # Order notes: list of string notes attached to the order
+    order_notes = Column(JSONB().with_variant(JSON, "sqlite"), nullable=True)
+
   
 
     # delivery_items has change to items, there is a lot of the fornt end that needs to be updated!

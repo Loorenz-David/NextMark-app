@@ -26,6 +26,7 @@ from Delivery_app_BK.services.queries.route_solutions.serialize_route_solutions 
     serialize_route_solution,
 )
 from Delivery_app_BK.services.domain.plan.route_freshness import touch_route_freshness
+from Delivery_app_BK.services.domain.plan.recompute_plan_totals import recompute_plan_totals
 from Delivery_app_BK.services.utils import model_requires_team, require_team_id
 
 from ...context import ServiceContext
@@ -159,6 +160,14 @@ def apply_orders_delivery_plan_change(
     if plans_to_touch:
         db.session.flush()
 
+    # Recompute denormalized plan totals for all affected plans.
+    _plans_to_recompute = {new_plan.id: new_plan}
+    _plans_to_recompute.update(old_plans_by_id)
+    for plan in _plans_to_recompute.values():
+        recompute_plan_totals(plan)
+    if _plans_to_recompute:
+        db.session.flush()
+
     old_local_delivery_bundle = _serialize_old_local_delivery_batch_bundle(
         updated_stops=old_local_delivery_batch["updated_stops"],
         synced_stops=old_local_delivery_batch["synced_stops"],
@@ -166,6 +175,7 @@ def apply_orders_delivery_plan_change(
         synced_route_solutions=old_local_delivery_batch["synced_route_solutions"],
     )
     old_local_delivery_bundle_attached = False
+    plan_totals_attached = False
 
     updated_bundles: list[dict] = []
     for target_id in normalized_order_ids:
@@ -182,6 +192,19 @@ def apply_orders_delivery_plan_change(
         if old_local_delivery_bundle and not old_local_delivery_bundle_attached:
             bundle.update(old_local_delivery_bundle)
             old_local_delivery_bundle_attached = True
+        if not plan_totals_attached:
+            bundle["plan_totals"] = [
+                {
+                    "id": plan.id,
+                    "total_weight": plan.total_weight_g,
+                    "total_volume": plan.total_volume_cm3,
+                    "total_items": plan.total_item_count,
+                    "total_orders": plan.total_orders,
+                }
+                for plan in _plans_to_recompute.values()
+                if plan.id is not None
+            ]
+            plan_totals_attached = True
 
         updated_bundles.append(bundle)
 

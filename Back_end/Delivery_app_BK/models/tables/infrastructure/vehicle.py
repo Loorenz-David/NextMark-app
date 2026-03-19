@@ -1,7 +1,6 @@
-# Thirs-party dependencies
-from sqlalchemy.dialects.postgresql import JSONB
+# Third-party dependencies
 from sqlalchemy.orm import relationship
-from sqlalchemy import Column, Integer, String, JSON, Float, ForeignKey, Boolean
+from sqlalchemy import Column, Integer, String, Float, Boolean
 
 # Local application imports
 from Delivery_app_BK.models import db
@@ -13,32 +12,24 @@ class Vehicle(db.Model, TeamScopedMixin):
 
     id = Column(Integer, primary_key=True)
     client_id = Column(String, index=True)
-    name = Column(String, nullable=False, index=True)
-    icon = Column(String, nullable=True)
 
-    travel_mode = Column(JSONB().with_variant(JSON, "sqlite"))
+    registration_number = Column(String, nullable=False, index=True)
+    label = Column(String, nullable=True)
 
+    fuel_type = Column(String, nullable=True)
+    travel_mode = Column(String, nullable=True)
+
+    max_volume_load_cm3 = Column(Integer, nullable=True)
+    max_weight_load_g = Column(Integer, nullable=True)
+    max_speed_kmh = Column(Float, nullable=True)
+
+    cost_per_km = Column(Float, default=0)
     cost_per_hour = Column(Float, default=0)
-    cost_per_kilometer = Column(Float, default=0)
 
-    travel_duration_limit = Column(Integer)
-    route_distance_limit = Column(Integer)
-
-    max_load = Column( Integer )
-    min_load = Column( Integer )
+    travel_distance_limit_km = Column(Integer, nullable=True)
+    travel_duration_limit_minutes = Column(Integer, nullable=True)
 
     is_system = Column(Boolean, default=False, index=True)
-
-    user_id = Column(
-        Integer, 
-        ForeignKey("user.id")
-    )
-
-    user = relationship(
-        "User",
-        back_populates="vehicle",
-        lazy="selectin"
-    )
 
     team = relationship(
         "Team",

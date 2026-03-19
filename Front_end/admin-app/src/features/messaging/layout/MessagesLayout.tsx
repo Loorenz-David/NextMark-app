@@ -18,23 +18,23 @@ export const MessagesLayout = <Key extends string>({
   onTabChange,
   children,
 }: MessagesLayoutProps<Key>) => (
-  <div className="flex h-full min-h-0 w-full flex-col gap-4 overflow-hidden">
-    <div className="flex shrink-0 gap-4 px-6 pt-6">
+  <section className="admin-glass-panel-strong flex w-full shrink-0 flex-col rounded-[28px] shadow-none">
+    <div className="flex shrink-0 gap-4 border-b border-[var(--color-border)]/70 px-6 pb-5 pt-6">
       {tabs.map((tab) => (
         <button
           key={tab.key}
           type="button"
           onClick={() => onTabChange(tab.key)}
-          className={`rounded-lg px-4 py-2 text-xs font-semibold ${
+          className={`rounded-2xl px-4 py-2 text-xs font-semibold transition-colors ${
             activeTab === tab.key
-              ? 'bg-[var(--color-blue-500)] text-white'
-              : 'bg-[var(--color-muted)]/10 text-[var(--color-text)]'
+              ? 'border border-[rgb(var(--color-light-blue-r),0.35)] bg-[rgb(var(--color-light-blue-r),0.14)] text-[rgb(var(--color-light-blue-r))]'
+              : 'border border-white/[0.05] bg-white/[0.04] text-[var(--color-text)]'
           }`}
         >
           {tab.label}
         </button>
       ))}
     </div>
-    <div className="flex min-h-0 flex-1 overflow-hidden">{children}</div>
-  </div>
+    <div className="bg-[var(--color-page)]/40">{children}</div>
+  </section>
 )

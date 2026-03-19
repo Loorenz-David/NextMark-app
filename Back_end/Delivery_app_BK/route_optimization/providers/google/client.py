@@ -69,6 +69,9 @@ class GoogleRouteOptimizationProvider(RouteOptimizationProvider):
 
         try:
             response = self.client.optimize_tours(request=google_request)
+            print('Debugging: ', 'response')
+            print(response)
+            print('-------------')
 
         except Exception as e:
             print("GOOGLE API ERROR:", e, flush=True)
@@ -76,7 +79,10 @@ class GoogleRouteOptimizationProvider(RouteOptimizationProvider):
 
 
         try:
-            response_dict = MessageToDict(response._pb)
+            response_dict = MessageToDict(
+                response._pb,
+                preserving_proto_field_name=True,
+            )
 
         except Exception:
             print("Could not convert response to dict", flush=True)

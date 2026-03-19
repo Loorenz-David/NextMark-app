@@ -12,17 +12,19 @@ def serialize_vehicles(instances: List[Vehicle], ctx: ServiceContext):
         unpacked = {
             "id": instance.id,
             "client_id": instance.client_id,
-            "name": instance.name,
-            "icon": instance.icon,
+            "registration_number": instance.registration_number,
+            "label": instance.label,
+            "fuel_type": instance.fuel_type,
             "travel_mode": instance.travel_mode,
+            "max_volume_load_cm3": instance.max_volume_load_cm3,
+            "max_weight_load_g": instance.max_weight_load_g,
+            "max_speed_kmh": instance.max_speed_kmh,
+            "cost_per_km": instance.cost_per_km,
             "cost_per_hour": instance.cost_per_hour,
-            "cost_per_kilometer": instance.cost_per_kilometer,
-            "travel_duration_limit": instance.travel_duration_limit,
-            "route_distance_limit": instance.route_distance_limit,
-            "user_id": instance.user_id,
-            "max_load": instance.max_load,
-            "min_load": instance.min_load,
+            "travel_distance_limit_km": instance.travel_distance_limit_km,
+            "travel_duration_limit_minutes": instance.travel_duration_limit_minutes,
             "is_system": instance.is_system,
+            "team_id": instance.team_id,
         }
         unpacked_instances.append(unpacked)
 

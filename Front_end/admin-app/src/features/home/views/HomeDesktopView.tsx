@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { BasicButton } from '@/shared/buttons/BasicButton'
 import { useSectionManager, useMapManager, usePopupManager } from '@/shared/resource-manager/useResourceManager'
 
-import { ChevronDownIcon, SettingIcon } from '@/assets/icons'
+import { ArchiveIcon, ChevronDownIcon, SettingIcon } from '@/assets/icons'
 
 import { OrderPage } from '@/features/order/pages/order.page'
 import { OrderMapOverlay } from '@/features/order/components/OrderMapOverlay'
@@ -22,6 +22,7 @@ import { AdminNotificationsTrigger } from '@/realtime/notifications'
 
 import { SectionPanel } from '../../../shared/section-panel/SectionPanel'
 import { PlanDesktopShell } from '@/features/plan/views/PlanDesktopShell'
+import { useOrderCaseActions } from '@/features/orderCase/actions/orderCase.actions'
 
 const SAFE_GUTTER = 24
 const DEFAULT_VIEWPORT_INSETS = {
@@ -42,16 +43,22 @@ const MAP_CONTAINER_STYLE: CSSProperties = {
 
 const PLAN_TOGGLE_BUTTON_STYLE: CSSProperties = {
   padding: '29px 6px',
-  backgroundColor: 'var(--color-page)',
+  backgroundColor: 'rgba(15, 23, 25, 0.78)',
   borderRadius: '10px 0 0 10px',
-  border: '1px solid #8a8a8a9c',
+  border: '1px solid rgba(255, 255, 255, 0.12)',
+  boxShadow: '0 14px 32px rgba(0, 0, 0, 0.18)',
+  backdropFilter: 'blur(18px) saturate(120%)',
+  WebkitBackdropFilter: 'blur(18px) saturate(120%)',
 }
 const PLAN_TOGGLE_BUTTON_SPLIT_STYLE: CSSProperties = {
   padding: '6px 29px ',
-  backgroundColor: 'var(--color-page)',
-  borderBottom:'2px solid var(--color-page)',
+  backgroundColor: 'rgba(15, 23, 25, 0.78)',
+  borderBottom:'2px solid rgba(15, 23, 25, 0.86)',
   borderRadius: '15px 15px 0 0',
-  border: '1px solid #8a8a8a9c',
+  border: '1px solid rgba(255, 255, 255, 0.12)',
+  boxShadow: '0 14px 32px rgba(0, 0, 0, 0.18)',
+  backdropFilter: 'blur(18px) saturate(120%)',
+  WebkitBackdropFilter: 'blur(18px) saturate(120%)',
 }
 
 export function HomeDesktopView() {
@@ -182,16 +189,18 @@ function HomeDesktopHeader({
   onToggleViewMode: () => void
 }) {
   const navigate = useNavigate()
+  const { openCaseMain } = useOrderCaseActions()
+
   return (
     <div
       ref={headerRef}
-      className="flex h-14 w-full items-center justify-between border-b border-b-1 border-b-[var(--color-muted)]/50 px-4"
+      className="admin-toolbar-strip relative z-30 mx-auto mt-4 mb-4 flex h-12 w-[calc(100%-2rem)] max-w-[calc(100%-2rem)] items-center justify-between rounded-xl border-b border-b-1 border-b-white/8 px-3.5"
     >
       <div className="flex items-center"></div>
-      <div className="flex items-center gap-5 scale-95">
-         <BasicButton
+      <div className="flex items-center gap-3">
+        <BasicButton
           params={{
-            variant: 'secondary',
+            variant: 'toolbarSecondary',
             ariaLabel: 'Toggle plan view mode',
             className: 'border-[var(--color-muted)]/30',
             onClick: onToggleViewMode,
@@ -199,16 +208,27 @@ function HomeDesktopHeader({
         >
           {viewMode === 'rail' ? 'Split View' : 'Rail View'}
         </BasicButton>
+        <BasicButton
+          params={{
+            variant: 'toolbarSecondary',
+            ariaLabel: 'Cases',
+            className: 'border-[var(--color-muted)]/30',
+            onClick: openCaseMain,
+          }}
+        >
+          <ArchiveIcon className="mr-2 h-4 w-4" />
+          Cases
+        </BasicButton>
         <AdminNotificationsTrigger />
         <BasicButton
           params={{
-            variant: 'secondary',
+            variant: 'toolbarSecondary',
             ariaLabel: 'Settings',
             className: 'border-[var(--color-muted)]/30',
             onClick: () => navigate('/settings'),
           }}
         >
-          <SettingIcon className="mr-2 h-4 w-4 " />
+          <SettingIcon className="mr-2 h-4 w-4  text-white" />
           Settings
         </BasicButton>
        

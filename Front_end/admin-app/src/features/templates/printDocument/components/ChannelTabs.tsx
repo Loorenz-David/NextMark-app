@@ -20,10 +20,10 @@ export const ChannelTabs = ({
             key={channel}
             type="button"
             onClick={() => onSelectChannel(channel)}
-            className={`rounded-lg px-4 py-2 text-xs font-semibold ${
+            className={`rounded-2xl px-4 py-2 text-xs font-semibold transition-colors ${
               isActive 
-                ? 'bg-[var(--color-blue-500)] text-white'
-                : 'bg-[var(--color-muted)]/10 text-[var(--color-text)]'
+                ? 'border border-[rgb(var(--color-light-blue-r),0.35)] bg-[rgb(var(--color-light-blue-r),0.14)] text-[rgb(var(--color-light-blue-r))]'
+                : 'border border-white/[0.05] bg-white/[0.04] text-[var(--color-text)]'
             }`}
           >
             {channel}

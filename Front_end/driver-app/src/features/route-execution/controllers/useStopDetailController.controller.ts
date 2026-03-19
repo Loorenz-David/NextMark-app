@@ -217,6 +217,11 @@ export function useStopDetailController(stopClientId?: string) {
           stopClientId: stop.stopClientId,
         })
       },
+      openOrderNotes: (() => {
+        const notes = stop.order?.order_notes
+        if (!notes || notes.length <= 1) return null
+        return () => openSlidingPage('route-stop-order-notes', { notes })
+      })(),
       openOrderCases: () => {
         if (!stop.order?.id || !stop.order.client_id) {
           return

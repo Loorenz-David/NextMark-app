@@ -4,6 +4,7 @@ import { SlideCarousel } from '@/shared/layout/slideCarousel'
 import { ItemsOrderPreview } from '../item'
 
 import { OrderDetailSummary } from '../components/OrderDetailSummary'
+import { OrderDetailTracking } from '../components/OrderDetailTracking'
 import { OrderDetailHeader } from '../components/pageHeaders/OrderDetailHeader'
 import { OrderDetailProvider } from '../context/OrderDetailProvider'
 import { useOrderDetailContext } from '../context/OrderDetailContext'
@@ -32,7 +33,7 @@ const OrderDetailContent = () => {
     <div className="relative flex h-full min-h-0 w-full flex-1 flex-col overflow-hidden bg-[var(--color-page)]">
     <div className="pointer-events-none absolute inset-y-0 left-0 z-20 w-px bg-[var(--color-primary)]/30" />
     <div
-        className="flex min-h-0 w-full flex-1 flex-col overflow-y-auto scroll-thin bg-[var(--color-muted)]/10"
+        className="flex min-h-0 w-full flex-1 flex-col overflow-y-auto scroll-thin"
 
     >
       <OrderDetailHeader
@@ -43,20 +44,24 @@ const OrderDetailContent = () => {
         order={order}
       />
 
-    <div className="flex w-full flex-col gap-6 bg-[var(--color-page)] pt-3">
+    <div className="flex w-full flex-col gap-6 bg-[var(--color-page)] pb-6 pt-3">
         <div className="flex flex-col gap-4 px-5 ">
           <SlideCarousel>
             {isRefreshing && !order ? (
-              <div className="rounded-xl border border-[var(--color-border)] bg-white p-4 text-sm text-[var(--color-muted)]">
+              <div className="admin-glass-panel rounded-[22px] p-4 text-sm text-[var(--color-muted)]">
                 Loading order details...
               </div>
             ) : order ? (
               <OrderDetailSummary order={order} orderState={orderState} />
             ) : (
-              <div className="rounded-xl border border-[var(--color-border)] bg-white p-4 text-sm text-[var(--color-muted)]">
+              <div className="admin-glass-panel rounded-[22px] p-4 text-sm text-[var(--color-muted)]">
                 Order not found.
               </div>
             )}
+
+            {order ? (
+              <OrderDetailTracking order={order} />
+            ) : null}
 
             {order ? (
               <OrderDetailTimeWindows order={order} />
@@ -82,7 +87,7 @@ const OrderDetailContent = () => {
             />
           </div>
           :
-          <div className="rounded-xl border border-[var(--color-border)] bg-white p-4 text-xs text-[var(--color-muted)]">
+          <div className="admin-glass-panel mx-5 rounded-[22px] p-4 text-xs text-[var(--color-muted)]">
             Items are available after the order has a server id.
           </div>
         }

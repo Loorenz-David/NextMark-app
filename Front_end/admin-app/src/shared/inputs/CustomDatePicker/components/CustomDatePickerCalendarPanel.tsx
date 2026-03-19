@@ -74,7 +74,7 @@ export const CustomDatePickerCalendarPanel = ({
   return (
     <motion.div
       ref={panelRef}
-      className='w-[310px] overflow-hidden rounded-lg border border-[var(--color-border)] bg-[var(--color-page)] p-3 text-sm shadow-md'
+      className='admin-glass-popover w-[310px] overflow-hidden rounded-lg border border-[var(--color-border-accent)] p-3 text-sm shadow-md'
       initial={{ height: 0, opacity: 0, y: -4 }}
       animate={{ height: 'auto', opacity: 1, y: 0 }}
       exit={{ height: 0, opacity: 0, y: -4 }}
@@ -99,7 +99,7 @@ export const CustomDatePickerCalendarPanel = ({
               <div className='mb-2 flex items-center justify-between gap-2'>
                 <button
                   type='button'
-                  className='rounded-md p-1 hover:bg-[var(--color-muted)]/10'
+                  className='rounded-md p-1 hover:bg-white/[0.08]'
                   onClick={calendarModel.prevMonth}
                   aria-label='Previous month'
                 >
@@ -110,7 +110,7 @@ export const CustomDatePickerCalendarPanel = ({
 
                 <button
                   type='button'
-                  className='rounded-md p-1 hover:bg-[var(--color-muted)]/10'
+                  className='rounded-md p-1 hover:bg-white/[0.08]'
                   onClick={calendarModel.nextMonth}
                   aria-label='Next month'
                 >
@@ -177,7 +177,7 @@ export const CustomDatePickerCalendarPanel = ({
                 day.isCurrentMonth ? 'text-[var(--color-text)]' : 'text-[var(--color-muted)]/50',
                 isToday && !isSelected ? 'bg-blue-500/10 text-blue-600' : '',
                 isSelected ? 'bg-[var(--color-text)] text-white' : '',
-                !isSelected && !isDisabled ? 'hover:bg-[var(--color-muted)]/15' : '',
+                !isSelected && !isDisabled ? 'hover:bg-white/[0.08]' : '',
                 isDisabled ? 'cursor-not-allowed opacity-35' : '',
               ].join(' ')}
             >
@@ -188,7 +188,7 @@ export const CustomDatePickerCalendarPanel = ({
       />
 
       {!isTodaySelected ? (
-        <div className='mt-2 border-t border-[var(--color-border)] pt-2'>
+          <div className='mt-2 border-t border-white/[0.08] pt-2'>
           <button
             type='button'
             className='w-full rounded-md py-1.5 text-xs font-semibold text-blue-600 hover:bg-blue-500/10 disabled:cursor-not-allowed disabled:text-[var(--color-muted)]/70 disabled:hover:bg-transparent'

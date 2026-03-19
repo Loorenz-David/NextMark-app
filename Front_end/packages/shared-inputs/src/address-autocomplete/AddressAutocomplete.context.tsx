@@ -14,6 +14,7 @@ export type AddressAutocompleteContextValue =
     enableCurrentLocation: boolean
     enableSavedLocations: boolean
     intentKey?: string
+    storageNamespace?: string
   }
 
 export const AddressAutocompleteContext = createContext<AddressAutocompleteContextValue | null>(null)

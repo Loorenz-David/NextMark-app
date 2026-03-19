@@ -58,7 +58,8 @@ export const CustomDatePickerDesktopView = ({
         onClose()
       }}
       classes='relative'
-      renderInPortal={renderPopoverInPortal}
+      renderInPortal={renderPopoverInPortal ?? true}
+      floatingClassName='z-[220]'
       reference={
         <CustomDatePickerInput
           value={inputValue}

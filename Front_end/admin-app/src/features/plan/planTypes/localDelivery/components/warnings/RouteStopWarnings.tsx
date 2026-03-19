@@ -22,45 +22,47 @@ export const RouteStopWarnings = ({ stop, planStartDate }: RouteStopWarningsProp
         Boolean(stop?.has_constraint_violation)
 
     if (!hasWarnings) return null
-    console.log(constraintWarnings)
+
     return (
         <FloatingPopover
             open={warningOpen}
             onOpenChange={setWarningOpen}
             classes="flex-none"
             offSetNum={6}
+            renderInPortal={true}
+            floatingClassName="z-[220]"
             reference={
                 <div
-                    className="flex h-7 w-7 items-center justify-center rounded-full border border-amber-200 bg-amber-50"
+                    className="flex h-7 w-7 items-center justify-center rounded-full border border-amber-300/25 bg-[linear-gradient(135deg,rgba(255,201,71,0.18),rgba(255,201,71,0.08))]"
                     onMouseEnter={() => setWarningOpen(true)}
                     onMouseLeave={() => setWarningOpen(false)}
                 >
-                    <TriangleWarningIcon className="h-4 w-4 text-amber-600" />
+                    <TriangleWarningIcon className="h-4 w-4 text-amber-300" />
                 </div>
             }
         >
             <div
-                className="w-64 rounded-xl border border-[var(--color-border)] bg-white p-3 text-xs shadow-lg"
+                className="w-72 rounded-[20px] border border-amber-300/25 bg-[linear-gradient(135deg,rgba(255,201,71,0.18),rgba(255,201,71,0.06))] p-3 text-xs text-amber-50 shadow-[0_18px_40px_rgba(0,0,0,0.26)] backdrop-blur-xl"
                 onMouseEnter={() => setWarningOpen(true)}
                 onMouseLeave={() => setWarningOpen(false)}
             >
                 {stop?.reason_was_skipped && (
                     <div className="mb-3">
-                        <div className="text-[0.6rem] font-semibold uppercase tracking-wide text-amber-700">
+                        <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-amber-200/80">
                             Skipped
                         </div>
-                        <div className="mt-1 text-[0.75rem] text-[var(--color-text)]">
+                        <div className="mt-1 text-[0.85rem] text-amber-50/95">
                             {stop.reason_was_skipped}
                         </div>
                     </div>
                 )}
                 {(constraintWarnings.length > 0 || stop?.has_constraint_violation) && (
                     <div className="space-y-2">
-                        <div className="text-[0.6rem] font-semibold uppercase tracking-wide text-red-600">
+                        <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-amber-200/80">
                             Violation
                         </div>
                         {constraintWarnings.length === 0 && (
-                            <div className="rounded-lg bg-[var(--color-primary)]/5 p-2 text-[0.75rem] text-[var(--color-text)]">
+                            <div className="rounded-[16px] border border-amber-200/15 bg-black/10 p-2.5 text-[0.85rem] text-amber-50/95">
                                 Constraint violation detected.
                             </div>
                         )}
@@ -70,13 +72,13 @@ export const RouteStopWarnings = ({ stop, planStartDate }: RouteStopWarningsProp
                             return (
                                 <div
                                     key={`${payload.type ?? 'warning'}-${index}`}
-                                    className="rounded-lg bg-[var(--color-primary)]/5 p-2"
+                                    className="rounded-[16px] border border-amber-200/15 bg-black/10 p-2.5"
                                 >
-                                    <div className="text-[0.75rem] font-medium text-[var(--color-text)]">
+                                    <div className="text-[0.85rem] font-medium text-amber-50/95">
                                         {payload.message ?? 'Constraint violation'}
                                     </div>
                                     {meta.length > 0 && (
-                                        <div className="mt-1 space-y-1 text-[0.7rem] text-[var(--color-muted)]">
+                                        <div className="mt-2 space-y-1 text-[0.72rem] text-amber-100/70">
                                             {meta.map((item) => (
                                                 <div key={item.label} className="flex w-full justify-between">
                                                     <span>{item.label}:</span>

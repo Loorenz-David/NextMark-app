@@ -1,6 +1,11 @@
 import { BasicButton } from '@/shared/buttons/BasicButton'
 import { Switch } from '@/shared/inputs/Switch'
+import { InfoHover } from '@/shared/layout/InfoHover'
 
+import {
+  MESSAGE_TEMPLATE_ENABLED_INFO,
+  MESSAGE_TEMPLATE_PERMISSION_INFO,
+} from '@/features/messaging/info/templateToggles.info'
 import { SmsTemplateEditor } from '../components/SmsTemplateEditor'
 import { useSmsMessageContext } from '../context/useSmsMessageContext'
 
@@ -22,8 +27,8 @@ export const SmsTemplateEditorPage = () => {
   }
  
   return (
-    <div className="flex h-full flex-col gap-4 p-6">
-      <div className="flex items-center justify-between">
+    <div className="flex flex-col gap-5 p-6">
+      <div className="admin-glass-panel-strong flex items-center justify-between rounded-[26px] px-5 py-4 shadow-none">
         <BasicButton
           params={{
             variant: 'secondary',
@@ -34,16 +39,26 @@ export const SmsTemplateEditorPage = () => {
         >
           Back
         </BasicButton>
-        <div className="flex items-end gap-12">
+        <div className="flex items-end gap-10">
           <div className="flex flex-col gap-1">
-              <span className="text-sm">Ask for permission:</span>
-              <Switch
-                value={ permission }
-                onChange={ setPermission }
-              />
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-muted)]">
+                Ask for permission
+              </span>
+              <InfoHover content={MESSAGE_TEMPLATE_PERMISSION_INFO} />
+            </div>
+            <Switch
+              value={ permission }
+              onChange={ setPermission }
+            />
           </div>
           <div className="flex flex-col  gap-1">
-            <span className="text-xs text-[var(--color-muted)]">Enabled</span>
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-muted)]">
+                Enabled
+              </span>
+              <InfoHover content={MESSAGE_TEMPLATE_ENABLED_INFO} />
+            </div>
             <Switch value={enabled} onChange={setEnabled}  />
           </div>
            <BasicButton
@@ -58,9 +73,12 @@ export const SmsTemplateEditorPage = () => {
             </BasicButton>
         </div>
       </div>
-      <div>
-        <h2 className="text-base font-semibold text-[var(--color-text)]">{activeTrigger.label}</h2>
-        <p className="text-sm text-[var(--color-muted)]">{activeTrigger.description}</p>
+      <div className="flex flex-col gap-2 px-1">
+        <p className="text-[0.62rem] font-semibold uppercase tracking-[0.26em] text-[var(--color-muted)]">
+          SMS trigger
+        </p>
+        <h2 className="text-xl font-semibold text-[var(--color-text)]">{activeTrigger.label}</h2>
+        <p className="max-w-2xl text-sm text-[var(--color-muted)]">{activeTrigger.description}</p>
       </div>
       <SmsTemplateEditor value={value} onChange={setValue} />
     </div>

@@ -69,7 +69,6 @@ export const OptionPopoverSelect = <TValue,>({
 
   const resolveOptionKey = (option: PopoverSelectOption<TValue>, index: number) =>
     getOptionKey ? getOptionKey(option, index) : `${option.label}-${index}`
-  console.log(inputFieldClassName,'container')
   return (
     <FloatingPopover
       open={open}
@@ -100,7 +99,7 @@ export const OptionPopoverSelect = <TValue,>({
       }
     >
       <div
-        className={`rounded-2xl border border-[var(--color-border)] bg-white p-2 shadow-xl ${dropdownClassName ?? ''}`.trim()}
+        className={`admin-glass-popover rounded-2xl border border-[var(--color-border-accent)] p-2 shadow-xl ${dropdownClassName ?? ''}`.trim()}
       >
         {allowEmpty ? (
           <button
@@ -112,8 +111,8 @@ export const OptionPopoverSelect = <TValue,>({
             }}
             className={`flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm transition-colors ${
               value === null
-                ? 'bg-[var(--color-blue-500)]/10 text-[var(--color-blue-700)]'
-                : 'text-[var(--color-text)] hover:bg-[var(--color-muted)]/10'
+                ? 'border border-[rgb(var(--color-light-blue-r),0.28)] bg-[rgb(var(--color-light-blue-r),0.12)] text-[rgb(var(--color-light-blue-r))]'
+                : 'text-[var(--color-text)] hover:bg-white/[0.08]'
             } ${optionClassName ?? ''}`.trim()}
             data-popover-close="true"
           >
@@ -134,8 +133,8 @@ export const OptionPopoverSelect = <TValue,>({
               }}
               className={`flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm transition-colors ${
                 selected
-                  ? 'bg-[var(--color-blue-500)]/10 text-[var(--color-blue-700)]'
-                  : 'text-[var(--color-text)] hover:bg-[var(--color-muted)]/10'
+                  ? 'border border-[rgb(var(--color-light-blue-r),0.28)] bg-[rgb(var(--color-light-blue-r),0.12)] text-[rgb(var(--color-light-blue-r))]'
+                  : 'text-[var(--color-text)] hover:bg-white/[0.08]'
               } ${optionClassName ?? ''}`.trim()}
               data-popover-close="true"
             >

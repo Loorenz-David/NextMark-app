@@ -4,10 +4,13 @@ import { getObjectDiff } from '@shared-utils'
 
 import type { useOrderItemDraftController } from '../../../item'
 import type { Item, ItemUpdateFields } from '../../../item'
+import type { ItemCreateResponse, ItemMutationResponse } from '../../../item/api/item.api'
 import type { Order, OrderUpdateFields } from '../../../types/order'
 import type { OrderFormMode, OrderFormState } from '../state/OrderForm.types'
 import { normalizeFormStateForSave, stripImmutableItemFields } from '../../../api/mappers/orderForm.normalize'
 import type { Costumer } from '@/features/costumer'
+import { patchOrderTotals } from '../../../store/order.store'
+import { patchPlanTotals } from '@/features/plan/store/plan.slice'
 
 type ItemDraftControllerApi = Pick<
   ReturnType<typeof useOrderItemDraftController>,
@@ -43,11 +46,11 @@ type OrderFormSubmitDeps = {
     onRollback?: () => void
     optimisticImmediate?: boolean
   }) => Promise<boolean>
-  createItemApi: (fields: Item[]) => Promise<unknown>
+  createItemApi: (fields: Item[]) => Promise<{ data?: ItemCreateResponse }>
   updateItemApi: (
     payload: Array<{ target_id: number; fields: ItemUpdateFields }>,
-  ) => Promise<unknown>
-  deleteItemApi: (payload: { target_ids: number[] }) => Promise<unknown>
+  ) => Promise<{ data?: ItemMutationResponse }>
+  deleteItemApi: (payload: { target_ids: number[] }) => Promise<{ data?: ItemMutationResponse }>
   loadItemsByOrderId: (orderId: number) => Promise<unknown>
   validateOrderFields: (payload: OrderUpdateFields) => boolean
 }
@@ -171,7 +174,18 @@ export const executeOrderFormSubmit = async (
           ...draft,
           order_id: orderServerId,
         }))
-        await createItemApi(createPayload)
+        const res = await createItemApi(createPayload)
+        res.data?.order_totals?.forEach(({ id, total_weight, total_volume, total_items }) => {
+          patchOrderTotals(id, { total_weight, total_volume, total_items })
+        })
+        res.data?.plan_totals?.forEach((p) => {
+          patchPlanTotals(p.id, {
+            total_weight: p.total_weight,
+            total_volume: p.total_volume,
+            total_items: p.total_items,
+            total_orders: p.total_orders,
+          })
+        })
       }
 
       if (updatedItems.length > 0) {
@@ -193,7 +207,18 @@ export const executeOrderFormSubmit = async (
           return { status: 'dependency_error', message: 'Unable to resolve item id for update.' }
         }
 
-        await updateItemApi(updatePayload)
+        const res = await updateItemApi(updatePayload)
+        res.data?.order_totals?.forEach(({ id, total_weight, total_volume, total_items }) => {
+          patchOrderTotals(id, { total_weight, total_volume, total_items })
+        })
+        res.data?.plan_totals?.forEach((p) => {
+          patchPlanTotals(p.id, {
+            total_weight: p.total_weight,
+            total_volume: p.total_volume,
+            total_items: p.total_items,
+            total_orders: p.total_orders,
+          })
+        })
       }
 
       if (deletedItemClientIds.length > 0) {
@@ -205,7 +230,18 @@ export const executeOrderFormSubmit = async (
           return { status: 'dependency_error', message: 'Unable to resolve item id for deletion.' }
         }
 
-        await deleteItemApi({ target_ids: targetIds })
+        const res = await deleteItemApi({ target_ids: targetIds })
+        res.data?.order_totals?.forEach(({ id, total_weight, total_volume, total_items }) => {
+          patchOrderTotals(id, { total_weight, total_volume, total_items })
+        })
+        res.data?.plan_totals?.forEach((p) => {
+          patchPlanTotals(p.id, {
+            total_weight: p.total_weight,
+            total_volume: p.total_volume,
+            total_items: p.total_items,
+            total_orders: p.total_orders,
+          })
+        })
       }
 
       await loadItemsByOrderId(orderServerId)

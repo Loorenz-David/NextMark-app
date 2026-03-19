@@ -11,12 +11,13 @@ type PropsuseController = {
   resetPredictions: () => void
   fetchPredictions: (value: string) => void
   getPlaceDetails: (value: string) => Promise<address>
-  getCurrentLocationAddress: () => Promise<address>
+  getCurrentLocationAddress: (storageNamespace?: string) => Promise<address>
   onSelectedAddress: (value: address | null) => void
   selectedAddress: address | null | undefined
   enableSavedLocations?: boolean
   intentKey?: string
   onInputValueChange?: (value: string) => void
+  storageNamespace?: string
 }
 
 export const useControllers = ({
@@ -29,6 +30,7 @@ export const useControllers = ({
   enableSavedLocations = false,
   intentKey,
   onInputValueChange,
+  storageNamespace,
 }: PropsuseController) => {
   const debounceMs = 500
   const debounceTimeoutRef = useRef<number | null>(null)
@@ -38,7 +40,7 @@ export const useControllers = ({
 
   const maybeRecordSavedLocation = (value: address) => {
     if (!enableSavedLocations || !intentKey?.trim()) return
-    recordSavedLocation(intentKey, value)
+    recordSavedLocation(intentKey, value, storageNamespace)
     setSavedLocationsRevision((prev) => prev + 1)
   }
 
@@ -87,7 +89,7 @@ export const useControllers = ({
       requestAnimationFrame(() => {
         (document.activeElement as HTMLElement | null)?.blur()
       })
-      const addressDetails = await getCurrentLocationAddress()
+      const addressDetails = await getCurrentLocationAddress(storageNamespace)
       setInputValue(CURRENT_LOCATION_INPUT_LABEL)
       onInputValueChange?.(CURRENT_LOCATION_INPUT_LABEL)
       onSelectedAddress(addressDetails)
@@ -99,7 +101,7 @@ export const useControllers = ({
   }
 
   const handleBeginManualEntryFromCurrentLocation = () => {
-    if (!selectedAddress || !isAddressCurrentLocation(selectedAddress)) return
+    if (!selectedAddress || !isAddressCurrentLocation(selectedAddress, storageNamespace)) return
     setInputValue('')
     onInputValueChange?.('')
     onSelectedAddress(null)
@@ -130,7 +132,7 @@ export const useControllers = ({
 
   useEffect(() => {
     if (selectedAddress) {
-      const firstLoadAddress = isAddressCurrentLocation(selectedAddress)
+      const firstLoadAddress = isAddressCurrentLocation(selectedAddress, storageNamespace)
         ? CURRENT_LOCATION_INPUT_LABEL
         : selectedAddress?.street_address ?? selectedAddress?.city ?? selectedAddress?.country
 
@@ -142,7 +144,7 @@ export const useControllers = ({
         window.clearTimeout(debounceTimeoutRef.current)
       }
     }
-  }, [selectedAddress])
+  }, [selectedAddress, storageNamespace])
 
   return {
     inputValue,

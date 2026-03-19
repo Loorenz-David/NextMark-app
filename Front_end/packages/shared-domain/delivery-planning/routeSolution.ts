@@ -14,8 +14,36 @@ export type RouteEndTimeExceededWarning = RouteSolutionWarningBase & {
   route_allowed_end?: ISODateTime
 }
 
+export type VehicleMaxVolumeExceededWarning = RouteSolutionWarningBase & {
+  type: 'vehicle_max_volume_exceeded'
+  total_volume_cm3?: number
+  max_volume_cm3?: number
+}
+
+export type VehicleMaxWeightExceededWarning = RouteSolutionWarningBase & {
+  type: 'vehicle_max_weight_exceeded'
+  total_weight_g?: number
+  max_weight_g?: number
+}
+
+export type VehicleMaxDistanceExceededWarning = RouteSolutionWarningBase & {
+  type: 'vehicle_max_distance_exceeded'
+  total_distance_km?: number
+  max_distance_km?: number
+}
+
+export type VehicleMaxDurationExceededWarning = RouteSolutionWarningBase & {
+  type: 'vehicle_max_duration_exceeded'
+  total_duration_minutes?: number
+  max_duration_minutes?: number
+}
+
 export type RouteSolutionWarning =
   | RouteEndTimeExceededWarning
+  | VehicleMaxVolumeExceededWarning
+  | VehicleMaxWeightExceededWarning
+  | VehicleMaxDistanceExceededWarning
+  | VehicleMaxDurationExceededWarning
   | RouteSolutionWarningBase
 
 export type RouteEndStrategy = 'round_trip' | 'custom_end_address' | 'end_at_last_stop'
@@ -48,6 +76,7 @@ export type RouteSolution = {
   eta_tolerance_seconds?: number | null
   stops_service_time?: ServiceTime | null
   driver_id?: number | null
+  vehicle_id?: number | null
   local_delivery_plan_id?: number | null
   has_route_warnings?: boolean
   route_warnings?: RouteSolutionWarning[] | null

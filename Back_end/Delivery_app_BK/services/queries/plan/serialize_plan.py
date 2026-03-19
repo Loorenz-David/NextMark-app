@@ -28,6 +28,13 @@ def serialize_plans( instances: List[ Type[ DeliveryPlan ] ], ctx:ServiceContext
             "state_id": instance.state_id
         }
         unpacked.update(calculate_plan_metrics(instance))
+        if instance.total_orders is not None:
+            unpacked.update({
+                "total_weight": instance.total_weight_g,
+                "total_volume": instance.total_volume_cm3,
+                "total_items": instance.total_item_count,
+                "total_orders": instance.total_orders,
+            })
 
         unpacked_instances.append( unpacked )
 

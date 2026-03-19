@@ -22,7 +22,7 @@ const mapGeolocationError = (error: GeolocationPositionError) => {
 export const useAddressCurrentLocationFlow = () => {
   const pendingPromiseRef = useRef<Promise<address> | null>(null)
 
-  const getCurrentLocationAddress = useCallback(async (): Promise<address> => {
+  const getCurrentLocationAddress = useCallback(async (storageNamespace?: string): Promise<address> => {
     if (pendingPromiseRef.current) {
       return pendingPromiseRef.current
     }
@@ -38,7 +38,7 @@ export const useAddressCurrentLocationFlow = () => {
           try {
             const lat = position.coords.latitude
             const lng = position.coords.longitude
-            const stored = getStoredCurrentLocation()
+            const stored = getStoredCurrentLocation(storageNamespace)
 
             if (stored) {
               const latDiff = Math.abs(lat - stored.coordinates.lat)
@@ -57,7 +57,7 @@ export const useAddressCurrentLocationFlow = () => {
               country: payload.country,
               coordinates: payload.coordinates,
             }
-            saveCurrentLocation(address)
+            saveCurrentLocation(address, storageNamespace)
             resolve(address)
           } catch (error) {
             reject(error)

@@ -13,6 +13,7 @@ type ItemPropertyFormContextValue = {
   initialFormRef: RefObject<ItemPropertyFormState | null>
   warnings: ItemPropertyFormWarnings
   handleSave: () => void
+  handleDelete: () => void
   setters: ReturnType<typeof useItemPropertyFormSetters>
   itemTypeQuery: ReturnType<typeof usePropertyItemTypeQuery>
 }
