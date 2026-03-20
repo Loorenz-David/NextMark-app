@@ -110,8 +110,6 @@ export function HomeDesktopView() {
     <>
       <HomeDesktopHeader
         headerRef={headerRef}
-        viewMode={layout.viewMode}
-        onToggleViewMode={layout.toggleViewMode}
       />
 
       <HomeDesktopLayout
@@ -181,12 +179,8 @@ export function HomeDesktopView() {
 
 function HomeDesktopHeader({
   headerRef,
-  viewMode,
-  onToggleViewMode,
 }: {
   headerRef?: RefObject<HTMLDivElement | null>
-  viewMode: 'rail' | 'split'
-  onToggleViewMode: () => void
 }) {
   const navigate = useNavigate()
   const { openCaseMain } = useOrderCaseActions()
@@ -194,41 +188,43 @@ function HomeDesktopHeader({
   return (
     <div
       ref={headerRef}
-      className="admin-toolbar-strip relative z-30 mx-auto mt-4 mb-4 flex h-12 w-[calc(100%-2rem)] max-w-[calc(100%-2rem)] items-center justify-between rounded-xl border-b border-b-1 border-b-white/8 px-3.5"
+      className="admin-toolbar-strip relative z-30 mx-auto  flex min-h-[3.25rem] w-full  items-center justify-between gap-3  px-6 py-3"
     >
-      <div className="flex items-center"></div>
-      <div className="flex items-center gap-3">
-        <BasicButton
+      <div className="min-w-0 flex-1" />
+      <div className="flex shrink-0 items-center gap-2 rounded-[1.15rem] ">
+        <div className="pr-2">
+          <AdminNotificationsTrigger />
+        </div>
+        {/* <BasicButton
           params={{
             variant: 'toolbarSecondary',
             ariaLabel: 'Toggle plan view mode',
-            className: 'border-[var(--color-muted)]/30',
+            className: 'border-[var(--color-muted)]/24 px-4 py-[5px]',
             onClick: onToggleViewMode,
           }}
         >
           {viewMode === 'rail' ? 'Split View' : 'Rail View'}
-        </BasicButton>
+        </BasicButton> */}
         <BasicButton
           params={{
             variant: 'toolbarSecondary',
             ariaLabel: 'Cases',
-            className: 'border-[var(--color-muted)]/30',
+            className: 'border-[var(--color-muted)]/24 px-4 py-[5px]',
             onClick: openCaseMain,
           }}
         >
           <ArchiveIcon className="mr-2 h-4 w-4" />
           Cases
         </BasicButton>
-        <AdminNotificationsTrigger />
         <BasicButton
           params={{
             variant: 'toolbarSecondary',
             ariaLabel: 'Settings',
-            className: 'border-[var(--color-muted)]/30',
+            className: 'border-[var(--color-muted)]/24 px-4 py-[5px]',
             onClick: () => navigate('/settings'),
           }}
         >
-          <SettingIcon className="mr-2 h-4 w-4  text-white" />
+          <SettingIcon className="mr-2 h-4 w-4  " />
           Settings
         </BasicButton>
        

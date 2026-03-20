@@ -65,11 +65,6 @@ class Order(
 
     marketing_messages = Column(Boolean, default=False)
 
-    earliest_delivery_date = Column(UTCDateTime, index=True) 
-    latest_delivery_date = Column(UTCDateTime, index=True) 
-    preferred_time_start = Column(String)  # "17:00"
-    preferred_time_end   = Column(String)  # "20:00"
-
     creation_date = Column(UTCDateTime, default=lambda: datetime.now(timezone.utc))
     updated_at = Column(
         UTCDateTime,

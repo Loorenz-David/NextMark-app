@@ -410,11 +410,11 @@ textarea:focus {
 }
 
 .admin-toolbar-strip {
-  background: rgba(15, 23, 25, 0.7);
+  background: linear-gradient(180deg, rgba(19, 29, 31, 0.84), rgba(14, 22, 24, 0.72));
   border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 0 14px 36px rgba(0, 0, 0, 0.22);
-  backdrop-filter: blur(18px) saturate(120%);
-  -webkit-backdrop-filter: blur(18px) saturate(120%);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(20px) saturate(118%);
+  -webkit-backdrop-filter: blur(20px) saturate(118%);
 }
 
 @media (prefers-reduced-motion: reduce) {

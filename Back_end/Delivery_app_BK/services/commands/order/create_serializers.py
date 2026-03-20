@@ -23,8 +23,6 @@ def _order_totals(instance: Order) -> dict:
 
 def serialize_created_order(instance: Order) -> dict:
     creation_date = instance.creation_date
-    earliest_delivery_date = instance.earliest_delivery_date
-    latest_delivery_date = instance.latest_delivery_date
     archive_at = instance.archive_at
     metrics = _order_totals(instance)
     delivery_windows = sort_delivery_window_instances(
@@ -49,14 +47,6 @@ def serialize_created_order(instance: Order) -> dict:
         "client_secondary_phone": instance.client_secondary_phone,
         "client_address": instance.client_address,
         "marketing_messages": instance.marketing_messages,
-        "earliest_delivery_date": earliest_delivery_date.isoformat()
-        if earliest_delivery_date
-        else None,
-        "latest_delivery_date": latest_delivery_date.isoformat()
-        if latest_delivery_date
-        else None,
-        "preferred_time_start": instance.preferred_time_start,
-        "preferred_time_end": instance.preferred_time_end,
         "creation_date": creation_date.isoformat() if creation_date else None,
         "items_updated_at": instance.items_updated_at.isoformat() if instance.items_updated_at else None,
         "order_state_id": instance.order_state_id,

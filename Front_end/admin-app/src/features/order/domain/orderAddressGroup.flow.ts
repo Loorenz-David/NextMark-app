@@ -30,12 +30,6 @@ const resolveOrderDeliveryMs = (order: Order): number => {
     return fromWindow as number
   }
 
-  const earliest = toMs(order.earliest_delivery_date)
-  if (Number.isFinite(earliest)) return earliest
-
-  const latest = toMs(order.latest_delivery_date)
-  if (Number.isFinite(latest)) return latest
-
   return Number.POSITIVE_INFINITY
 }
 

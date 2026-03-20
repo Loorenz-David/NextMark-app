@@ -307,63 +307,6 @@ def build_time_windows(
     base_date: Optional[datetime],
     base_end_date: Optional[datetime] = None,
 ) -> List[Tuple[datetime, datetime]]:
-    earliest = _coerce_datetime(order.earliest_delivery_date)
-    latest = _coerce_datetime(order.latest_delivery_date)
-    preferred_start = _parse_time_string(order.preferred_time_start)
-    preferred_end = _parse_time_string(order.preferred_time_end)
-    base_start = _coerce_datetime(base_date) if base_date else None
-    base_end = _coerce_datetime(base_end_date) if base_end_date else None
-
-    if earliest or latest:
-        windows = []
-        range_start = earliest or base_start or datetime.now(timezone.utc)
-        range_end = latest or (range_start + timedelta(days=13))
-        if range_start.tzinfo is None:
-            range_start = range_start.replace(tzinfo=timezone.utc)
-        if range_end.tzinfo is None:
-            range_end = range_end.replace(tzinfo=timezone.utc)
-
-        day_cursor = range_start
-        while day_cursor.date() <= range_end.date() and len(windows) < 14:
-            start_dt = (
-                _combine_date_time(day_cursor, preferred_start)
-                if preferred_start
-                else datetime.combine(
-                    day_cursor.date(),
-                    time_cls(0, 0),
-                    tzinfo=day_cursor.tzinfo,
-                )
-            )
-            end_dt = (
-                _combine_date_time(day_cursor, preferred_end)
-                if preferred_end
-                else datetime.combine(
-                    day_cursor.date(),
-                    time_cls(23, 59, 59),
-                    tzinfo=day_cursor.tzinfo,
-                )
-            )
-            windows.append((start_dt, end_dt))
-            day_cursor = day_cursor + timedelta(days=1)
-        return windows
-
-    if preferred_start or preferred_end:
-        base_start = base_start or datetime.now(timezone.utc)
-        if base_start.tzinfo is None:
-            base_start = base_start.replace(tzinfo=timezone.utc)
-        if base_end and base_end.tzinfo is None:
-            base_end = base_end.replace(tzinfo=timezone.utc)
-
-        start_dt = _combine_date_time(base_start, preferred_start) if preferred_start else None
-        end_dt = _combine_date_time(base_start, preferred_end) if preferred_end else None
-
-        if start_dt and end_dt:
-            return [(start_dt, end_dt)]
-        if preferred_end and end_dt:
-            return [(base_start, end_dt)]
-        if preferred_start and start_dt:
-            return [(start_dt, base_end or base_start)]
-
     return []
 
 
@@ -490,14 +433,6 @@ def _location_group_key(location: Dict[str, float]) -> str:
         f"{float(location['latitude']):.6f},"
         f"{float(location['longitude']):.6f}"
     )
-
-
-def _combine_date_time(base: datetime, time_value: Optional[time_cls]) -> Optional[datetime]:
-    if not base or not time_value:
-        return None
-    if base.tzinfo is None:
-        base = base.replace(tzinfo=timezone.utc)
-    return datetime.combine(base.date(), time_value, tzinfo=base.tzinfo)
 
 
 def _coerce_datetime(value: Any, tz = timezone.utc) -> Optional[datetime]:

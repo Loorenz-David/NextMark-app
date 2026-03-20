@@ -4,7 +4,6 @@ import pytest
 
 from Delivery_app_BK.errors import ValidationFailed
 from Delivery_app_BK.services.domain.order.delivery_windows import (
-    derive_legacy_delivery_envelope_fields,
     validate_and_normalize_delivery_windows,
     validate_same_local_day_delivery_windows,
 )
@@ -78,30 +77,3 @@ def test_validate_same_local_day_rejects_cross_midnight_in_team_timezone():
             normalized,
             team_timezone=ZoneInfo("Europe/Stockholm"),
         )
-
-
-def test_derive_legacy_delivery_envelope_fields_uses_local_preferred_pair():
-    normalized = validate_and_normalize_delivery_windows(
-        [
-            {
-                "start_at": "2026-03-05T09:00:00+00:00",
-                "end_at": "2026-03-05T11:00:00+00:00",
-                "window_type": "FULL_RANGE",
-            },
-            {
-                "start_at": "2026-03-06T09:00:00+00:00",
-                "end_at": "2026-03-06T11:00:00+00:00",
-                "window_type": "FULL_RANGE",
-            },
-        ],
-    )
-
-    envelope = derive_legacy_delivery_envelope_fields(
-        normalized,
-        team_timezone=ZoneInfo("UTC"),
-    )
-
-    assert envelope["earliest_delivery_date"].isoformat() == "2026-03-05T09:00:00+00:00"
-    assert envelope["latest_delivery_date"].isoformat() == "2026-03-06T11:00:00+00:00"
-    assert envelope["preferred_time_start"] == "09:00"
-    assert envelope["preferred_time_end"] == "11:00"

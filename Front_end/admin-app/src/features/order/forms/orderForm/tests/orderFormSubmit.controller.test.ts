@@ -39,10 +39,6 @@ const buildBaseFormState = (): OrderFormState => ({
     postal_code: '33101',
     coordinates: { lat: 25.7617, lng: -80.1918 },
   },
-  earliest_delivery_date: '2026-02-23T00:00:00.000Z',
-  latest_delivery_date: '2026-02-23T23:59:59.999Z',
-  preferred_time_start: '08:00',
-  preferred_time_end: '18:00',
   delivery_windows: [],
   delivery_plan_id: 10,
 })

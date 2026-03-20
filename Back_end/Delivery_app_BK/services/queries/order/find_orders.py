@@ -1,7 +1,7 @@
 from typing import Dict, Any
 from sqlalchemy.orm import Query
 
-from Delivery_app_BK.models import db, Order, Item, DeliveryPlan
+from Delivery_app_BK.models import db, Order, Item, DeliveryPlan, OrderDeliveryWindow
 from Delivery_app_BK.services.utils import inject_team_id, model_requires_team
 from Delivery_app_BK.services.queries.utils  import parsed_string_to_list
 from sqlalchemy import func, String, or_
@@ -160,18 +160,27 @@ def find_orders (
 
     if "earliest_delivery_date" in params:
         earliest_delivery_date = to_datetime( params.get( "earliest_delivery_date" ) )
-
-        query = query.filter( 
-            Order.earliest_delivery_date.isnot(None),
-            Order.earliest_delivery_date >= earliest_delivery_date
+        window_subquery = (
+            db.session.query(OrderDeliveryWindow.id)
+            .filter(
+                OrderDeliveryWindow.order_id == Order.id,
+                OrderDeliveryWindow.start_at >= earliest_delivery_date,
+            )
+            .exists()
         )
+        query = query.filter(window_subquery)
 
     if "latest_delivery_date" in params:
         latest_delivery_date = to_datetime ( params.get( "latest_delivery_date" ) )
-        query = query.filter( 
-            Order.latest_delivery_date.isnot(None),
-            Order.latest_delivery_date <= latest_delivery_date 
+        window_subquery = (
+            db.session.query(OrderDeliveryWindow.id)
+            .filter(
+                OrderDeliveryWindow.order_id == Order.id,
+                OrderDeliveryWindow.end_at <= latest_delivery_date,
+            )
+            .exists()
         )
+        query = query.filter(window_subquery)
 
     if "creation_date_from" in params:
         creation_date_from = to_datetime( params.get("creation_date_from" ) )

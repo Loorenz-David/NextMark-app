@@ -17,10 +17,6 @@ def _make_order(order_id: int, lat: float, lng: float):
             "coordinates": {"lat": lat, "lng": lng},
         },
         items=[],
-        preferred_time_start=None,
-        preferred_time_end=None,
-        earliest_delivery_date=None,
-        latest_delivery_date=None,
         delivery_windows=[],
     )
 

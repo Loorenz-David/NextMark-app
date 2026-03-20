@@ -17,8 +17,6 @@ def _count_open_order_cases(order: Order) -> int:
 
 def _serialize_order_instance(instance: Order, ctx: ServiceContext, include_items: bool = False):
     creation_date = instance.creation_date
-    earliest_delivery_date = instance.earliest_delivery_date
-    latest_delivery_date = instance.latest_delivery_date
     delivery_windows = sort_delivery_window_instances(
         list(getattr(instance, "delivery_windows", None) or []),
     )
@@ -42,10 +40,6 @@ def _serialize_order_instance(instance: Order, ctx: ServiceContext, include_item
         "client_secondary_phone": instance.client_secondary_phone,
         "client_address": instance.client_address,
         "marketing_messages": instance.marketing_messages,
-        "earliest_delivery_date": earliest_delivery_date.isoformat() if earliest_delivery_date else None,
-        "latest_delivery_date": latest_delivery_date.isoformat() if latest_delivery_date else None,
-        "preferred_time_start": instance.preferred_time_start,
-        "preferred_time_end": instance.preferred_time_end,
         "creation_date": creation_date.isoformat() if creation_date else None,
         "updated_at": instance.updated_at.isoformat() if instance.updated_at else None,
         "items_updated_at": instance.items_updated_at.isoformat() if instance.items_updated_at else None,

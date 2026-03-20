@@ -17,10 +17,6 @@ def _route_solution(plan_start: datetime | None = None, plan_end: datetime | Non
 
 def test_delivery_windows_are_authoritative_over_legacy_fields():
     order = SimpleNamespace(
-        earliest_delivery_date=datetime(2026, 3, 1, 0, 0, 0, tzinfo=timezone.utc),
-        latest_delivery_date=datetime(2026, 3, 1, 23, 59, 59, tzinfo=timezone.utc),
-        preferred_time_start="09:00",
-        preferred_time_end="18:00",
         delivery_windows=[
             SimpleNamespace(
                 start_at=datetime(2026, 3, 2, 9, 0, 0, tzinfo=timezone.utc),
@@ -42,10 +38,6 @@ def test_delivery_windows_are_authoritative_over_legacy_fields():
 
 def test_time_windows_use_half_open_interval_end_exclusive():
     order = SimpleNamespace(
-        earliest_delivery_date=None,
-        latest_delivery_date=None,
-        preferred_time_start=None,
-        preferred_time_end=None,
         delivery_windows=[
             SimpleNamespace(
                 start_at=datetime(2026, 3, 2, 9, 0, 0, tzinfo=timezone.utc),
@@ -73,10 +65,6 @@ def test_time_windows_use_half_open_interval_end_exclusive():
 
 def test_apply_evaluation_keeps_non_time_warnings():
     order = SimpleNamespace(
-        earliest_delivery_date=None,
-        latest_delivery_date=None,
-        preferred_time_start=None,
-        preferred_time_end=None,
         delivery_windows=[
             SimpleNamespace(
                 start_at=datetime(2026, 3, 2, 9, 0, 0, tzinfo=timezone.utc),

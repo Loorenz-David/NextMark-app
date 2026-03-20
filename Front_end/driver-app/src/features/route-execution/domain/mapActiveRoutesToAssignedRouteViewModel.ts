@@ -76,10 +76,6 @@ function mapOrder(order: DriverOrderRecord | null): Order | null {
     client_primary_phone: mapPhone(order.client_primary_phone),
     client_secondary_phone: mapPhone(order.client_secondary_phone),
     client_address: mapAddress(order.client_address),
-    earliest_delivery_date: order.earliest_delivery_date,
-    latest_delivery_date: order.latest_delivery_date,
-    preferred_time_start: order.preferred_time_start,
-    preferred_time_end: order.preferred_time_end,
     delivery_windows: order.delivery_windows.map((window) => ({
       id: window.id,
       client_id: window.client_id,

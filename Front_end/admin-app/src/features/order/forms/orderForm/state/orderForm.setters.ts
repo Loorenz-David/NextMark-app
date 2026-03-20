@@ -6,54 +6,11 @@ import type { Phone } from '@/types/phone'
 import type { OrderDeliveryWindow } from '../../../types/order'
 import type { OrderOperationTypes } from '../../../types/order'
 import {
-  deriveLegacyFieldsFromDeliveryWindows,
   resolveOrderFormTimeZone,
   sortDeliveryWindowsUtc,
 } from '../flows/orderFormDeliveryWindows.flow'
 
 import type { OrderFormState, OrderFormWarnings } from './OrderForm.types'
-
-const normalizeTime = (value: string | null | undefined) => {
-  if (!value) return ''
-
-  const [rawHours = '', rawMinutes = ''] = value.split(':')
-  const hours = Number(rawHours)
-  const minutes = Number(rawMinutes)
-
-  if (!Number.isFinite(hours) || !Number.isFinite(minutes)) {
-    return ''
-  }
-
-  if (hours < 0 || hours > 23 || minutes < 0 || minutes > 59) {
-    return ''
-  }
-
-  return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`
-}
-
-const normalizeDateBoundary = (
-  value: string | null | undefined,
-  boundary: 'start' | 'end',
-) => {
-  if (!value) return null
-
-  const datePart = value.split(/[T\s]/)[0]
-  const [yearText, monthText, dayText] = datePart.split('-')
-  const year = Number(yearText)
-  const month = Number(monthText)
-  const day = Number(dayText)
-
-  if (!Number.isFinite(year) || !Number.isFinite(month) || !Number.isFinite(day)) {
-    return null
-  }
-
-  const date =
-    boundary === 'start'
-      ? new Date(Date.UTC(year, month - 1, day, 0, 0, 0, 0))
-      : new Date(Date.UTC(year, month - 1, day, 23, 59, 59, 999))
-
-  return date.toISOString()
-}
 
 const normalizeOperationType = (value: string | number): OrderOperationTypes => {
   if (value === 'pickup') return 'pickup'
@@ -69,27 +26,9 @@ export const useOrderFormSetters = ({
   warnings: OrderFormWarnings
 }) => {
   const timeZone = resolveOrderFormTimeZone()
-  const validateDateRange = (state: OrderFormState) => {
-    warnings.dateRangeWarning.validate({
-      earliest_delivery_date: state.earliest_delivery_date,
-      latest_delivery_date: state.latest_delivery_date,
-      preferred_time_start: state.preferred_time_start,
-      preferred_time_end: state.preferred_time_end,
-    })
-    warnings.deliveryWindowsWarning.validate({
-      earliest_delivery_date: state.earliest_delivery_date,
-      latest_delivery_date: state.latest_delivery_date,
-      preferred_time_start: state.preferred_time_start,
-      preferred_time_end: state.preferred_time_end,
-    })
-  }
 
   const updateFormState = (updater: (prev: OrderFormState) => OrderFormState) => {
-    setFormState((prev) => {
-      const next = updater(prev)
-      validateDateRange(next)
-      return next
-    })
+    setFormState((prev) => updater(prev))
   }
 
   const handleOrderPlanObjective = (value: string | null) => {
@@ -164,26 +103,6 @@ export const useOrderFormSetters = ({
     warnings.addressWarning.validate(value)
   }
 
-  const handleEarliestDate = (value: string | null) => {
-    const normalized = normalizeDateBoundary(value, 'start')
-    updateFormState((prev) => ({ ...prev, earliest_delivery_date: normalized }))
-  }
-
-  const handleLatestDate = (value: string | null) => {
-    const normalized = normalizeDateBoundary(value, 'end')
-    updateFormState((prev) => ({ ...prev, latest_delivery_date: normalized }))
-  }
-
-  const handlePreferredTimeStart = (value: string | null) => {
-    const normalized = normalizeTime(value)
-    updateFormState((prev) => ({ ...prev, preferred_time_start: normalized }))
-  }
-
-  const handlePreferredTimeEnd = (value: string | null) => {
-    const normalized = normalizeTime(value)
-    updateFormState((prev) => ({ ...prev, preferred_time_end: normalized }))
-  }
-
   const mergeExternalClientData = (data: ExternalFormData) => {
     updateFormState((prev) => ({
       ...prev,
@@ -196,16 +115,9 @@ export const useOrderFormSetters = ({
     }))
   }
 
-  const handleDeliveryWindows = (windows: OrderDeliveryWindow[]) => {    const sorted = sortDeliveryWindowsUtc(windows)
-    const legacy = deriveLegacyFieldsFromDeliveryWindows(sorted, timeZone)
-    updateFormState((prev) => ({
-      ...prev,
-      delivery_windows: sorted,
-      earliest_delivery_date: legacy.earliest_delivery_date,
-      latest_delivery_date: legacy.latest_delivery_date,
-      preferred_time_start: legacy.preferred_time_start,
-      preferred_time_end: legacy.preferred_time_end,
-    }))
+  const handleDeliveryWindows = (windows: OrderDeliveryWindow[]) => {
+    const sorted = sortDeliveryWindowsUtc(windows)
+    updateFormState((prev) => ({ ...prev, delivery_windows: sorted }))
   }
 
   const handleOrderNote = (event: ChangeEvent<HTMLInputElement>) => {
@@ -228,10 +140,6 @@ export const useOrderFormSetters = ({
     handlePrimaryPhone,
     handleSecondaryPhone,
     handleAddress,
-    handleEarliestDate,
-    handleLatestDate,
-    handlePreferredTimeStart,
-    handlePreferredTimeEnd,
     handleDeliveryWindows,
     handleOrderNote,
     mergeExternalClientData,

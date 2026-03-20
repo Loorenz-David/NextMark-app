@@ -171,7 +171,7 @@ const DELIVERY_WINDOW_CALENDAR_SHELL_PRESETS: Record<
       cancelButtonClassName:
         'px-4 py-1 text-[12px] rounded-sm border-1 border-[var(--color-border-accent)]  text-base text-[var(--color-text)] cursor-pointer hover:bg-[var(--color-border)]',
       applyButtonClassName:
-        'px-4 py-1 text-[12px] rounded-sm text-base text-[var(--color-page)] bg-[var(--color-dark-blue)]  cursor-pointer hover:bg-[var(--color-dark-blue)]/90',
+        'rounded-full border border-[rgba(131,204,185,0.26)] bg-[rgba(131,204,185,0.12)] px-4 py-1.5 text-[12px] font-semibold  text-[var(--color-primary)] shadow-[0_10px_24px_rgba(22,49,46,0.18),inset_0_1px_0_rgba(255,255,255,0.04)] transition hover:bg-[rgba(131,204,185,0.18)]',
     },
   },
   desktopRegular: {
@@ -254,7 +254,7 @@ const DELIVERY_WINDOW_CALENDAR_SHELL_PRESETS: Record<
       cancelButtonClassName:
         'border-[var(--color-border-accent)] px-4 py-2 text-xl text-[var(--color-text)]',
       applyButtonClassName:
-        'px-4 py-2 text-xl text-[var(--color-page)] hover:bg-[var(--color-dark-blue)]/90',
+        'rounded-full border border-[rgba(131,204,185,0.26)] bg-[rgba(131,204,185,0.12)] px-5 py-2 text-base font-semibold uppercase tracking-[0.18em] text-[var(--color-primary)] shadow-[0_12px_28px_rgba(22,49,46,0.18),inset_0_1px_0_rgba(255,255,255,0.04)] transition hover:bg-[rgba(131,204,185,0.18)]',
     },
   },
   mobile: {
@@ -337,7 +337,7 @@ const DELIVERY_WINDOW_CALENDAR_SHELL_PRESETS: Record<
       cancelButtonClassName:
         'border-[var(--color-border-accent)] px-3 py-1.5 text-base text-[var(--color-text)]',
       applyButtonClassName:
-        'px-3 py-1.5 text-base text-[var(--color-page)] hover:bg-[var(--color-dark-blue)]/90',
+        'rounded-full border border-[rgba(131,204,185,0.26)] bg-[rgba(131,204,185,0.12)] px-3.5 py-1.5 text-sm font-semibold uppercase tracking-[0.16em] text-[var(--color-primary)] shadow-[0_10px_22px_rgba(22,49,46,0.18),inset_0_1px_0_rgba(255,255,255,0.04)] transition hover:bg-[rgba(131,204,185,0.18)]',
     },
   },
 }

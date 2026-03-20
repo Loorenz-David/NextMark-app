@@ -1,11 +1,4 @@
 import { validateAddress } from '@/shared/data-validation/addressValidation'
-import {
-  isDateOnOrAfterToday,
-  isDateTimeOnOrAfterNow,
-  validateDateComparison,
-  validateDateTimeComparison,
-  toDateOnly,
-} from '@/shared/data-validation/timeValidation'
 import { validateEmail, validateString } from '@shared-domain'
 import type { address } from '@/types/address'
 import type { Phone } from '@/types/phone'
@@ -55,7 +48,7 @@ export const useOrderValidation = () => {
     return validateString(value.prefix)
   }
 
-  const validateAddressValue = (value: address | null | undefined) => validateAddress(value ?? null)
+    const validateAddressValue = (value: address | null | undefined) => validateAddress(value ?? null)
 
   const validateTimeValue = (
     value: string | null | undefined,
@@ -63,74 +56,6 @@ export const useOrderValidation = () => {
   ) => {
     if (!value) return !required
     return /^([01]\d|2[0-3]):([0-5]\d)$/.test(value)
-  }
-
-  const validateDeliveryWindow = ({
-    earliestDeliveryDate,
-    latestDeliveryDate,
-    preferredTimeStart,
-    preferredTimeEnd,
-  }: {
-    earliestDeliveryDate: string | null | undefined
-    latestDeliveryDate: string | null | undefined
-    preferredTimeStart: string | null | undefined
-    preferredTimeEnd: string | null | undefined
-  }) => {
-    if (!earliestDeliveryDate || !latestDeliveryDate) return true
-
-    const earliestDateOnly = toDateOnly(earliestDeliveryDate)
-    const latestDateOnly = toDateOnly(latestDeliveryDate)
-
-    if (!earliestDateOnly || !latestDateOnly) return true
-
-    if (!validateDateComparison(earliestDateOnly, latestDateOnly)) return false
-
-    return validateDateTimeComparison(
-      earliestDeliveryDate,
-      preferredTimeStart ?? null,
-      latestDeliveryDate,
-      preferredTimeEnd ?? null,
-    )
-  }
-
-  const validateDeliveryWindowNotInPast = ({
-    earliestDeliveryDate,
-    latestDeliveryDate,
-    preferredTimeStart,
-    preferredTimeEnd,
-  }: {
-    earliestDeliveryDate: string | null | undefined
-    latestDeliveryDate: string | null | undefined
-    preferredTimeStart: string | null | undefined
-    preferredTimeEnd: string | null | undefined
-  }) => {
-    if (!earliestDeliveryDate && !latestDeliveryDate) {
-      return true
-    }
-
-    if (earliestDeliveryDate && !isDateOnOrAfterToday(earliestDeliveryDate)) {
-      return false
-    }
-
-    if (latestDeliveryDate && !isDateOnOrAfterToday(latestDeliveryDate)) {
-      return false
-    }
-
-    if (
-      earliestDeliveryDate
-      && !isDateTimeOnOrAfterNow(earliestDeliveryDate, preferredTimeStart ?? null)
-    ) {
-      return false
-    }
-
-    if (
-      latestDeliveryDate
-      && !isDateTimeOnOrAfterNow(latestDeliveryDate, preferredTimeEnd ?? null)
-    ) {
-      return false
-    }
-
-    return true
   }
 
   const validateOrderFields = (fields: OrderUpdateFields) => {
@@ -234,60 +159,6 @@ export const useOrderValidation = () => {
       }
     }
 
-    if ('earliest_delivery_date' in fields) {
-      if (
-        fields.earliest_delivery_date &&
-        !validateString(String(fields.earliest_delivery_date))
-      ) {
-        return false
-      }
-    }
-
-    if ('latest_delivery_date' in fields) {
-      if (
-        fields.latest_delivery_date &&
-        !validateString(String(fields.latest_delivery_date))
-      ) {
-        return false
-      }
-    }
-
-    if ('preferred_time_start' in fields) {
-      if (!validateTimeValue(fields.preferred_time_start, { required: false })) {
-        return false
-      }
-    }
-
-    if ('preferred_time_end' in fields) {
-      if (!validateTimeValue(fields.preferred_time_end, { required: false })) {
-        return false
-      }
-    }
-
-    const hasAnyDeliveryWindowField =
-      'earliest_delivery_date' in fields ||
-      'latest_delivery_date' in fields ||
-      'preferred_time_start' in fields ||
-      'preferred_time_end' in fields
-
-    if (hasAnyDeliveryWindowField) {
-      const isWindowValid = validateDeliveryWindow({
-        earliestDeliveryDate: fields.earliest_delivery_date ?? null,
-        latestDeliveryDate: fields.latest_delivery_date ?? null,
-        preferredTimeStart: fields.preferred_time_start ?? null,
-        preferredTimeEnd: fields.preferred_time_end ?? null,
-      })
-      const isWindowNotInPast = validateDeliveryWindowNotInPast({
-        earliestDeliveryDate: fields.earliest_delivery_date ?? null,
-        latestDeliveryDate: fields.latest_delivery_date ?? null,
-        preferredTimeStart: fields.preferred_time_start ?? null,
-        preferredTimeEnd: fields.preferred_time_end ?? null,
-      })
-      if (!isWindowValid || !isWindowNotInPast) {
-        return false
-      }
-    }
-
     return true
   }
 
@@ -303,8 +174,6 @@ export const useOrderValidation = () => {
     validatePhone,
     validateAddressValue,
     validateTimeValue,
-    validateDeliveryWindow,
-    validateDeliveryWindowNotInPast,
     validateOrderFields,
   }
 }

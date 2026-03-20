@@ -38,10 +38,6 @@ export type OrderDto = {
   client_secondary_phone: unknown
   client_address: Record<string, unknown> | null
   marketing_messages: boolean | null
-  earliest_delivery_date: string | null
-  latest_delivery_date: string | null
-  preferred_time_start: string | null
-  preferred_time_end: string | null
   creation_date: string | null
   updated_at: string | null
   items_updated_at: string | null

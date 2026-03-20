@@ -48,10 +48,6 @@ export const normalizeFormStateForSave = (state: OrderFormState): OrderUpdateFie
         }
       : null,
     client_address: state.client_address,
-    earliest_delivery_date: state.earliest_delivery_date,
-    latest_delivery_date: state.latest_delivery_date,
-    preferred_time_start: state.preferred_time_start || null,
-    preferred_time_end: state.preferred_time_end || null,
     delivery_windows: sortDeliveryWindowsUtc(state.delivery_windows),
     delivery_plan_id: state.delivery_plan_id ?? null,
     order_notes: state.order_note.trim() ? [state.order_note.trim()] : [],

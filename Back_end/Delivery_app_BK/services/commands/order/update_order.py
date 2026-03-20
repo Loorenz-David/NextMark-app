@@ -29,9 +29,8 @@ from Delivery_app_BK.services.infra.events.builders.order import (
 )
 from Delivery_app_BK.services.infra.events.emiters.order import emit_order_events
 from Delivery_app_BK.services.domain.plan.route_freshness import touch_route_freshness
-from Delivery_app_BK.services.utils import model_requires_team, require_team_id, to_datetime
+from Delivery_app_BK.services.utils import model_requires_team, require_team_id
 from Delivery_app_BK.services.domain.order.delivery_windows import (
-    derive_legacy_delivery_envelope_fields,
     resolve_order_delivery_windows_timezone,
     validate_and_normalize_delivery_windows,
     validate_same_local_day_delivery_windows,
@@ -69,20 +68,12 @@ MUTABLE_FIELDS = {
     "client_secondary_phone",
     "client_address",
     "marketing_messages",
-    "earliest_delivery_date",
-    "latest_delivery_date",
-    "preferred_time_start",
-    "preferred_time_end",
     "delivery_windows",
     "order_notes",
 }
 
 ADDRESS_FIELDS = {"client_address"}
 WINDOW_FIELDS = {
-    "earliest_delivery_date",
-    "latest_delivery_date",
-    "preferred_time_start",
-    "preferred_time_end",
     "delivery_windows",
 }
 DETAIL_FIELDS = MUTABLE_FIELDS.difference(WINDOW_FIELDS)
@@ -179,18 +170,12 @@ def apply_order_updates(
             raw_fields=raw_fields,
             team_timezone=team_timezone,
         )
-        if normalized_delivery_windows is not None:
-            fields_to_apply.update(
-                derive_legacy_delivery_envelope_fields(
-                    normalized_delivery_windows,
-                    team_timezone=team_timezone,
-                ),
-            )
 
         old_values = _capture_sync_values(existing)
         old_driver_visible_values = _capture_driver_visible_values(existing)
-        old_earliest: datetime = to_datetime(existing.earliest_delivery_date)
-        old_latest: datetime = to_datetime(existing.latest_delivery_date)
+        _old_windows = list(existing.delivery_windows or [])
+        old_earliest: datetime | None = min((_w.start_at for _w in _old_windows), default=None)
+        old_latest: datetime | None = max((_w.end_at for _w in _old_windows), default=None)
 
         if fields_to_apply:
             inject_fields(ctx, existing, fields_to_apply)
@@ -203,8 +188,9 @@ def apply_order_updates(
 
         new_values = _capture_sync_values(existing)
         new_driver_visible_values = _capture_driver_visible_values(existing)
-        new_earliest = to_datetime(existing.earliest_delivery_date)
-        new_latest = to_datetime(existing.latest_delivery_date)
+        _new_windows = list(existing.delivery_windows or [])
+        new_earliest: datetime | None = min((_w.start_at for _w in _new_windows), default=None)
+        new_latest: datetime | None = max((_w.end_at for _w in _new_windows), default=None)
         changed_sections = _resolve_changed_sections(
             old_values=old_driver_visible_values,
             new_values=new_driver_visible_values,
@@ -267,10 +253,6 @@ def _build_change_flags(
 def _capture_sync_values(order: Order) -> dict[str, Any]:
     return {
         "client_address": order.client_address,
-        "earliest_delivery_date": order.earliest_delivery_date,
-        "latest_delivery_date": order.latest_delivery_date,
-        "preferred_time_start": order.preferred_time_start,
-        "preferred_time_end": order.preferred_time_end,
     }
 
 
@@ -288,10 +270,6 @@ def _capture_driver_visible_values(order: Order) -> dict[str, Any]:
         "client_primary_phone": order.client_primary_phone,
         "client_secondary_phone": order.client_secondary_phone,
         "client_address": order.client_address,
-        "earliest_delivery_date": order.earliest_delivery_date.isoformat() if order.earliest_delivery_date else None,
-        "latest_delivery_date": order.latest_delivery_date.isoformat() if order.latest_delivery_date else None,
-        "preferred_time_start": order.preferred_time_start,
-        "preferred_time_end": order.preferred_time_end,
         "delivery_windows": [
             {
                 "start_at": window.start_at.isoformat() if window.start_at else None,

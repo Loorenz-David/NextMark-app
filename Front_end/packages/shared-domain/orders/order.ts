@@ -47,10 +47,6 @@ export type Order = {
     costumer_id?: number | null
     client_id?: string | null
   } | null
-  earliest_delivery_date?: ISODateTime | null
-  latest_delivery_date?: ISODateTime | null
-  preferred_time_start?: string | null
-  preferred_time_end?: string | null
   delivery_windows?: OrderDeliveryWindow[]
   creation_date?: ISODateTime | null
   updated_at?: ISODateTime | null

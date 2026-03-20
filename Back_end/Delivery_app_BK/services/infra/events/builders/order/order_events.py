@@ -62,10 +62,10 @@ def build_delivery_window_rescheduled_by_user_event(
     changed_sections: list[str] | None = None,
 ) -> dict:
     payload = {
-        "old_earliest_delivery_date": old_earliest.isoformat() if old_earliest else None,
-        "old_latest_delivery_date": old_latest.isoformat() if old_latest else None,
-        "new_earliest_delivery_date": new_earliest.isoformat() if new_earliest else None,
-        "new_latest_delivery_date": new_latest.isoformat() if new_latest else None,
+        "old_window_start": old_earliest.isoformat() if old_earliest else None,
+        "old_window_end": old_latest.isoformat() if old_latest else None,
+        "new_window_start": new_earliest.isoformat() if new_earliest else None,
+        "new_window_end": new_latest.isoformat() if new_latest else None,
     }
     if changed_sections:
         payload["changed_sections"] = changed_sections

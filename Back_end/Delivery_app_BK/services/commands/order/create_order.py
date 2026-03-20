@@ -33,7 +33,6 @@ from Delivery_app_BK.services.infra.events.emiters.order import emit_order_event
 from Delivery_app_BK.services.domain.plan.route_freshness import touch_route_freshness
 from .plan_objectives import PlanObjectiveCreateResult, apply_order_plan_objective
 from ...domain.order.delivery_windows import (
-    derive_legacy_delivery_envelope_fields,
     resolve_order_delivery_windows_timezone,
     validate_and_normalize_delivery_windows,
     validate_same_local_day_delivery_windows,
@@ -132,12 +131,6 @@ def create_order(ctx: ServiceContext):
                 validate_same_local_day_delivery_windows(
                     normalized_windows,
                     team_timezone=team_timezone,
-                )
-                order_fields.update(
-                    derive_legacy_delivery_envelope_fields(
-                        normalized_windows,
-                        team_timezone=team_timezone,
-                    )
                 )
             delivery_plan = (
                 delivery_plans_by_id.get(order_request.delivery_plan_id)

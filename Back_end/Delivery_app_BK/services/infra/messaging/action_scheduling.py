@@ -202,10 +202,6 @@ def _resolve_order_future_anchor(order, baseline: datetime) -> datetime | None:
         if start_date is not None and start_date > baseline:
             return start_date
 
-    earliest_delivery_date = getattr(order, "earliest_delivery_date", None)
-    if earliest_delivery_date is not None and earliest_delivery_date > baseline:
-        return earliest_delivery_date
-
     return None
 
 

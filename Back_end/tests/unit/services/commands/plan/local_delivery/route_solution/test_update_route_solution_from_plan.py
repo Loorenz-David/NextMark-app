@@ -25,6 +25,8 @@ def _build_route_solution(*, set_start_time: str | None, arrival: datetime):
         is_optimized=IS_OPTIMIZED_OPTIMIZE,
         set_start_time=set_start_time,
         set_end_time=None,
+        eta_tolerance_seconds=None,
+        stops_service_time=None,
         expected_start_time=datetime(2026, 2, 28, 7, 0, 0, tzinfo=timezone.utc),
         expected_end_time=datetime(2026, 2, 28, 19, 0, 0, tzinfo=timezone.utc),
         start_location={"coordinates": {"lat": 1.0, "lng": 1.0}},
@@ -174,10 +176,6 @@ def test_set_start_updates_expected_times_and_rechecks_violations_when_moved_bac
     route_solution = _build_route_solution(set_start_time="10:00:00", arrival=arrival)
     route_solution.expected_end_time = datetime(2026, 2, 28, 20, 0, 0, tzinfo=timezone.utc)
     route_solution.stops[0].order = SimpleNamespace(
-        earliest_delivery_date=None,
-        latest_delivery_date=None,
-        preferred_time_start=None,
-        preferred_time_end=None,
         delivery_windows=[
             SimpleNamespace(
                 start_at=datetime(2026, 2, 28, 9, 30, 0, tzinfo=timezone.utc),

@@ -34,10 +34,6 @@ export type OrderFormState = {
   client_primary_phone: Phone
   client_secondary_phone: Phone
   client_address: address | null
-  earliest_delivery_date: string | null
-  latest_delivery_date: string | null
-  preferred_time_start: string
-  preferred_time_end: string
   delivery_windows: OrderDeliveryWindow[]
   delivery_plan_id?: number | null
   order_note: string

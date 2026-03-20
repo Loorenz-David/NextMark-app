@@ -58,51 +58,6 @@ export const validateNonOverlappingUtcDeliveryWindows = (windows: OrderDeliveryW
   return { valid: true as const }
 }
 
-export const deriveLegacyFieldsFromDeliveryWindows = (
-  windows: OrderDeliveryWindow[],
-  timeZone: string,
-) => {
-  if (!windows.length) {
-    return {
-      earliest_delivery_date: null,
-      latest_delivery_date: null,
-      preferred_time_start: '',
-      preferred_time_end: '',
-    }
-  }
-
-  const sorted = sortDeliveryWindowsUtc(windows)
-  const earliest = sorted[0]?.start_at ?? null
-  const latest = sorted[sorted.length - 1]?.end_at ?? null
-  const localPairs = new Set<string>()
-  sorted.forEach((window) => {
-    const start = toLocalDateTimeParts(window.start_at, timeZone)
-    const end = toLocalDateTimeParts(window.end_at, timeZone)
-    if (!start || !end) {
-      return
-    }
-    localPairs.add(`${start.time}|${end.time}`)
-  })
-
-  if (localPairs.size === 1) {
-    const pair = [...localPairs][0] ?? ''
-    const [preferredStart = '', preferredEnd = ''] = pair.split('|')
-    return {
-      earliest_delivery_date: earliest,
-      latest_delivery_date: latest,
-      preferred_time_start: preferredStart,
-      preferred_time_end: preferredEnd,
-    }
-  }
-
-  return {
-    earliest_delivery_date: earliest,
-    latest_delivery_date: latest,
-    preferred_time_start: '',
-    preferred_time_end: '',
-  }
-}
-
 export const toDeliveryWindowDisplayRows = (
   windows: OrderDeliveryWindow[],
   timeZone: string,

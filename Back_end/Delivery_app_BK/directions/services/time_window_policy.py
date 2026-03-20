@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import copy
-from datetime import datetime, time as time_cls, timezone, timedelta
+from datetime import datetime, timezone, timedelta
 from typing import Any, List, Optional, Tuple
 
 from Delivery_app_BK.models import Order, RouteSolution
@@ -95,14 +95,6 @@ def build_effective_windows(
         return delivery_windows
 
     base_date, base_end_date = _resolve_plan_window_bounds(route_solution)
-    legacy_windows = _build_legacy_windows(
-        order=order,
-        base_date=base_date,
-        base_end_date=base_end_date,
-    )
-    if legacy_windows:
-        return legacy_windows
-
     fallback_start = ensure_utc(base_date)
     fallback_end = ensure_utc(base_end_date)
     if not fallback_start or not fallback_end or fallback_end <= fallback_start:
@@ -122,66 +114,6 @@ def _build_windows_from_delivery_windows(order: Order) -> List[Tuple[datetime, d
         windows.append((start, end))
 
     return _normalize_windows(windows)
-
-
-def _build_legacy_windows(
-    *,
-    order: Order,
-    base_date: Optional[datetime],
-    base_end_date: Optional[datetime],
-) -> List[Tuple[datetime, datetime]]:
-    earliest = _coerce_datetime(getattr(order, "earliest_delivery_date", None))
-    latest = _coerce_datetime(getattr(order, "latest_delivery_date", None))
-    preferred_start = _parse_time_string(getattr(order, "preferred_time_start", None))
-    preferred_end = _parse_time_string(getattr(order, "preferred_time_end", None))
-    base_start = _coerce_datetime(base_date) if base_date else None
-    base_end = _coerce_datetime(base_end_date) if base_end_date else None
-
-    if earliest or latest:
-        windows: List[Tuple[datetime, datetime]] = []
-        range_start = earliest or base_start or datetime.now(timezone.utc)
-        range_end = latest or (range_start + timedelta(days=13))
-        range_start = ensure_utc(range_start)
-        range_end = ensure_utc(range_end)
-        if not range_start or not range_end:
-            return []
-
-        day_cursor = range_start
-        while day_cursor.date() <= range_end.date() and len(windows) < 14:
-            start_dt = (
-                _combine_date_time(day_cursor, preferred_start)
-                if preferred_start
-                else datetime.combine(day_cursor.date(), time_cls(0, 0), tzinfo=day_cursor.tzinfo)
-            )
-            end_dt = (
-                _combine_date_time(day_cursor, preferred_end)
-                if preferred_end
-                else datetime.combine(day_cursor.date(), time_cls(23, 59, 59), tzinfo=day_cursor.tzinfo)
-            )
-            if start_dt and end_dt and end_dt > start_dt:
-                windows.append((start_dt, end_dt))
-            day_cursor = day_cursor + timedelta(days=1)
-        return windows
-
-    if preferred_start or preferred_end:
-        base_start = ensure_utc(base_start or datetime.now(timezone.utc))
-        base_end = ensure_utc(base_end)
-        if not base_start:
-            return []
-
-        start_dt = _combine_date_time(base_start, preferred_start) if preferred_start else None
-        end_dt = _combine_date_time(base_start, preferred_end) if preferred_end else None
-
-        if start_dt and end_dt and end_dt > start_dt:
-            return [(start_dt, end_dt)]
-        if preferred_end and end_dt and end_dt > base_start:
-            return [(base_start, end_dt)]
-        if preferred_start and start_dt:
-            candidate_end = base_end or base_start
-            if candidate_end > start_dt:
-                return [(start_dt, candidate_end)]
-
-    return []
 
 
 def _normalize_windows(
@@ -273,30 +205,6 @@ def _normalize_skip_reason(value):
     if isinstance(value, (list, tuple)):
         return value[0] if value else None
     return value
-
-
-def _combine_date_time(base: datetime, time_value: Optional[time_cls]) -> Optional[datetime]:
-    if not base or not time_value:
-        return None
-    if base.tzinfo is None:
-        base = base.replace(tzinfo=timezone.utc)
-    return datetime.combine(base.date(), time_value, tzinfo=base.tzinfo)
-
-
-def _parse_time_string(value: Optional[str]) -> Optional[time_cls]:
-    if not value:
-        return None
-    parsed = str(value).strip()
-    if not parsed:
-        return None
-    parts = parsed.split(":")
-    try:
-        hour = int(parts[0])
-        minute = int(parts[1]) if len(parts) > 1 else 0
-        second = int(parts[2]) if len(parts) > 2 else 0
-        return time_cls(hour=hour, minute=minute, second=second)
-    except ValueError:
-        return None
 
 
 def _coerce_datetime(value: Any, tz=timezone.utc) -> Optional[datetime]:

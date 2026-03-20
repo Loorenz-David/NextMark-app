@@ -3,7 +3,6 @@ from dataclasses import dataclass
 from Delivery_app_BK.errors import ValidationFailed
 from Delivery_app_BK.services.domain.item.item_states import ItemStateId
 from Delivery_app_BK.services.domain.order.order_states import OrderStateId
-from Delivery_app_BK.services.requests.common.datetime import parse_optional_datetime
 from Delivery_app_BK.services.requests.common.fields import (
     validate_forbidden,
     validate_unexpected,
@@ -36,10 +35,6 @@ ORDER_ALLOWED_FIELDS = {
     "client_secondary_phone",
     "client_address",
     "marketing_messages",
-    "earliest_delivery_date",
-    "latest_delivery_date",
-    "preferred_time_start",
-    "preferred_time_end",
     "delivery_windows",
     "order_state_id",
     "delivery_plan_id",
@@ -91,8 +86,6 @@ ORDER_OPTIONAL_STRING_FIELDS = {
     "client_first_name",
     "client_last_name",
     "client_email",
-    "preferred_time_start",
-    "preferred_time_end",
 }
 
 ITEM_OPTIONAL_STRING_FIELDS = {
@@ -226,29 +219,6 @@ def parse_create_order_request(raw_fields: dict) -> OrderCreateRequest:
             raw_fields.get("marketing_messages"),
             field="marketing_messages",
         )
-
-    earliest_delivery_date = None
-    latest_delivery_date = None
-
-    if "earliest_delivery_date" in raw_fields:
-        earliest_delivery_date = parse_optional_datetime(
-            raw_fields.get("earliest_delivery_date"),
-            field="earliest_delivery_date",
-        )
-        order_fields["earliest_delivery_date"] = earliest_delivery_date
-
-    if "latest_delivery_date" in raw_fields:
-        latest_delivery_date = parse_optional_datetime(
-            raw_fields.get("latest_delivery_date"),
-            field="latest_delivery_date",
-        )
-        order_fields["latest_delivery_date"] = latest_delivery_date
-
-    if earliest_delivery_date and latest_delivery_date:
-        if latest_delivery_date < earliest_delivery_date:
-            raise ValidationFailed(
-                "latest_delivery_date cannot be before earliest_delivery_date."
-            )
 
     item_requests = _parse_items(raw_fields)
     delivery_windows = _parse_delivery_windows(raw_fields)

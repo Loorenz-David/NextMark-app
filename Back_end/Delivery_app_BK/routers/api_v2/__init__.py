@@ -28,6 +28,7 @@ from .item_state import item_state_bp
 from .costumer import costumer_bp
 from .drivers import drivers_bp
 from .client_form import client_form_bp, public_client_form_bp
+from .ai import ai_bp
 from .order_tracking import public_order_tracking_bp
 from Delivery_app_BK.routers.utils.role_decorator import install_blueprint_scope_guard
 
@@ -59,6 +60,7 @@ ADMIN_APP_BLUEPRINTS = [
     plan_overviews_bp,
     costumer_bp,
     client_form_bp,
+    ai_bp,
 ]
 
 
@@ -110,3 +112,4 @@ def register_v2_blueprints(app):
     app.register_blueprint(public_client_form_bp, url_prefix="/api_v2")
     # public_order_tracking_bp requires no auth; do NOT add to ADMIN_APP_BLUEPRINTS
     app.register_blueprint(public_order_tracking_bp, url_prefix="/api_v2")
+    app.register_blueprint(ai_bp, url_prefix="/api_v2/ai")

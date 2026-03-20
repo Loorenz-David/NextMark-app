@@ -34,16 +34,10 @@ def _make_route_solution(plan_start: datetime | None, plan_end: datetime | None)
 
 
 def _make_order(
-    earliest: datetime | None = None,
-    latest: datetime | None = None,
-    preferred_start: str | None = None,
-    preferred_end: str | None = None,
+    delivery_windows=None,
 ):
     return SimpleNamespace(
-        earliest_delivery_date=earliest,
-        latest_delivery_date=latest,
-        preferred_time_start=preferred_start,
-        preferred_time_end=preferred_end,
+        delivery_windows=list(delivery_windows or []),
     )
 
 
@@ -80,8 +74,12 @@ def test_explicit_order_windows_take_precedence_over_plan_window():
         datetime(2026, 2, 28, 23, 59, 59, tzinfo=timezone.utc),
     )
     order = _make_order(
-        earliest=datetime(2026, 3, 2, 9, 0, 0, tzinfo=timezone.utc),
-        latest=datetime(2026, 3, 2, 12, 0, 0, tzinfo=timezone.utc),
+        delivery_windows=[
+            SimpleNamespace(
+                start_at=datetime(2026, 3, 2, 9, 0, 0, tzinfo=timezone.utc),
+                end_at=datetime(2026, 3, 2, 12, 0, 0, tzinfo=timezone.utc),
+            ),
+        ],
     )
     arrival = datetime(2026, 3, 1, 10, 0, 0, tzinfo=timezone.utc)
 

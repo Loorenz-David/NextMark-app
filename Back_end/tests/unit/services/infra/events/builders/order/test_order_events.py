@@ -25,7 +25,7 @@ def test_build_delivery_window_rescheduled_by_user_event_formats_payload():
     assert event["order_id"] == 7
     assert event["team_id"] == 3
     assert event["event_name"] == OrderEvent.DELIVERY_WINDOW_RESCHEDULED_BY_USER.value
-    assert event["payload"]["old_earliest_delivery_date"] == old_earliest.isoformat()
-    assert event["payload"]["old_latest_delivery_date"] == old_latest.isoformat()
-    assert event["payload"]["new_earliest_delivery_date"] == new_earliest.isoformat()
-    assert event["payload"]["new_latest_delivery_date"] == new_latest.isoformat()
+    assert event["payload"]["old_window_start"] == old_earliest.isoformat()
+    assert event["payload"]["old_window_end"] == old_latest.isoformat()
+    assert event["payload"]["new_window_start"] == new_earliest.isoformat()
+    assert event["payload"]["new_window_end"] == new_latest.isoformat()

@@ -35,10 +35,6 @@ def _make_order(
         },
         items=[],
         delivery_windows=list(delivery_windows or []),
-        earliest_delivery_date=None,
-        latest_delivery_date=None,
-        preferred_time_start=None,
-        preferred_time_end=None,
     )
 
 

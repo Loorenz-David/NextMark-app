@@ -54,6 +54,23 @@ def find_plans( params:Dict, ctx:ServiceContext ):
     if "plan_state_id" in params:
         query = query.filter( DeliveryPlan.plan_state_id == params["plan_state_id"] )
 
+    # overlap filter: find plans whose window covers a target date range
+    # condition: plan.start_date <= covers_end AND plan.end_date >= covers_start
+    if "covers_start" in params and "covers_end" in params:
+        covers_start = to_datetime( params["covers_start"] )
+        covers_end   = to_datetime( params["covers_end"] )
+        query = query.filter(
+            DeliveryPlan.start_date <= covers_end,
+            DeliveryPlan.end_date   >= covers_start,
+        )
+
+    # order count filters (uses denormalized total_orders column)
+    if "max_orders" in params:
+        query = query.filter( DeliveryPlan.total_orders <= int(params["max_orders"]) )
+
+    if "min_orders" in params:
+        query = query.filter( DeliveryPlan.total_orders >= int(params["min_orders"]) )
+
 
     # query on orders table --------------------------------------------
     order_params = params.get( "orders" )

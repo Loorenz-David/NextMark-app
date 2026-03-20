@@ -132,43 +132,6 @@ def validate_same_local_day_delivery_windows(
             )
 
 
-def derive_legacy_delivery_envelope_fields(
-    windows: list[ParsedOrderDeliveryWindow],
-    *,
-    team_timezone: ZoneInfo,
-) -> dict[str, Any]:
-    if not windows:
-        return {
-            "earliest_delivery_date": None,
-            "latest_delivery_date": None,
-            "preferred_time_start": None,
-            "preferred_time_end": None,
-        }
-
-    earliest = min(row.start_at for row in windows)
-    latest = max(row.end_at for row in windows)
-
-    local_pairs = {
-        (
-            row.start_at.astimezone(team_timezone).strftime("%H:%M"),
-            row.end_at.astimezone(team_timezone).strftime("%H:%M"),
-        )
-        for row in windows
-    }
-
-    preferred_time_start = None
-    preferred_time_end = None
-    if len(local_pairs) == 1:
-        preferred_time_start, preferred_time_end = next(iter(local_pairs))
-
-    return {
-        "earliest_delivery_date": earliest,
-        "latest_delivery_date": latest,
-        "preferred_time_start": preferred_time_start,
-        "preferred_time_end": preferred_time_end,
-    }
-
-
 def sort_delivery_window_instances(instances: list[Any] | None) -> list[Any]:
     source = instances or []
     minimum = datetime.min.replace(tzinfo=timezone.utc)

@@ -6,8 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
-    "lint": "eslint . && eslint --no-warn-ignored $(find ../packages/shared-domain ../packages/shared-utils/src ../packages/shared-api ../packages/shared-google-maps ../packages/shared-store/src ../packages/shared-optimistic/src ../packages/shared-message-handler/src ../packages/shared-realtime/src \\( -name '*.ts' -o -name '*.tsx' \\) -print)",
-    "lint:packages": "eslint --no-warn-ignored $(find ../packages/shared-domain ../packages/shared-utils/src ../packages/shared-api ../packages/shared-google-maps ../packages/shared-store/src ../packages/shared-optimistic/src ../packages/shared-message-handler/src ../packages/shared-realtime/src \\( -name '*.ts' -o -name '*.tsx' \\) -print)",
+    "lint": "eslint . && eslint --no-warn-ignored $(find ../packages/shared-domain ../packages/shared-utils/src ../packages/shared-api ../packages/shared-google-maps ../packages/shared-store/src ../packages/shared-optimistic/src ../packages/shared-message-handler/src ../packages/shared-realtime/src ../packages/ai-panel/src \\( -name '*.ts' -o -name '*.tsx' \\) -print)",
+    "lint:packages": "eslint --no-warn-ignored $(find ../packages/shared-domain ../packages/shared-utils/src ../packages/shared-api ../packages/shared-google-maps ../packages/shared-store/src ../packages/shared-optimistic/src ../packages/shared-message-handler/src ../packages/shared-realtime/src ../packages/ai-panel/src \\( -name '*.ts' -o -name '*.tsx' \\) -print)",
     "check:popup-contract": "node scripts/check-feature-popup-architecture.mjs",
     "preview": "vite preview"
   },

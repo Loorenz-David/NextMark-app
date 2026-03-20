@@ -7,6 +7,7 @@ import { apiClient } from '@/lib/api/ApiClient'
 import { MessageHandlerProvider } from '@shared-message-handler'
 import { MobileProvider } from '@/app/providers/MobileProvider'
 import { useBootstrap } from '@/features/bootstrap/bootstrap.hook'
+import { AdminAiPanelProvider } from '@/features/ai'
 import { AdminBusinessRealtimeProvider } from '@/realtime/business'
 import { DriverLiveRealtimeProvider } from '@/realtime/driverLive'
 import { AdminNotificationsProvider } from '@/realtime/notifications'
@@ -41,14 +42,16 @@ export function AppProviders({ children }: PropsWithChildren) {
             defaultMessageDurationMs={8000}
             maxMessages={2}
           >
-            <AdminNotificationsProvider>
-              <AdminBusinessRealtimeProvider>
-                <DriverLiveRealtimeProvider>
-                  <ApiAuthBridge />
-                  {children}
-                </DriverLiveRealtimeProvider>
-              </AdminBusinessRealtimeProvider>
-            </AdminNotificationsProvider>
+            <AdminAiPanelProvider>
+              <AdminNotificationsProvider>
+                <AdminBusinessRealtimeProvider>
+                  <DriverLiveRealtimeProvider>
+                    <ApiAuthBridge />
+                    {children}
+                  </DriverLiveRealtimeProvider>
+                </AdminBusinessRealtimeProvider>
+              </AdminNotificationsProvider>
+            </AdminAiPanelProvider>
           </MessageHandlerProvider>
         </MobileProvider>
       </LocalizationProvider>

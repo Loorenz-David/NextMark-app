@@ -238,34 +238,7 @@ def _build_time_windows(order, context: OptimizationContext) -> List[TimeWindow]
     if delivery_windows:
         return delivery_windows
 
-    windows: List[TimeWindow] = []
-
-    earliest = _coerce_datetime(order.earliest_delivery_date)
-    latest = _coerce_datetime(order.latest_delivery_date)
-    preferred_start = _parse_time_string(order.preferred_time_start)
-    preferred_end = _parse_time_string(order.preferred_time_end)
-
-
-    if earliest or latest:
-        windows = _build_date_range_windows(
-            earliest=earliest,
-            latest=latest,
-            preferred_start=preferred_start,
-            preferred_end=preferred_end,
-            context=context,
-        )
-        return windows
-    
-    if preferred_start or preferred_end:
-        windows = _build_date_range_windows(
-            earliest=_coerce_datetime(context.delivery_plan.start_date ),
-            latest=_coerce_datetime(context.delivery_plan.end_date),
-            preferred_start=preferred_start,
-            preferred_end=preferred_end,
-            context=context,
-        )
-
-    return windows
+    return []
 
 
 def _build_delivery_windows_from_order(order) -> List[TimeWindow]:
