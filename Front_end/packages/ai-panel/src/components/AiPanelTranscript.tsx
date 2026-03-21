@@ -1,13 +1,12 @@
 import { useEffect, useRef } from 'react'
 
+import { AiPanelLoadingStatus } from './AiPanelLoadingStatus'
 import { AiPanelMessageCard } from './AiPanelMessageCard'
 import {
   emptyStateBodyStyle,
   emptyStateStyle,
   emptyStateTitleStyle,
-  statusBodyStyle,
   statusMessageStyle,
-  statusTitleStyle,
   transcriptStyle,
 } from '../styles'
 import type { AiActionDescriptor, AiPanelMessage, AiPanelProviderProps, AiPanelTheme } from '../types'
@@ -15,18 +14,24 @@ import type { AiActionDescriptor, AiPanelMessage, AiPanelProviderProps, AiPanelT
 interface AiPanelTranscriptProps {
   messages: AiPanelMessage[]
   isLoading: boolean
+  loadingStatusText: string
   activeActionId: string | null
   theme: AiPanelTheme
   renderEmptyState?: AiPanelProviderProps['renderEmptyState']
+  mapLegacyDataToBlocks?: AiPanelProviderProps['mapLegacyDataToBlocks']
+  renderBlock?: AiPanelProviderProps['renderBlock']
   runAction: (action: AiActionDescriptor) => Promise<void>
 }
 
 export function AiPanelTranscript({
   messages,
   isLoading,
+  loadingStatusText,
   activeActionId,
   theme,
   renderEmptyState,
+  mapLegacyDataToBlocks,
+  renderBlock,
   runAction,
 }: AiPanelTranscriptProps) {
   const scrollerRef = useRef<HTMLDivElement | null>(null)
@@ -58,15 +63,19 @@ export function AiPanelTranscript({
         <AiPanelMessageCard
           key={message.id}
           activeActionId={activeActionId}
+          mapLegacyDataToBlocks={mapLegacyDataToBlocks}
           message={message}
           onAction={runAction}
+          renderBlock={renderBlock}
           theme={theme}
         />
       ))}
       {isLoading ? (
         <div style={statusMessageStyle(theme)}>
-          <div style={statusTitleStyle(theme)}>Working</div>
-          <div style={statusBodyStyle(theme)}>The assistant is resolving the next step.</div>
+          <AiPanelLoadingStatus
+            statusText={loadingStatusText || 'The assistant is resolving the next step.'}
+            theme={theme}
+          />
         </div>
       ) : null}
     </div>

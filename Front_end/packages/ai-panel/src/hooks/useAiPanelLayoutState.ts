@@ -1,11 +1,11 @@
-import { useCallback, useEffect, useState, type PointerEvent as ReactPointerEvent } from 'react'
+import { useCallback, useEffect, useMemo, useState, type PointerEvent as ReactPointerEvent } from 'react'
 
 import {
   clampFloatingPoint,
+  computePanelOpenPosition,
   readPersistedLayout,
   readViewport,
   resolveDefaultLauncherPosition,
-  resolveDefaultPanelPosition,
   writePersistedLayout,
 } from '../layout'
 import type { FloatingPoint, FloatingSize, FloatingViewport } from '../layout'
@@ -16,6 +16,9 @@ type DragState = {
   target: DragTarget
   startPointer: FloatingPoint
   startPosition: FloatingPoint
+  // For panel drag: offset from panel origin to launcher origin, frozen at drag start.
+  // Prevents the above/below toggle in computePanelOpenPosition from firing mid-drag.
+  panelToLauncherOffset?: FloatingPoint
 }
 
 interface UseAiPanelLayoutStateParams {
@@ -31,6 +34,7 @@ interface AiPanelLayoutState {
   viewport: FloatingViewport
   isMobile: boolean
   isOpen: boolean
+  isDragging: boolean
   setIsOpen: (next: boolean | ((current: boolean) => boolean)) => void
   panelPosition: FloatingPoint
   launcherPosition: FloatingPoint
@@ -47,12 +51,6 @@ export function useAiPanelLayoutState({
 }: UseAiPanelLayoutStateParams): AiPanelLayoutState {
   const initialViewport = readViewport()
   const persistedLayout = readPersistedLayout(storageKey)
-  const initialPanelPosition = clampFloatingPoint(
-    persistedLayout?.panelPosition ?? resolveDefaultPanelPosition(initialViewport, desktopSize, viewportMargin),
-    desktopSize,
-    initialViewport,
-    viewportMargin,
-  )
   const initialLauncherPosition = clampFloatingPoint(
     persistedLayout?.launcherPosition ??
       resolveDefaultLauncherPosition(initialViewport, launcherSize, viewportMargin),
@@ -63,19 +61,23 @@ export function useAiPanelLayoutState({
 
   const [viewport, setViewport] = useState(initialViewport)
   const [isOpen, setIsOpen] = useState(Boolean(persistedLayout?.isOpen ?? defaultOpen))
-  const [panelPosition, setPanelPosition] = useState(initialPanelPosition)
   const [launcherPosition, setLauncherPosition] = useState(initialLauncherPosition)
   const [dragState, setDragState] = useState<DragState | null>(null)
 
   const isMobile = viewport.width < mobileBreakpoint
+  const isDragging = dragState !== null
+
+  // Panel position is always derived from launcher position — no independent state.
+  const panelPosition = useMemo(
+    () =>
+      computePanelOpenPosition(launcherPosition, launcherSize, desktopSize, viewport, viewportMargin),
+    [launcherPosition, launcherSize, desktopSize, viewport, viewportMargin],
+  )
 
   useEffect(() => {
     const handleResize = () => {
       const nextViewport = readViewport()
       setViewport(nextViewport)
-      setPanelPosition((current) =>
-        clampFloatingPoint(current, desktopSize, nextViewport, viewportMargin),
-      )
       setLauncherPosition((current) =>
         clampFloatingPoint(current, launcherSize, nextViewport, viewportMargin),
       )
@@ -83,7 +85,7 @@ export function useAiPanelLayoutState({
 
     window.addEventListener('resize', handleResize)
     return () => window.removeEventListener('resize', handleResize)
-  }, [desktopSize, launcherSize, viewportMargin])
+  }, [launcherSize, viewportMargin])
 
   useEffect(() => {
     if (!dragState || isMobile) {
@@ -93,23 +95,35 @@ export function useAiPanelLayoutState({
     const handlePointerMove = (event: PointerEvent) => {
       const deltaX = event.clientX - dragState.startPointer.x
       const deltaY = event.clientY - dragState.startPointer.y
-      const size = dragState.target === 'panel' ? desktopSize : launcherSize
-      const nextPoint = clampFloatingPoint(
-        {
-          x: dragState.startPosition.x + deltaX,
-          y: dragState.startPosition.y + deltaY,
-        },
-        size,
-        viewport,
-        viewportMargin,
-      )
 
-      if (dragState.target === 'panel') {
-        setPanelPosition(nextPoint)
+      if (dragState.target === 'panel' && dragState.panelToLauncherOffset) {
+        // Move the panel directly by delta (clamped to panel bounds), then
+        // back-derive launcher using the frozen offset — prevents above/below flip.
+        const targetPanel = clampFloatingPoint(
+          { x: dragState.startPosition.x + deltaX, y: dragState.startPosition.y + deltaY },
+          desktopSize,
+          viewport,
+          viewportMargin,
+        )
+        setLauncherPosition(
+          clampFloatingPoint(
+            { x: targetPanel.x + dragState.panelToLauncherOffset.x, y: targetPanel.y + dragState.panelToLauncherOffset.y },
+            launcherSize,
+            viewport,
+            viewportMargin,
+          ),
+        )
         return
       }
 
-      setLauncherPosition(nextPoint)
+      setLauncherPosition(
+        clampFloatingPoint(
+          { x: dragState.startPosition.x + deltaX, y: dragState.startPosition.y + deltaY },
+          launcherSize,
+          viewport,
+          viewportMargin,
+        ),
+      )
     }
 
     const handlePointerUp = () => {
@@ -123,28 +137,38 @@ export function useAiPanelLayoutState({
       window.removeEventListener('pointermove', handlePointerMove)
       window.removeEventListener('pointerup', handlePointerUp)
     }
-  }, [desktopSize, dragState, isMobile, launcherSize, viewport, viewportMargin])
+  }, [dragState, isMobile, launcherSize, viewport, viewportMargin])
 
   useEffect(() => {
     writePersistedLayout(storageKey, {
       isOpen,
-      panelPosition,
       launcherPosition,
     })
-  }, [isOpen, launcherPosition, panelPosition, storageKey])
+  }, [isOpen, launcherPosition, storageKey])
 
   const startDrag = useCallback(
     (target: DragTarget) => (event: ReactPointerEvent<HTMLElement>) => {
       if (isMobile) {
         return
       }
-
       event.preventDefault()
-      setDragState({
-        target,
-        startPointer: { x: event.clientX, y: event.clientY },
-        startPosition: target === 'panel' ? panelPosition : launcherPosition,
-      })
+      if (target === 'panel') {
+        setDragState({
+          target,
+          startPointer: { x: event.clientX, y: event.clientY },
+          startPosition: panelPosition,
+          panelToLauncherOffset: {
+            x: launcherPosition.x - panelPosition.x,
+            y: launcherPosition.y - panelPosition.y,
+          },
+        })
+      } else {
+        setDragState({
+          target,
+          startPointer: { x: event.clientX, y: event.clientY },
+          startPosition: launcherPosition,
+        })
+      }
     },
     [isMobile, launcherPosition, panelPosition],
   )
@@ -153,6 +177,7 @@ export function useAiPanelLayoutState({
     viewport,
     isMobile,
     isOpen,
+    isDragging,
     setIsOpen,
     panelPosition,
     launcherPosition,

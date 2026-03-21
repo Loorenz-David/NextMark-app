@@ -5,7 +5,9 @@ import { AiPanelProvider, type AiActionDescriptor } from '@nextmark/ai-panel'
 
 import { resetQuery, setQueryFilters, setQuerySearch, updateQueryFilters } from '@/features/order/store/orderQuery.store'
 import type { OrderQueryFilters } from '@/features/order/types/orderMeta'
+import { renderAdminAiBlock } from '../components/renderAdminAiBlock'
 import { adminAiPanelTransport } from '../domain/adminAiPanelAdapter'
+import { mapLegacyAiDataToBlocks } from '../domain/mapLegacyAiDataToBlocks'
 
 type NavigatePayload = {
   path?: string
@@ -84,7 +86,9 @@ export function AdminAiPanelProvider({ children }: PropsWithChildren) {
       defaultOpen={false}
       launcherLabel="AI"
       mobileBreakpoint={1000}
+      mapLegacyDataToBlocks={mapLegacyAiDataToBlocks}
       placeholder="Ask logistics, planning, or navigation questions..."
+      renderBlock={renderAdminAiBlock}
       resolveAction={resolveAction}
       storageKey="admin-app:ai-companion-panel"
       subtitle="AI logistics operator companion"

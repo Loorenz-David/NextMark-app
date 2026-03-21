@@ -143,6 +143,7 @@ def resolve_app_workspace_context(user: User, app_scope: AppScope) -> dict:
         "base_role": ((active_base_role.role_name if active_base_role else "") or "").lower() or None,
         "team_name": active_team.name if active_team else None,
         "team_time_zone": active_team.time_zone if active_team else None,
+        "default_country_code": active_team.default_country_code if active_team else None,
     }
 
 

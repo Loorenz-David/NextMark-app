@@ -1,46 +1,46 @@
 import type { PointerEvent as ReactPointerEvent } from 'react'
 
-import { buttonStyle, dragHandleStyle, headerActionsStyle, headerEyebrowStyle, headerStyle, headerSubtitleStyle, headerTitleStyle } from '../styles'
+import {
+  dragHandleStyle,
+  headerActionDockStyle,
+  headerActionsStyle,
+  headerCloseButtonStyle,
+  headerCloseGlyphStyle,
+  headerStyle,
+} from '../styles'
 import type { AiPanelTheme } from '../types'
 
 interface AiPanelHeaderProps {
-  title: string
-  subtitle: string
   theme: AiPanelTheme
+  visible: boolean
+  mobile?: boolean
   onClose: () => void
-  onClear: () => void
-  onRetry: () => Promise<void>
   onDragStart?: (event: ReactPointerEvent<HTMLElement>) => void
 }
 
 export function AiPanelHeader({
-  title,
-  subtitle,
   theme,
+  visible,
+  mobile = false,
   onClose,
-  onClear,
-  onRetry,
   onDragStart,
 }: AiPanelHeaderProps) {
+  const headerTheme = theme.header
   return (
-    <header style={headerStyle(theme)}>
-      <div onPointerDown={onDragStart} style={dragHandleStyle(theme)}>
-        <span style={headerEyebrowStyle(theme)}>AI</span>
-        <div>
-          <div style={headerTitleStyle(theme)}>{title}</div>
-          <div style={headerSubtitleStyle(theme)}>{subtitle}</div>
-        </div>
+    <header onPointerDown={onDragStart} style={headerStyle(headerTheme, visible, mobile)}>
+      <div style={dragHandleStyle(headerTheme)}>
+        <button
+          aria-label="Hide AI panel"
+          onClick={onClose}
+          onPointerDown={(event) => event.stopPropagation()}
+          style={headerCloseButtonStyle(headerTheme)}
+          type="button"
+        >
+          <span style={headerCloseGlyphStyle}>×</span>
+        </button>
       </div>
       <div style={headerActionsStyle}>
-        <button onClick={() => void onRetry()} style={buttonStyle(theme, 'ghost')} type="button">
-          Retry
-        </button>
-        <button onClick={onClear} style={buttonStyle(theme, 'ghost')} type="button">
-          Clear
-        </button>
-        <button onClick={onClose} style={buttonStyle(theme, 'secondary')} type="button">
-          Hide
-        </button>
+        <div style={headerActionDockStyle()} />
       </div>
     </header>
   )

@@ -9,6 +9,7 @@ export function panelShellStyle(theme: AiPanelTheme): CSSProperties {
     zIndex: OVERLAY_Z_INDEX,
     display: 'flex',
     flexDirection: 'column',
+    isolation: 'isolate',
     borderRadius: 28,
     border: `1px solid ${theme.border}`,
     background: theme.background,
@@ -92,7 +93,7 @@ export const manualLauncherButtonStyle: CSSProperties = {
   cursor: 'pointer',
 }
 
-export function launcherStyle(theme: AiPanelTheme): CSSProperties {
+export function launcherStyle(theme: AiPanelTheme["launcher"]): CSSProperties {
   return {
     position: 'fixed',
     zIndex: OVERLAY_Z_INDEX,
@@ -100,8 +101,9 @@ export function launcherStyle(theme: AiPanelTheme): CSSProperties {
     height: DEFAULT_LAUNCHER_SIZE.height,
     borderRadius: 999,
     border: `1px solid ${theme.border}`,
-    background: `radial-gradient(circle at 30% 20%, ${theme.launcherAccent}, ${theme.surface})`,
-    color: '#0D1713',
+    backdropFilter: 'blur(18px)',
+    background: theme.background,
+    color: theme.text,
     boxShadow: theme.shadow,
     cursor: 'grab',
     overflow: 'hidden',
@@ -125,10 +127,12 @@ export function messageCardStyle(
   if (role === 'user') {
     return {
       ...base,
-      background: `linear-gradient(135deg, ${theme.launcherAccent}, ${theme.accent})`,
-      color: '#102018',
+      background: 'rgba(92, 92, 92, 0.62)',
+      border: '1px solid rgba(255,255,255,0.08)',
+      color: theme.text,
       width: 'fit-content',
-      maxWidth: '88%',
+      maxWidth: '86%',
+      boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.05)',
     }
   }
 
@@ -149,19 +153,24 @@ export function messageCardStyle(
   }
 
   return {
-    ...base,
-    background: theme.surface,
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 10,
+    padding: 0,
+    border: 'none',
+    background: 'transparent',
     color: theme.text,
+    maxWidth: '100%',
   }
 }
 
 export const transcriptStyle: CSSProperties = {
   flex: 1,
   overflowY: 'auto',
-  padding: '18px 18px 8px',
+  padding: '78px 22px 10px',
   display: 'flex',
   flexDirection: 'column',
-  gap: 14,
+  gap: 20,
 }
 
 export function emptyStateStyle(theme: AiPanelTheme): CSSProperties {
@@ -171,35 +180,79 @@ export function emptyStateStyle(theme: AiPanelTheme): CSSProperties {
   }
 }
 
-export function headerStyle(theme: AiPanelTheme): CSSProperties {
+export function headerStyle(theme: AiPanelTheme["header"], visible: boolean, mobile = false): CSSProperties {
   return {
+    position: 'sticky',
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 10,
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'space-between',
+    backgroundColor: theme.backgroundColor,
     gap: 12,
-    padding: '18px 18px 12px',
-    borderBottom: `1px solid ${theme.border}`,
+    padding: '5px 16px 5px',
+    opacity: mobile || visible ? 1 : 0,
+    transform: mobile || visible ? 'translateY(0)' : 'translateY(-10px)',
+    pointerEvents: mobile || visible ? 'auto' : 'none',
+    transition: 'opacity 180ms ease, transform 180ms ease',
   }
 }
 
-export function dragHandleStyle(theme: AiPanelTheme): CSSProperties {
+export function dragHandleStyle(theme: AiPanelTheme["header"]): CSSProperties {
   return {
     display: 'flex',
     alignItems: 'center',
-    gap: 14,
+    gap: 10,
     cursor: 'grab',
     minWidth: 0,
-    flex: 1,
+    flex: '0 0 auto',
     color: theme.text,
+    userSelect: 'none',
   }
 }
 
 export const headerActionsStyle: CSSProperties = {
   display: 'flex',
   alignItems: 'center',
-  gap: 8,
+  gap: 10,
   flexWrap: 'wrap',
   justifyContent: 'flex-end',
+  minWidth: 88,
+  minHeight: 40,
+}
+
+export function headerActionDockStyle(): CSSProperties {
+  return {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 10,
+    minHeight: 40,
+  }
+}
+
+export function headerCloseButtonStyle(theme: AiPanelTheme["header"]): CSSProperties {
+  return {
+    width: 30,
+    height: 30,
+    borderRadius: 999,
+    border: '1px solid rgba(255,255,255,0.08)',
+    background: 'rgba(76, 78, 78, 0.64)',
+    color: theme.muted,
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    cursor: 'pointer',
+    boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.04)',
+    backdropFilter: 'blur(14px)',
+  }
+}
+
+export const headerCloseGlyphStyle: CSSProperties = {
+  fontSize: 20,
+  lineHeight: 1,
+  transform: 'translateY(-1px)',
 }
 
 export function headerEyebrowStyle(theme: AiPanelTheme): CSSProperties {
@@ -235,30 +288,50 @@ export function headerSubtitleStyle(theme: AiPanelTheme): CSSProperties {
   }
 }
 
-export function composerShellStyle(theme: AiPanelTheme): CSSProperties {
+export function composerShellStyle(theme: AiPanelTheme["composer"]): CSSProperties {
   return {
-    padding: 18,
+    padding: '18px 18px 20px',
     borderTop: `1px solid ${theme.border}`,
-    background: 'rgba(9, 13, 15, 0.4)',
-    display: 'flex',
-    flexDirection: 'column',
-    gap: 10,
+    background: 'rgba(9, 13, 15, 0.28)',
   }
 }
 
-export function composerInputStyle(theme: AiPanelTheme): CSSProperties {
+export function composerFrameStyle(theme: AiPanelTheme["composer"]): CSSProperties {
   return {
+    display: 'flex',
+    flexDirection: 'column',
+    borderRadius: 28,
+    border: `1px solid ${theme.border}`,
+    background: 'linear-gradient(180deg, rgba(56,58,58,0.72), rgba(44,46,46,0.9))',
+    boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.05), 0 18px 48px rgba(0,0,0,0.24)',
+    overflow: 'hidden',
+    backdropFilter: 'blur(18px)',
+    color: theme.text,
+  }
+}
+
+export function composerTopRowStyle(): CSSProperties {
+  return {
+    display: 'flex',
+    flexDirection: 'column',
+  }
+}
+
+export function composerInputStyle(theme: AiPanelTheme["composer"]): CSSProperties {
+  return {
+
+    overflowY: 'auto',
     width: '100%',
     resize: 'none',
-    borderRadius: 22,
-    border: `1px solid ${theme.border}`,
-    padding: '14px 16px',
-    background: theme.surface,
+    border: 'none',
+    padding: '10px 14px',
+    background: 'transparent',
     color: theme.text,
     outline: 'none',
-    minHeight: 92,
+    minHeight: 40,
+    maxHeight: 160,
     fontSize: 14,
-    lineHeight: 1.5,
+    lineHeight: 1.65,
     fontFamily: theme.fontFamily,
   }
 }
@@ -268,26 +341,47 @@ export const composerFooterStyle: CSSProperties = {
   alignItems: 'center',
   justifyContent: 'space-between',
   gap: 12,
+  width: '100%',
+  padding: '0 18px 16px',
+  minHeight: 56,
 }
 
-export function composerHintStyle(theme: AiPanelTheme): CSSProperties {
+export function composerActionsRowStyle(theme: AiPanelTheme["composer"]): CSSProperties {
+  return {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 12,
+
+  }
+}
+
+export function composerHintStyle(theme: AiPanelTheme["composer"]): CSSProperties {
   return {
     color: theme.muted,
-    fontSize: 11,
+    fontSize: 12,
+    opacity: 0.88,
   }
 }
 
-export function launcherPulseStyle(theme: AiPanelTheme): CSSProperties {
+export function composerSubmitButtonStyle(
+  theme: AiPanelTheme["composer"],
+  disabled = false,
+): CSSProperties {
   return {
-    position: 'absolute',
-    inset: 10,
     borderRadius: 999,
-    border: `1px solid ${theme.border}`,
-    background: 'rgba(255,255,255,0.18)',
+    padding: '5px 5px',
+    background: theme.accent,
+    color: '#132118',
+    cursor: disabled ? 'not-allowed' : 'pointer',
+    opacity: disabled ? 0.55 : 1,
+    transition: 'opacity 120ms ease, transform 120ms ease',
   }
 }
 
-export function launcherLabelStyle(theme: AiPanelTheme): CSSProperties {
+
+
+export function launcherLabelStyle(theme: AiPanelTheme["launcher"]): CSSProperties {
   return {
     position: 'relative',
     zIndex: 1,
@@ -296,10 +390,10 @@ export function launcherLabelStyle(theme: AiPanelTheme): CSSProperties {
     justifyContent: 'center',
     width: '100%',
     height: '100%',
-    fontWeight: 800,
+    fontWeight: theme.fontWeight,
     letterSpacing: '0.14em',
-    fontSize: 12,
-    color: '#15211A',
+    fontSize: theme.fontSize,
+    color: theme.text,
     fontFamily: theme.fontFamily,
   }
 }
@@ -320,17 +414,18 @@ export function emptyStateBodyStyle(theme: AiPanelTheme): CSSProperties {
   }
 }
 
-export function messageHeaderStyle(theme: AiPanelTheme, isUser: boolean): CSSProperties {
+export function messageHeaderStyle(theme: AiPanelTheme["header"], isUser: boolean): CSSProperties {
   return {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'space-between',
     gap: 10,
-    color: isUser ? '#153121' : theme.muted,
+    color: isUser ? 'rgba(255,255,255,0.72)' : theme.muted,
     fontSize: 11,
     fontWeight: 700,
     letterSpacing: '0.08em',
     textTransform: 'uppercase',
+    background: isUser ? 'rgba(255,255,255,0.08)' : 'transparent',
   }
 }
 
@@ -349,8 +444,18 @@ export function messageBodyStyle(theme: AiPanelTheme): CSSProperties {
   return {
     color: theme.text,
     fontSize: 14,
-    lineHeight: 1.55,
+    lineHeight: 1.62,
     whiteSpace: 'pre-wrap',
+  }
+}
+
+export function assistantMessageBodyStyle(theme: AiPanelTheme): CSSProperties {
+  return {
+    color: theme.text,
+    fontSize: 17,
+    lineHeight: 1.72,
+    whiteSpace: 'pre-wrap',
+    letterSpacing: '-0.01em',
   }
 }
 
@@ -467,6 +572,7 @@ export function dataPreviewStyle(theme: AiPanelTheme): CSSProperties {
 export const messageFooterStyle: CSSProperties = {
   display: 'flex',
   justifyContent: 'flex-end',
+  marginTop: -2,
 }
 
 export function statusMessageStyle(theme: AiPanelTheme): CSSProperties {

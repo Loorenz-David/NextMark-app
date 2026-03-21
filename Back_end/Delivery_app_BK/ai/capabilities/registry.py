@@ -1,0 +1,20 @@
+from __future__ import annotations
+
+from Delivery_app_BK.ai.capabilities.base import CapabilityProfile
+from Delivery_app_BK.ai.capabilities.logistics import LOGISTICS_CAPABILITY
+from Delivery_app_BK.ai.capabilities.user_config import USER_CONFIG_CAPABILITY
+
+
+CAPABILITY_REGISTRY: dict[str, CapabilityProfile] = {
+    LOGISTICS_CAPABILITY.name: LOGISTICS_CAPABILITY,
+    USER_CONFIG_CAPABILITY.name: USER_CONFIG_CAPABILITY,
+}
+
+
+def get_capability_profile(name: str = "logistics") -> CapabilityProfile:
+    try:
+        return CAPABILITY_REGISTRY[name]
+    except KeyError as exc:
+        raise ValueError(
+            f"Unknown AI capability '{name}'. Allowed: {list(CAPABILITY_REGISTRY.keys())}"
+        ) from exc

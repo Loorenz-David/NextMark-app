@@ -12,32 +12,49 @@ def get_next_step(
     user_input: str,
     history: list[dict],
     provider: LLMProvider,
+    system_prompt: str | None = None,
 ) -> dict:
     """
-    Build a proper conversation and get the next planner step from the LLM.
-    History entries are dicts with keys: tool, params, result.
+    Build a conversation and get the next planner step from the LLM.
+
+    history entries are one of two shapes:
+      - cross-request turns (from _turns_to_planner_history):
+          {"role": "user"|"assistant", "content": "..."}
+      - within-request tool steps (appended during the loop):
+          {"tool": "...", "params": {...}, "result": {...}}
+
+    The current user_input is always appended last so the LLM sees the full
+    prior conversation before receiving the new question.
+
+    system_prompt: optional override; falls back to PLANNER_SYSTEM_PROMPT.
     """
+    active_prompt = system_prompt or PLANNER_SYSTEM_PROMPT
     messages: list[dict] = [
-        {"role": "system", "content": PLANNER_SYSTEM_PROMPT},
-        {"role": "user", "content": user_input},
+        {"role": "system", "content": active_prompt},
     ]
 
-    # Build proper conversation turns from history
+    # Replay history — two formats supported
     for entry in history:
-        # What the assistant decided (the tool call)
-        messages.append({
-            "role": "assistant",
-            "content": json.dumps({
-                "type": "tool",
-                "tool": entry["tool"],
-                "parameters": entry.get("params", {}),
-            }),
-        })
-        # What the tool returned (feed back as user message)
-        messages.append({
-            "role": "user",
-            "content": f"Tool result for {entry['tool']}: {json.dumps(entry['result'])}",
-        })
+        if "role" in entry:
+            # Already a formatted message (cross-request turn)
+            messages.append(entry)
+        else:
+            # Within-request tool step: {tool, params, result}
+            messages.append({
+                "role": "assistant",
+                "content": json.dumps({
+                    "type": "tool",
+                    "tool": entry["tool"],
+                    "parameters": entry.get("params", {}),
+                }),
+            })
+            messages.append({
+                "role": "user",
+                "content": f"Tool result for {entry['tool']}: {json.dumps(entry['result'])}",
+            })
+
+    # Current user message goes last — after all prior context
+    messages.append({"role": "user", "content": user_input})
 
     try:
         content = _complete_with_history(provider, messages)

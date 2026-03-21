@@ -8,6 +8,7 @@ from ...context import ServiceContext
 from ..base.create_instance import create_instance
 from ..utils import extract_fields, build_create_result
 from ..utils.client_id_generator import generate_client_id
+from Delivery_app_BK.services.requests.common import parse_optional_country_code
 
 
 def _generate_team_name(username: str) -> str:
@@ -33,6 +34,10 @@ def register_user(ctx: ServiceContext):
     password = field_set.get("password")
     phone_number = field_set.get("phone_number")
     time_zone = field_set.get("time_zone")
+    default_country_code = parse_optional_country_code(
+        field_set.get("default_country_code"),
+        field="default_country_code",
+    )
 
     if not time_zone:
         time_zone = "UTC"
@@ -63,7 +68,15 @@ def register_user(ctx: ServiceContext):
     }
 
     user_instance: User = create_instance(ctx, User, user_fields)
-    team_instance: Team = create_instance(ctx, Team, {"name": team_name, "time_zone": time_zone})
+    team_instance: Team = create_instance(
+        ctx,
+        Team,
+        {
+            "name": team_name,
+            "time_zone": time_zone,
+            "default_country_code": default_country_code,
+        },
+    )
     user_instance.team = team_instance
 
    

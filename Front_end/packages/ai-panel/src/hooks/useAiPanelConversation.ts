@@ -1,5 +1,6 @@
-import { useCallback, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
+import { clearPersistedThread, readPersistedThread, writePersistedThread } from '../layout'
 import { createAiPanelMessage } from '../message'
 import type {
   AiActionDescriptor,
@@ -10,6 +11,7 @@ import type {
 
 interface UseAiPanelConversationParams {
   transport: AiTransportAdapter
+  storageKey: string
   resolveAction?: (action: AiActionDescriptor) => void | Promise<void>
   onOpen: () => void
   onToggle: () => void
@@ -26,24 +28,47 @@ interface AiPanelConversationState {
 
 export function useAiPanelConversation({
   transport,
+  storageKey,
   resolveAction,
   onOpen,
   onToggle,
   onClose,
 }: UseAiPanelConversationParams): AiPanelConversationState {
-  const [threadId, setThreadId] = useState<string | null>(null)
+  const [threadId, setThreadId] = useState<string | null>(() => readPersistedThread(storageKey))
   const [messages, setMessages] = useState<AiPanelMessage[]>([])
   const [composerValue, setComposerValue] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [activeActionId, setActiveActionId] = useState<string | null>(null)
   const lastPromptRef = useRef<string | null>(null)
 
+  // On mount: if we have a persisted threadId and transport supports loadThread,
+  // restore the conversation history.
+  useEffect(() => {
+    const persistedThreadId = readPersistedThread(storageKey)
+    if (!persistedThreadId || !transport.loadThread) return
+
+    let cancelled = false
+    transport.loadThread(persistedThreadId).then((state) => {
+      if (cancelled) return
+      setThreadId(state.threadId)
+      setMessages(state.messages)
+    }).catch(() => {
+      // Thread expired or inaccessible — clear persisted id
+      clearPersistedThread(storageKey)
+      setThreadId(null)
+    })
+
+    return () => { cancelled = true }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []) // intentionally runs once on mount only
+
   const clearConversation = useCallback(() => {
     setMessages([])
     setThreadId(null)
     setComposerValue('')
     lastPromptRef.current = null
-  }, [])
+    clearPersistedThread(storageKey)
+  }, [storageKey])
 
   const send = useCallback(
     async (message?: string, context?: unknown) => {
@@ -66,9 +91,11 @@ export function useAiPanelConversation({
         const createdThread = await transport.createThread()
         activeThreadId = createdThread.threadId
         setThreadId(createdThread.threadId)
+        writePersistedThread(storageKey, createdThread.threadId)
       }
 
       try {
+
         const response = await transport.sendMessage({
           threadId: activeThreadId,
           message: nextMessage,
@@ -97,7 +124,7 @@ export function useAiPanelConversation({
         setIsLoading(false)
       }
     },
-    [composerValue, isLoading, onOpen, threadId, transport],
+    [composerValue, isLoading, onOpen, storageKey, threadId, transport],
   )
 
   const retryLast = useCallback(async () => {

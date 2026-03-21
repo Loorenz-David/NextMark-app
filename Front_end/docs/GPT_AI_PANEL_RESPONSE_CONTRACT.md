@@ -1,5 +1,10 @@
 # GPT AI Panel Response Contract
 
+> Contract update notice:
+> The locked structured blocks contract for ongoing implementation is now maintained in
+> `packages/ai-panel/AI_PANEL_BACKEND_BLOCKS_CONTRACT.md` (contract version 1).
+> Use that file as the source of truth for `message.blocks[]` payloads.
+
 This document defines the backend extension expected by the installable AI panel package and the `admin-app` adapter.
 
 ## Goals

@@ -12,6 +12,7 @@ import type {
 interface AiPanelOverlayProps {
   isOpen: boolean
   isMobile: boolean
+  isDragging: boolean
   launcherLabel: string
   title: string
   subtitle: string
@@ -38,6 +39,7 @@ interface AiPanelOverlayProps {
 export function AiPanelOverlay({
   isOpen,
   isMobile,
+  isDragging,
   launcherLabel,
   title,
   subtitle,
@@ -97,6 +99,7 @@ export function AiPanelOverlay({
   return (
     <DesktopPanel
       {...sharedSurfaceProps}
+      isDragging={isDragging}
       onDragStart={onDragStart('panel')}
       position={panelPosition}
       size={desktopSize}

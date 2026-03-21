@@ -22,3 +22,4 @@ class Team(db.Model):
     # last thing to develop
     subscription = Column(JSONB().with_variant(JSON, "sqlite"))
     time_zone = Column(String(64), nullable=False, default="UTC") # IANA timezone identifier
+    default_country_code = Column(String(2), nullable=True)  # ISO 3166-1 alpha-2 geocoding hint

@@ -105,6 +105,18 @@ def parse_optional_time_zone(value, *, field: str = "time_zone") -> str | None:
     return parsed
 
 
+def parse_optional_country_code(value, *, field: str = "country_code") -> str | None:
+    parsed = parse_optional_string(value, field=field)
+    if parsed is None:
+        return None
+
+    normalized = parsed.upper()
+    if len(normalized) != 2 or not normalized.isalpha():
+        raise ValidationFailed(f"{field} must be a valid ISO 3166-1 alpha-2 country code.")
+
+    return normalized
+
+
 def parse_required_time_zone(value, *, field: str = "time_zone") -> str:
     parsed = parse_optional_time_zone(value, field=field)
     if parsed is None:

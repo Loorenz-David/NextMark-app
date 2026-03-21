@@ -81,3 +81,7 @@ class ServiceContext():
     @property
     def time_zone(self):
         return self.identity.get("time_zone")
+
+    @property
+    def default_country_code(self):
+        return self.identity.get("default_country_code")

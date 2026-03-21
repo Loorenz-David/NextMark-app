@@ -43,6 +43,7 @@ export function AiPanelProvider({
 
   const conversationState = useAiPanelConversation({
     transport,
+    storageKey,
     resolveAction,
     onOpen: open,
     onClose: close,
@@ -66,6 +67,7 @@ export function AiPanelProvider({
               activeActionId={conversationState.activeActionId}
               composerValue={conversationState.composerValue}
               desktopSize={desktopSize}
+              isDragging={layoutState.isDragging}
               isLoading={controllerValue.isLoading}
               isMobile={layoutState.isMobile}
               isOpen={layoutState.isOpen}
