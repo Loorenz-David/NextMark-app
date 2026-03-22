@@ -8,6 +8,7 @@ from Delivery_app_BK.ai.schemas import (
     PlannerIntentStep,
 )
 from Delivery_app_BK.ai.stages import CLARIFY_STAGE, EXECUTE_STAGE, INTENT_STAGE
+from Delivery_app_BK.services.context import ServiceContext
 
 
 class _DummyProvider:
@@ -109,7 +110,7 @@ def test_handle_ai_request_returns_clarify_result_before_execution(monkeypatch):
     capability = CapabilityProfile(
         name="logistics",
         description="logistics",
-        prompt_builders={stage: (lambda prompt=prompt: prompt) for stage, prompt in prompts.items()},
+        prompt_builders={stage: (lambda prompt=prompt, **_kw: prompt) for stage, prompt in prompts.items()},
         tool_registries={EXECUTE_STAGE: {}},
     )
     captured = {"prompts": []}
@@ -180,7 +181,7 @@ def test_handle_ai_request_returns_clarify_result_for_user_config(monkeypatch):
     capability = CapabilityProfile(
         name="user_config",
         description="user-config",
-        prompt_builders={stage: (lambda prompt=prompt: prompt) for stage, prompt in prompts.items()},
+        prompt_builders={stage: (lambda prompt=prompt, **_kw: prompt) for stage, prompt in prompts.items()},
         tool_registries={EXECUTE_STAGE: {}},
     )
 
@@ -240,7 +241,7 @@ def test_handle_ai_request_execute_stage_returns_clarify_interaction(monkeypatch
     capability = CapabilityProfile(
         name="user_config",
         description="user-config",
-        prompt_builders={stage: (lambda prompt=prompt: prompt) for stage, prompt in prompts.items()},
+        prompt_builders={stage: (lambda prompt=prompt, **_kw: prompt) for stage, prompt in prompts.items()},
         tool_registries={EXECUTE_STAGE: {}},
     )
 
@@ -282,3 +283,254 @@ def test_handle_ai_request_execute_stage_returns_clarify_interaction(monkeypatch
     assert result.reuse_recent_tool_turns is False
     assert result.interactions[0].id == "int_confirm_user_config_apply"
     assert result.data == {"stage": CLARIFY_STAGE}
+
+
+def test_handle_ai_request_statistics_missing_timeframe_triggers_clarify(monkeypatch):
+    prompts = {
+        INTENT_STAGE: "intent-prompt",
+        CLARIFY_STAGE: "clarify-prompt",
+        EXECUTE_STAGE: "execute-prompt",
+    }
+    capability = CapabilityProfile(
+        name="statistics",
+        description="statistics",
+        prompt_builders={stage: (lambda prompt=prompt, **_kw: prompt) for stage, prompt in prompts.items()},
+        tool_registries={EXECUTE_STAGE: {"get_analytics_snapshot": lambda ctx, timeframe="7d": {}}},
+    )
+
+    monkeypatch.setattr("Delivery_app_BK.ai.orchestrator.get_capability_profile", lambda name: capability)
+    monkeypatch.setattr(
+        "Delivery_app_BK.ai.orchestrator.select_provider_for_stage",
+        lambda capability_name, stage_name: _DummyProvider(),
+    )
+
+    def _fake_get_next_step(user_input, history, provider, system_prompt=None):
+        if system_prompt == "intent-prompt":
+            return PlannerIntentStep(type="intent", operation="analyze_metrics", needs_clarification=True)
+        if system_prompt == "clarify-prompt":
+            return PlannerClarifyStep(
+                type="clarify",
+                message="Please choose a timeframe for the analytics view.",
+                interaction=AIInteraction(
+                    id="int_clarify_statistics_timeframe",
+                    kind="question",
+                    label="Choose a timeframe",
+                    required=True,
+                    response_mode="select",
+                    payload={"operation": "analyze_metrics", "fallback_timeframe": "last_7_days"},
+                    options=[
+                        {"id": "24h", "label": "Last 24 hours"},
+                        {"id": "7d", "label": "Last 7 days"},
+                        {"id": "30d", "label": "Last 30 days"},
+                    ],
+                ),
+            )
+        raise AssertionError(f"Unexpected prompt: {system_prompt}")
+
+    monkeypatch.setattr("Delivery_app_BK.ai.orchestrator.get_next_step", _fake_get_next_step)
+
+    result = handle_ai_request_with_thread(
+        ctx=None,
+        user_input="show performance",
+        prior_turns=[],
+        capability_name="statistics",
+        stage_name=EXECUTE_STAGE,
+    )
+
+    assert result.success is True
+    assert result.tool_turns == []
+    assert result.reuse_recent_tool_turns is False
+    assert result.interactions[0].id == "int_clarify_statistics_timeframe"
+    assert result.data == {"stage": CLARIFY_STAGE, "operation": "analyze_metrics"}
+
+
+def test_handle_ai_request_statistics_parses_structured_final_output(monkeypatch):
+    prompts = {
+        INTENT_STAGE: "intent-prompt",
+        CLARIFY_STAGE: "clarify-prompt",
+        EXECUTE_STAGE: "execute-prompt",
+    }
+    capability = CapabilityProfile(
+        name="statistics",
+        description="statistics",
+        prompt_builders={stage: (lambda prompt=prompt, **_kw: prompt) for stage, prompt in prompts.items()},
+        tool_registries={EXECUTE_STAGE: {"get_analytics_snapshot": lambda ctx, timeframe="7d": {}}},
+    )
+
+    monkeypatch.setattr("Delivery_app_BK.ai.orchestrator.get_capability_profile", lambda name: capability)
+    monkeypatch.setattr(
+        "Delivery_app_BK.ai.orchestrator.select_provider_for_stage",
+        lambda capability_name, stage_name: _DummyProvider(),
+    )
+
+    structured_message = (
+        "{"
+        "\"summary\":\"Late deliveries increased compared to last week.\"," 
+        "\"key_metrics\":[{\"name\":\"late_deliveries\",\"value\":18,\"delta\":4}],"
+        "\"insights\":[{\"type\":\"correlation\",\"description\":\"Higher unscheduled share coincides with more late deliveries.\",\"confidence\":0.71}],"
+        "\"warnings\":[\"Correlation only; causation is not proven.\"],"
+        "\"confidence_score\":0.78"
+        "}"
+    )
+    steps = iter([
+        PlannerIntentStep(type="intent", operation="analyze_metrics", needs_clarification=False),
+        PlannerFinalStep(type="final", message=structured_message),
+    ])
+    monkeypatch.setattr("Delivery_app_BK.ai.orchestrator.get_next_step", lambda *args, **kwargs: next(steps))
+
+    result = handle_ai_request_with_thread(
+        ctx=None,
+        user_input="why are deliveries late",
+        prior_turns=[],
+        capability_name="statistics",
+        stage_name=EXECUTE_STAGE,
+    )
+
+    assert result.success is True
+    assert result.final_message == "Late deliveries increased compared to last week."
+    assert result.data["operation"] == "analyze_metrics"
+    assert result.data["statistical_output"]["insights"][0]["type"] == "correlation"
+
+
+def test_handle_ai_request_statistics_applies_fallback_timeframe_to_execution_facts(monkeypatch):
+    monkeypatch.setattr(
+        "Delivery_app_BK.ai.orchestrator.get_next_step",
+        lambda *args, **kwargs: PlannerFinalStep(type="final", message="done"),
+    )
+
+    ctx = ServiceContext(incoming_data={}, identity={})
+    result = handle_ai_request_with_thread(
+        ctx=ctx,
+        user_input="show performance",
+        prior_turns=[],
+        provider=_DummyProvider(),
+        system_prompt="custom",
+        interaction_response_payload={
+            "__interaction_response__": "int_clarify_statistics_timeframe",
+            "fallback_timeframe": "last_7_days",
+        },
+    )
+
+    assert result.success is True
+    facts = (((ctx.incoming_data or {}).get("_ai_execution") or {}).get("normalized_facts") or {})
+    assert facts["statistics_timeframe"] == "7d"
+    assert facts["statistics_timeframe_fallback_applied"] is True
+
+
+def test_handle_ai_request_statistics_normalizes_timeframe_from_interaction_form(monkeypatch):
+    monkeypatch.setattr(
+        "Delivery_app_BK.ai.orchestrator.get_next_step",
+        lambda *args, **kwargs: PlannerFinalStep(type="final", message="done"),
+    )
+
+    ctx = ServiceContext(incoming_data={}, identity={})
+    result = handle_ai_request_with_thread(
+        ctx=ctx,
+        user_input="show performance",
+        prior_turns=[],
+        provider=_DummyProvider(),
+        system_prompt="custom",
+        interaction_response_payload={
+            "__interaction_response__": "int_clarify_statistics_timeframe",
+            "interaction_form": {"timeframe": "30d"},
+            "fallback_timeframe": "last_7_days",
+        },
+    )
+
+    assert result.success is True
+    facts = (((ctx.incoming_data or {}).get("_ai_execution") or {}).get("normalized_facts") or {})
+    assert facts["statistics_timeframe"] == "30d"
+    assert "statistics_timeframe_fallback_applied" not in facts
+
+
+def test_handle_ai_request_statistics_repairs_invalid_structured_final_output(monkeypatch):
+    prompts = {
+        INTENT_STAGE: "intent-prompt",
+        CLARIFY_STAGE: "clarify-prompt",
+        EXECUTE_STAGE: "execute-prompt",
+    }
+    capability = CapabilityProfile(
+        name="statistics",
+        description="statistics",
+        prompt_builders={stage: (lambda prompt=prompt, **_kw: prompt) for stage, prompt in prompts.items()},
+        tool_registries={EXECUTE_STAGE: {"get_analytics_snapshot": lambda ctx, timeframe="7d": {}}},
+    )
+
+    monkeypatch.setattr("Delivery_app_BK.ai.orchestrator.get_capability_profile", lambda name: capability)
+    monkeypatch.setattr(
+        "Delivery_app_BK.ai.orchestrator.select_provider_for_stage",
+        lambda capability_name, stage_name: _DummyProvider(),
+    )
+
+    invalid_message = "{\"summary\":\"Missing required fields\"}"
+    repaired_message = (
+        "{"
+        "\"summary\":\"Performance stabilized after schedule adherence improved.\"," 
+        "\"key_metrics\":[{\"name\":\"completion_rate\",\"value\":0.87,\"delta\":0.06}],"
+        "\"insights\":[{\"type\":\"trend\",\"description\":\"Completion rate improved over the selected period.\",\"confidence\":0.74}],"
+        "\"warnings\":[\"Dataset includes partial-day effects.\"],"
+        "\"confidence_score\":0.79"
+        "}"
+    )
+    steps = iter([
+        PlannerIntentStep(type="intent", operation="analyze_metrics", needs_clarification=False),
+        PlannerFinalStep(type="final", message=invalid_message),
+        PlannerFinalStep(type="final", message=repaired_message),
+    ])
+    monkeypatch.setattr("Delivery_app_BK.ai.orchestrator.get_next_step", lambda *args, **kwargs: next(steps))
+
+    result = handle_ai_request_with_thread(
+        ctx=None,
+        user_input="show analytics trends",
+        prior_turns=[],
+        capability_name="statistics",
+        stage_name=EXECUTE_STAGE,
+    )
+
+    assert result.success is True
+    assert result.final_message == "Performance stabilized after schedule adherence improved."
+    assert result.data["statistical_output_repair_applied"] is True
+    assert result.data["statistical_output"]["key_metrics"][0]["name"] == "completion_rate"
+
+
+def test_handle_ai_request_statistics_returns_validation_details_when_repair_fails(monkeypatch):
+    prompts = {
+        INTENT_STAGE: "intent-prompt",
+        CLARIFY_STAGE: "clarify-prompt",
+        EXECUTE_STAGE: "execute-prompt",
+    }
+    capability = CapabilityProfile(
+        name="statistics",
+        description="statistics",
+        prompt_builders={stage: (lambda prompt=prompt, **_kw: prompt) for stage, prompt in prompts.items()},
+        tool_registries={EXECUTE_STAGE: {"get_analytics_snapshot": lambda ctx, timeframe="7d": {}}},
+    )
+
+    monkeypatch.setattr("Delivery_app_BK.ai.orchestrator.get_capability_profile", lambda name: capability)
+    monkeypatch.setattr(
+        "Delivery_app_BK.ai.orchestrator.select_provider_for_stage",
+        lambda capability_name, stage_name: _DummyProvider(),
+    )
+
+    invalid_message = "{\"summary\":\"Missing required fields\"}"
+    steps = iter([
+        PlannerIntentStep(type="intent", operation="analyze_metrics", needs_clarification=False),
+        PlannerFinalStep(type="final", message=invalid_message),
+        PlannerFinalStep(type="final", message=invalid_message),
+    ])
+    monkeypatch.setattr("Delivery_app_BK.ai.orchestrator.get_next_step", lambda *args, **kwargs: next(steps))
+
+    result = handle_ai_request_with_thread(
+        ctx=None,
+        user_input="show analytics trends",
+        prior_turns=[],
+        capability_name="statistics",
+        stage_name=EXECUTE_STAGE,
+    )
+
+    assert result.success is False
+    assert result.final_message == "Could not produce a valid statistical output payload."
+    assert "statistical_output_validation" in (result.data or {})
+    validation = result.data["statistical_output_validation"]
+    assert isinstance(validation.get("errors"), list)
+    assert any("confidence_score" in error.get("loc", ()) for error in validation["errors"])

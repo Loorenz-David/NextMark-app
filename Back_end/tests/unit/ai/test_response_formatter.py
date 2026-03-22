@@ -1,4 +1,10 @@
-from Delivery_app_BK.ai.response_formatter import format_response, generate_blocks, generate_interactions
+from Delivery_app_BK.ai.response_formatter import (
+    format_response,
+    format_tool_trace,
+    generate_blocks,
+    generate_interactions,
+    validate_ai_focus_warnings,
+)
 from Delivery_app_BK.ai.schemas import AIInteraction
 
 
@@ -82,6 +88,7 @@ def test_generate_blocks_maps_list_orders_collection():
     assert blocks[0].layout == "table"
     assert blocks[0].data["total"] == 1
     assert blocks[0].data["items"][0]["client_name"] == "Anna Smith"
+    assert blocks[0].data["items"][0]["reference"] == "Order 100245"
     assert blocks[0].meta["table"]["columns"] == [
         "status",
         "order_scalar_id",
@@ -187,8 +194,10 @@ def test_generate_blocks_maps_plan_and_route_tables_with_columns():
 
     assert blocks[0].layout == "table"
     assert blocks[0].meta["table"]["columns"][0] == "plan_name"
+    assert blocks[0].data["items"][0]["reference"] == "Morning route (local_delivery plan)"
     assert blocks[1].layout == "table"
-    assert blocks[1].meta["table"]["columns"][0] == "plan_name"
+    assert blocks[1].meta["table"]["columns"][0] == "reference"
+    assert blocks[1].data["items"][0]["reference"] == "Route for Morning route"
 
 
 def test_generate_blocks_falls_back_for_unknown_tool():
@@ -338,8 +347,53 @@ def test_generate_blocks_maps_item_search_and_plan_optimization():
     assert [block.kind for block in blocks] == ["entity_collection", "summary"]
     assert blocks[0].layout == "chips"
     assert blocks[0].data["items"][0]["item_type"] == "table"
+    assert blocks[0].data["items"][0]["reference"] == "table (12cd)"
     assert blocks[1].data["plan_id"] == 77
     assert blocks[1].data["route_id"] == 501
+
+
+def test_format_tool_trace_normalizes_list_orders_count_from_nested_stats():
+    trace = format_tool_trace([
+        {
+            "tool": "list_orders",
+            "params": {"scheduled": True},
+            "result": {
+                "order": [
+                    {"id": 95, "order_scalar_id": 1056},
+                    {"id": 94, "order_scalar_id": 1055},
+                ],
+                "order_stats": {"orders": {"total": 2}},
+            },
+        }
+    ])
+
+    assert len(trace) == 1
+    assert trace[0].summary == "Found 2 orders."
+
+
+def test_generate_blocks_maps_list_item_types_config_nested_shape():
+    blocks = generate_blocks([
+        {
+            "tool": "list_item_types_config",
+            "params": {"limit": 20},
+            "result": {
+                "count": 2,
+                "item_types": {
+                    "allIds": ["it_1", "it_2"],
+                    "byClientId": {
+                        "it_1": {"id": 1, "name": "dining chair", "properties": []},
+                        "it_2": {"id": 2, "name": "sideboard", "properties": [11]},
+                    },
+                },
+            },
+        }
+    ])
+
+    assert len(blocks) == 1
+    assert blocks[0].entity_type == "item_type"
+    assert blocks[0].layout == "table"
+    assert blocks[0].data["total"] == 2
+    assert blocks[0].data["items"][0]["name"] in {"dining chair", "sideboard"}
 
 
 def test_format_response_keeps_legacy_data_while_adding_blocks():
@@ -363,123 +417,273 @@ def test_format_response_keeps_legacy_data_while_adding_blocks():
     assert response.message.blocks[0].kind == "entity_detail"
 
 
-# ---------------------------------------------------------------------------
-# Interaction generation tests (Phase 1: continue_prompt)
-# ---------------------------------------------------------------------------
+def test_format_response_sets_intent_policy_and_rendering_hints_with_blocks():
+    response = format_response(
+        "thr_123",
+        "I found 2 orders.\n- ORD-1 is late\n- ORD-2 is unassigned",
+        [
+            {
+                "tool": "list_orders",
+                "params": {"scheduled": False},
+                "result": {
+                    "count": 2,
+                    "orders": [
+                        {"id": "ORD-1", "order_scalar_id": "ORD-1", "order_state_id": 1, "is_late": True, "delivery_plan_id": 10},
+                        {"id": "ORD-2", "order_scalar_id": "ORD-2", "order_state_id": 1, "is_late": False, "delivery_plan_id": None},
+                    ],
+                },
+            }
+        ],
+    )
 
-def test_generate_interactions_returns_continue_prompt_for_list_orders_with_results():
-    """Phase 1: list_orders with results should generate continue_prompt interactions."""
-    tool_turns = [
-        {
-            "tool": "list_orders",
-            "params": {},
-            "result": {
-                "count": 5,
-                "orders": [
-                    {"id": 1, "client_first_name": "Ana", "order_scalar_id": "ORD-001"},
-                    {"id": 2, "client_first_name": "Ana", "order_scalar_id": "ORD-002"},
-                    {"id": 3, "client_first_name": "Bob", "order_scalar_id": "ORD-003"},
-                    {"id": 4, "client_first_name": "Bob", "order_scalar_id": "ORD-004"},
-                    {"id": 5, "client_first_name": "Bob", "order_scalar_id": "ORD-005"},
-                ],
-            },
-        }
-    ]
-
-    interactions = generate_interactions(tool_turns)
-
-    # Should have at least one continue_prompt for refining search
-    assert len(interactions) > 0
-    assert all(i.kind == "continue_prompt" for i in interactions)
-    assert any(i.label == "Refine search" for i in interactions)
+    assert response.message.intent == "summary_with_blocks"
+    assert response.message.narrative_policy == "no_enumeration"
+    assert response.message.rendering_hints["has_blocks"] is True
+    assert "ORD-1 is late" in response.message.content
+    assert "ORD-2 is unassigned" in response.message.content
 
 
-def test_generate_interactions_returns_continue_prompt_for_unscheduled_orders():
-    """Phase 1: unscheduled orders should generate continue_prompt for scheduling."""
-    tool_turns = [
-        {
-            "tool": "list_orders",
-            "params": {"scheduled": False},  # unscheduled filter
-            "result": {
-                "count": 12,
-                "orders": [{"id": i, "client_first_name": f"Customer{i}", "order_scalar_id": f"ORD-{i:03d}"} for i in range(1, 13)],
-            },
-        }
-    ]
+def test_format_response_full_enumeration_preserves_list_lines():
+    response = format_response(
+        "thr_123",
+        "Summary\n- Row 1\n- Row 2",
+        [],
+        narrative_policy_override="full_enumeration",
+    )
 
-    interactions = generate_interactions(tool_turns)
-
-    # Should have continue_prompt for scheduling
-    assert len(interactions) > 0
-    assert any(i.kind == "continue_prompt" and i.label == "Schedule these" for i in interactions)
-    schedule_prompt = next(i for i in interactions if i.label == "Schedule these")
-    assert schedule_prompt.payload.get("unscheduled_count") == 12
+    assert response.message.narrative_policy == "full_enumeration"
+    assert "- Row 1" in response.message.content
 
 
-def test_generate_interactions_returns_continue_prompt_for_list_plans():
-    """Phase 1: list_plans with results should generate continue_prompt."""
-    tool_turns = [
-        {
-            "tool": "list_plans",
-            "params": {},
-            "result": {
-                "count": 3,
-                "delivery_plans": [
-                    {"id": 1, "label": "Monday Delivery", "plan_type": "local_delivery"},
-                    {"id": 2, "label": "Tuesday Delivery", "plan_type": "local_delivery"},
-                    {"id": 3, "label": "Express", "plan_type": "international_shipping"},
-                ],
-            },
-        }
-    ]
+def test_format_response_adds_markdown_structure_for_plain_content_with_blocks():
+    response = format_response(
+        "thr_123",
+        "There are currently 4 orders in the system. Two are draft. One is ready. One is completed.",
+        [
+            {
+                "tool": "list_orders",
+                "params": {},
+                "result": {
+                    "count": 4,
+                    "orders": [
+                        {"id": 1, "order_scalar_id": "1056", "order_state_id": 1},
+                        {"id": 2, "order_scalar_id": "1055", "order_state_id": 1},
+                    ],
+                },
+            }
+        ],
+    )
 
-    interactions = generate_interactions(tool_turns)
-
-    # Should have continue_prompt for searching plans
-    assert len(interactions) > 0
-    assert any(i.kind == "continue_prompt" and i.label == "Search plans" for i in interactions)
-
-
-def test_generate_interactions_returns_continue_prompt_for_list_routes():
-    """Phase 1: list_routes with results should generate continue_prompt."""
-    tool_turns = [
-        {
-            "tool": "list_routes",
-            "params": {"plan_id": 123},
-            "result": {
-                "count": 2,
-                "routes": [
-                    {"id": 1, "plan_id": 123, "driver_id": 10, "is_selected": True},
-                    {"id": 2, "plan_id": 123, "driver_id": 11, "is_selected": False},
-                ],
-            },
-        }
-    ]
-
-    interactions = generate_interactions(tool_turns)
-
-    # Should have continue_prompt for viewing route details
-    assert len(interactions) > 0
-    assert any(i.kind == "continue_prompt" and i.label == "View route details" for i in interactions)
+    assert response.message.content.startswith("### Snapshot")
+    assert "#### Highlights" in response.message.content
+    assert "- Two are draft." in response.message.content
 
 
-def test_generate_interactions_no_results_for_empty_lists():
-    """Phase 1: empty list results should not generate continue_prompt."""
-    tool_turns = [
-        {
-            "tool": "list_orders",
-            "params": {"q": "nonexistent"},
-            "result": {
-                "count": 0,
-                "orders": [],
-            },
-        }
-    ]
+def test_generate_actions_keeps_filters_but_omits_navigate_actions():
+    response = format_response(
+        "thr_123",
+        "Found matching scheduled orders.",
+        [
+            {
+                "tool": "list_orders",
+                "params": {"q": "Stockholm", "scheduled": True},
+                "result": {
+                    "count": 2,
+                    "orders": [
+                        {"id": 1, "order_scalar_id": "1054", "order_state_id": 2, "delivery_plan_id": 10},
+                        {"id": 2, "order_scalar_id": "1053", "order_state_id": 2, "delivery_plan_id": 11},
+                    ],
+                },
+            }
+        ],
+    )
 
-    interactions = generate_interactions(tool_turns)
+    assert all(action.type != "navigate" for action in response.message.actions)
+    assert any(action.type == "apply_order_filters" for action in response.message.actions)
 
-    # Should have no interactions for empty results
-    assert len(interactions) == 0
+
+def test_format_response_uses_validated_presentation_hint_columns_for_orders():
+    response = format_response(
+        "thr_123",
+        "The following orders contain items.",
+        [
+            {
+                "tool": "list_orders",
+                "params": {},
+                "result": {
+                    "count": 2,
+                    "orders": [
+                        {"id": 1, "order_scalar_id": "1054", "order_state_id": 5, "total_items": 11},
+                        {"id": 2, "order_scalar_id": "1053", "order_state_id": 1, "total_items": 0},
+                    ],
+                },
+            }
+        ],
+        presentation_hints_override={
+            "blocks": [
+                {"entity_type": "order", "columns": ["reference", "total_items", "status", "not_allowed"]}
+            ]
+        },
+    )
+
+    columns = response.message.blocks[0].meta["table"]["columns"]
+    assert columns == ["reference", "total_items", "status"]
+    assert response.message.blocks[0].data["items"][0]["total_items"] == 11
+
+
+def test_format_response_uses_query_fallback_columns_for_item_questions_without_hints():
+    response = format_response(
+        "thr_123",
+        "These are orders that contain items.",
+        [
+            {
+                "tool": "list_orders",
+                "params": {},
+                "result": {
+                    "count": 2,
+                    "orders": [
+                        {"id": 1, "order_scalar_id": "1054", "order_state_id": 5, "total_items": 11},
+                        {"id": 2, "order_scalar_id": "1053", "order_state_id": 1, "total_items": 0},
+                    ],
+                },
+            }
+        ],
+        user_query_override="what orders contain items?",
+    )
+
+    columns = response.message.blocks[0].meta["table"]["columns"]
+    assert columns == ["reference", "total_items", "status", "street_address"]
+
+
+def test_format_response_keeps_existing_markdown_content_unchanged():
+    original = "### Snapshot\n\nThere are **2 orders**."
+    response = format_response(
+        "thr_123",
+        original,
+        [
+            {
+                "tool": "list_orders",
+                "params": {},
+                "result": {
+                    "count": 2,
+                    "orders": [
+                        {"id": 1, "order_scalar_id": "1056", "order_state_id": 1},
+                        {"id": 2, "order_scalar_id": "1055", "order_state_id": 7},
+                    ],
+                },
+            }
+        ],
+    )
+
+    assert response.message.content == original
+
+
+def test_generate_blocks_adds_ai_focus_for_late_or_unassigned_orders():
+    response = format_response(
+        "thr_123",
+        "Found issues in orders.",
+        [
+            {
+                "tool": "list_orders",
+                "params": {},
+                "result": {
+                    "orders": [
+                        {"id": "ORD-11", "order_scalar_id": "ORD-11", "order_state_id": 1, "is_late": True, "delivery_plan_id": 20},
+                        {"id": "ORD-12", "order_scalar_id": "ORD-12", "order_state_id": 1, "is_late": False, "delivery_plan_id": None},
+                    ],
+                    "count": 2,
+                },
+            }
+        ],
+    )
+
+    block = response.message.blocks[0]
+    ai_focus = block.data.get("ai_focus")
+    assert ai_focus is not None
+    assert sorted(ai_focus["focus_entity_ids"]) == ["ORD-11", "ORD-12"]
+    assert ai_focus["focus_counts"]["late"] == 1
+    assert ai_focus["focus_counts"]["unassigned"] == 1
+
+
+def test_format_response_emits_warning_when_ai_focus_references_missing_entities():
+    rebuilt = format_response(
+        "thr_123",
+        "Found issues in orders.",
+        [
+            {
+                "tool": "list_orders",
+                "params": {},
+                "result": {
+                    "orders": [{"id": "ORD-1", "order_scalar_id": "ORD-1", "order_state_id": 1}],
+                    "count": 1,
+                },
+            }
+        ],
+    )
+    rebuilt.message.blocks[0].data["ai_focus"] = {"focus_entity_ids": ["ORD-1", "ORD-2"]}
+    warnings = validate_ai_focus_warnings(rebuilt.message.blocks)
+
+    assert len(warnings) == 1
+    assert warnings[0].code == "AI_FOCUS_MISMATCH"
+    assert warnings[0].message == "ai_focus references entities not present in block items."
+    assert warnings[0].meta["missing_entity_ids"] == ["ORD-2"]
+
+
+def test_format_response_uses_ai_led_plan_focus_from_narrative_and_keeps_missing_ids():
+    response = format_response(
+        "thr_123",
+        "Plan 92 and plan 999 need attention.",
+        [
+            {
+                "tool": "list_plans",
+                "params": {},
+                "result": {
+                    "delivery_plans": [
+                        {"id": 91, "label": "Morning", "plan_type": "local_delivery", "state_id": 2},
+                        {"id": 92, "label": "Evening", "plan_type": "local_delivery", "state_id": 2},
+                    ],
+                    "count": 2,
+                },
+            }
+        ],
+        operation_name="list_plans",
+    )
+
+    ai_focus = response.message.blocks[0].data["ai_focus"]
+    assert "92" in ai_focus["focus_entity_ids"]
+    assert "999" in ai_focus["focus_entity_ids"]
+    assert response.message.typed_warnings
+    assert response.message.typed_warnings[0].code == "AI_FOCUS_MISMATCH"
+    assert response.message.typed_warnings[0].meta["missing_entity_ids"] == ["999"]
+
+
+def test_format_response_uses_ai_led_route_focus_from_narrative():
+    response = format_response(
+        "thr_123",
+        "Route 501 should be prioritized.",
+        [
+            {
+                "tool": "list_routes",
+                "params": {"plan_id": 91},
+                "result": {
+                    "routes": [
+                        {
+                            "id": 501,
+                            "delivery_plan": {"label": "Morning route"},
+                            "driver_id": 7,
+                            "is_selected": True,
+                            "stops": [{"id": 1}],
+                        }
+                    ],
+                    "count": 1,
+                },
+            }
+        ],
+        operation_name="list_routes",
+    )
+
+    ai_focus = response.message.blocks[0].data["ai_focus"]
+    assert "501" in ai_focus["focus_entity_ids"]
 
 
 def test_generate_interactions_no_results_on_error():
@@ -498,40 +702,6 @@ def test_generate_interactions_no_results_on_error():
 
     # Should have no interactions on error
     assert len(interactions) == 0
-
-
-def test_format_response_includes_interactions():
-    """Phase 1: format_response should include interactions in the payload."""
-    response = format_response(
-        "thr_123",
-        "Found 5 orders.",
-        [
-            {
-                "tool": "list_orders",
-                "params": {},
-                "result": {
-                    "count": 5,
-                    "orders": [
-                        {"id": 1, "client_first_name": "Ana", "order_scalar_id": "ORD-001"},
-                        {"id": 2, "client_first_name": "Ana", "order_scalar_id": "ORD-002"},
-                        {"id": 3, "client_first_name": "Bob", "order_scalar_id": "ORD-003"},
-                        {"id": 4, "client_first_name": "Bob", "order_scalar_id": "ORD-004"},
-                        {"id": 5, "client_first_name": "Bob", "order_scalar_id": "ORD-005"},
-                    ],
-                },
-            }
-        ],
-    )
-
-    # Response should include interactions
-    assert hasattr(response.message, "interactions")
-    assert isinstance(response.message.interactions, list)
-    assert len(response.message.interactions) > 0
-    # Verify interactions have the right structure
-    for interaction in response.message.interactions:
-        assert interaction.kind == "continue_prompt"
-        assert interaction.label  # should have a label
-        assert interaction.payload is not None
 
 
 def test_generate_interactions_adds_plan_type_question_when_plan_types_are_ambiguous():
@@ -568,8 +738,8 @@ def test_generate_interactions_adds_driver_question_when_routes_have_multiple_dr
             "params": {},
             "result": {
                 "routes": [
-                    {"id": 1, "driver_id": 10},
-                    {"id": 2, "driver_id": 11},
+                    {"id": 1, "driver_id": 10, "driver_name": "Alice"},
+                    {"id": 2, "driver_id": 11, "driver_name": "Bob"},
                 ],
                 "count": 2,
             },
@@ -583,6 +753,7 @@ def test_generate_interactions_adds_driver_question_when_routes_have_multiple_dr
     assert question.kind == "question"
     assert question.required is True
     assert question.response_mode == "select"
+    assert sorted(option["label"] for option in (question.options or [])) == ["Alice", "Bob"]
 
 
 def test_generate_interactions_adds_confirm_for_large_order_state_update():
@@ -620,4 +791,89 @@ def test_generate_interactions_adds_confirm_for_large_assign_batch():
     assert confirm.kind == "confirm"
     assert confirm.required is True
     assert confirm.payload.get("plan_id") == 99
+
+
+def test_generate_blocks_maps_analytics_snapshot_into_kpi_trend_breakdown_blocks():
+    blocks = generate_blocks([
+        {
+            "tool": "get_analytics_snapshot",
+            "params": {"timeframe": "7d"},
+            "result": {
+                "metrics": {
+                    "total_orders": 120,
+                    "scheduled_rate": 0.82,
+                    "completion_rate": 0.77,
+                    "failed_orders": 8,
+                },
+                "trends": [
+                    {"date": "2026-03-15", "orders_created": 14},
+                    {"date": "2026-03-16", "orders_created": 18},
+                ],
+                "breakdowns": [
+                    {
+                        "dimension": "scheduled_status",
+                        "values": [
+                            {"label": "scheduled", "count": 98},
+                            {"label": "unscheduled", "count": 22},
+                        ],
+                    }
+                ],
+            },
+        }
+    ])
+
+    assert [block.entity_type for block in blocks] == ["analytics_kpi", "analytics_trend", "analytics_breakdown"]
+    assert blocks[0].data["items"][0]["name"] == "total_orders"
+    assert blocks[1].data["items"][0]["date"] == "2026-03-15"
+    assert blocks[2].data["items"][0]["dimension"] == "scheduled_status"
+
+
+def test_format_tool_trace_summarizes_analytics_snapshot():
+    trace = format_tool_trace([
+        {
+            "tool": "get_analytics_snapshot",
+            "params": {"timeframe": "7d"},
+            "result": {"metrics": {"total_orders": 42}},
+        }
+    ])
+
+    assert trace[0].summary == "Analytics snapshot ready for 42 orders."
+
+
+def test_format_response_adds_statistical_output_insight_and_warning_blocks():
+    response = format_response(
+        "thr_123",
+        "Late deliveries increased in the selected window.",
+        [],
+        data={
+            "statistical_output": {
+                "summary": "Late deliveries increased in the selected window.",
+                "key_metrics": [
+                    {"name": "late_deliveries", "value": 18.0, "delta": 4.0},
+                ],
+                "insights": [
+                    {
+                        "type": "correlation",
+                        "description": "Higher unscheduled share coincides with more late deliveries.",
+                        "confidence": 0.71,
+                    }
+                ],
+                "warnings": ["Correlation only; causation is not proven."],
+                "confidence_score": 0.78,
+            }
+        },
+    )
+
+    entity_types = [block.entity_type for block in response.message.blocks]
+    assert "analytics_insight" in entity_types
+    assert "analytics_warning" in entity_types
+
+    insight_block = next(block for block in response.message.blocks if block.entity_type == "analytics_insight")
+    assert insight_block.data["items"][0]["type"] == "correlation"
+
+    warning_block = next(block for block in response.message.blocks if block.entity_type == "analytics_warning")
+    assert warning_block.data["items"][0]["message"] == "Correlation only; causation is not proven."
+
+    warning_codes = [warning.code for warning in response.message.typed_warnings]
+    assert "STATISTICS_WARNING" in warning_codes
 

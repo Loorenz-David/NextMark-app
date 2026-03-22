@@ -62,7 +62,7 @@ export function buttonStyle(
   if (variant === 'primary') {
     return {
       ...shared,
-      background: theme.launcherAccent,
+      background: theme.accent,
       color: '#132118',
     }
   }
@@ -218,7 +218,6 @@ export const headerActionsStyle: CSSProperties = {
   alignItems: 'center',
   gap: 10,
   flexWrap: 'wrap',
-  justifyContent: 'flex-end',
   minWidth: 88,
   minHeight: 40,
 }
@@ -236,7 +235,7 @@ export function headerCloseButtonStyle(theme: AiPanelTheme["header"]): CSSProper
   return {
     width: 30,
     height: 30,
-    borderRadius: 999,
+    
     border: '1px solid rgba(255,255,255,0.08)',
     background: 'rgba(76, 78, 78, 0.64)',
     color: theme.muted,
@@ -246,6 +245,7 @@ export function headerCloseButtonStyle(theme: AiPanelTheme["header"]): CSSProper
     cursor: 'pointer',
     boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.04)',
     backdropFilter: 'blur(14px)',
+     
   }
 }
 
@@ -300,7 +300,7 @@ export function composerFrameStyle(theme: AiPanelTheme["composer"]): CSSProperti
   return {
     display: 'flex',
     flexDirection: 'column',
-    borderRadius: 28,
+    borderRadius: 20,
     border: `1px solid ${theme.border}`,
     background: 'linear-gradient(180deg, rgba(56,58,58,0.72), rgba(44,46,46,0.9))',
     boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.05), 0 18px 48px rgba(0,0,0,0.24)',
@@ -342,8 +342,8 @@ export const composerFooterStyle: CSSProperties = {
   justifyContent: 'space-between',
   gap: 12,
   width: '100%',
-  padding: '0 18px 16px',
-  minHeight: 56,
+  padding: '5px 10px ',
+  minHeight: 40,
 }
 
 export function composerActionsRowStyle(theme: AiPanelTheme["composer"]): CSSProperties {
@@ -571,8 +571,8 @@ export function dataPreviewStyle(theme: AiPanelTheme): CSSProperties {
 
 export const messageFooterStyle: CSSProperties = {
   display: 'flex',
-  justifyContent: 'flex-end',
-  marginTop: -2,
+  justifyContent: 'flex-start',
+  marginTop: -1,
 }
 
 export function statusMessageStyle(theme: AiPanelTheme): CSSProperties {
@@ -580,8 +580,6 @@ export function statusMessageStyle(theme: AiPanelTheme): CSSProperties {
     alignSelf: 'stretch',
     borderRadius: 18,
     padding: 14,
-    background: theme.surfaceAlt,
-    border: `1px dashed ${theme.border}`,
   }
 }
 

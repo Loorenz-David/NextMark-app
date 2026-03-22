@@ -4,6 +4,10 @@ import type { Order } from '@shared-domain'
 import { AiOrderCard } from './AiOrderCard'
 import { AiOrdersTable, type AiOrdersTableColumnExternalId } from './AiOrdersTable'
 
+interface AdminAiBlockRenderOptions {
+  onOrderRowClick?: (order: Order) => void
+}
+
 // Trust the block's entity_type declaration — any non-null object is a valid
 // candidate when we're already inside an `entity_type: "order"` block.
 function isNonNullObject(value: unknown): value is Order {
@@ -51,13 +55,18 @@ function getOrdersTableColumnsFromMeta(meta: unknown): AiOrdersTableColumnExtern
   return columns.length ? columns : undefined
 }
 
-export function renderAdminAiBlock({ block }: AiBlockRendererProps) {
+export function renderAdminAiBlock(
+  { block }: AiBlockRendererProps,
+  options: AdminAiBlockRenderOptions = {},
+) {
+  const { onOrderRowClick } = options
+
   if (block.entityType !== 'order') {
     return null
   }
 
   if (block.kind === 'entity_detail' && isNonNullObject(block.data)) {
-    return <AiOrderCard order={block.data} />
+    return <AiOrderCard onRowClick={onOrderRowClick} order={block.data} />
   }
 
   if (block.kind === 'entity_collection') {
@@ -71,13 +80,19 @@ export function renderAdminAiBlock({ block }: AiBlockRendererProps) {
       return (
         <div style={{ display: 'grid', gap: 8 }}>
           {orders.map((order, i) => (
-            <AiOrderCard key={order.id ?? order.order_scalar_id ?? i} order={order} />
+            <AiOrderCard key={order.id ?? order.order_scalar_id ?? i} onRowClick={onOrderRowClick} order={order} />
           ))}
         </div>
       )
     }
 
-    return <AiOrdersTable columns={getOrdersTableColumnsFromMeta(block.meta)} orders={orders} />
+    return (
+      <AiOrdersTable
+        columns={getOrdersTableColumnsFromMeta(block.meta)}
+        onRowClick={onOrderRowClick}
+        orders={orders}
+      />
+    )
   }
 
   return null

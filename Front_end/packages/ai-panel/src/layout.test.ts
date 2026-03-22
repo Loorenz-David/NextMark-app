@@ -1,5 +1,6 @@
 import {
   clampFloatingPoint,
+  computePanelOpenPosition,
   resolveDefaultLauncherPosition,
   resolveDefaultPanelPosition,
 } from './layout'
@@ -29,5 +30,17 @@ export const runAiPanelLayoutTests = () => {
     const point = resolveDefaultLauncherPosition(viewport, { width: 68, height: 68 }, 24)
     assert(point.x === 1188, 'default launcher should anchor near the right edge')
     assert(point.y === 628, 'default launcher should anchor near the bottom edge')
+  }
+
+  {
+    const point = computePanelOpenPosition(
+      { x: 24, y: 628 },
+      { width: 68, height: 68 },
+      { width: 460, height: 640 },
+      viewport,
+      0,
+    )
+    assert(point.x === 0, 'panel should be able to reach the left viewport edge')
+    assert(point.y === 80, 'panel should remain fully visible when opened from launcher with zero margin')
   }
 }

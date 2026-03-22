@@ -6,6 +6,8 @@ from Delivery_app_BK.ai.prompts.user_config_execute_prompt import build_user_con
 from Delivery_app_BK.ai.prompts.user_config_intent_prompt import build_user_config_intent_prompt
 from Delivery_app_BK.ai.stages import CLARIFY_STAGE, EXECUTE_STAGE, INTENT_STAGE
 from Delivery_app_BK.ai.tools.user_config_tools import (
+    apply_item_taxonomy_proposal_tool,
+    create_item_taxonomy_proposal_tool,
     create_item_property_config_tool,
     create_item_type_config_tool,
     get_item_property_config_tool,
@@ -28,6 +30,8 @@ USER_CONFIG_TOOLS = {
     "update_item_type_config": update_item_type_config_tool,
     "update_item_property_config": update_item_property_config_tool,
     "link_properties_to_item_type": link_properties_to_item_type_tool,
+    "create_item_taxonomy_proposal": create_item_taxonomy_proposal_tool,
+    "apply_item_taxonomy_proposal": apply_item_taxonomy_proposal_tool,
 }
 
 

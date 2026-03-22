@@ -71,6 +71,24 @@ def find_plans( params:Dict, ctx:ServiceContext ):
     if "min_orders" in params:
         query = query.filter( DeliveryPlan.total_orders >= int(params["min_orders"]) )
 
+    if "total_weight_min_g" in params:
+        query = query.filter(DeliveryPlan.total_weight_g >= float(params["total_weight_min_g"]))
+
+    if "total_weight_max_g" in params:
+        query = query.filter(DeliveryPlan.total_weight_g <= float(params["total_weight_max_g"]))
+
+    if "total_volume_min_cm3" in params:
+        query = query.filter(DeliveryPlan.total_volume_cm3 >= float(params["total_volume_min_cm3"]))
+
+    if "total_volume_max_cm3" in params:
+        query = query.filter(DeliveryPlan.total_volume_cm3 <= float(params["total_volume_max_cm3"]))
+
+    if "total_items_min" in params:
+        query = query.filter(DeliveryPlan.total_item_count >= int(params["total_items_min"]))
+
+    if "total_items_max" in params:
+        query = query.filter(DeliveryPlan.total_item_count <= int(params["total_items_max"]))
+
 
     # query on orders table --------------------------------------------
     order_params = params.get( "orders" )

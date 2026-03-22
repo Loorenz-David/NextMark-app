@@ -182,6 +182,16 @@ export const buildWindowsFromLocalDates = ({
       }
     }
 
+    const startEpoch = Date.parse(startUtc)
+    const endEpoch = Date.parse(endUtc)
+    if (startEpoch < Date.now() || endEpoch <= Date.now()) {
+      return {
+        nextWindows: existingWindows,
+        skippedClosedDates,
+        error: `Invalid time window for ${localDate}. Time windows cannot be in the past.`,
+      }
+    }
+
     nextRows.push({
       client_id: buildClientId('order_delivery_window'),
       start_at: startUtc,

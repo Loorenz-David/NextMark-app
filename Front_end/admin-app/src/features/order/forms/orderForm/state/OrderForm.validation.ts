@@ -14,13 +14,15 @@ export const useOrderFormValidation = ({
     const emailValid = warnings.emailWarning.validate(formState.client_email)
     const primaryPhoneValid = warnings.primaryPhoneWarning.validate(formState.client_primary_phone)
     const addressValid = warnings.addressWarning.validate(formState.client_address)
+    const deliveryWindowsValid = warnings.deliveryWindowsWarning.validate(formState.delivery_windows)
 
     return (
       firstNameValid &&
       lastNameValid &&
       emailValid &&
       primaryPhoneValid &&
-      addressValid
+      addressValid &&
+      deliveryWindowsValid
     )
   }
 

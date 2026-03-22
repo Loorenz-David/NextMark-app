@@ -28,10 +28,15 @@ export const SearchFilterBar = ({
   config = [],
   hideFilteredIcon = false,
   placeholder,
+  searchValue = '',
 }: SearchFilterBarProps) => {
   const [open, setOpen] = useState(false)
-  const [searchInput, setSearchInput] = useState('')
+  const [searchInput, setSearchInput] = useState(searchValue)
   const [tempRange, setTempRange] = useState<[Dayjs | null, Dayjs | null]>(EMPTY_RANGE)
+
+  useEffect(() => {
+    setSearchInput(searchValue)
+  }, [searchValue])
 
   const dateRangeFilter = useMemo(
     () => config.find(isDateRangeFilter) ?? null,

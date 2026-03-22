@@ -174,6 +174,15 @@ export const OrderFormDeliveryWindowCalendar = ({
     return `Selected range: ${formatSelectionRange(rangeCandidate)}`
   }, [mode, selectedLocalDates, selectionValue])
 
+  const deliveryWindowsWarningMessage = useMemo(() => {
+    const warning = warnings.deliveryWindowsWarning.warning
+    if (!warning?.isVisible) {
+      return null
+    }
+
+    return warning.message ?? null
+  }, [warnings])
+
   const baseWindowsForApply = useMemo(() => {
     if (!editingWindow) {
       return formState.delivery_windows
@@ -306,9 +315,7 @@ export const OrderFormDeliveryWindowCalendar = ({
               />
             )}
             <DeliveryWindowCalendarWarningNotice
-              message={message ?? (warnings.deliveryWindowsWarning.warning.isVisible
-                ? warnings.deliveryWindowsWarning.warning.message ?? null
-                : null)}
+              message={message ?? deliveryWindowsWarningMessage}
               helperText={helperText}
               compact={compact}
             />

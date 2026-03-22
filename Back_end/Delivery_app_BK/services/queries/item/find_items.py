@@ -56,6 +56,26 @@ def find_items(
     if "weight_max" in params:
         query = query.filter(Item.weight <= params.get("weight_max"))
 
+    if "item_type_exact" in params:
+        query = query.filter(Item.item_type == params.get("item_type_exact"))
+
+    if "quantity_min" in params:
+        query = query.filter(Item.quantity >= int(params.get("quantity_min")))
+
+    if "quantity_max" in params:
+        query = query.filter(Item.quantity <= int(params.get("quantity_max")))
+
+    if "is_system" in params:
+        query = query.filter(Item.is_system.is_(bool(params.get("is_system"))))
+
+    if "dimension_volume_min_cm3" in params:
+        vol = Item.dimension_depth * Item.dimension_height * Item.dimension_width
+        query = query.filter(vol >= float(params.get("dimension_volume_min_cm3")))
+
+    if "dimension_volume_max_cm3" in params:
+        vol = Item.dimension_depth * Item.dimension_height * Item.dimension_width
+        query = query.filter(vol <= float(params.get("dimension_volume_max_cm3")))
+
 
     sort = params.get("sort", "id_desc")
     if sort == "id_asc":

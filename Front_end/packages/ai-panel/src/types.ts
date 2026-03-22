@@ -2,6 +2,13 @@ import type { ReactNode } from 'react'
 
 export type AiMessageRole = 'user' | 'assistant' | 'status' | 'error'
 
+export type AiCapabilityMode = 'auto' | 'manual'
+
+export interface AiCapabilityOption {
+  id: string
+  label: string
+}
+
 /**
  * Base context shape sent alongside user messages.
  * Host applications may extend this with app-specific fields.
@@ -12,6 +19,8 @@ export type AiMessageRole = 'user' | 'assistant' | 'status' | 'error'
 export interface AiMessageContext {
   /** The frontend route active when the message is sent. */
   route?: string
+  capability_mode?: AiCapabilityMode
+  capability_id?: string
   [key: string]: unknown
 }
 
@@ -36,7 +45,7 @@ export interface AiActionDescriptor<TPayload = unknown> {
 
 export type AiInteractionKind = 'ui_action' | 'continue_prompt' | 'question' | 'confirm'
 
-export type AiInteractionResponseMode = 'text' | 'select' | 'confirm' | 'form'
+export type AiInteractionResponseMode = 'free_text' | 'select' | 'confirm' | 'form'
 
 export type AiInteractionFieldType =
   | 'text'
@@ -91,13 +100,85 @@ export interface AIInteraction<TPayload = unknown> {
 
 export type AiToolTraceStatus = 'success' | 'error' | 'info'
 
+export type AiProposalErrorCode =
+  | 'proposal_expired'
+  | 'proposal_cancelled'
+  | 'proposal_already_applied'
+  | 'proposal_conflict'
+  | 'proposal_invalid_state'
+  | 'bad_request'
+  | 'VALIDATION_ERROR'
+  | 'tool_execution_failed'
+  | 'DELIVERY_WINDOW_PAST_TIME'
+  | 'DELIVERY_WINDOW_OVERLAP'
+  | 'DELIVERY_WINDOW_LIMIT_EXCEEDED'
+  | string
+
+export interface AiProposalMeta {
+  status?: string
+  created_at?: string
+  expires_at?: string
+  version?: string | number
+  applied_at?: string
+}
+
+export interface AiToolTraceResult {
+  error_code?: AiProposalErrorCode
+  error?: string
+  proposal?: {
+    meta?: AiProposalMeta
+    [key: string]: unknown
+  }
+  proposal_meta?: AiProposalMeta
+  [key: string]: unknown
+}
+
 export interface AiToolTraceEntry {
   id?: string
   tool: string
   status?: AiToolTraceStatus
   summary?: string
   params?: Record<string, unknown>
-  result?: unknown
+  result?: AiToolTraceResult | unknown
+  errorCode?: AiProposalErrorCode
+  errorMessage?: string
+  proposalMeta?: AiProposalMeta
+}
+
+export type AiNarrativeIntent = 'summary_with_blocks' | 'blocks_only' | 'narrative_only' | string
+
+export type AiNarrativePolicy = 'no_enumeration' | 'full_enumeration' | 'key_highlights' | string
+
+export interface AiRenderingHints {
+  has_blocks?: boolean
+  suppress_raw_data_preview?: boolean
+  text_section_title?: string
+  block_section_title?: string
+}
+
+export type AiPanelMetricName =
+  | 'conversation:thread_load'
+  | 'conversation:append_message'
+  | 'conversation:poll_status'
+  | 'transcript:load_older'
+  | 'transcript:render_window'
+
+export interface AiPanelMetric {
+  name: AiPanelMetricName
+  timestamp: number
+  detail: Record<string, unknown>
+}
+
+export interface AiPanelDiagnosticsConfig {
+  enabled?: boolean
+  emitToConsole?: boolean
+  onMetric?: (metric: AiPanelMetric) => void
+}
+
+export interface AiTypedWarning {
+  code: string
+  message: string
+  meta?: Record<string, unknown>
 }
 
 export interface AiMessageBlock {
@@ -127,6 +208,10 @@ export interface AiPanelMessage {
   content: string
   createdAt: number
   statusLabel?: string
+  intent?: AiNarrativeIntent
+  narrativePolicy?: AiNarrativePolicy
+  renderingHints?: AiRenderingHints
+  typedWarnings?: AiTypedWarning[]
   blocks?: AiMessageBlock[]
   actions?: AiActionDescriptor[]
   toolTrace?: AiToolTraceEntry[]
@@ -145,6 +230,10 @@ export interface AiPanelResponse {
     role?: Extract<AiMessageRole, 'assistant' | 'status' | 'error'>
     content: string
     statusLabel?: string
+    intent?: AiNarrativeIntent
+    narrativePolicy?: AiNarrativePolicy
+    renderingHints?: AiRenderingHints
+    typedWarnings?: AiTypedWarning[]
     blocks?: AiMessageBlock[]
     actions?: AiActionDescriptor[]
     toolTrace?: AiToolTraceEntry[]
@@ -159,6 +248,7 @@ export interface AiTransportAdapter {
     threadId: string
     message: string
     context?: AiMessageContext
+    narrative_policy?: AiNarrativePolicy
     __interaction_response__?: string
     confirm_accepted?: boolean
     interaction_form?: Record<string, unknown>
@@ -226,6 +316,9 @@ export interface AiPanelConfig {
   subtitle?: string
   placeholder?: string
   storageKey?: string
+  maxMessages?: number
+  diagnostics?: AiPanelDiagnosticsConfig
+  capabilityOptions?: AiCapabilityOption[]
   mobileBreakpoint?: number
   viewportMargin?: number
   defaultOpen?: boolean

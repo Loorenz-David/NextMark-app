@@ -19,4 +19,5 @@ export type SearchFilterBarProps = {
   config?: FilterConfig[]
   hideFilteredIcon?: boolean
   placeholder?: string
+  searchValue?: string
 }

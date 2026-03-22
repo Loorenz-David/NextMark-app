@@ -23,14 +23,14 @@ export function AiPanelLoadingStatus({ theme, statusText }: AiPanelLoadingStatus
           ...statusBodyStyle(theme),
           display: 'inline-block',
           fontWeight: 600,
-          backgroundImage: `linear-gradient(90deg, ${theme.muted} 0%, ${theme.text} 45%, ${theme.muted} 85%)`,
-          backgroundSize: '200% 100%',
+          backgroundImage: `linear-gradient(90deg, ${theme.muted} 0%, ${theme.muted} 28%, ${theme.text} 50%, ${theme.muted} 72%, ${theme.muted} 100%)`,
+          backgroundSize: '260% 100%',
           backgroundPosition: '0% 0%',
           backgroundClip: 'text',
           WebkitBackgroundClip: 'text',
           color: 'transparent',
           WebkitTextFillColor: 'transparent',
-          animation: `${SHIMMER_ANIMATION_NAME} 2s linear infinite`,
+          animation: `${SHIMMER_ANIMATION_NAME} 3.2s linear infinite`,
         }}
       >
         {statusText}

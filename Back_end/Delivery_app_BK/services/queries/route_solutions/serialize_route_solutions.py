@@ -11,6 +11,8 @@ def serialize_route_solution(instance: RouteSolution) -> dict:
     expected_end_time = instance.expected_end_time
     actual_start_time = instance.actual_start_time
     actual_end_time = instance.actual_end_time
+    driver = getattr(instance, "driver", None)
+    plan = getattr(instance, "local_delivery_plan", None)
     return {
         "id": instance.id,
         "client_id": instance.client_id,
@@ -38,21 +40,29 @@ def serialize_route_solution(instance: RouteSolution) -> dict:
         "is_selected": instance.is_selected,
         "is_optimized": instance.is_optimized,
         "driver_id": instance.driver_id,
+        "driver_name": getattr(driver, "username", None),
         "vehicle_id": instance.vehicle_id,
         "route_end_strategy": instance.route_end_strategy,
         "local_delivery_plan_id":instance.local_delivery_plan_id,
+        "plan_label": getattr(plan, "label", None),
+        "plan_type": getattr(plan, "plan_type", None),
         "created_at": created_at.isoformat() if created_at else None,
         "updated_at": instance.updated_at.isoformat() if instance.updated_at else None,
     }
 
 
 def serialize_route_solution_partial(instance: RouteSolution) -> dict:
+    driver = getattr(instance, "driver", None)
+    plan = getattr(instance, "local_delivery_plan", None)
     return {
         "id": instance.id,
         "client_id": instance.client_id,
         "local_delivery_plan_id": instance.local_delivery_plan_id,
         "_representation": "partial",
         "label": instance.label,
+        "driver_name": getattr(driver, "username", None),
+        "plan_label": getattr(plan, "label", None),
+        "plan_type": getattr(plan, "plan_type", None),
         "score": instance.score,
         "total_distance_meters": instance.total_distance_meters,
         "total_travel_time_seconds": instance.total_travel_time_seconds,

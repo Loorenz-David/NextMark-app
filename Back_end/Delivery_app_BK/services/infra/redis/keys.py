@@ -47,3 +47,8 @@ def build_ai_thread_turns_key(thread_id: str) -> str:
 def build_ai_turn_key(thread_id: str, turn_id: str) -> str:
     prefix = get_redis_key_prefix()
     return f"{prefix}:ai:thread:{thread_id}:turn:{turn_id}"
+
+
+def build_ai_proposal_apply_key(proposal_hash: str) -> str:
+    prefix = get_redis_key_prefix()
+    return f"{prefix}:ai:proposal:applied:{proposal_hash}"

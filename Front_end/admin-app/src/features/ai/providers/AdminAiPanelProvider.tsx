@@ -5,18 +5,13 @@ import { AiPanelProvider, type AiActionDescriptor } from '@nextmark/ai-panel'
 
 import { resetQuery, setQueryFilters, setQuerySearch, updateQueryFilters } from '@/features/order/store/orderQuery.store'
 import type { OrderQueryFilters } from '@/features/order/types/orderMeta'
-import { renderAdminAiBlock } from '../components/renderAdminAiBlock'
+import { AdminAiBlockRenderer } from '../components/AdminAiBlockRenderer'
 import { adminAiPanelTransport } from '../domain/adminAiPanelAdapter'
 import { mapLegacyAiDataToBlocks } from '../domain/mapLegacyAiDataToBlocks'
+import { normalizeApplyOrderFiltersPayload, type ApplyOrderFiltersPayload } from '../domain/normalizeApplyOrderFiltersPayload'
 
 type NavigatePayload = {
   path?: string
-}
-
-type ApplyOrderFiltersPayload = {
-  mode?: 'replace' | 'merge'
-  search?: string
-  filters?: Partial<OrderQueryFilters>
 }
 
 type CopyTextPayload = {
@@ -25,6 +20,10 @@ type CopyTextPayload = {
 
 export function AdminAiPanelProvider({ children }: PropsWithChildren) {
   const navigate = useNavigate()
+
+  const renderBlock = useCallback((props: Parameters<typeof AdminAiBlockRenderer>[0]) => (
+    <AdminAiBlockRenderer {...props} />
+  ), [])
 
   const resolveAction = useCallback(
     async (action: AiActionDescriptor) => {
@@ -45,21 +44,22 @@ export function AdminAiPanelProvider({ children }: PropsWithChildren) {
 
         case 'apply_order_filters': {
           const payload = action.payload as ApplyOrderFiltersPayload | undefined
+          const normalizedPayload = normalizeApplyOrderFiltersPayload(payload)
           navigate('/')
 
-          if (payload?.mode === 'replace') {
+          if (normalizedPayload.mode === 'replace') {
             resetQuery()
           }
 
-          if (typeof payload?.search === 'string') {
-            setQuerySearch(payload.search)
+          if (typeof normalizedPayload.search === 'string') {
+            setQuerySearch(normalizedPayload.search)
           }
 
-          if (payload?.filters) {
-            if (payload.mode === 'replace') {
-              setQueryFilters(payload.filters as OrderQueryFilters)
+          if (Object.keys(normalizedPayload.filters).length > 0) {
+            if (normalizedPayload.mode === 'replace') {
+              setQueryFilters(normalizedPayload.filters as OrderQueryFilters)
             } else {
-              updateQueryFilters(payload.filters)
+              updateQueryFilters(normalizedPayload.filters)
             }
           }
           return
@@ -88,7 +88,7 @@ export function AdminAiPanelProvider({ children }: PropsWithChildren) {
       mobileBreakpoint={1000}
       mapLegacyDataToBlocks={mapLegacyAiDataToBlocks}
       placeholder="Ask logistics, planning, or navigation questions..."
-      renderBlock={renderAdminAiBlock}
+      renderBlock={renderBlock}
       resolveAction={resolveAction}
       storageKey="admin-app:ai-companion-panel"
       subtitle="AI logistics operator companion"

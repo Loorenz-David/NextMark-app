@@ -1,7 +1,6 @@
-import type { AiPanelTheme } from '../types'
-import { useRef, useEffect } from 'react'
+import type { AiCapabilityMode, AiCapabilityOption, AiPanelTheme } from '../types'
+import { useMemo } from 'react'
 import {
-  buttonStyle,
   composerActionsRowStyle,
   composerFooterStyle,
   composerFrameStyle,
@@ -15,17 +14,51 @@ import {
 interface AiPanelComposerProps {
   value: string
   placeholder: string
+  capabilityMode: AiCapabilityMode
+  selectedCapabilityId: string
+  capabilityOptions: AiCapabilityOption[]
   disabled: boolean
   theme: AiPanelTheme
+  onCapabilitySelectionChange: (value: string) => void
   onChange: (value: string) => void
   onSubmit: () => Promise<void>
+}
+
+const CAPABILITY_LABEL_OVERRIDES: Record<string, string> = {
+  statistical_reasoning: 'Statistical Reasoning',
+  operations: 'Operations',
+  app_configuration: 'App Configuration',
+}
+
+const CAPABILITY_DESCRIPTION_OVERRIDES: Record<string, string> = {
+  statistical_reasoning: 'Responds as a statistician focused on quantitative analysis. Tool actions are typically disabled.',
+  operations: 'Focused on logistics operations such as create, reschedule, and replan workflows.',
+  app_configuration: 'Focused on app setup and configuration workflows, such as creating item types for forms.',
+}
+
+function formatCapabilityLabel(option: AiCapabilityOption): string {
+  if (CAPABILITY_LABEL_OVERRIDES[option.id]) {
+    return CAPABILITY_LABEL_OVERRIDES[option.id]
+  }
+
+  if (!option.label || option.label === option.id) {
+    return option.id
+      .replace(/[_-]+/g, ' ')
+      .replace(/\b\w/g, (char) => char.toUpperCase())
+  }
+
+  return option.label
 }
 
 export function AiPanelComposer({
   value,
   placeholder,
+  capabilityMode,
+  selectedCapabilityId,
+  capabilityOptions,
   disabled,
   theme,
+  onCapabilitySelectionChange,
   onChange,
   onSubmit,
 }: AiPanelComposerProps) {
@@ -34,6 +67,16 @@ export function AiPanelComposer({
     el.style.height = "0px";
     el.style.height = el.scrollHeight + "px";
   };
+
+  const selectedCapabilityKey = capabilityMode === 'auto' ? '__auto__' : selectedCapabilityId
+  const selectedCapabilityDescription = useMemo(() => {
+    if (selectedCapabilityKey === '__auto__') {
+      return 'Automatically infers the best capability from the user intent for this message.'
+    }
+
+    return CAPABILITY_DESCRIPTION_OVERRIDES[selectedCapabilityKey]
+      ?? `Uses the ${selectedCapabilityKey.replace(/[_-]+/g, ' ')} capability profile.`
+  }, [selectedCapabilityKey])
 
 
 
@@ -63,7 +106,28 @@ export function AiPanelComposer({
         </div>
         <div style={composerActionsRowStyle(composerTheme)}>
           <div style={composerFooterStyle}>
-            <div style={composerHintStyle(composerTheme)}></div>
+            <div style={composerHintStyle(composerTheme)}>
+              <label style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                <select
+                  disabled={disabled}
+                  onChange={(event) => onCapabilitySelectionChange(event.target.value)}
+                  style={{
+                    color: composerTheme.text,
+                    borderRadius: 8,
+                    padding: '4px 8px',
+                    fontSize: 12,
+                    fontWeight: 500,
+                  }}
+                  title={selectedCapabilityDescription}
+                  value={capabilityMode === 'auto' ? '__auto__' : selectedCapabilityId}
+                >
+                  <option value="__auto__">Auto </option>
+                  {capabilityOptions.map((option) => (
+                    <option key={option.id} value={option.id}>{formatCapabilityLabel(option)}</option>
+                  ))}
+                </select>
+              </label>
+            </div>
             <button
               disabled={disabled || !value.trim()}
               onClick={() => void onSubmit()}

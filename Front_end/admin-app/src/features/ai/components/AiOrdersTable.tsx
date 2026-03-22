@@ -1,3 +1,5 @@
+import { memo, useCallback, useMemo, type KeyboardEvent } from 'react'
+
 import type { Order } from '@shared-domain'
 
 export type AiOrdersTableColumnId =
@@ -18,6 +20,7 @@ const DEFAULT_ORDER_COLUMNS: AiOrdersTableColumnId[] = [
 interface AiOrdersTableProps {
   orders: Order[]
   columns?: AiOrdersTableColumnExternalId[]
+  onRowClick?: (order: Order) => void
 }
 
 function getOrderIdentifier(order: Order) {
@@ -82,8 +85,20 @@ const COLUMN_CONFIG: Record<AiOrdersTableColumnId, {
   },
 }
 
-export function AiOrdersTable({ orders, columns }: AiOrdersTableProps) {
-  const resolvedColumns = resolveColumns(columns)
+function AiOrdersTableComponent({ orders, columns, onRowClick }: AiOrdersTableProps) {
+  const resolvedColumns = useMemo(() => resolveColumns(columns), [columns])
+  const isInteractive = typeof onRowClick === 'function'
+
+  const handleRowKeyDown = useCallback((event: KeyboardEvent<HTMLTableRowElement>, order: Order) => {
+    if (!onRowClick) {
+      return
+    }
+
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault()
+      onRowClick(order)
+    }
+  }, [onRowClick])
 
   return (
     <div className="admin-glass-panel admin-surface-compact overflow-hidden rounded-lg border border-white/10">
@@ -105,7 +120,12 @@ export function AiOrdersTable({ orders, columns }: AiOrdersTableProps) {
             {orders.map((order, index) => (
               <tr
                 key={order.client_id ?? order.id ?? `${getOrderIdentifier(order)}-${index}`}
-                className="border-t border-white/8 text-[var(--color-text)]/92"
+                aria-label={isInteractive ? `Open order ${getOrderIdentifier(order)} details` : undefined}
+                className={`border-t border-white/8 text-[var(--color-text)]/92 ${isInteractive ? 'cursor-pointer transition-colors hover:bg-white/[0.04] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-light-blue)]/60' : ''}`.trim()}
+                onClick={isInteractive ? () => onRowClick(order) : undefined}
+                onKeyDown={isInteractive ? (event) => handleRowKeyDown(event, order) : undefined}
+                role={isInteractive ? 'button' : undefined}
+                tabIndex={isInteractive ? 0 : undefined}
               >
                 {resolvedColumns.map((columnId) => {
                   const column = COLUMN_CONFIG[columnId]
@@ -123,3 +143,5 @@ export function AiOrdersTable({ orders, columns }: AiOrdersTableProps) {
     </div>
   )
 }
+
+export const AiOrdersTable = memo(AiOrdersTableComponent)

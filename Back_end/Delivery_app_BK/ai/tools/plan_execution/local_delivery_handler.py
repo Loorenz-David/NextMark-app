@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from sqlalchemy.orm import selectinload
+
 from Delivery_app_BK.models import db, RouteSolution
 from Delivery_app_BK.models.tables.delivery_plan.delivery_plan import DeliveryPlan
 from Delivery_app_BK.services.context import ServiceContext
@@ -16,6 +18,10 @@ def get_execution_status(ctx: ServiceContext, plan: DeliveryPlan) -> dict:
     """
     route = (
         db.session.query(RouteSolution)
+        .options(
+            selectinload(RouteSolution.driver),
+            selectinload(RouteSolution.local_delivery_plan),
+        )
         .filter(
             RouteSolution.local_delivery_plan_id == plan.id,
             RouteSolution.is_selected.is_(True),
@@ -40,6 +46,8 @@ def get_execution_status(ctx: ServiceContext, plan: DeliveryPlan) -> dict:
         "route_id": route.id,
         "label": route.label,
         "driver_id": route.driver_id,
+        "driver_name": route.driver.username if route.driver else None,
+        "plan_label": route.local_delivery_plan.label if route.local_delivery_plan else plan.label,
         "vehicle_id": route.vehicle_id,
         "is_optimized": route.is_optimized,
         "total_distance_meters": route.total_distance_meters,

@@ -212,9 +212,21 @@ export function AiPanelBlockingInteraction({
             gap: 4,
           }}
         >
-          <strong style={{ color: theme.text, fontSize: 12, letterSpacing: '0.04em', textTransform: 'uppercase' }}>
-            Action required to continue
-          </strong>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
+            <strong style={{ color: theme.text, fontSize: 12, letterSpacing: '0.04em', textTransform: 'uppercase' }}>
+              Action required to continue
+            </strong>
+            {isFormQuestion ? (
+              <button
+                disabled={isLoading}
+                onClick={() => void submitCancelQuestion()}
+                style={buttonStyle(theme, 'ghost', isLoading)}
+                type="button"
+              >
+                Cancel operation
+              </button>
+            ) : null}
+          </div>
           <span style={{ color: theme.muted, fontSize: 12, lineHeight: 1.45 }}>
             This thread is waiting for your response and cannot be dismissed until you answer.
           </span>
@@ -305,44 +317,6 @@ export function AiPanelBlockingInteraction({
                         }}
                       />
                     </div>
-                    <div style={{ display: 'flex', justifyContent: 'center', gap: 6 }}>
-                      {fields.map((field, index) => {
-                        const isActive = index === currentPage
-                        const stepState = fieldStepStates[index]
-                        const isCompleted = index < currentPage
-                        const isClickable = index < currentPage
-
-                        return (
-                          <button
-                            key={field.id}
-                            aria-label={`Go to question ${index + 1}`}
-                            disabled={!isClickable || isLoading}
-                            onClick={() => jumpToPage(index)}
-                            style={{
-                              width: isActive ? 18 : 8,
-                              height: 8,
-                              borderRadius: 999,
-                              background: isActive
-                                ? theme.accent
-                                : stepState?.isComplete
-                                  ? theme.text
-                                  : isCompleted
-                                    ? theme.muted
-                                  : theme.border,
-                              opacity: isActive || isCompleted ? 1 : 0.65,
-                              transition: 'width 180ms ease, background 180ms ease, opacity 180ms ease',
-                              border: 'none',
-                              padding: 0,
-                              cursor: isClickable && !isLoading ? 'pointer' : 'default',
-                              boxShadow: stepState?.isComplete
-                                ? `0 0 0 1px rgba(255,255,255,0.08) inset`
-                                : undefined,
-                            }}
-                            type="button"
-                          />
-                        )
-                      })}
-                    </div>
                   </div>
 
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
@@ -432,15 +406,7 @@ export function AiPanelBlockingInteraction({
 
           {isFormQuestion ? (
             <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}>
-              <div style={{ display: 'flex', gap: 8 }}>
-                <button
-                  disabled={isLoading}
-                  onClick={() => void submitCancelQuestion()}
-                  style={buttonStyle(theme, 'ghost', isLoading)}
-                  type="button"
-                >
-                  Cancel operation
-                </button>
+              <div style={{ display: 'flex',  gap: 8 }}>
                 <button
                   disabled={isLoading || currentPage === 0}
                   onClick={goToPreviousPage}
@@ -449,8 +415,6 @@ export function AiPanelBlockingInteraction({
                 >
                   Back
                 </button>
-              </div>
-              <div style={{ display: 'flex', gap: 8 }}>
                 {!isLastPage ? (
                   <button
                     disabled={!canMoveToNextPage}
@@ -461,6 +425,7 @@ export function AiPanelBlockingInteraction({
                     Next
                   </button>
                 ) : null}
+              </div>
                 <button
                   disabled={!canSubmitQuestion || !isLastPage}
                   onClick={() => void submitQuestion()}
@@ -469,7 +434,6 @@ export function AiPanelBlockingInteraction({
                 >
                   {isLoading ? 'Sending...' : 'Submit details'}
                 </button>
-              </div>
             </div>
           ) : (
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>

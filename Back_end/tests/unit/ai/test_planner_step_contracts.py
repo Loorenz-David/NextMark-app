@@ -1,5 +1,6 @@
 from Delivery_app_BK.ai.schemas import (
     PlannerClarifyStep,
+    PlannerFinalStep,
     PlannerIntentStep,
     PlannerToolStep,
     parse_planner_step,
@@ -58,3 +59,22 @@ def test_parse_planner_step_validates_tool_contract():
     assert isinstance(step, PlannerToolStep)
     assert step.tool == "create_order"
     assert step.parameters["client_email"] == "ana@example.com"
+
+
+def test_parse_planner_step_validates_final_contract_with_presentation_hints():
+    step = parse_planner_step(
+        {
+            "type": "final",
+            "message": "Found matching orders.",
+            "presentation_hints": {
+                "blocks": [
+                    {"entity_type": "order", "columns": ["reference", "total_items", "status"]}
+                ]
+            },
+        }
+    )
+
+    assert isinstance(step, PlannerFinalStep)
+    assert step.presentation_hints is not None
+    assert step.presentation_hints.blocks[0].entity_type == "order"
+    assert step.presentation_hints.blocks[0].columns == ["reference", "total_items", "status"]

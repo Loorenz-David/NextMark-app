@@ -112,6 +112,7 @@ export const OrderMainHeader = ({
             config={filterConfig}
             updateFilter={(key, value) => updateFilters(key as OrderQueryStringQueries, value)}
             filters={query.filters}
+            searchValue={query.q}
           />
 
           <BasicButton

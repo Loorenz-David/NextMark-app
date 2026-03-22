@@ -20,6 +20,22 @@ ORDER_DELIVERY_WINDOW_TYPES = {
 }
 
 
+class DeliveryWindowValidationFailed(ValidationFailed):
+    code = "VALIDATION_ERROR"
+
+
+class DeliveryWindowPastTimeError(DeliveryWindowValidationFailed):
+    code = "DELIVERY_WINDOW_PAST_TIME"
+
+
+class DeliveryWindowOverlapError(DeliveryWindowValidationFailed):
+    code = "DELIVERY_WINDOW_OVERLAP"
+
+
+class DeliveryWindowLimitExceededError(DeliveryWindowValidationFailed):
+    code = "DELIVERY_WINDOW_LIMIT_EXCEEDED"
+
+
 @dataclass(frozen=True)
 class ParsedOrderDeliveryWindow:
     client_id: str | None
@@ -56,7 +72,7 @@ def validate_and_normalize_delivery_windows(
     if not isinstance(value, list):
         raise ValidationFailed(f"{field} must be a list of objects.")
     if len(value) > MAX_ORDER_DELIVERY_WINDOWS:
-        raise ValidationFailed(f"{field} supports at most {MAX_ORDER_DELIVERY_WINDOWS} windows.")
+        raise DeliveryWindowLimitExceededError(f"{field} supports at most {MAX_ORDER_DELIVERY_WINDOWS} windows.")
 
     parsed_rows: list[ParsedOrderDeliveryWindow] = []
     for index, row in enumerate(value):
@@ -66,6 +82,8 @@ def validate_and_normalize_delivery_windows(
 
         start_at = _parse_strict_utc_datetime(row.get("start_at"), field=f"{row_field}.start_at")
         end_at = _parse_strict_utc_datetime(row.get("end_at"), field=f"{row_field}.end_at")
+        if start_at < datetime.now(timezone.utc):
+            raise DeliveryWindowPastTimeError(f"{row_field}.start_at cannot be in the past.")
         if end_at <= start_at:
             raise ValidationFailed(f"{row_field}.end_at must be greater than {row_field}.start_at.")
 
@@ -112,7 +130,7 @@ def validate_non_overlapping_delivery_windows(
         current = windows[index]
         # Half-open intervals: [start_at, end_at). Adjacency is valid.
         if current.start_at < previous.end_at:
-            raise ValidationFailed(
+            raise DeliveryWindowOverlapError(
                 f"{field}[{index}] overlaps with a previous delivery window.",
             )
 

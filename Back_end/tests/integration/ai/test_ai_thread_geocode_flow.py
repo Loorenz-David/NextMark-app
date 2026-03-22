@@ -16,6 +16,7 @@ def _build_app() -> Flask:
 	app = Flask(__name__)
 	app.config.update(
 		TESTING=True,
+		DEBUG=True,  # Enable DEBUG for tests so tool_trace is included
 		JWT_SECRET_KEY="test-secret",
 	)
 	jwt.init_app(app)
@@ -58,6 +59,8 @@ def _install_thread_store_stubs(monkeypatch):
 	monkeypatch.setattr(ai_route, "assert_thread_access", lambda *args, **kwargs: None)
 	monkeypatch.setattr(ai_route, "append_turn", lambda thread_id, turn: stored_turns.append(turn))
 	monkeypatch.setattr(ai_route, "list_turns", lambda thread_id: [])
+	monkeypatch.setattr(ai_route, "list_turns_for_topic", lambda thread_id, topic_id: [])
+	monkeypatch.setattr(ai_route, "set_active_topic_session", lambda thread_id, topic_id: (topic_id, False))
 	monkeypatch.setattr(ai_route.thread_store, "get_turn_awaiting_response", lambda thread_id: None)
 	monkeypatch.setattr(ai_route.thread_store, "clear_turn_awaiting_response", lambda thread_id, turn_id: None)
 
@@ -166,6 +169,624 @@ def test_ai_thread_message_route_resolves_user_config_capability_from_payload(mo
 	assert captured["kwargs"]["stage_name"] == "execute"
 
 
+def test_ai_thread_message_route_tags_turns_with_topic_id(monkeypatch):
+	app = _build_app()
+	client = app.test_client()
+	stored_turns = _install_thread_store_stubs(monkeypatch)
+
+	monkeypatch.setattr(
+		ai_route,
+		"handle_ai_request_with_thread",
+		lambda ctx, message, prior_turns, **kwargs: ai_orchestrator.OrchestratorResult(
+			final_message="User config capability selected.",
+			tool_turns=[
+				{
+					"tool": "list_item_types_config",
+					"params": {"limit": 20},
+					"result": {"count": 0},
+				}
+			],
+			success=True,
+		),
+	)
+
+	response = client.post(
+		"/api_v2/ai/threads/thr_123/messages",
+		json={"message": "update my settings", "capability": "user_config"},
+		headers=_auth_headers(app),
+	)
+
+	assert response.status_code == 200
+	assert stored_turns[0].role == "user"
+	assert stored_turns[0].topic_id == "user_config"
+	assert any(turn.role == "tool" and turn.topic_id == "user_config" for turn in stored_turns)
+	assert stored_turns[-1].role == "assistant"
+	assert stored_turns[-1].topic_id == "user_config"
+
+
+def test_ai_thread_message_route_resolves_user_config_capability_from_natural_language(monkeypatch):
+	app = _build_app()
+	client = app.test_client()
+	_install_thread_store_stubs(monkeypatch)
+
+	captured = {}
+
+	monkeypatch.setattr(
+		ai_route,
+		"handle_ai_request_with_thread",
+		lambda ctx, message, prior_turns, **kwargs: (
+			captured.update({"kwargs": kwargs})
+			or ai_orchestrator.OrchestratorResult(
+				final_message="User config capability selected.",
+				tool_turns=[],
+				success=True,
+			)
+		),
+	)
+
+	response = client.post(
+		"/api_v2/ai/threads/thr_123/messages",
+		json={"message": "can you help me create items types and properties for the application ?"},
+		headers=_auth_headers(app),
+	)
+
+	assert response.status_code == 200
+	assert captured["kwargs"]["capability_name"] == "user_config"
+	assert captured["kwargs"]["stage_name"] == "execute"
+
+
+def test_ai_thread_message_route_infers_user_config_from_recent_tool_turn(monkeypatch):
+	app = _build_app()
+	client = app.test_client()
+	_install_thread_store_stubs(monkeypatch)
+
+	prior_turns = [
+		AIThreadTurn(
+			id="turn_tool_1",
+			thread_id="thr_123",
+			role="tool",
+			content="",
+			created_at="2026-03-21T10:00:00Z",
+			tool_name="list_item_types_config",
+			tool_params={"limit": 20},
+			tool_result={"count": 1},
+		),
+	]
+	monkeypatch.setattr(ai_route, "list_turns", lambda thread_id: prior_turns)
+
+	captured = {}
+	monkeypatch.setattr(
+		ai_route,
+		"handle_ai_request_with_thread",
+		lambda ctx, message, prior_turns, **kwargs: (
+			captured.update({"kwargs": kwargs})
+			or ai_orchestrator.OrchestratorResult(
+				final_message="User config capability selected.",
+				tool_turns=[],
+				success=True,
+			)
+		),
+	)
+
+	response = client.post(
+		"/api_v2/ai/threads/thr_123/messages",
+		json={"message": "can you create them"},
+		headers=_auth_headers(app),
+	)
+
+	assert response.status_code == 200
+	assert captured["kwargs"]["capability_name"] == "user_config"
+	assert captured["kwargs"]["stage_name"] == "execute"
+
+
+def test_ai_thread_message_route_auto_switches_capability_from_recent_user_topic_streak(monkeypatch):
+	app = _build_app()
+	client = app.test_client()
+	_install_thread_store_stubs(monkeypatch)
+
+	prior_turns = [
+		AIThreadTurn(
+			id="turn_tool_1",
+			thread_id="thr_123",
+			role="tool",
+			content="",
+			created_at="2026-03-21T10:00:00Z",
+			tool_name="list_orders",
+			tool_params={"scheduled": True},
+			tool_result={"count": 2},
+		),
+		AIThreadTurn(
+			id="turn_user_1",
+			thread_id="thr_123",
+			role="user",
+			content="i need item types for my business",
+			created_at="2026-03-21T10:01:00Z",
+		),
+		AIThreadTurn(
+			id="turn_user_2",
+			thread_id="thr_123",
+			role="user",
+			content="also add item properties please",
+			created_at="2026-03-21T10:02:00Z",
+		),
+	]
+	monkeypatch.setattr(ai_route, "list_turns", lambda thread_id: prior_turns)
+
+	captured = {}
+	monkeypatch.setattr(
+		ai_route,
+		"handle_ai_request_with_thread",
+		lambda ctx, message, prior_turns, **kwargs: (
+			captured.update({"kwargs": kwargs, "prior_turns": prior_turns})
+			or ai_orchestrator.OrchestratorResult(
+				final_message="User config capability selected.",
+				tool_turns=[],
+				success=True,
+			)
+		),
+	)
+
+	response = client.post(
+		"/api_v2/ai/threads/thr_123/messages",
+		json={"message": "can you create them"},
+		headers=_auth_headers(app),
+	)
+
+	assert response.status_code == 200
+	assert captured["kwargs"]["capability_name"] == "user_config"
+	# Cross-topic switch clears replayed history for this request.
+	assert captured["prior_turns"] == []
+
+
+def test_ai_thread_message_route_confidence_floor_falls_back_to_default_capability(monkeypatch):
+	app = _build_app()
+	app.config.update(
+		AI_ROUTING_CONFIDENCE_ENABLED=True,
+		AI_ROUTING_CONFIDENCE_FLOOR=0.90,
+		AI_ROUTING_DEFAULT_CAPABILITY="logistics",
+	)
+	client = app.test_client()
+	_install_thread_store_stubs(monkeypatch)
+
+	prior_turns = [
+		AIThreadTurn(
+			id="turn_tool_1",
+			thread_id="thr_123",
+			role="tool",
+			content="",
+			created_at="2026-03-21T10:00:00Z",
+			tool_name="list_item_types_config",
+			tool_params={"limit": 20},
+			tool_result={"count": 1},
+		),
+	]
+	monkeypatch.setattr(ai_route, "list_turns", lambda thread_id: prior_turns)
+
+	captured = {}
+	monkeypatch.setattr(
+		ai_route,
+		"handle_ai_request_with_thread",
+		lambda ctx, message, prior_turns, **kwargs: (
+			captured.update({"kwargs": kwargs})
+			or ai_orchestrator.OrchestratorResult(
+				final_message="Capability selected.",
+				tool_turns=[],
+				success=True,
+			)
+		),
+	)
+
+	response = client.post(
+		"/api_v2/ai/threads/thr_123/messages",
+		json={"message": "can you create them"},
+		headers=_auth_headers(app),
+	)
+
+	assert response.status_code == 200
+	assert captured["kwargs"]["capability_name"] == "logistics"
+
+
+def test_ai_thread_message_route_disabling_confidence_keeps_low_confidence_inference(monkeypatch):
+	app = _build_app()
+	app.config.update(
+		AI_ROUTING_CONFIDENCE_ENABLED=False,
+		AI_ROUTING_CONFIDENCE_FLOOR=0.90,
+		AI_ROUTING_DEFAULT_CAPABILITY="logistics",
+	)
+	client = app.test_client()
+	_install_thread_store_stubs(monkeypatch)
+
+	prior_turns = [
+		AIThreadTurn(
+			id="turn_tool_1",
+			thread_id="thr_123",
+			role="tool",
+			content="",
+			created_at="2026-03-21T10:00:00Z",
+			tool_name="list_item_types_config",
+			tool_params={"limit": 20},
+			tool_result={"count": 1},
+		),
+	]
+	monkeypatch.setattr(ai_route, "list_turns", lambda thread_id: prior_turns)
+
+	captured = {}
+	monkeypatch.setattr(
+		ai_route,
+		"handle_ai_request_with_thread",
+		lambda ctx, message, prior_turns, **kwargs: (
+			captured.update({"kwargs": kwargs})
+			or ai_orchestrator.OrchestratorResult(
+				final_message="Capability selected.",
+				tool_turns=[],
+				success=True,
+			)
+		),
+	)
+
+	response = client.post(
+		"/api_v2/ai/threads/thr_123/messages",
+		json={"message": "can you create them"},
+		headers=_auth_headers(app),
+	)
+
+	assert response.status_code == 200
+	assert captured["kwargs"]["capability_name"] == "user_config"
+
+
+def test_ai_thread_message_route_uses_topic_scoped_replay_when_context_packing_enabled(monkeypatch):
+	app = _build_app()
+	app.config.update(AI_CONTEXT_PACKING_ENABLED=True)
+	client = app.test_client()
+	_install_thread_store_stubs(monkeypatch)
+
+	fallback_turns = [
+		AIThreadTurn(
+			id="turn_fallback",
+			thread_id="thr_123",
+			role="user",
+			content="fallback replay",
+			created_at="2026-03-21T10:00:00Z",
+		),
+	]
+	topic_turns = [
+		AIThreadTurn(
+			id="turn_topic",
+			thread_id="thr_123",
+			role="user",
+			content="topic replay",
+			created_at="2026-03-21T10:00:01Z",
+			topic_id="user_config",
+		),
+	]
+
+	monkeypatch.setattr(ai_route, "list_turns", lambda thread_id: fallback_turns)
+	monkeypatch.setattr(ai_route, "list_turns_for_topic", lambda thread_id, topic_id: topic_turns)
+
+	captured = {}
+	monkeypatch.setattr(
+		ai_route,
+		"handle_ai_request_with_thread",
+		lambda ctx, message, prior_turns, **kwargs: (
+			captured.update({"prior_turns": prior_turns, "kwargs": kwargs})
+			or ai_orchestrator.OrchestratorResult(
+				final_message="ok",
+				tool_turns=[],
+				success=True,
+			)
+		),
+	)
+
+	response = client.post(
+		"/api_v2/ai/threads/thr_123/messages",
+		json={"message": "update my settings", "capability": "user_config"},
+		headers=_auth_headers(app),
+	)
+
+	assert response.status_code == 200
+	assert captured["prior_turns"] == topic_turns
+	assert captured["kwargs"]["context_packing_enabled"] is True
+
+
+def test_ai_thread_message_route_filters_fallback_display_tool_turns_by_capability(monkeypatch):
+	app = _build_app()
+	client = app.test_client()
+	_install_thread_store_stubs(monkeypatch)
+
+	prior_turns = [
+		AIThreadTurn(
+			id="turn_tool_1",
+			thread_id="thr_123",
+			role="tool",
+			content="",
+			created_at="2026-03-21T10:00:00Z",
+			tool_name="list_orders",
+			tool_params={"scheduled": False},
+			tool_result={"order": [], "count": 0},
+		),
+		AIThreadTurn(
+			id="turn_tool_2",
+			thread_id="thr_123",
+			role="tool",
+			content="",
+			created_at="2026-03-21T10:00:01Z",
+			tool_name="list_item_types_config",
+			tool_params={"limit": 20},
+			tool_result={"item_types": [{"id": 1, "name": "Furniture", "properties": []}], "count": 1},
+		),
+	]
+	monkeypatch.setattr(ai_route, "list_turns", lambda thread_id: prior_turns)
+
+	monkeypatch.setattr(
+		ai_route,
+		"handle_ai_request_with_thread",
+		lambda ctx, message, prior_turns, **kwargs: ai_orchestrator.OrchestratorResult(
+			final_message="Here are your configured item types.",
+			tool_turns=[],
+			success=True,
+			reuse_recent_tool_turns=True,
+		),
+	)
+
+	response = client.post(
+		"/api_v2/ai/threads/thr_123/messages",
+		json={"message": "show my item type settings", "capability": "user_config"},
+		headers=_auth_headers(app),
+	)
+
+	assert response.status_code == 200
+	payload = response.get_json()
+	message = payload["data"]["message"]
+	assert [entry["tool"] for entry in message["tool_trace"]] == ["list_item_types_config"]
+	assert all(action["id"] != "navigate_orders" for action in message["actions"])
+	assert all(block["entity_type"] != "order" for block in message["blocks"])
+
+
+def test_ai_thread_message_route_filters_fallback_display_tool_turns_by_operation(monkeypatch):
+	app = _build_app()
+	client = app.test_client()
+	_install_thread_store_stubs(monkeypatch)
+
+	prior_turns = [
+		AIThreadTurn(
+			id="turn_tool_1",
+			thread_id="thr_123",
+			role="tool",
+			content="",
+			created_at="2026-03-21T10:00:00Z",
+			tool_name="list_orders",
+			tool_params={"scheduled": False},
+			tool_result={"order": [{"id": 11, "order_scalar_id": "11", "order_state_id": 1}], "count": 1},
+		),
+		AIThreadTurn(
+			id="turn_tool_2",
+			thread_id="thr_123",
+			role="tool",
+			content="",
+			created_at="2026-03-21T10:00:01Z",
+			tool_name="list_plans",
+			tool_params={"label": "Morning"},
+			tool_result={"delivery_plans": [{"id": 91, "label": "Morning route"}], "count": 1},
+		),
+	]
+	monkeypatch.setattr(ai_route, "list_turns", lambda thread_id: prior_turns)
+
+	monkeypatch.setattr(
+		ai_route,
+		"handle_ai_request_with_thread",
+		lambda ctx, message, prior_turns, **kwargs: ai_orchestrator.OrchestratorResult(
+			final_message="Found matching plans.",
+			tool_turns=[],
+			success=True,
+			reuse_recent_tool_turns=True,
+			data={"stage": "execute", "operation": "list_plans"},
+		),
+	)
+
+	response = client.post(
+		"/api_v2/ai/threads/thr_123/messages",
+		json={"message": "show my plans", "capability": "logistics"},
+		headers=_auth_headers(app),
+	)
+
+	assert response.status_code == 200
+	payload = response.get_json()
+	message = payload["data"]["message"]
+	assert [entry["tool"] for entry in message["tool_trace"]] == ["list_plans"]
+	assert all(block["entity_type"] != "order" for block in message["blocks"])
+	assert all(action["id"] != "navigate_orders" for action in message["actions"])
+
+
+def test_ai_thread_message_route_filters_fallback_display_tool_turns_for_create_order_operation(monkeypatch):
+	app = _build_app()
+	client = app.test_client()
+	_install_thread_store_stubs(monkeypatch)
+
+	prior_turns = [
+		AIThreadTurn(
+			id="turn_tool_1",
+			thread_id="thr_123",
+			role="tool",
+			content="",
+			created_at="2026-03-21T10:00:00Z",
+			tool_name="list_orders",
+			tool_params={"scheduled": False},
+			tool_result={"order": [{"id": 55, "order_scalar_id": "55", "order_state_id": 1}], "count": 1},
+		),
+		AIThreadTurn(
+			id="turn_tool_2",
+			thread_id="thr_123",
+			role="tool",
+			content="",
+			created_at="2026-03-21T10:00:01Z",
+			tool_name="geocode_address",
+			tool_params={"q": "Kungsgatan 5"},
+			tool_result={"found": True, "formatted_address": "Kungsgatan 5, Stockholm"},
+		),
+		AIThreadTurn(
+			id="turn_tool_3",
+			thread_id="thr_123",
+			role="tool",
+			content="",
+			created_at="2026-03-21T10:00:02Z",
+			tool_name="create_order",
+			tool_params={"client_first_name": "Anna"},
+			tool_result={"status": "created", "order_id": 77, "items_created": 0},
+		),
+	]
+	monkeypatch.setattr(ai_route, "list_turns", lambda thread_id: prior_turns)
+
+	monkeypatch.setattr(
+		ai_route,
+		"handle_ai_request_with_thread",
+		lambda ctx, message, prior_turns, **kwargs: ai_orchestrator.OrchestratorResult(
+			final_message="Created order #77.",
+			tool_turns=[],
+			success=True,
+			reuse_recent_tool_turns=True,
+			data={"stage": "execute", "operation": "create_order"},
+		),
+	)
+
+	response = client.post(
+		"/api_v2/ai/threads/thr_123/messages",
+		json={"message": "create the order", "capability": "logistics"},
+		headers=_auth_headers(app),
+	)
+
+	assert response.status_code == 200
+	payload = response.get_json()
+	message = payload["data"]["message"]
+	assert [entry["tool"] for entry in message["tool_trace"]] == ["geocode_address", "create_order"]
+	assert all(action["id"] != "navigate_orders" for action in message["actions"])
+
+
+def test_ai_thread_message_route_surfaces_tool_error_code_in_tool_trace(monkeypatch):
+	app = _build_app()
+	client = app.test_client()
+	_install_thread_store_stubs(monkeypatch)
+
+	monkeypatch.setattr(
+		ai_route,
+		"handle_ai_request_with_thread",
+		lambda ctx, message, prior_turns, **kwargs: ai_orchestrator.OrchestratorResult(
+			final_message="I could not apply that proposal.",
+			tool_turns=[
+				{
+					"tool": "apply_item_taxonomy_proposal",
+					"params": {"approved": True},
+					"result": {
+						"error": "This proposal has expired and can no longer be applied.",
+						"error_code": "proposal_expired",
+					},
+				}
+			],
+			success=True,
+		),
+	)
+
+	response = client.post(
+		"/api_v2/ai/threads/thr_123/messages",
+		json={"message": "apply it", "capability": "user_config"},
+		headers=_auth_headers(app),
+	)
+
+	assert response.status_code == 200
+	data = response.get_json()["data"]
+	trace = data["message"]["tool_trace"]
+	assert trace[0]["status"] == "error"
+	assert trace[0]["result"]["error_code"] == "proposal_expired"
+
+
+def test_ai_thread_message_route_auto_detects_plain_text_override(monkeypatch):
+	app = _build_app()
+	client = app.test_client()
+	_install_thread_store_stubs(monkeypatch)
+
+	monkeypatch.setattr(
+		ai_route,
+		"handle_ai_request_with_thread",
+		lambda ctx, message, prior_turns, **kwargs: ai_orchestrator.OrchestratorResult(
+			final_message="I found 2 orders.\n- ORD-1\n- ORD-2",
+			tool_turns=[
+				{
+					"tool": "list_orders",
+					"params": {"scheduled": False},
+					"result": {
+						"count": 2,
+						"orders": [
+							{"id": "ORD-1", "order_scalar_id": "ORD-1", "order_state_id": 1},
+							{"id": "ORD-2", "order_scalar_id": "ORD-2", "order_state_id": 1},
+						],
+					},
+				}
+			],
+			success=True,
+			data={"operation": "list_orders"},
+		),
+	)
+
+	response = client.post(
+		"/api_v2/ai/threads/thr_123/messages",
+		json={"message": "list all orders in plain text"},
+		headers=_auth_headers(app),
+	)
+
+	assert response.status_code == 200
+	message = response.get_json()["data"]["message"]
+	assert message["narrative_policy"] == "full_enumeration"
+	assert "- ORD-1" in message["content"]
+
+
+def test_ai_thread_message_route_persists_and_rehydrates_typed_warnings(monkeypatch):
+	app = _build_app()
+	client = app.test_client()
+	stored_turns = _install_thread_store_stubs(monkeypatch)
+
+	monkeypatch.setattr(
+		ai_route,
+		"handle_ai_request_with_thread",
+		lambda ctx, message, prior_turns, **kwargs: ai_orchestrator.OrchestratorResult(
+			final_message="Order ORD-999 needs attention.",
+			tool_turns=[
+				{
+					"tool": "list_orders",
+					"params": {},
+					"result": {
+						"count": 1,
+						"orders": [{"id": "ORD-1", "order_scalar_id": "ORD-1", "order_state_id": 1}],
+					},
+				}
+			],
+			success=True,
+			data={"operation": "list_orders"},
+		),
+	)
+
+	post_response = client.post(
+		"/api_v2/ai/threads/thr_123/messages",
+		json={"message": "show issues"},
+		headers=_auth_headers(app),
+	)
+
+	assert post_response.status_code == 200
+	post_message = post_response.get_json()["data"]["message"]
+	assert post_message["typed_warnings"]
+	assert post_message["typed_warnings"][0]["code"] == "AI_FOCUS_MISMATCH"
+
+	monkeypatch.setattr(ai_route, "list_all_turns", lambda thread_id: stored_turns)
+	get_response = client.get(
+		"/api_v2/ai/threads/thr_123",
+		headers=_auth_headers(app),
+	)
+
+	assert get_response.status_code == 200
+	messages = get_response.get_json()["data"]["messages"]
+	assistant_turn = messages[-1]
+	assert assistant_turn["typed_warnings"]
+	assert assistant_turn["typed_warnings"][0]["code"] == "AI_FOCUS_MISMATCH"
+
+
 def test_ai_thread_message_route_rejects_unknown_capability(monkeypatch):
 	app = _build_app()
 	client = app.test_client()
@@ -180,7 +801,8 @@ def test_ai_thread_message_route_rejects_unknown_capability(monkeypatch):
 	assert response.status_code == 400
 	payload = response.get_json()
 	assert payload["success"] is False
-	assert "Unknown AI capability" in payload["error"]
+	assert payload.get("code") == "capability_policy_unknown_id"
+	assert "Unknown capability_id" in payload["error"]
 
 
 def test_ai_thread_message_route_falls_back_to_create_order_without_address(monkeypatch):
@@ -402,7 +1024,8 @@ def test_ai_thread_message_handles_single_order_object_from_list_orders(monkeypa
 	assert stored_turns[-1].blocks[0].data["items"][0]["order_number"] == "1056"
 
 
-def test_ai_thread_message_rejects_non_response_while_blocking_interaction_is_awaiting(monkeypatch):
+def test_ai_thread_message_rejects_plain_message_while_confirm_is_awaiting(monkeypatch):
+	"""Only confirm interactions hard-gate the thread; question interactions accept plain messages."""
 	app = _build_app()
 	client = app.test_client()
 
@@ -410,11 +1033,11 @@ def test_ai_thread_message_rejects_non_response_while_blocking_interaction_is_aw
 		id="turn_blocking",
 		thread_id="thr_123",
 		role="assistant",
-		content="Which plan type should I use?",
+		content="Update 50 orders to completed? Please confirm.",
 		created_at="2026-03-21T11:00:00Z",
 		awaiting_response=True,
-		interaction_kind="question",
-		interaction_id="q_plan_type",
+		interaction_kind="confirm",
+		interaction_id="int_confirm_update_order_state",
 	)
 
 	monkeypatch.setattr(ai_route, "assert_thread_access", lambda *args, **kwargs: None)
@@ -422,14 +1045,14 @@ def test_ai_thread_message_rejects_non_response_while_blocking_interaction_is_aw
 
 	response = client.post(
 		"/api_v2/ai/threads/thr_123/messages",
-		json={"message": "create the plan now"},
+		json={"message": "yes go ahead"},
 		headers=_auth_headers(app),
 	)
 
 	assert response.status_code == 409
 	payload = response.get_json()
 	assert payload["success"] is False
-	assert payload["data"]["awaiting_interaction_id"] == "q_plan_type"
+	assert payload["data"]["awaiting_interaction_id"] == "int_confirm_update_order_state"
 
 
 def test_ai_thread_message_marks_assistant_turn_awaiting_response_for_blocking_interaction(monkeypatch):
@@ -862,3 +1485,56 @@ def test_ai_thread_message_forwards_and_persists_interaction_form(monkeypatch):
 		"client_address": "Kungsgatan 5, Stockholm",
 		"client_phone": "+46 70 123 45 67",
 	}
+
+
+def test_ai_thread_message_accepts_plain_message_for_question_interaction(monkeypatch):
+	"""A plain message (no __interaction_response__) auto-maps to a pending question interaction
+	and resumes execution without requiring the formal interaction form protocol."""
+	app = _build_app()
+	client = app.test_client()
+	stored_turns = _install_thread_store_stubs(monkeypatch)
+
+	awaiting_turn = AIThreadTurn(
+		id="turn_clarify_pending",
+		thread_id="thr_123",
+		role="assistant",
+		content="Please describe your business scope and naming preferences.",
+		created_at="2026-03-21T13:00:00Z",
+		awaiting_response=True,
+		interaction_kind="question",
+		interaction_id="int_clarify_user_config_item_taxonomy",
+	)
+
+	clear_calls: list[tuple[str, str]] = []
+	monkeypatch.setattr(ai_route, "assert_thread_access", lambda *args, **kwargs: None)
+	monkeypatch.setattr(ai_route.thread_store, "get_turn_awaiting_response", lambda thread_id: awaiting_turn)
+	monkeypatch.setattr(
+		ai_route.thread_store,
+		"clear_turn_awaiting_response",
+		lambda thread_id, turn_id: clear_calls.append((thread_id, turn_id)),
+	)
+	monkeypatch.setattr(
+		ai_route,
+		"handle_ai_request_with_thread",
+		lambda *args, **kwargs: ai_orchestrator.OrchestratorResult(
+			final_message="Here is a proposed taxonomy for your second hand furniture business.",
+			tool_turns=[],
+			success=True,
+		),
+	)
+
+	response = client.post(
+		"/api_v2/ai/threads/thr_123/messages",
+		json={"message": "it's a second hand furniture company, we restore and sell second hand furniture"},
+		headers=_auth_headers(app),
+	)
+
+	assert response.status_code == 200
+	payload = response.get_json()
+	assert payload["success"] is True
+	assert payload["data"]["message"]["content"] == "Here is a proposed taxonomy for your second hand furniture business."
+	assert clear_calls == [("thr_123", "turn_clarify_pending")]
+	# user turn should have been tagged as a response to the clarify interaction
+	user_turn = stored_turns[0]
+	assert user_turn.role == "user"
+	assert user_turn.interaction_response_id == "int_clarify_user_config_item_taxonomy"
