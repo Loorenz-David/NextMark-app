@@ -39,7 +39,15 @@ export interface AITypedWarning {
 
 export interface AIBlock {
   id?: string
-  kind: 'entity_detail' | 'entity_collection' | 'summary' | 'stat' | 'analytics'
+  kind:
+    | 'entity_detail'
+    | 'entity_collection'
+    | 'summary'
+    | 'stat'
+    | 'analytics'
+    | 'analytics_kpi'
+    | 'analytics_trend'
+    | 'analytics_breakdown'
   entity_type?: 'order' | 'route' | 'plan' | 'client' | 'driver' | 'generic' | 'analytics'
   layout?: 'card' | 'cards' | 'list' | 'table' | 'chips' | 'key_value' | 'metric_grid' | 'bar_list'
   title?: string

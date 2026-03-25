@@ -20,13 +20,21 @@ interface AiPanelOverlayProps {
   messages: AiPanelMessage[]
   composerValue: string
   isLoading: boolean
+  loadingStatusText?: string
+  capabilityMode?: 'auto' | 'manual'
+  selectedCapabilityId?: string
+  capabilityOptions?: NonNullable<AiPanelProviderProps['capabilityOptions']>
   activeActionId: string | null
   theme: AiPanelTheme
   desktopSize: { width: number; height: number }
   panelPosition: { x: number; y: number }
   launcherPosition: { x: number; y: number }
   renderEmptyState?: AiPanelProviderProps['renderEmptyState']
+  diagnostics?: AiPanelProviderProps['diagnostics']
+  mapLegacyDataToBlocks?: AiPanelProviderProps['mapLegacyDataToBlocks']
+  renderBlock?: AiPanelProviderProps['renderBlock']
   onComposerChange: (value: string) => void
+  onCapabilitySelectionChange?: (value: string) => void
   onClose: () => void
   onOpen: () => void
   onClear: () => void
@@ -47,13 +55,21 @@ export function AiPanelOverlay({
   messages,
   composerValue,
   isLoading,
+  loadingStatusText,
+  capabilityMode,
+  selectedCapabilityId,
+  capabilityOptions,
   activeActionId,
   theme,
   desktopSize,
   panelPosition,
   launcherPosition,
   renderEmptyState,
+  diagnostics,
+  mapLegacyDataToBlocks,
+  renderBlock,
   onComposerChange,
+  onCapabilitySelectionChange,
   onClose,
   onOpen,
   onClear,
@@ -81,10 +97,18 @@ export function AiPanelOverlay({
     messages,
     composerValue,
     isLoading,
+    loadingStatusText,
+    capabilityMode,
+    selectedCapabilityId,
+    capabilityOptions,
     activeActionId,
     theme,
     renderEmptyState,
+    diagnostics,
+    mapLegacyDataToBlocks,
+    renderBlock,
     onComposerChange,
+    onCapabilitySelectionChange,
     onClose,
     onClear,
     onRetry,

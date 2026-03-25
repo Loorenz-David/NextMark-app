@@ -3,8 +3,10 @@ import { validateAddress } from '@/shared/data-validation/addressValidation'
 import { validateString } from '@shared-domain'
 import type { address } from '@/types/address'
 import type { Phone } from '@/types/phone'
+import type { OrderDeliveryWindow } from '../../../types/order'
 
 import { useOrderValidation } from '../../../domain/useOrderValidation'
+import { validateNonOverlappingUtcDeliveryWindows } from '../flows/orderFormDeliveryWindows.flow'
 
 export const useOrderFormWarnings = () => {
   const validation = useOrderValidation()
@@ -61,6 +63,23 @@ export const useOrderFormWarnings = () => {
     return isValid
   })
 
+  const deliveryWindowsWarning = useInputWarning('At least one delivery window is required.', (value, setMessage) => {
+    const candidate = value as OrderDeliveryWindow[] | null | undefined
+
+    if (!Array.isArray(candidate) || candidate.length === 0) {
+      setMessage('At least one delivery window is required.')
+      return false
+    }
+
+    const overlapValidation = validateNonOverlappingUtcDeliveryWindows(candidate)
+    if (!overlapValidation.valid) {
+      setMessage(overlapValidation.message)
+      return false
+    }
+
+    return true
+  })
+
   return {
     referenceWarning,
     firstNameWarning,
@@ -68,6 +87,7 @@ export const useOrderFormWarnings = () => {
     emailWarning,
     primaryPhoneWarning,
     addressWarning,
+    deliveryWindowsWarning,
   }
 }
 

@@ -23,8 +23,13 @@ export function AiPanelProvider({
   defaultOpen = false,
   desktopSize = DEFAULT_DESKTOP_SIZE,
   launcherLabel = 'AI',
+  maxMessages,
+  diagnostics,
+  capabilityOptions = [],
   theme,
   renderEmptyState,
+  mapLegacyDataToBlocks,
+  renderBlock,
 }: AiPanelProviderProps) {
   const mergedTheme = useMemo(() => mergeAiPanelTheme(theme), [theme])
 
@@ -44,6 +49,8 @@ export function AiPanelProvider({
   const conversationState = useAiPanelConversation({
     transport,
     storageKey,
+    maxMessages,
+    capabilityOptions,
     resolveAction,
     onOpen: open,
     onClose: close,
@@ -66,14 +73,20 @@ export function AiPanelProvider({
             <AiPanelOverlay
               activeActionId={conversationState.activeActionId}
               composerValue={conversationState.composerValue}
+              capabilityMode={conversationState.capabilityMode}
+              capabilityOptions={capabilityOptions}
               desktopSize={desktopSize}
+              diagnostics={diagnostics}
               isDragging={layoutState.isDragging}
               isLoading={controllerValue.isLoading}
               isMobile={layoutState.isMobile}
               isOpen={layoutState.isOpen}
               launcherLabel={launcherLabel}
               launcherPosition={layoutState.launcherPosition}
+              loadingStatusText={conversationState.loadingStatusText}
+              mapLegacyDataToBlocks={mapLegacyDataToBlocks}
               messages={controllerValue.messages}
+              onCapabilitySelectionChange={conversationState.setCapabilitySelection}
               onClear={controllerValue.clearConversation}
               onClose={close}
               onComposerChange={conversationState.setComposerValue}
@@ -84,7 +97,9 @@ export function AiPanelProvider({
               panelPosition={layoutState.panelPosition}
               placeholder={placeholder}
               renderEmptyState={renderEmptyState}
+              renderBlock={renderBlock}
               runAction={conversationState.runAction}
+              selectedCapabilityId={conversationState.selectedCapabilityId}
               subtitle={subtitle}
               theme={mergedTheme}
               title={title}

@@ -16,7 +16,7 @@ import type { AiActionDescriptor, AiPanelMessage, AiPanelProviderProps, AiPanelT
 interface AiPanelTranscriptProps {
   messages: AiPanelMessage[]
   isLoading: boolean
-  loadingStatusText: string
+  loadingStatusText?: string
   activeActionId: string | null
   theme: AiPanelTheme
   renderEmptyState?: AiPanelProviderProps['renderEmptyState']

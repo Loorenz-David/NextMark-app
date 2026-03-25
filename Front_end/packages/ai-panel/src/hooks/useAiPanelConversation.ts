@@ -3,8 +3,10 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { clearPersistedThread, readPersistedThread, writePersistedThread } from '../layout'
 import { createAiPanelMessage } from '../message'
 import type {
+  AiCapabilityOption,
   AiActionDescriptor,
   AiMessageContext,
+  AiCapabilityMode,
   AiPanelController,
   AiPanelMessage,
   AiTransportAdapter,
@@ -13,6 +15,8 @@ import type {
 interface UseAiPanelConversationParams {
   transport: AiTransportAdapter
   storageKey: string
+  maxMessages?: number
+  capabilityOptions?: AiCapabilityOption[]
   resolveAction?: (action: AiActionDescriptor) => void | Promise<void>
   onOpen: () => void
   onToggle: () => void
@@ -23,13 +27,27 @@ interface AiPanelConversationState {
   controller: AiPanelController
   composerValue: string
   setComposerValue: (value: string) => void
+  loadingStatusText: string
+  capabilityMode: AiCapabilityMode
+  selectedCapabilityId: string
+  setCapabilitySelection: (value: string) => void
   activeActionId: string | null
   runAction: (action: AiActionDescriptor) => Promise<void>
+}
+
+function trimMessages(messages: AiPanelMessage[], maxMessages?: number) {
+  if (!maxMessages || maxMessages <= 0) {
+    return messages
+  }
+
+  return messages.slice(-maxMessages)
 }
 
 export function useAiPanelConversation({
   transport,
   storageKey,
+  maxMessages,
+  capabilityOptions = [],
   resolveAction,
   onOpen,
   onToggle,
@@ -39,8 +57,19 @@ export function useAiPanelConversation({
   const [messages, setMessages] = useState<AiPanelMessage[]>([])
   const [composerValue, setComposerValue] = useState('')
   const [isLoading, setIsLoading] = useState(false)
+  const [loadingStatusText, setLoadingStatusText] = useState('')
   const [activeActionId, setActiveActionId] = useState<string | null>(null)
+  const [capabilityMode, setCapabilityMode] = useState<AiCapabilityMode>('auto')
+  const [selectedCapabilityId, setSelectedCapabilityId] = useState<string>(capabilityOptions[0]?.id ?? '')
   const lastPromptRef = useRef<string | null>(null)
+
+  useEffect(() => {
+    if (selectedCapabilityId || capabilityOptions.length === 0) {
+      return
+    }
+
+    setSelectedCapabilityId(capabilityOptions[0]?.id ?? '')
+  }, [capabilityOptions, selectedCapabilityId])
 
   // On mount: if we have a persisted threadId and transport supports loadThread,
   // restore the conversation history.
@@ -67,9 +96,20 @@ export function useAiPanelConversation({
     setMessages([])
     setThreadId(null)
     setComposerValue('')
+    setLoadingStatusText('')
     lastPromptRef.current = null
     clearPersistedThread(storageKey)
   }, [storageKey])
+
+  const setCapabilitySelection = useCallback((value: string) => {
+    if (value === '__auto__') {
+      setCapabilityMode('auto')
+      return
+    }
+
+    setCapabilityMode('manual')
+    setSelectedCapabilityId(value)
+  }, [])
 
   const send = useCallback(
     async (message?: string, context?: AiMessageContext) => {
@@ -80,10 +120,11 @@ export function useAiPanelConversation({
 
       onOpen()
       setComposerValue('')
-      setMessages((current) => [
+      setLoadingStatusText('')
+      setMessages((current) => trimMessages([
         ...current,
         createAiPanelMessage({ role: 'user', content: nextMessage }),
-      ])
+      ], maxMessages))
       setIsLoading(true)
       lastPromptRef.current = nextMessage
 
@@ -95,16 +136,55 @@ export function useAiPanelConversation({
         writePersistedThread(storageKey, createdThread.threadId)
       }
 
+      let stopPolling = () => undefined
+
       try {
+        if (transport.pollLoadingStatus) {
+          let cancelled = false
+          const poll = async () => {
+            if (cancelled) {
+              return
+            }
+
+            try {
+              const result = await transport.pollLoadingStatus?.({
+                threadId: activeThreadId!,
+                lastMessage: nextMessage,
+              })
+
+              if (!cancelled && typeof result?.message === 'string') {
+                setLoadingStatusText(result.message)
+              }
+            } catch {
+              // Loading status is additive only; failures should not break the main request.
+            }
+          }
+
+          void poll()
+          const interval = window.setInterval(() => {
+            void poll()
+          }, 1500)
+
+          stopPolling = () => {
+            cancelled = true
+            window.clearInterval(interval)
+          }
+        }
+
+        const effectiveContext: AiMessageContext = {
+          ...(context ?? {}),
+          capability_mode: capabilityMode,
+          capability_id: capabilityMode === 'manual' ? selectedCapabilityId : undefined,
+        }
 
         const response = await transport.sendMessage({
           threadId: activeThreadId,
           message: nextMessage,
-          context,
+          context: effectiveContext,
         })
 
         setThreadId(response.threadId)
-        setMessages((current) => [
+        setMessages((current) => trimMessages([
           ...current,
           createAiPanelMessage({
             role: response.message.role ?? 'assistant',
@@ -120,18 +200,20 @@ export function useAiPanelConversation({
             data: response.message.data,
             interactions: response.message.interactions,
           }),
-        ])
+        ], maxMessages))
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : 'The AI request failed.'
-        setMessages((current) => [
+        setMessages((current) => trimMessages([
           ...current,
           createAiPanelMessage({ role: 'error', content: errorMessage }),
-        ])
+        ], maxMessages))
       } finally {
+        stopPolling()
         setIsLoading(false)
+        setLoadingStatusText('')
       }
     },
-    [composerValue, isLoading, onOpen, storageKey, threadId, transport],
+    [capabilityMode, composerValue, isLoading, maxMessages, onOpen, selectedCapabilityId, storageKey, threadId, transport],
   )
 
   const retryLast = useCallback(async () => {
@@ -186,6 +268,10 @@ export function useAiPanelConversation({
     controller,
     composerValue,
     setComposerValue,
+    loadingStatusText,
+    capabilityMode,
+    selectedCapabilityId,
+    setCapabilitySelection,
     activeActionId,
     runAction,
   }

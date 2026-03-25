@@ -24,13 +24,15 @@ The package owns:
 ```
 AiPanelProvider
   ├─ capability selection state (auto/manual + selected id)
+  ├─ config passthrough (renderEmptyState, renderBlock, mapLegacyDataToBlocks, diagnostics)
   ├─ useAiPanelLayoutState
   ├─ useAiPanelConversation
   │    ├─ thread/message state
   │    ├─ send/load/retry
-  │    ├─ internal interaction action handling
+   │    ├─ capability context injection
+   │    ├─ optional loading-status polling
   │    ├─ message retention cap
-  │    └─ diagnostics metric emission
+   │    └─ action execution state
   └─ AiPanelOverlay
        └─ AiPanelSurface (DesktopPanel / MobileSheet)
             ├─ AiPanelHeader
@@ -103,7 +105,8 @@ Handled internally by conversation hook (never delegated):
 
 - `maxMessages` is configurable in provider config.
 - Default `DEFAULT_MAX_MESSAGES = 60`.
-- All appends and thread restore are clamped to retention limit.
+- Outgoing user, assistant, and error appends are clamped to the retention limit.
+- Current thread restore path is not clamped yet; persisted thread history is restored as returned by `loadThread`.
 
 ### Transcript rendering
 
@@ -114,9 +117,9 @@ Handled internally by conversation hook (never delegated):
 
 ### Loading status polling
 
-- Uses adaptive timeout-based polling (not fixed interval).
-- Backoff increases up to `LOADING_STATUS_MAX_TICK_MS = 6000`.
-- Polling slows when tab is hidden.
+- When `transport.pollLoadingStatus` exists, the hook polls every 1500ms while a request is active.
+- Polling result is additive UI state only; polling failures do not fail the main send request.
+- Returned loading text is cleared when the request finishes.
 
 ### Diagnostics metrics
 
@@ -130,9 +133,15 @@ If diagnostics are enabled, package emits metrics:
 
 Configured via `AiPanelConfig.diagnostics`.
 
+Current behavior:
+
+- transcript metrics are forwarded correctly from provider -> overlay -> surface -> transcript
+- conversation-level append/load/poll metrics are defined in the contract but are not currently emitted by `useAiPanelConversation`
+
 ### Loading status UX
 
-Overlay currently passes `loadingStatusText = "The assistant is resolving the next step."` to the transcript surface while waiting.
+Transcript shows a transport-provided loading status message when available.
+Fallback text remains: `The assistant is resolving the next step.`
 
 ---
 
@@ -149,7 +158,9 @@ Overlay currently passes `loadingStatusText = "The assistant is resolving the ne
 
 Entity-collection heavy blocks use compact rendering with expand/collapse controls.
 
-Blocking interactions (`question` / `confirm`) currently replace the composer until handled; the close button remains available.
+Blocking interactions (`question` / `confirm`) currently replace the composer until handled.
+The panel close button is disabled when the latest blocking interaction is marked `required`.
+The header clear button remains available but is disabled while loading or when there are no messages.
 
 ---
 
@@ -157,7 +168,7 @@ Blocking interactions (`question` / `confirm`) currently replace the composer un
 
 - Default storage key: `nextmark-ai-panel`.
 - Persists thread id and layout position.
-- On mount, if `loadThread` exists, thread history is restored (then clamped by retention limit).
+- On mount, if `loadThread` exists, thread history is restored.
 
 ---
 
@@ -167,12 +178,13 @@ Blocking interactions (`question` / `confirm`) currently replace the composer un
 |---|---|
 | `src/types.ts` | Shared types and contracts (transport, config, diagnostics, capabilities) |
 | `src/AiPanelProvider.tsx` | Package entrypoint; wires layout + conversation + overlay |
-| `src/hooks/useAiPanelConversation.ts` | Thread state, send flow, interaction handling, capability context, retention, diagnostics |
+| `src/hooks/useAiPanelConversation.ts` | Thread state, send flow, capability context injection, retention, loading-status polling, action execution state |
 | `src/hooks/useAiPanelLayoutState.ts` | Open/close, drag, panel and launcher positions |
 | `src/components/AiPanelTranscript.tsx` | Windowed transcript rendering and load-older behavior |
 | `src/components/AiPanelMessageCard.tsx` | Narrative/block/actions rendering and compact expand behavior |
 | `src/components/AiPanelBlockingInteraction.tsx` | Required question/confirm flow UI |
 | `src/components/AiPanelComposer.tsx` | Input + capability selector |
+| `src/components/AiPanelHeader.tsx` | Panel close and clear controls |
 | `src/diagnostics.ts` | Shared metric emission helper |
 | `src/layout.ts` | Local storage read/write for thread/layout |
 | `src/message.ts` | Message factory and clipboard/json helpers |

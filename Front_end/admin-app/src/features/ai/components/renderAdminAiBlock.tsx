@@ -7,6 +7,7 @@ import type {
 import type { Order } from '@shared-domain'
 
 import { AiAnalyticsBarList } from './AiAnalyticsBarList'
+import { AiAnalyticsKpi } from './AiAnalyticsKpi'
 import { AiAnalyticsMetricGrid } from './AiAnalyticsMetricGrid'
 import { AiAnalyticsNarrativeBlock } from './AiAnalyticsNarrativeBlock'
 import { AiAnalyticsTable } from './AiAnalyticsTable'
@@ -83,6 +84,48 @@ function isNarrativeSummaryData(value: unknown): value is { text: string } {
   return typeof value === 'object' && value !== null && typeof (value as { text?: unknown }).text === 'string'
 }
 
+function isLegacyAnalyticsKpiData(
+  value: unknown,
+): value is {
+  metric_name?: string
+  value?: number | string
+  display_value?: string
+  delta?: number | string
+  unit?: string
+  description?: string
+  confidence_score?: number
+} {
+  return typeof value === 'object' && value !== null && (
+    typeof (value as { metric_name?: unknown }).metric_name === 'string'
+      || typeof (value as { value?: unknown }).value === 'number'
+      || typeof (value as { display_value?: unknown }).display_value === 'string'
+  )
+}
+
+function isLegacyAnalyticsTrendData(
+  value: unknown,
+): value is {
+  description?: string
+  confidence_score?: number
+  data_points: Array<{ label: string; value: number }>
+} {
+  return typeof value === 'object'
+    && value !== null
+    && Array.isArray((value as { data_points?: unknown }).data_points)
+}
+
+function isLegacyAnalyticsBreakdownData(
+  value: unknown,
+): value is {
+  description?: string
+  confidence_score?: number
+  components: Array<{ label: string; value: number; percentage?: number }>
+} {
+  return typeof value === 'object'
+    && value !== null
+    && Array.isArray((value as { components?: unknown }).components)
+}
+
 export function renderAdminAiBlock(
   { block }: AiBlockRendererProps,
   options: AdminAiBlockRenderOptions = {},
@@ -95,6 +138,44 @@ export function renderAdminAiBlock(
         subtitle={block.subtitle}
         text={block.data.text}
         title={block.title}
+      />
+    )
+  }
+
+  if (block.kind === 'analytics_kpi' && isLegacyAnalyticsKpiData(block.data)) {
+    return <AiAnalyticsKpi data={block.data} subtitle={block.subtitle} title={block.title} />
+  }
+
+  if (block.kind === 'analytics_trend' && isLegacyAnalyticsTrendData(block.data)) {
+    return (
+      <AiAnalyticsBarList
+        data={{
+          items: block.data.data_points.map((item, index) => ({
+            id: `trend_${index + 1}`,
+            label: item.label,
+            value: item.value,
+          })),
+        }}
+        meta={{
+          ...block.meta,
+          sourceKind: 'analytics_trend',
+        }}
+      />
+    )
+  }
+
+  if (block.kind === 'analytics_breakdown' && isLegacyAnalyticsBreakdownData(block.data)) {
+    return (
+      <AiAnalyticsBarList
+        data={{
+          items: block.data.components.map((item, index) => ({
+            id: `breakdown_${index + 1}`,
+            label: item.label,
+            value: item.value,
+            displayValue: typeof item.percentage === 'number' ? `${item.percentage}%` : undefined,
+          })),
+        }}
+        meta={block.meta}
       />
     )
   }

@@ -33,11 +33,16 @@ interface SharedSurfaceProps {
   renderBlock?: AiPanelProviderProps['renderBlock']
   composerValue: string
   isLoading: boolean
-  loadingStatusText: string
+  loadingStatusText?: string
+  capabilityMode?: AiPanelProviderProps['transport'] extends never ? never : 'auto' | 'manual'
+  selectedCapabilityId?: string
+  capabilityOptions?: NonNullable<AiPanelProviderProps['capabilityOptions']>
   activeActionId: string | null
   theme: AiPanelTheme
   renderEmptyState?: AiPanelProviderProps['renderEmptyState']
+  diagnostics?: AiPanelProviderProps['diagnostics']
   onComposerChange: (value: string) => void
+  onCapabilitySelectionChange?: (value: string) => void
   onClose: () => void
   onClear: () => void
   onRetry: () => Promise<void>
@@ -63,6 +68,7 @@ export function DesktopPanel({
   const headerVisible = isHoveringPanel || isDragging
   const blockingInteraction = getBlockingInteraction(surfaceProps.messages)
   const closeDisabled = Boolean(blockingInteraction?.required)
+  const clearDisabled = surfaceProps.isLoading || surfaceProps.messages.length === 0
 
   return (
     <section
@@ -80,7 +86,9 @@ export function DesktopPanel({
       <AiPanelHeader
         closeDisabled={closeDisabled}
         closeDisabledReason={closeDisabled ? 'Answer the required interaction before closing this panel.' : undefined}
+        clearDisabled={clearDisabled}
         mobile={false}
+        onClear={surfaceProps.onClear}
         onClose={surfaceProps.onClose}
         onDragStart={onDragStart}
         theme={surfaceProps.theme}
@@ -96,10 +104,14 @@ export function DesktopPanel({
         />
       ) : (
         <AiPanelComposer
+          capabilityMode={surfaceProps.capabilityMode}
+          capabilityOptions={surfaceProps.capabilityOptions}
           disabled={surfaceProps.isLoading}
           onChange={surfaceProps.onComposerChange}
+          onCapabilitySelectionChange={surfaceProps.onCapabilitySelectionChange}
           onSubmit={surfaceProps.onSend}
           placeholder={surfaceProps.placeholder}
+          selectedCapabilityId={surfaceProps.selectedCapabilityId}
           theme={surfaceProps.theme}
           value={surfaceProps.composerValue}
         />
@@ -113,6 +125,7 @@ type MobileSheetProps = SharedSurfaceProps
 export function MobileSheet(surfaceProps: MobileSheetProps) {
   const blockingInteraction = getBlockingInteraction(surfaceProps.messages)
   const closeDisabled = Boolean(blockingInteraction?.required)
+  const clearDisabled = surfaceProps.isLoading || surfaceProps.messages.length === 0
 
   return (
     <section aria-label="AI companion panel" style={mobileSheetStyle(surfaceProps.theme)}>
@@ -120,7 +133,9 @@ export function MobileSheet(surfaceProps: MobileSheetProps) {
       <AiPanelHeader
         closeDisabled={closeDisabled}
         closeDisabledReason={closeDisabled ? 'Answer the required interaction before closing this panel.' : undefined}
+        clearDisabled={clearDisabled}
         mobile={true}
+        onClear={surfaceProps.onClear}
         onClose={surfaceProps.onClose}
         theme={surfaceProps.theme}
         visible={true}
@@ -135,10 +150,14 @@ export function MobileSheet(surfaceProps: MobileSheetProps) {
         />
       ) : (
         <AiPanelComposer
+          capabilityMode={surfaceProps.capabilityMode}
+          capabilityOptions={surfaceProps.capabilityOptions}
           disabled={surfaceProps.isLoading}
           onChange={surfaceProps.onComposerChange}
+          onCapabilitySelectionChange={surfaceProps.onCapabilitySelectionChange}
           onSubmit={surfaceProps.onSend}
           placeholder={surfaceProps.placeholder}
+          selectedCapabilityId={surfaceProps.selectedCapabilityId}
           theme={surfaceProps.theme}
           value={surfaceProps.composerValue}
         />

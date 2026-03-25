@@ -14,12 +14,12 @@ import {
 interface AiPanelComposerProps {
   value: string
   placeholder: string
-  capabilityMode: AiCapabilityMode
-  selectedCapabilityId: string
-  capabilityOptions: AiCapabilityOption[]
+  capabilityMode?: AiCapabilityMode
+  selectedCapabilityId?: string
+  capabilityOptions?: AiCapabilityOption[]
   disabled: boolean
   theme: AiPanelTheme
-  onCapabilitySelectionChange: (value: string) => void
+  onCapabilitySelectionChange?: (value: string) => void
   onChange: (value: string) => void
   onSubmit: () => Promise<void>
 }
@@ -53,12 +53,12 @@ function formatCapabilityLabel(option: AiCapabilityOption): string {
 export function AiPanelComposer({
   value,
   placeholder,
-  capabilityMode,
-  selectedCapabilityId,
-  capabilityOptions,
+  capabilityMode = 'auto',
+  selectedCapabilityId = '',
+  capabilityOptions = [],
   disabled,
   theme,
-  onCapabilitySelectionChange,
+  onCapabilitySelectionChange = () => undefined,
   onChange,
   onSubmit,
 }: AiPanelComposerProps) {

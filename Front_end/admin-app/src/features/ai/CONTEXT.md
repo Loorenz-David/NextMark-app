@@ -27,6 +27,7 @@ AdminAiPanelProvider
   │    ├─ sendMessage  -> POST /ai/threads/:id/messages
   │    └─ loadThread   -> GET  /ai/threads/:id
   ├─ resolveAction (navigate/open_settings/apply_order_filters/copy_text)
+  ├─ dev fixture transport override (`/fixture`, dev only)
   ├─ mapLegacyDataToBlocks (legacy data fallback mapper)
   └─ renderBlock -> AdminAiBlockRenderer
         ├─ useAiOrderRowClick.controller
@@ -35,6 +36,7 @@ AdminAiPanelProvider
              ├─ AiOrderCard
              └─ AiOrdersTable
              ├─ AiAnalyticsNarrativeBlock
+             ├─ AiAnalyticsKpi
              ├─ AiAnalyticsMetricGrid
              ├─ AiAnalyticsBarList
              └─ AiAnalyticsTable
@@ -64,11 +66,9 @@ Key mappings:
 
 - `normalizeV2Response` -> `AiPanelResponse`
 - `normalizeV2Block` -> `AiMessageBlock`
-- `normalizeNarrativeStatisticsBlock` -> canonical analytics/summary blocks
 - `normalizeAiAnalyticsBlockData` -> strict analytics layout data shape validation
 - `normalizeV2Action` -> `AiActionDescriptor`
 - `normalizeV2ToolTrace` -> `AiToolTraceEntry`
-- interaction field/option normalization
 
 Message fields normalized for panel rendering:
 
@@ -79,6 +79,11 @@ Message fields normalized for panel rendering:
 - `blocks`
 
 No UI component should consume raw DTO types from `types/ai.ts` directly.
+
+Important detail:
+
+- canonical `kind: 'analytics'` blocks with `entity_type: 'analytics'` and supported `layout` values are normalized through `normalizeAiAnalyticsBlockData`
+- legacy analytics fixture kinds (`analytics_kpi`, `analytics_trend`, `analytics_breakdown`) are passed through as-is and rendered on the admin side by `renderAdminAiBlock`
 
 ---
 
@@ -94,6 +99,8 @@ No UI component should consume raw DTO types from `types/ai.ts` directly.
 `apply_order_filters` uses `normalizeApplyOrderFiltersPayload` so search text and filters are separated cleanly before store updates.
 
 Internal interaction actions (`interaction:*`) are still handled by the package hook and do not pass through provider `resolveAction`.
+
+In dev mode, `AdminAiPanelProvider` also intercepts `/fixture` commands and returns normalized local fixture payloads without calling the backend thread message endpoint.
 
 ---
 
@@ -126,6 +133,8 @@ This feature transport already forwards `context` to backend unchanged.
 
 This provider currently uses package default capability options and does not override `capabilityOptions`.
 
+The provider also does not currently configure package diagnostics, loading-status polling, or message retention overrides; package defaults apply.
+
 ---
 
 ## File reference
@@ -134,8 +143,9 @@ This provider currently uses package default capability options and does not ove
 |---|---|
 | `providers/AdminAiPanelProvider.tsx` | Feature entrypoint; mounts panel with transport, resolver, block renderer |
 | `components/AdminAiBlockRenderer.tsx` | Hook-safe wrapper that injects row-click action callback |
-| `components/renderAdminAiBlock.tsx` | Pure AI block renderer for order entity blocks |
+| `components/renderAdminAiBlock.tsx` | Pure AI block renderer for order blocks plus admin analytics blocks (canonical + legacy fixture kinds) |
 | `components/AiAnalyticsNarrativeBlock.tsx` | Presentational narrative summary block for analytics text sections |
+| `components/AiAnalyticsKpi.tsx` | Presentational legacy KPI stat block renderer |
 | `components/AiAnalyticsMetricGrid.tsx` | Presentational KPI metric-grid renderer |
 | `components/AiAnalyticsBarList.tsx` | Presentational ranked analytics bar-list renderer |
 | `components/AiAnalyticsTable.tsx` | Presentational analytics table renderer |
@@ -146,5 +156,6 @@ This provider currently uses package default capability options and does not ove
 | `domain/adminAiPanelAdapter.ts` | DTO normalization + transport adapter implementation |
 | `domain/normalizeAiAnalyticsBlockData.ts` | Canonical analytics data guards/normalization by layout |
 | `domain/normalizeApplyOrderFiltersPayload.ts` | apply_order_filters payload normalization |
+| `domain/statisticalNarrative.fixtures.ts` | Dev-only structured AI fixture responses used by `/fixture` commands |
 | `api/ai.api.ts` | Raw HTTP calls |
 | `types/ai.ts` | Raw backend DTO contracts |

@@ -212,7 +212,6 @@ export const STATISTICAL_NARRATIVE_FIXTURES: AIThreadMessageResponse[] = [
           },
           meta: {
             schema_version: 1,
-            chart_type: 'area',
           },
         },
         {
