@@ -31,6 +31,8 @@ class ServiceContext():
         self.allow_is_system_modification = allow_is_system_modification 
         self.extract_fields_key = extract_fields_key
         self.prevent_event_bus = prevent_event_bus
+        # Set by the AI orchestrator to scope tool-access enforcement per operation
+        self.ai_operation: str | None = None
     
     def set_warning( self, message ):
         return self.warnings.append( message )

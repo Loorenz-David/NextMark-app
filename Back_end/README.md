@@ -2,6 +2,14 @@
 
 Backend for the delivery application. It is built with Flask and SQLAlchemy, uses PostgreSQL for application data, Redis for async/realtime infrastructure, and Socket.IO for shared websocket delivery across the admin and driver apps.
 
+## Documentation
+- [AI Operator Architecture](Delivery_app_BK/ai/AI_OPERATOR.md)
+- [Docs Index](docs/README.md)
+- [State Transitions](docs/domain/state-transitions.md)
+- [State Transition Spec](docs/domain/state-transitions-spec.md)
+- [Architecture Overview](docs/architecture/overview.md)
+- [Development Quickstart](docs/runbooks/development-quickstart.md)
+
 ## Tech Stack
 - Python 3.10+
 - Flask & Flask SQLAlchemy

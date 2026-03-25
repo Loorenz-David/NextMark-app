@@ -1,4 +1,5 @@
 from Delivery_app_BK.ai.schemas import AIAction, AIThreadMessagePayload, AIThreadMessageResponse
+from Delivery_app_BK.ai.schemas import AIThreadTurn
 from Delivery_app_BK.routers.api_v2 import ai as ai_route
 
 
@@ -31,12 +32,145 @@ def test_operation_allowlist_covers_response_formatter_operations():
 
 
 def test_message_capability_hint_routes_statistics_keywords():
-    assert ai_route._message_capability_hint("show performance this week") == "statistics"
-    assert ai_route._message_capability_hint("why are deliveries late") == "statistics"
+    assert ai_route._message_capability_hint("show performance this week") == "analytics"
+    assert ai_route._message_capability_hint("why are deliveries late") == "analytics"
 
 
-def test_message_capability_hint_does_not_route_bare_why_to_statistics():
-    assert ai_route._message_capability_hint("why did this fail?") is None
+def test_message_capability_hint_routes_failure_why_to_statistics():
+    assert ai_route._message_capability_hint("why did this fail?") == "analytics"
+
+
+def test_has_mixed_capability_intent_detects_analytics_plus_actions():
+    message = "show performance this week and cancel unassigned orders"
+    assert ai_route._has_mixed_capability_intent(message) is True
+
+
+def test_resolve_capability_auto_prefers_keyword_hint_when_not_mixed():
+    capability_id, source, warnings = ai_route._resolve_capability_auto(
+        "show performance trend this week",
+        prior_turns=[],
+    )
+
+    assert capability_id == "analytics"
+    assert source == "keyword_hint"
+    assert warnings == []
+
+
+def test_resolve_capability_auto_uses_sticky_for_short_followups():
+    prior_turns = [
+        AIThreadTurn(
+            id="turn_1",
+            thread_id="thr_1",
+            role="assistant",
+            content="Previous answer",
+            created_at="2026-03-24T10:00:00Z",
+            data={"resolved_capability_id": "statistics"},
+        )
+    ]
+
+    capability_id, source, warnings = ai_route._resolve_capability_auto(
+        "also for 30d",
+        prior_turns=prior_turns,
+    )
+
+    assert capability_id == "statistics"
+    assert source == "sticky_followup"
+    assert "capability_auto_sticky_applied" in warnings
+
+
+def test_resolve_capability_auto_returns_mixed_when_domains_collide():
+    capability_id, source, warnings = ai_route._resolve_capability_auto(
+        "why are deliveries late and reschedule failed orders",
+        prior_turns=[],
+    )
+
+    assert capability_id is None
+    assert source == "mixed"
+    assert "mixed_intent_needs_clarification" in warnings
+
+
+def test_build_mixed_intent_interaction_includes_detected_capabilities():
+    interaction = ai_route._build_mixed_intent_interaction(
+        "show analytics trend and update order states"
+    )
+
+    option_ids = [opt["id"] for opt in (interaction.options or [])]
+    assert interaction.id == "int_clarify_capability_target"
+    assert "analytics" in option_ids
+    assert "logistics" in option_ids
+
+
+def test_parse_capability_router_output_accepts_valid_payload():
+    raw = (
+        '{"capability_ids":["statistics","logistics"],'
+        '"ordered_capability_ids":["statistics","logistics"],'
+        '"needs_clarification":false,'
+        '"clarification_question":"",'
+        '"reason":"analytics followed by action"}'
+    )
+
+    parsed = ai_route._parse_capability_router_output(raw)
+
+    assert parsed is not None
+    assert parsed["ordered_capability_ids"] == ["statistics", "logistics"]
+    assert parsed["needs_clarification"] is False
+
+
+def test_parse_capability_router_output_filters_unknown_capabilities():
+    raw = (
+        '{"capability_ids":["statistics","unknown"],'
+        '"ordered_capability_ids":["unknown","statistics"],'
+        '"needs_clarification":false,'
+        '"clarification_question":"",'
+        '"reason":"x"}'
+    )
+
+    parsed = ai_route._parse_capability_router_output(raw)
+
+    assert parsed is not None
+    assert parsed["capability_ids"] == ["statistics"]
+    assert parsed["ordered_capability_ids"] == ["statistics"]
+
+
+def test_resolve_capability_plan_auto_with_llm_uses_llm_output(monkeypatch):
+    class _DummyProvider:
+        def complete(self, _system, _user):
+            return (
+                '{"capability_ids":["statistics","logistics"],'
+                '"ordered_capability_ids":["statistics","logistics"],'
+                '"needs_clarification":false,'
+                '"clarification_question":"",'
+                '"reason":"analyze then execute"}'
+            )
+
+    monkeypatch.setattr(ai_route, "OpenAIProvider", lambda: _DummyProvider())
+
+    plan = ai_route._resolve_capability_plan_auto_with_llm(
+        "analyze delays and then reschedule failed orders",
+        prior_turns=[],
+    )
+
+    assert plan["resolved_capability_id"] == "statistics"
+    assert plan["ordered_capability_ids"] == ["statistics", "logistics"]
+    assert plan["resolution_source"] == "llm_router"
+    assert "capability_chain_detected" in plan["policy_warnings"]
+
+
+def test_resolve_capability_plan_auto_with_llm_falls_back_to_heuristics(monkeypatch):
+    class _BrokenProvider:
+        def complete(self, _system, _user):
+            return "not json"
+
+    monkeypatch.setattr(ai_route, "OpenAIProvider", lambda: _BrokenProvider())
+
+    plan = ai_route._resolve_capability_plan_auto_with_llm(
+        "show performance trend this week",
+        prior_turns=[],
+    )
+
+    assert plan["resolved_capability_id"] == "analytics"
+    assert plan["resolution_source"] == "keyword_hint"
+    assert "capability_router_llm_fallback_used" in plan["policy_warnings"]
 
 
 def test_parse_requested_capability_policy_defaults_to_auto_for_backward_compat():
@@ -124,6 +258,7 @@ def test_parse_requested_capability_policy_ignores_capability_id_in_auto_mode_wi
 
 def test_tool_policy_resolution_maps_statistics_to_readonly():
     assert ai_route._resolve_tool_policy("statistics") == "readonly"
+    assert ai_route._resolve_tool_policy("analytics") == "readonly"
     assert ai_route._resolve_tool_policy("logistics") == "action"
 
 

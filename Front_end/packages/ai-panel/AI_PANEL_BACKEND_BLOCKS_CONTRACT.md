@@ -99,6 +99,9 @@ Optional block fields:
 - `entity_collection`
 - `summary`
 - `stat`
+- `analytics_kpi`
+- `analytics_trend`
+- `analytics_breakdown`
 
 `entity_type`:
 - `order`
@@ -107,6 +110,7 @@ Optional block fields:
 - `client`
 - `driver`
 - `generic`
+- `analytics`
 
 `layout`:
 - `card`
@@ -115,6 +119,62 @@ Optional block fields:
 - `table`
 - `chips`
 - `key_value`
+- `metric_grid`
+- `bar_list`
+
+## Narrative Analytics Blocks
+
+New block kinds for ordered analytics narrative responses (statistics capability):
+
+### `analytics_kpi`
+Single key performance indicator with optional change delta and confidence.
+
+```json
+{
+  "kind": "analytics_kpi",
+  "data": {
+    "metric_name": "Delivery Completion Rate",
+    "value": 96.5,
+    "delta": 2.1,
+    "unit": "%",
+    "confidence_score": 0.92
+  }
+}
+```
+
+### `analytics_trend`
+Temporal trend showing direction (up/down/stable) of a metric.
+
+```json
+{
+  "kind": "analytics_trend",
+  "data": {
+    "title": "Route Efficiency",
+    "description": "Average minutes per stop decreased from 8.2 to 7.9",
+    "direction": "up",
+    "confidence_score": 0.87,
+    "data_points": []
+  }
+}
+```
+
+### `analytics_breakdown`
+Distribution or composition analysis (e.g., percentages by category).
+
+```json
+{
+  "kind": "analytics_breakdown",
+  "data": {
+    "title": "Delivery Status Distribution",
+    "description": "Breakdown of order states across active plans",
+    "components": [
+      {"label": "Completed", "value": 847, "percentage": 67.8},
+      {"label": "Preparing", "value": 312, "percentage": 24.9}
+    ],
+    "confidence_score": 0.95
+  }
+}
+```
 
 ## Kind + Layout Compatibility
 
@@ -123,8 +183,12 @@ Recommended combinations:
 - `entity_collection`: `cards` | `list` | `table` | `chips`
 - `summary`: `key_value` | `list`
 - `stat`: `chips` | `key_value`
+- `analytics_kpi`: `card` | `metric_grid`
+- `analytics_trend`: `card` | `list`
+- `analytics_breakdown`: `card` | `bar_list` | `table`
 
 If backend sends a non-recommended pair, frontend may fallback to generic rendering.
+
 
 ## Actions Ownership
 

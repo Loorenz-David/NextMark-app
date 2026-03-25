@@ -1,3 +1,6 @@
+import json
+import logging
+
 from flask import Blueprint, request, jsonify, abort
 from flask_jwt_extended import jwt_required, get_jwt
 
@@ -18,8 +21,61 @@ from Delivery_app_BK.ai.thread_store import (
     list_all_turns,
     list_turns,
 )
+from Delivery_app_BK.ai.capabilities.statistics import NarrativeStatisticalOutput
+
+logger = logging.getLogger(__name__)
 
 ai_bp = Blueprint("api_v2_ai_bp", __name__)
+
+
+# ---------------------------------------------------------------------------
+# Statistics output parsing helpers
+# ---------------------------------------------------------------------------
+
+def _is_statistics_response(tool_turns: list[dict]) -> bool:
+    """Check if this response came from statistics capability."""
+    return any(turn.get("tool") == "get_analytics_snapshot" for turn in tool_turns)
+
+
+def _parse_narrative_statistics_output(final_message: str) -> tuple[str, dict | None]:
+    """
+    Parse final_message as NarrativeStatisticalOutput JSON.
+    
+    Returns:
+      (summary, data_dict): where summary is text content, data_dict is structured data
+                            data_dict is None if parsing fails
+    
+    Guardrail: If blocks are empty or parsing fails, creates a fallback summary block.
+    """
+    if not final_message:
+        return final_message, None
+    
+    try:
+        payload = json.loads(final_message)
+        # Validate against schema
+        parsed = NarrativeStatisticalOutput(**payload)
+        
+        # Guardrail: if no blocks provided, create a fallback text block from summary
+        if not parsed.blocks:
+            fallback_block = {"type": "text", "text": parsed.summary}
+            payload["blocks"] = [fallback_block]
+            logger.info("Statistics response had empty blocks; created fallback text block")
+        
+        # Return summary as message content, full payload as data
+        return parsed.summary, payload
+    except (json.JSONDecodeError, ValueError) as e:
+        logger.warning("Failed to parse statistics output JSON: %s | message=%r", e, final_message)
+        # Create a fallback response with the raw message as a text block
+        fallback_payload = {
+            "summary": final_message,
+            "blocks": [{"type": "text", "text": final_message}],
+            "confidence_score": 0.0,
+            "warnings": ["Failed to parse structured statistics output; presenting raw analysis."],
+        }
+        return final_message, fallback_payload
+
+
+
 
 
 # ---------------------------------------------------------------------------
@@ -105,6 +161,13 @@ def send_message(thread_id: str):
             tool_entry["result"],
         )
         append_turn(thread_id, tool_turn)
+
+    # Parse statistics output if applicable
+    if _is_statistics_response(result.tool_turns):
+        final_message, parsed_data = _parse_narrative_statistics_output(result.final_message)
+        result.final_message = final_message
+        if parsed_data is not None:
+            result.data = parsed_data
 
     # Format structured response
     response = format_response(

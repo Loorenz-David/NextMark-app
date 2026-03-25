@@ -4,31 +4,31 @@ from Delivery_app_BK.services.commands.order.order_states.update_orders_state im
 from Delivery_app_BK.services.domain.plan.plan_states import PlanStateId
 from ...domain.order.order_states import OrderStateId
 from Delivery_app_BK.services.queries.get_instance import get_instance
-
+from Delivery_app_BK.services.domain.state_transitions.plan_state_engine import apply_plan_state
 
 
 def mark_plan_state(
-        ctx:ServiceContext,
+        ctx: ServiceContext,
         delivery_plan_id: int,
         state_id: PlanStateId
 ):
+        plan: DeliveryPlan = get_instance(ctx, DeliveryPlan, delivery_plan_id)
 
-        plan:DeliveryPlan = get_instance(ctx, DeliveryPlan,delivery_plan_id)
-
-        if plan.state_id == state_id:
+        if not apply_plan_state(plan, state_id):
                 return {}
-        
-        plan.state_id = state_id
-        orders = plan.orders
 
         if state_id == PlanStateId.READY:
+                _TERMINAL_ORDER_STATE_IDS = {OrderStateId.COMPLETED, OrderStateId.CANCELLED}
+                eligible_orders = [
+                        o for o in (plan.orders or [])
+                        if o.order_state_id not in _TERMINAL_ORDER_STATE_IDS
+                ]
                 update_orders_state(
                         ctx=ctx,
-                        orders=orders,
-                        state_id=OrderStateId.READY
+                        orders=eligible_orders,
+                        state_id=OrderStateId.READY,
                 )
-       
 
         return {
-                "failed_order_state_updates":{}
+                "failed_order_state_updates": {}
         }

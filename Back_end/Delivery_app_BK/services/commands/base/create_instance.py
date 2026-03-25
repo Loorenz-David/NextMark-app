@@ -7,6 +7,7 @@ from Delivery_app_BK.errors import ValidationFailed
 from ...context import ServiceContext
 from ...utils import model_requires_team, inject_team_id
 from ..utils.inject_fields import inject_fields
+from ..utils import generate_client_id
 
 
 
@@ -25,11 +26,9 @@ def create_instance(
         if model_requires_team( Model ):
             fields = inject_team_id( fields, ctx )
 
+    fields = _ensure_client_id(Model, fields)
+
     new_instance = Model()
-    from sqlalchemy import inspect
-
-    state = inspect(new_instance)
-
 
     inject_fields( 
         ctx,
@@ -38,3 +37,18 @@ def create_instance(
     )
     
     return new_instance
+
+
+def _ensure_client_id(model: Model, fields: dict) -> dict:
+    table = getattr(model, "__table__", None)
+    if table is None or "client_id" not in table.columns:
+        return fields
+
+    client_id = fields.get("client_id")
+    if isinstance(client_id, str) and client_id.strip():
+        return fields
+
+    resolved_fields = dict(fields)
+    prefix = getattr(model, "__tablename__", None) or model.__name__.lower()
+    resolved_fields["client_id"] = generate_client_id(prefix)
+    return resolved_fields

@@ -1,5 +1,5 @@
 
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 
 
@@ -10,6 +10,8 @@ import { usePlanHeaderAction } from "../actions/usePlanActions";
 import { usePlanListStats } from "../store/planList.selector";
 import { BasicButton } from "@/shared/buttons/BasicButton";
 import { usePlanPaginationController } from "../hooks/usePlanPaginationController";
+import type { PlanDateFilterPayload } from "../components/planDateFilter";
+import type { PlanQueryFilters } from "../types/planMeta";
 
 
 type PlanListPage = {
@@ -17,10 +19,33 @@ type PlanListPage = {
   showCloseButton?: boolean
 }
 
+const mergePlanQuery = (previous: PlanQueryFilters | undefined, next: PlanQueryFilters): PlanQueryFilters => {
+  const merged: PlanQueryFilters = {
+    ...previous,
+    ...next,
+  }
+
+  merged.filters = {
+    ...(typeof previous?.filters === 'object' && previous.filters && !Array.isArray(previous.filters)
+      ? previous.filters
+      : {}),
+    ...(typeof next.filters === 'object' && next.filters && !Array.isArray(next.filters)
+      ? next.filters
+      : {}),
+  }
+
+  return merged
+}
+
+const queryEquals = (left: PlanQueryFilters | undefined, right: PlanQueryFilters | undefined): boolean => {
+  return JSON.stringify(left ?? {}) === JSON.stringify(right ?? {})
+}
+
 export const PlanPage = ({
     onRequestClose,
     showCloseButton
 }:PlanListPage) => {
+    const [activeQuery, setActiveQuery] = useState<PlanQueryFilters | undefined>(undefined)
     const scrollContainerRef = useRef<HTMLDivElement | null>(null)
     const handleScrollToTop = useCallback(() => {
       if (scrollContainerRef.current) {
@@ -30,6 +55,25 @@ export const PlanPage = ({
     const plans = useVisiblePlans()
     const plansStats = usePlanListStats()
     const planActions = usePlanHeaderAction()
+    const handleFilterSelection = useCallback((payload: PlanDateFilterPayload) => {
+      const nextFilters = {
+        mode: payload.selection.mode,
+        ...payload.filters,
+      }
+
+      setActiveQuery((previous) => {
+        const candidate = mergePlanQuery(previous, nextFilters)
+        return queryEquals(previous, candidate) ? previous : candidate
+      })
+    }, [])
+
+    const handleFiltersChange = useCallback((filters: PlanQueryFilters) => {
+      setActiveQuery((previous) => {
+        const candidate = mergePlanQuery(previous, filters)
+        return queryEquals(previous, candidate) ? previous : candidate
+      })
+    }, [])
+
     const {
       currentPage,
       hasMore,
@@ -37,6 +81,7 @@ export const PlanPage = ({
       loadFirstPage,
       loadNextPage,
     } = usePlanPaginationController({
+      query: activeQuery,
       scrollToTop: handleScrollToTop,
     })
     useEffect(()=>{
@@ -52,7 +97,8 @@ export const PlanPage = ({
             showCloseButton={showCloseButton}
             planStats={plansStats}
             applySearch={() => {}}
-            applyFilters={() => {}}
+            applyFilters={handleFiltersChange}
+            applyFilterSelection={handleFilterSelection}
         />
             <div ref={scrollContainerRef} className="w-full h-full flex flex-col overflow-y-auto scroll-thin">
                 <PlanList plans={plans} droppable={true}/>
@@ -65,7 +111,7 @@ export const PlanPage = ({
                       ariaLabel: 'Load next page of plans',
                     }}
                   >
-                    {isLoadingPage ? 'Loading…' : hasMore ? `Next Page (${currentPage + 1})` : 'No more plans'}
+                    {isLoadingPage ? 'Loading…' : hasMore ? 'Show more' : 'No more plans'}
                   </BasicButton>
                 </div>
             </div>

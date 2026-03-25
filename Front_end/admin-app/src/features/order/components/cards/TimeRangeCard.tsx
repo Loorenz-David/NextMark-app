@@ -1,4 +1,4 @@
-import { TimeIcon } from '@mui/x-date-pickers'
+import { TimeIcon } from '@/assets/icons'
 
 type Props = {
   timeContainerClass?: string

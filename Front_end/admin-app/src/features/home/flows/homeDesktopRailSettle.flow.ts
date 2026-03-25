@@ -15,6 +15,7 @@ type HomeDesktopRailSettleFlowParams = {
   layoutDeps: RailLayoutDeps
   resize: () => void
   reframeToVisibleArea: () => void
+  shouldReframeToVisibleArea?: () => boolean
 }
 
 export const buildRafSettleScheduler = (
@@ -36,13 +37,16 @@ export const useHomeDesktopRailSettleFlow = ({
   layoutDeps,
   resize,
   reframeToVisibleArea,
+  shouldReframeToVisibleArea,
 }: HomeDesktopRailSettleFlowParams) => {
   const rafRef = useRef<number | null>(null)
 
   const settleNow = useCallback(() => {
     resize()
-    reframeToVisibleArea()
-  }, [reframeToVisibleArea, resize])
+    if (shouldReframeToVisibleArea?.() ?? true) {
+      reframeToVisibleArea()
+    }
+  }, [reframeToVisibleArea, resize, shouldReframeToVisibleArea])
 
   const scheduleSettle = useCallback(() => {
     if (rafRef.current !== null) return

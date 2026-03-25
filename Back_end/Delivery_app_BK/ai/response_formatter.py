@@ -13,8 +13,103 @@ from .schemas import (
 logger = logging.getLogger(__name__)
 
 # ---------------------------------------------------------------------------
-# Tool trace
+# Narrative statistics block mapping
 # ---------------------------------------------------------------------------
+
+def _is_narrative_statistics_response(tool_turns: list[dict]) -> bool:
+    """Check if this response contains narrative statistics blocks."""
+    return any(turn.get("tool") == "get_analytics_snapshot" for turn in tool_turns)
+
+
+def _map_narrative_blocks_to_renderable(data: dict) -> dict:
+    """
+    Map narrative block structure to renderable block format.
+    
+    Transforms blocks array while preserving order and structure.
+    Adds rendering hints for narrative statistics responses.
+    """
+    if not data or "blocks" not in data:
+        return data
+    
+    blocks = data.get("blocks", [])
+    mapped_blocks = []
+    
+    for block in blocks:
+        if not isinstance(block, dict):
+            logger.warning("Skipping non-dict block: %s", type(block))
+            continue
+        
+        block_type = block.get("type")
+        
+        if block_type == "text":
+            # Map text block directly with summary layout
+            mapped_blocks.append({
+                "id": f"block_{uuid4().hex[:8]}",
+                "kind": "summary",
+                "data": {
+                    "text": block.get("text", ""),
+                    "layout": "narrative",
+                },
+            })
+        
+        elif block_type == "analytics_kpi":
+            # Map KPI block to analytics_kpi kind
+            mapped_blocks.append({
+                "id": f"block_{uuid4().hex[:8]}",
+                "kind": "analytics_kpi",
+                "data": {
+                    "metric_name": block.get("metric_name", ""),
+                    "value": block.get("value", 0),
+                    "delta": block.get("delta"),
+                    "unit": block.get("unit"),
+                    "confidence_score": block.get("confidence_score", 0.5),
+                },
+            })
+        
+        elif block_type == "analytics_trend":
+            # Map trend block to analytics_trend kind
+            mapped_blocks.append({
+                "id": f"block_{uuid4().hex[:8]}",
+                "kind": "analytics_trend",
+                "data": {
+                    "title": block.get("title", ""),
+                    "description": block.get("description", ""),
+                    "direction": block.get("direction"),
+                    "confidence_score": block.get("confidence_score", 0.5),
+                    "data_points": block.get("data_points", []),
+                },
+            })
+        
+        elif block_type == "analytics_breakdown":
+            # Map breakdown block to analytics_breakdown kind
+            mapped_blocks.append({
+                "id": f"block_{uuid4().hex[:8]}",
+                "kind": "analytics_breakdown",
+                "data": {
+                    "title": block.get("title", ""),
+                    "description": block.get("description"),
+                    "components": block.get("components", []),
+                    "confidence_score": block.get("confidence_score", 0.5),
+                },
+            })
+        
+        else:
+            logger.warning("Unknown narrative block type: %s", block_type)
+    
+    # Return data with mapped blocks and rendering hints
+    result = data.copy()
+    result["blocks"] = mapped_blocks
+    result["rendering_hints"] = {
+        "has_blocks": len(mapped_blocks) > 0,
+        "suppress_raw_data_preview": True,
+        "text_section_title": "Analysis",
+        "block_section_title": "Insights",
+    }
+    
+    return result
+
+
+
 
 def format_tool_trace(tool_turns: list[dict]) -> list[AIToolTraceEntry]:
     entries: list[AIToolTraceEntry] = []
@@ -235,6 +330,10 @@ def format_response(
     tool_trace = format_tool_trace(tool_turns)
     actions = generate_actions(tool_turns)
     status_label = "Completed" if success else "Failed"
+
+    # Apply narrative statistics block mapping if applicable
+    if _is_narrative_statistics_response(tool_turns) and data:
+        data = _map_narrative_blocks_to_renderable(data)
 
     payload = AIThreadMessagePayload(
         role="assistant",

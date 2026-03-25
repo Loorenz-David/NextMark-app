@@ -1,5 +1,16 @@
 from .registry import STATISTICS_CAPABILITY, STATISTICS_TOOLS
-from .schemas import StatisticalInsight, StatisticalMetric, StatisticalOutput
+from .schemas import (
+    StatisticalInsight,
+    StatisticalMetric,
+    StatisticalOutput,
+    NarrativeBlock,
+    NarrativeBlockText,
+    NarrativeBlockAnalyticsKPI,
+    NarrativeBlockAnalyticsTrend,
+    NarrativeBlockAnalyticsBreakdown,
+    NarrativeBlockType,
+    NarrativeStatisticalOutput,
+)
 
 __all__ = [
     "STATISTICS_CAPABILITY",
@@ -7,4 +18,11 @@ __all__ = [
     "StatisticalInsight",
     "StatisticalMetric",
     "StatisticalOutput",
+    "NarrativeBlock",
+    "NarrativeBlockText",
+    "NarrativeBlockAnalyticsKPI",
+    "NarrativeBlockAnalyticsTrend",
+    "NarrativeBlockAnalyticsBreakdown",
+    "NarrativeBlockType",
+    "NarrativeStatisticalOutput",
 ]

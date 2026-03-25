@@ -51,6 +51,7 @@ const resolveSelectValue = (
 
 const buildSelectOptions = (property: selectedItemTypeProperties[number] ): Array<PopoverSelectOption<string | number>> => {
   const values = (property.options ?? []) as Array<string | number>
+ 
   return values.map((option) => ({
     label: String(option),
     value: option,
@@ -140,14 +141,20 @@ export const ItemPropertiesInputs = ({
           <p className="text-xs font-semibold text-[var(--color-page)] text-center w-full">Item properties</p>
       </div>
       
-      {selectedItemTypeProperties.map((property) => (
+      {selectedItemTypeProperties.map((property, index) => {
+        const resolvedKey =
+          property.client_id != null
+            ? String(property.client_id)
+            : `${property.name ?? 'property'}-${property.field_type ?? 'unknown'}-${index}`
+
+        return (
         <ItemPropertyInputField
-          key={property.client_id}
+          key={resolvedKey}
           property={property}
           propertyValues={propertyValues}
           onPropertyValueChange={onPropertyValueChange}
         />
-      ))}
+      )})}
     </section>
   )
 }

@@ -33,6 +33,7 @@ export type OrderQueryFilters = {
   q?: string
   s?: OrderQueryStringQueries[]
   order_state_id?: number | number[] | null
+  plan_id?: number | number[] | null
   schedule_order?: boolean
   unschedule_order?: boolean
   after_cursor?: string

@@ -10,8 +10,9 @@ import { useOrderController } from '../controllers/order.controller';
 type openOrderDetailProps ={ 
   clientId?: string; 
   serverId?: number; 
-  mode?: 'view' | 'edit' 
+  mode?: 'view' | 'edit'
   freshAfter?: string | null
+  openSource?: 'card' | 'marker'
 }
 type parentParamsProps ={
   borderLeft?:string
@@ -57,13 +58,21 @@ export const useOrderActions = () => {
     (payload: openOrderDetailProps, parentParams:parentParamsProps) => {
       const key = 'order.details'
 
-      const openPayload = sectionManager.getEntryPayload(key) as openOrderDetailProps | undefined
-      if(openPayload && openPayload?.clientId == payload?.clientId){
+      const latestOpenEntry = sectionManager
+        .getSnapshot()
+        .filter((entry) => entry.key === key && !entry.isClosing)
+        .at(-1)
+
+      const openPayload = latestOpenEntry?.payload as openOrderDetailProps | undefined
+      if (openPayload && openPayload.clientId === payload.clientId) {
         return
       }
 
-      
-      sectionManager.open({ key: key, payload , parentParams:parentParams})
+      if (latestOpenEntry) {
+        sectionManager.atomicOpenClose({ key, payload, parentParams }, latestOpenEntry.id)
+      } else {
+        sectionManager.open({ key, payload, parentParams })
+      }
     },
     [sectionManager],
   )
@@ -87,38 +96,68 @@ export const useOrderActions = () => {
   }, [])
 
   const updateFilters = useCallback(
-    (key: OrderQueryStringQueries, value: unknown) => {
+    (key: string, value: unknown) => {
 
       if (key in filterBehavior){
         const updatedFilters = resolveConflicts(query.filters, key)
-        applyFilters({...updatedFilters, [key]:value})
+        applyFilters({...updatedFilters, [key]:value} as OrderQueryFilters)
         return
       }
       
      
 
-      if (orderStringFilters.has(key)) {
+      if (orderStringFilters.has(key as OrderQueryStringQueries)) {
         const previous = query.filters.s ?? []
-        const alreadySelected = previous.includes(key as OrderQueryStringQueries)
+        const stringKey = key as OrderQueryStringQueries
+        const alreadySelected = previous.includes(stringKey)
         if (alreadySelected) return
 
-        updateQueryFilters({ s: [ ...(query.filters.s || []), key as OrderQueryStringQueries] })
+        updateQueryFilters({ s: [ ...(query.filters.s || []), stringKey] })
         return
       } 
-      updateQueryFilters({ [key]: value })
+      updateQueryFilters({ [key]: value } as Partial<OrderQueryFilters>)
     },
     [query, ]
   )
   const deleteFilter = useCallback(
-    (key:OrderQueryStringQueries) => {
-        
-        if (orderStringFilters.has(key)) { 
-         
-          const newStringFilters = (query.filters.s || []).filter(f => f !== key)
+    (key: string, value?: unknown) => {
+        if (key === 's' && typeof value === 'string') {
+          const stringKey = value as OrderQueryStringQueries
+          const newStringFilters = (query.filters.s || []).filter((filterKey) => filterKey !== stringKey)
+
+          if (newStringFilters.length === 0) {
+            deleteQueryFilter('s')
+            return
+          }
 
           updateQueryFilters({ s: newStringFilters })
           return
         }
+
+        if (orderStringFilters.has(key as OrderQueryStringQueries)) {
+          const stringKey = key as OrderQueryStringQueries
+          const newStringFilters = (query.filters.s || []).filter((filterKey) => filterKey !== stringKey)
+
+          if (newStringFilters.length === 0) {
+            deleteQueryFilter('s')
+            return
+          }
+
+          updateQueryFilters({ s: newStringFilters })
+          return
+        }
+
+      const existingValue = query.filters[key as keyof OrderQueryFilters]
+      if (Array.isArray(existingValue) && value !== undefined) {
+        const nextValue = existingValue.filter((item) => item !== value)
+        if (nextValue.length === 0) {
+          deleteQueryFilter(key as keyof OrderQueryFilters)
+          return
+        }
+        updateQueryFilters({ [key]: nextValue } as Partial<OrderQueryFilters>)
+        return
+      }
+
       deleteQueryFilter(key as keyof OrderQueryFilters)
     },
     [query]
@@ -127,14 +166,14 @@ export const useOrderActions = () => {
   const handleOrderMarkerClick = useCallback(
       (_event: MouseEvent, order: Order) => {
         openOrderDetail(
-          { clientId: order.client_id, mode: 'view' },
+          { clientId: order.client_id, mode: 'view', openSource: 'marker' },
           {
             pageClass: 'bg-[var(--color-muted)]/10 ',
             borderLeft: 'rgb(var(--color-light-blue-r),0.7)',
           },
         )
       },
-      [],
+      [openOrderDetail],
     )
 
   return {

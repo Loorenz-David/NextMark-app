@@ -77,7 +77,10 @@ export const RouteSolutionWarnings = ({
     <FloatingPopover
       open={warningOpen}
       onOpenChange={setWarningOpen}
+      classes="flex-none"
       offSetNum={6}
+      renderInPortal={true}
+      floatingClassName="z-[220]"
       reference={
         <div
           className="flex h-7 w-7 items-center justify-center rounded-full border border-amber-300/25 bg-[linear-gradient(135deg,rgba(255,201,71,0.18),rgba(255,201,71,0.08))]"

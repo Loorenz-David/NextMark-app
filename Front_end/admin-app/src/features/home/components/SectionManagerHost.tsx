@@ -16,6 +16,10 @@ type Section ={
   isClosing:boolean
 }
 
+// Must be >= B's spring settle time (~270ms for stiffness:300 damping:30)
+// so A is removed only after B fully covers it. A's exit is then instant and invisible.
+const DUPLICATE_SECTION_CLOSE_DELAY_MS = 350
+
 export function SectionManagerHost({ stackKey, isBaseOpen, containerClassName, width }: SectionManagerHostProps) {
   const sectionManager = useSectionManager()
   const entries = useStackActionEntries(sectionManager)
@@ -23,7 +27,7 @@ export function SectionManagerHost({ stackKey, isBaseOpen, containerClassName, w
   const sectionCount = openSections.length
 
   useEffect(()=>{
-    const allowedOpenOnce = new Set(["order.details", 'orderCase.orderCases', 'orderCase.details', "LocalDeliveryStatsPage"])
+    const allowedOpenOnce = new Set(['orderCase.orderCases', 'orderCase.details', "LocalDeliveryStatsPage"])
 
     const seen= new Map<string,Section>()
     const toClose: string[] = []
@@ -39,11 +43,13 @@ export function SectionManagerHost({ stackKey, isBaseOpen, containerClassName, w
     }
 
 
-    toClose.forEach(id => sectionManager.closeExact(id))
+    toClose.forEach((id) => {
+      sectionManager.closeExactWithDelay(id, DUPLICATE_SECTION_CLOSE_DELAY_MS)
+    })
 
 
 
-  },[sectionCount])
+  }, [openSections, sectionManager])
 
   
 

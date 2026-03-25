@@ -29,7 +29,7 @@ def build_route_solution_stops_for_order_ids(
         if getattr(route_solution, "id", None) is not None:
             lock_route_solution(route_solution.id)
 
-        current_stop = get_next_route_stop_order(getattr(route_solution, "id", None)) - 1
+        current_stop = _resolve_current_stop_order(route_solution)
         for order_id in order_id_list:
             current_stop += 1
             stop_instance = RouteSolutionStop(
@@ -77,3 +77,21 @@ def _skip_reason_value(reason) -> str | None:
     if isinstance(reason, tuple):
         return reason[0] if reason else None
     return reason
+
+
+def _resolve_current_stop_order(route_solution: RouteSolution) -> int:
+    """Return the current max stop order for a route, including pending in-memory stops.
+
+    This avoids duplicate stop_order values when multiple stops are created in the
+    same session before a flush/commit.
+    """
+    in_memory_max = max(
+        (
+            int(stop.stop_order)
+            for stop in (route_solution.stops or [])
+            if getattr(stop, "stop_order", None) is not None
+        ),
+        default=0,
+    )
+    db_max = get_next_route_stop_order(getattr(route_solution, "id", None)) - 1
+    return max(in_memory_max, db_max)

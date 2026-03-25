@@ -26,11 +26,95 @@ export interface AiMessageContext {
 
 export type AiActionVariant = 'primary' | 'secondary' | 'ghost'
 
-export type AiBlockKind = 'entity_detail' | 'entity_collection' | 'summary' | 'stat'
+export type AiBlockKind = 
+  | 'entity_detail' 
+  | 'entity_collection' 
+  | 'summary' 
+  | 'stat' 
+  | 'analytics'
+  | 'analytics_kpi'
+  | 'analytics_trend'
+  | 'analytics_breakdown'
 
-export type AiBlockEntityType = 'order' | 'route' | 'plan' | 'client' | 'driver' | 'generic'
+export type AiBlockEntityType = 'order' | 'route' | 'plan' | 'client' | 'driver' | 'generic' | 'analytics'
 
-export type AiBlockLayout = 'card' | 'cards' | 'list' | 'table' | 'chips' | 'key_value'
+export type AiBlockLayout = 'card' | 'cards' | 'list' | 'table' | 'chips' | 'key_value' | 'metric_grid' | 'bar_list'
+
+export type AiAnalyticsMetricTrend = 'up' | 'down' | 'flat'
+
+export type AiAnalyticsMetricEmphasis = 'default' | 'positive' | 'warning' | 'critical'
+
+export type AiAnalyticsValueType =
+  | 'number'
+  | 'integer'
+  | 'percent'
+  | 'currency'
+  | 'duration_seconds'
+  | 'duration_minutes'
+  | string
+
+export type AiAnalyticsSourceKind =
+  | 'analytics'
+  | 'analytics_kpi'
+  | 'analytics_trend'
+  | 'analytics_breakdown'
+  | string
+
+export interface AiMessageBlockMeta extends Record<string, unknown> {
+  schemaVersion?: number
+  sourceKind?: AiAnalyticsSourceKind
+  direction?: string
+  confidenceScore?: number
+}
+
+export interface AiAnalyticsMetric {
+  id: string
+  label: string
+  value?: number | string
+  displayValue?: string
+  description?: string
+  hint?: string
+  changeLabel?: string
+  trend?: AiAnalyticsMetricTrend
+  emphasis?: AiAnalyticsMetricEmphasis
+  valueType?: AiAnalyticsValueType
+  unit?: string
+}
+
+export interface AiAnalyticsBarItem {
+  id: string
+  label: string
+  value: number
+  displayValue?: string
+  hint?: string
+  color?: string
+}
+
+export interface AiAnalyticsTableColumn {
+  id: string
+  label: string
+  align?: 'left' | 'center' | 'right'
+}
+
+export interface AiAnalyticsTableRow {
+  id?: string
+  [key: string]: unknown
+}
+
+export interface AiAnalyticsMetricGridData {
+  metrics: AiAnalyticsMetric[]
+}
+
+export interface AiAnalyticsBarListData {
+  items: AiAnalyticsBarItem[]
+}
+
+export interface AiAnalyticsTableData {
+  columns: AiAnalyticsTableColumn[]
+  rows: AiAnalyticsTableRow[]
+}
+
+export type AiAnalyticsBlockData = AiAnalyticsMetricGridData | AiAnalyticsBarListData | AiAnalyticsTableData
 
 export interface AiActionDescriptor<TPayload = unknown> {
   id?: string
@@ -190,7 +274,7 @@ export interface AiMessageBlock {
   subtitle?: string
   data: unknown
   actions?: AiActionDescriptor[]
-  meta?: Record<string, unknown>
+  meta?: AiMessageBlockMeta
   interactions?: AIInteraction[]
 }
 

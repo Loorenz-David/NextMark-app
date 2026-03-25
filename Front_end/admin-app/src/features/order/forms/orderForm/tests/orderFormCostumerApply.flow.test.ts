@@ -13,6 +13,8 @@ const buildState = (): OrderFormState => ({
   operation_type: 'dropoff',
   reference_number: 'REF-1',
   external_source: '',
+  external_tracking_number: '',
+  external_tracking_link: '',
   tracking_number: '',
   tracking_link: '',
   client_first_name: 'Old',
@@ -23,6 +25,7 @@ const buildState = (): OrderFormState => ({
   client_address: null,
   delivery_windows: [],
   delivery_plan_id: null,
+  order_note: '',
 })
 
 export const runOrderFormCostumerApplyFlowTests = () => {

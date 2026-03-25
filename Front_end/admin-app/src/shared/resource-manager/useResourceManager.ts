@@ -28,6 +28,11 @@ export function useSectionManager(){
   return sectionManager
 }
 
+export function useOptionalSectionManager() {
+  const context = useContext(ResourcesManagerContext)
+  return context?.sectionManager
+}
+
 export function useBaseControlls<TPayload = unknown>() {
   const {baseControlls} = useResourceManager<KnownResourceRegistry>()
    if (!baseControlls){

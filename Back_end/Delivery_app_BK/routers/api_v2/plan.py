@@ -55,8 +55,10 @@ plan_bp = Blueprint("api_v2_plan_bp", __name__)
 @role_required([ADMIN, ASSISTANT])
 def list_delivery_plans():
     identity = get_jwt()
+    incoming_data = request.get_json(silent=True)
     ctx = ServiceContext(
         query_params=request.args,
+        incoming_data=incoming_data,
         identity=identity,
     )
 

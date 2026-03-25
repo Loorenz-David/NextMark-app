@@ -1,4 +1,7 @@
 from Delivery_app_BK.models import DeliveryPlan
+from Delivery_app_BK.services.requests.plan.list_delivery_plans import (
+    parse_list_delivery_plans_query,
+)
 
 from ..utils import build_opaque_pagination
 from ...context import ServiceContext
@@ -9,15 +12,20 @@ from .plan_stats import plan_stats
 
 
 def list_delivery_plans(ctx: ServiceContext):
-    query = find_plans( ctx.query_params, ctx )
+    params = parse_list_delivery_plans_query(
+        query_params=ctx.query_params,
+        incoming_data=ctx.incoming_data,
+    )
+
+    query = find_plans( params, ctx )
     stats_query_params = {
         key: value
-        for key, value in dict(ctx.query_params).items()
+        for key, value in dict(params).items()
         if key not in {"after_cursor", "before_cursor", "limit"}
     }
     stats_query = find_plans(stats_query_params, ctx)
 
-    limit = min(int(ctx.query_params.get("limit", MAX_PLAN_LIMIT)), MAX_PLAN_LIMIT)
+    limit = min(int(params.get("limit", MAX_PLAN_LIMIT)), MAX_PLAN_LIMIT)
     results = query.limit(limit + 1).all()
     has_more = len(results) > limit
 

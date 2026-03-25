@@ -39,7 +39,6 @@ export const LocalDeliveryEditFormRouteSections = () => {
             intentKey={'local-delivery-start-address'}
             enableSavedLocations
             enableCurrentLocation
-            defaultToCurrentLocation
           />
         </Field>
         <Field label="">

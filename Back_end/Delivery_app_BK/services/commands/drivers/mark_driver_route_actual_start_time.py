@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from Delivery_app_BK.models import db
 from Delivery_app_BK.services.context import ServiceContext
+from Delivery_app_BK.services.domain.state_transitions.plan_state_engine import apply_plan_state
+from Delivery_app_BK.services.domain.plan.plan_states import PlanStateId
 
 from ._helpers import resolve_driver_route_solution
 from ._timing_helpers import (
@@ -41,6 +43,14 @@ def mark_driver_route_actual_start_time(
         return build_timing_result(recorded=False, reason="outside_route_window", route=route_delta)
   
     route_solution.actual_start_time = candidate_time
+
+    # Transition the delivery plan to PROCESSING when the driver starts the route.
+    local = getattr(route_solution, "local_delivery_plan", None)
+    if local is not None:
+        delivery_plan = getattr(local, "delivery_plan", None)
+        if delivery_plan is not None:
+            apply_plan_state(delivery_plan, PlanStateId.PROCESSING)
+
     db.session.add(route_solution)
     db.session.commit()
 

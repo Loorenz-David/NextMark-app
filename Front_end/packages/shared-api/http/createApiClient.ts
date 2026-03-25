@@ -253,10 +253,33 @@ export class HttpApiClient {
       return trimmedPath
     }
 
-    const queryString = Object.entries(query)
-      .filter(([, value]) => value !== undefined && value !== null)
-      .map(([key, value]) => `${encodeURIComponent(key)}=${encodeURIComponent(String(value))}`)
-      .join('&')
+    const parts: string[] = []
+
+    const appendQueryValue = (key: string, value: unknown): void => {
+      if (value === undefined || value === null) {
+        return
+      }
+
+      if (Array.isArray(value)) {
+        value.forEach((item) => appendQueryValue(`${key}[]`, item))
+        return
+      }
+
+      if (typeof value === 'object') {
+        Object.entries(value as Record<string, unknown>).forEach(([nestedKey, nestedValue]) => {
+          appendQueryValue(`${key}[${nestedKey}]`, nestedValue)
+        })
+        return
+      }
+
+      parts.push(`${encodeURIComponent(key)}=${encodeURIComponent(String(value))}`)
+    }
+
+    Object.entries(query).forEach(([key, value]) => {
+      appendQueryValue(key, value)
+    })
+
+    const queryString = parts.join('&')
 
     return queryString ? `${trimmedPath}?${queryString}` : trimmedPath
   }

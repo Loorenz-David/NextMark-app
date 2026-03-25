@@ -1,11 +1,22 @@
 import { usePlanStore, selectAllPlans, selectPlanByClientId, selectPlanByServerId, selectVisiblePlans, useDeliveryPlanStateById as useDeliveryPlanStateStoreById } from '@/features/plan/store/plan.slice'
 import { useShallow } from 'zustand/react/shallow'
+import { useMemo } from 'react'
 import { useInternationalShippingPlanByPlanId } from '@/features/plan/planTypes/internationalShipping/hooks/useInternationalShippingPlan'
 import { useLocalDeliveryPlanByPlanId } from '@/features/plan/planTypes/localDelivery/store/useLocalDeliveryPlan.selector'
 import { useStorePickupPlanByPlanId } from '@/features/plan/planTypes/storePickup/hooks/useStorePickupPlan'
+import { reactivePlanVisibility } from '@/features/plan/domain/planReactiveVisibility'
+import { selectPlanListQuery, usePlanListStore } from './planList.store'
 
 export const usePlans = () => usePlanStore(useShallow(selectAllPlans))
-export const useVisiblePlans = () => usePlanStore(useShallow(selectVisiblePlans))
+export const useVisiblePlans = () => {
+  const plans = usePlanStore(useShallow(selectVisiblePlans))
+  const query = usePlanListStore(selectPlanListQuery)
+
+  return useMemo(
+    () => plans.filter((plan) => reactivePlanVisibility(plan, query)),
+    [plans, query],
+  )
+}
 
 export const usePlanByClientId = (clientId: string | null | undefined) =>
   usePlanStore(selectPlanByClientId(clientId))

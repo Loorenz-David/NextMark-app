@@ -15,6 +15,7 @@ export type OrderDetailPayload = {
   serverId?: number
   mode?: 'view' | 'edit'
   freshAfter?: string | null
+  openSource?: 'card' | 'marker'
 }
 
 const OrderDetailContent = () => {

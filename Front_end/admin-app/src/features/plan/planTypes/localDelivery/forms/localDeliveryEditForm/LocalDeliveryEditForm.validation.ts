@@ -38,6 +38,7 @@ export const useLocalDeliveryEditFormValidation = ({
       }),
       !isVehicleBusy,
     ]
+   
     return valid.every((entry) => entry === true)
   }
 

@@ -31,8 +31,8 @@
 
 .map-marker__operation-badges {
   position: absolute;
-  top: -7px;
-  right: -7px;
+  top: -10px;
+  right: -10px;
   display: flex;
   flex-direction: column;
   gap: 2px;
@@ -41,32 +41,23 @@
 }
 
 .map-marker__operation-badge {
-  width: 11px;
-  height: 11px;
+  width: 20px;
+  height: 20px;
   border-radius: 999px;
-  background: #fff;
-  border: 1px solid var(--color-border-accent, #2563eb);
+  background: rgba(8, 12, 30, 0.88);
+  border: 1px solid rgba(122, 167, 255, 0.18);
+  color: rgb(122, 167, 255);
   display: inline-flex;
   align-items: center;
   justify-content: center;
 }
 
-.map-marker__operation-badge::before {
-  content: "";
-  width: 0;
-  height: 0;
+.map-marker__operation-badge--up svg {
+  transform: rotate(-90deg);
 }
 
-.map-marker__operation-badge--up::before {
-  border-left: 3px solid transparent;
-  border-right: 3px solid transparent;
-  border-bottom: 4px solid var(--color-border-accent, #2563eb);
-}
-
-.map-marker__operation-badge--down::before {
-  border-left: 3px solid transparent;
-  border-right: 3px solid transparent;
-  border-top: 4px solid var(--color-border-accent, #2563eb);
+.map-marker__operation-badge--down svg {
+  transform: rotate(90deg);
 }
 
 .map-marker::after {

@@ -1,8 +1,6 @@
 import type { PropsWithChildren } from 'react'
 import { useEffect } from 'react'
 import { BrowserRouter, useNavigate } from 'react-router-dom'
-import { LocalizationProvider } from '@mui/x-date-pickers'
-import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs'
 import { apiClient } from '@/lib/api/ApiClient'
 import { MessageHandlerProvider } from '@shared-message-handler'
 import { MobileProvider } from '@/app/providers/MobileProvider'
@@ -36,25 +34,23 @@ export function AppProviders({ children }: PropsWithChildren) {
   
   return (
     <BrowserRouter>
-      <LocalizationProvider dateAdapter={AdapterDayjs}>
-        <MobileProvider>
-          <MessageHandlerProvider
-            defaultMessageDurationMs={8000}
-            maxMessages={2}
-          >
-            <AdminAiPanelProvider>
-              <AdminNotificationsProvider>
-                <AdminBusinessRealtimeProvider>
-                  <DriverLiveRealtimeProvider>
-                    <ApiAuthBridge />
-                    {children}
-                  </DriverLiveRealtimeProvider>
-                </AdminBusinessRealtimeProvider>
-              </AdminNotificationsProvider>
-            </AdminAiPanelProvider>
-          </MessageHandlerProvider>
-        </MobileProvider>
-      </LocalizationProvider>
+      <MobileProvider>
+        <MessageHandlerProvider
+          defaultMessageDurationMs={8000}
+          maxMessages={2}
+        >
+          <AdminAiPanelProvider>
+            <AdminNotificationsProvider>
+              <AdminBusinessRealtimeProvider>
+                <DriverLiveRealtimeProvider>
+                  <ApiAuthBridge />
+                  {children}
+                </DriverLiveRealtimeProvider>
+              </AdminBusinessRealtimeProvider>
+            </AdminNotificationsProvider>
+          </AdminAiPanelProvider>
+        </MessageHandlerProvider>
+      </MobileProvider>
     </BrowserRouter>
   )
 }

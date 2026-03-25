@@ -6,6 +6,12 @@ export type FilterConfig =
       value: string | number | boolean
     }
   | {
+      type: 'number-list'
+      key: string
+      label: string
+      placeholder?: string
+    }
+  | {
       type: 'date-range'
       keyStart: string
       keyEnd: string

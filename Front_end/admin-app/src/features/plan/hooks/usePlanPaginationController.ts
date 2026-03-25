@@ -47,7 +47,7 @@ export const usePlanPaginationController = ({ query, scrollToTop }: Params = {})
     setPlanListLoading(true)
     const response = await fetchPlansPageRef.current({
       ...query,
-      limit: 25,
+      limit: 20,
       ...(append && cursor ? { after_cursor: cursor } : {}),
     })
 

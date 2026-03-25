@@ -82,9 +82,6 @@ export const LocalDeliveryEditFormProvider = ({
 
   useEffect(() => {
     if (!localDeliveryPlanId || !localDeliveryPlan || !plan || !selectedRouteSolution) {
-      if (!initialFormRef.current) {
-        makeInitialFormCopy(initialFormRef, formState)
-      }
       return
     }
 

@@ -17,6 +17,8 @@ export const useInfoHoverController = () => {
   const [isTriggerFocused, setIsTriggerFocused] = useState(false)
   const [isOverlayFocused, setIsOverlayFocused] = useState(false)
   const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const pointerEventRef = useRef(false)
+  const pointerEventTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const popoverId = useId()
   const isTouchMode = useMemo(resolveTouchMode, [])
 
@@ -77,6 +79,27 @@ export const useInfoHoverController = () => {
     }
   }, [])
 
+  useEffect(() => {
+    const handlePointerEvent = () => {
+      pointerEventRef.current = true
+      if (pointerEventTimerRef.current) {
+        clearTimeout(pointerEventTimerRef.current)
+      }
+      pointerEventTimerRef.current = setTimeout(() => {
+        pointerEventRef.current = false
+        pointerEventTimerRef.current = null
+      }, 100)
+    }
+
+    window.addEventListener('pointerdown', handlePointerEvent)
+    return () => {
+      window.removeEventListener('pointerdown', handlePointerEvent)
+      if (pointerEventTimerRef.current) {
+        clearTimeout(pointerEventTimerRef.current)
+      }
+    }
+  }, [])
+
   return {
     isOpen,
     popoverId,
@@ -96,6 +119,9 @@ export const useInfoHoverController = () => {
         scheduleClose()
       },
       onFocus: () => {
+        if (isTouchMode || pointerEventRef.current) {
+          return
+        }
         setIsTriggerFocused(true)
         clearCloseTimer()
       },

@@ -21,6 +21,7 @@ from Delivery_app_BK.route_optimization.constants.is_optimized import (
 )
 from Delivery_app_BK.route_optimization.constants.route_end_strategy import ROUND_TRIP, CUSTOM_END_ADDRESS,LAST_STOP
 from Delivery_app_BK.services.domain.route_solution import RouteActualEndTimeSource
+from Delivery_app_BK.services.domain.order.order_states import OrderState as OrderStateEnum
 
 
 
@@ -103,6 +104,10 @@ class RouteSolution(
 
     stop_count = Column(Integer, default=0)
 
+    # Order-count denormalization — updated via state_transitions engine.
+    order_count = Column(Integer, nullable=True, default=0)
+    order_state_counts = Column(JSONB().with_variant(JSON, "sqlite"), nullable=True)
+
     driver_id = Column(
         Integer, 
         ForeignKey("user.id")
@@ -172,3 +177,17 @@ class RouteSolution(
             raise ValueError(
                 f"actual_end_time_source must be one of {RouteActualEndTimeSource.values()}."
             ) from error
+
+        @validates("order_state_counts")
+        def validate_order_state_counts(self, key, value):
+            if value is None:
+                return value
+            if not isinstance(value, dict):
+                raise ValueError("order_state_counts must be a dict.")
+            valid_states = {e.value for e in OrderStateEnum}
+            invalid = [k for k in value if k not in valid_states]
+            if invalid:
+                raise ValueError(
+                    f"order_state_counts keys must be valid OrderState values. Invalid: {invalid}"
+                )
+            return value

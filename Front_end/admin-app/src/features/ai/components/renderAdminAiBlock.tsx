@@ -1,6 +1,15 @@
-import type { AiBlockRendererProps } from '@nextmark/ai-panel'
+import type {
+  AiAnalyticsBarListData,
+  AiAnalyticsMetricGridData,
+  AiAnalyticsTableData,
+  AiBlockRendererProps,
+} from '@nextmark/ai-panel'
 import type { Order } from '@shared-domain'
 
+import { AiAnalyticsBarList } from './AiAnalyticsBarList'
+import { AiAnalyticsMetricGrid } from './AiAnalyticsMetricGrid'
+import { AiAnalyticsNarrativeBlock } from './AiAnalyticsNarrativeBlock'
+import { AiAnalyticsTable } from './AiAnalyticsTable'
 import { AiOrderCard } from './AiOrderCard'
 import { AiOrdersTable, type AiOrdersTableColumnExternalId } from './AiOrdersTable'
 
@@ -55,11 +64,56 @@ function getOrdersTableColumnsFromMeta(meta: unknown): AiOrdersTableColumnExtern
   return columns.length ? columns : undefined
 }
 
+function isAnalyticsMetricGridData(value: unknown): value is AiAnalyticsMetricGridData {
+  return typeof value === 'object' && value !== null && Array.isArray((value as { metrics?: unknown }).metrics)
+}
+
+function isAnalyticsBarListData(value: unknown): value is AiAnalyticsBarListData {
+  return typeof value === 'object' && value !== null && Array.isArray((value as { items?: unknown }).items)
+}
+
+function isAnalyticsTableData(value: unknown): value is AiAnalyticsTableData {
+  return typeof value === 'object'
+    && value !== null
+    && Array.isArray((value as { columns?: unknown }).columns)
+    && Array.isArray((value as { rows?: unknown }).rows)
+}
+
+function isNarrativeSummaryData(value: unknown): value is { text: string } {
+  return typeof value === 'object' && value !== null && typeof (value as { text?: unknown }).text === 'string'
+}
+
 export function renderAdminAiBlock(
   { block }: AiBlockRendererProps,
   options: AdminAiBlockRenderOptions = {},
 ) {
   const { onOrderRowClick } = options
+
+  if (block.kind === 'summary' && isNarrativeSummaryData(block.data)) {
+    return (
+      <AiAnalyticsNarrativeBlock
+        subtitle={block.subtitle}
+        text={block.data.text}
+        title={block.title}
+      />
+    )
+  }
+
+  if (block.entityType === 'analytics' || block.kind === 'analytics') {
+    if (block.layout === 'metric_grid' && isAnalyticsMetricGridData(block.data)) {
+      return <AiAnalyticsMetricGrid data={block.data} />
+    }
+
+    if (block.layout === 'bar_list' && isAnalyticsBarListData(block.data)) {
+      return <AiAnalyticsBarList data={block.data} meta={block.meta} />
+    }
+
+    if (block.layout === 'table' && isAnalyticsTableData(block.data)) {
+      return <AiAnalyticsTable data={block.data} />
+    }
+
+    return null
+  }
 
   if (block.entityType !== 'order') {
     return null

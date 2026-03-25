@@ -1,25 +1,53 @@
 import { useEffect, useMemo, useState, type ChangeEvent } from 'react'
-import type { Dayjs } from 'dayjs'
-import dayjs from 'dayjs'
-import { DatePicker } from '@mui/x-date-pickers'
 
 import { FilteredIcon } from '@/assets/icons'
 import { BasicButton } from '@/shared/buttons/BasicButton'
+import { CustomDatePicker } from '@/shared/inputs/CustomDatePicker'
 import { InputField } from '@/shared/inputs/InputField'
 import { FloatingPopover } from '@/shared/popups/FloatingPopover/FloatingPopover'
 
 import type { FilterConfig, SearchFilterBarProps } from './SearchFilterBar.types'
 
-const EMPTY_RANGE: [Dayjs | null, Dayjs | null] = [null, null]
+const EMPTY_RANGE: [Date | null, Date | null] = [null, null]
 
-const parseDateFilterValue = (value: unknown): Dayjs | null => {
+const parseDateFilterValue = (value: unknown): Date | null => {
   if (typeof value !== 'string' || !value.trim()) return null
-  const parsed = dayjs(value)
-  return parsed.isValid() ? parsed : null
+  const parsed = new Date(value)
+  return Number.isNaN(parsed.getTime()) ? null : parsed
+}
+
+const formatDateFilterValue = (value: Date) => {
+  const year = value.getFullYear()
+  const month = String(value.getMonth() + 1).padStart(2, '0')
+  const day = String(value.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
 }
 
 const isDateRangeFilter = (filter: FilterConfig): filter is Extract<FilterConfig, { type: 'date-range' }> =>
   filter.type === 'date-range'
+
+const isNumberListFilter = (filter: FilterConfig): filter is Extract<FilterConfig, { type: 'number-list' }> =>
+  filter.type === 'number-list'
+
+const parseNumberListValue = (rawValue: string): number | number[] | undefined => {
+  const normalized = rawValue.trim()
+  if (!normalized) return undefined
+
+  const parts = normalized
+    .split(',')
+    .map((part) => part.trim())
+    .filter(Boolean)
+
+  if (!parts.length) return undefined
+
+  const parsed = parts
+    .map((part) => Number(part))
+    .filter((value) => Number.isFinite(value))
+
+  if (!parsed.length) return undefined
+
+  return parsed.length === 1 ? parsed[0] : parsed
+}
 
 export const SearchFilterBar = ({
   applySearch,
@@ -32,7 +60,8 @@ export const SearchFilterBar = ({
 }: SearchFilterBarProps) => {
   const [open, setOpen] = useState(false)
   const [searchInput, setSearchInput] = useState(searchValue)
-  const [tempRange, setTempRange] = useState<[Dayjs | null, Dayjs | null]>(EMPTY_RANGE)
+  const [tempRange, setTempRange] = useState<[Date | null, Date | null]>(EMPTY_RANGE)
+  const [tempNumberListValues, setTempNumberListValues] = useState<Record<string, string>>({})
 
   useEffect(() => {
     setSearchInput(searchValue)
@@ -51,6 +80,26 @@ export const SearchFilterBar = ({
     setTempRange([start, end])
   }, [dateRangeFilter, filters, open])
 
+  useEffect(() => {
+    if (!open) return
+
+    const nextValues: Record<string, string> = {}
+    for (const filter of config) {
+      if (!isNumberListFilter(filter)) continue
+      const currentValue = filters[filter.key]
+
+      if (Array.isArray(currentValue)) {
+        nextValues[filter.key] = currentValue.join(', ')
+      } else if (typeof currentValue === 'number') {
+        nextValues[filter.key] = String(currentValue)
+      } else {
+        nextValues[filter.key] = ''
+      }
+    }
+
+    setTempNumberListValues(nextValues)
+  }, [config, filters, open])
+
   const handleSearchChange = (event: ChangeEvent<HTMLInputElement>) => {
     const value = event.target.value
     setSearchInput(value)
@@ -63,11 +112,26 @@ export const SearchFilterBar = ({
     const [start, end] = tempRange
 
     if (start) {
-      updateFilter(filter.keyStart, start.format('YYYY-MM-DD'))
+      updateFilter(filter.keyStart, formatDateFilterValue(start))
     }
 
     if (end) {
-      updateFilter(filter.keyEnd, end.format('YYYY-MM-DD'))
+      updateFilter(filter.keyEnd, formatDateFilterValue(end))
+    }
+
+    setOpen(false)
+  }
+
+  const applyNumberList = (filter: Extract<FilterConfig, { type: 'number-list' }>) => {
+    if (!updateFilter) return
+
+    const rawValue = tempNumberListValues[filter.key] ?? ''
+    const parsed = parseNumberListValue(rawValue)
+
+    if (parsed === undefined) {
+      updateFilter(filter.key, undefined)
+    } else {
+      updateFilter(filter.key, parsed)
     }
 
     setOpen(false)
@@ -144,6 +208,59 @@ export const SearchFilterBar = ({
               )
             }
 
+            if (filter.type === 'number-list') {
+              const value = tempNumberListValues[filter.key] ?? ''
+              return (
+                <div
+                  key={`${filter.type}-${filter.key}-${index}`}
+                  className="flex flex-col gap-2 rounded-md border border-white/[0.08] bg-white/[0.04] p-2"
+                >
+                  <span className="text-xs font-semibold text-[var(--color-muted)]">
+                    {filter.label}
+                  </span>
+                  <InputField
+                    value={value}
+                    onChange={(event) => {
+                      const nextValue = event.target.value
+                      setTempNumberListValues((current) => ({
+                        ...current,
+                        [filter.key]: nextValue,
+                      }))
+                    }}
+                    placeholder={filter.placeholder ?? 'Enter one or more ids (comma separated)'}
+                    fieldClassName=""
+                    inputClassName="text-xs w-full"
+                  />
+                  <div className="flex items-center justify-end gap-2">
+                    <BasicButton
+                      params={{
+                        variant: 'text',
+                        onClick: () => {
+                          setTempNumberListValues((current) => ({
+                            ...current,
+                            [filter.key]: '',
+                          }))
+                          updateFilter?.(filter.key, undefined)
+                        },
+                        ariaLabel: `Clear ${filter.label}`,
+                      }}
+                    >
+                      Clear
+                    </BasicButton>
+                    <BasicButton
+                      params={{
+                        variant: 'secondary',
+                        onClick: () => applyNumberList(filter),
+                        ariaLabel: `Apply ${filter.label}`,
+                      }}
+                    >
+                      Apply
+                    </BasicButton>
+                  </div>
+                </div>
+              )
+            }
+
             const [start, end] = tempRange
             return (
               <div
@@ -154,18 +271,20 @@ export const SearchFilterBar = ({
                   {filter.label}
                 </span>
                 <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                  <DatePicker
-                    label="Start"
-                    value={start}
-                    onChange={(value) => setTempRange([value, end])}
-                    slotProps={{ textField: { size: 'small' } }}
-                  />
-                  <DatePicker
-                    label="End"
-                    value={end}
-                    onChange={(value) => setTempRange([start, value])}
-                    slotProps={{ textField: { size: 'small' } }}
-                  />
+                  <div className="flex flex-col gap-1">
+                    <span className="text-xs text-[var(--color-muted)]/80">Start</span>
+                    <CustomDatePicker
+                      date={start}
+                      onChange={(value) => setTempRange([parseDateFilterValue(value), end])}
+                    />
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <span className="text-xs text-[var(--color-muted)]/80">End</span>
+                    <CustomDatePicker
+                      date={end}
+                      onChange={(value) => setTempRange([start, parseDateFilterValue(value)])}
+                    />
+                  </div>
                 </div>
                 <div className="flex items-center justify-end gap-2">
                   <BasicButton

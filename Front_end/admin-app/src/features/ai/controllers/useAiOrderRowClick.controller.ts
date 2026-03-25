@@ -1,7 +1,7 @@
 import { useCallback } from 'react'
 import type { Order } from '@shared-domain'
 
-import { useSectionManager } from '@/shared/resource-manager/useResourceManager'
+import { useOptionalSectionManager } from '@/shared/resource-manager/useResourceManager'
 import { resolveAiOrderDetailPayload } from '../domain/resolveAiOrderDetailPayload'
 
 interface OrderDetailsEntryPayload {
@@ -10,9 +10,11 @@ interface OrderDetailsEntryPayload {
 }
 
 export function useAiOrderRowClick() {
-  const sectionManager = useSectionManager()
+  const sectionManager = useOptionalSectionManager()
 
   return useCallback((order: Order) => {
+    if (!sectionManager) return
+
     const payload = resolveAiOrderDetailPayload(order)
     if (!payload) {
       return

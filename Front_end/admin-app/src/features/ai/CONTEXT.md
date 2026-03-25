@@ -1,7 +1,7 @@
 # Admin AI Feature — Developer Context
 
 Feature path: `admin-app/src/features/ai/`
-Last updated: 2026-03-22
+Last updated: 2026-03-24
 
 ---
 
@@ -27,12 +27,17 @@ AdminAiPanelProvider
   │    ├─ sendMessage  -> POST /ai/threads/:id/messages
   │    └─ loadThread   -> GET  /ai/threads/:id
   ├─ resolveAction (navigate/open_settings/apply_order_filters/copy_text)
+  ├─ mapLegacyDataToBlocks (legacy data fallback mapper)
   └─ renderBlock -> AdminAiBlockRenderer
         ├─ useAiOrderRowClick.controller
         │    └─ resolveAiOrderDetailPayload
         └─ renderAdminAiBlock (pure renderer)
              ├─ AiOrderCard
              └─ AiOrdersTable
+             ├─ AiAnalyticsNarrativeBlock
+             ├─ AiAnalyticsMetricGrid
+             ├─ AiAnalyticsBarList
+             └─ AiAnalyticsTable
 ```
 
 ---
@@ -59,9 +64,19 @@ Key mappings:
 
 - `normalizeV2Response` -> `AiPanelResponse`
 - `normalizeV2Block` -> `AiMessageBlock`
+- `normalizeNarrativeStatisticsBlock` -> canonical analytics/summary blocks
+- `normalizeAiAnalyticsBlockData` -> strict analytics layout data shape validation
 - `normalizeV2Action` -> `AiActionDescriptor`
 - `normalizeV2ToolTrace` -> `AiToolTraceEntry`
 - interaction field/option normalization
+
+Message fields normalized for panel rendering:
+
+- `intent`
+- `narrativePolicy`
+- `renderingHints`
+- `typedWarnings`
+- `blocks`
 
 No UI component should consume raw DTO types from `types/ai.ts` directly.
 
@@ -109,6 +124,8 @@ This keeps side effects in controller layer and UI components presentational.
 
 This feature transport already forwards `context` to backend unchanged.
 
+This provider currently uses package default capability options and does not override `capabilityOptions`.
+
 ---
 
 ## File reference
@@ -118,11 +135,16 @@ This feature transport already forwards `context` to backend unchanged.
 | `providers/AdminAiPanelProvider.tsx` | Feature entrypoint; mounts panel with transport, resolver, block renderer |
 | `components/AdminAiBlockRenderer.tsx` | Hook-safe wrapper that injects row-click action callback |
 | `components/renderAdminAiBlock.tsx` | Pure AI block renderer for order entity blocks |
+| `components/AiAnalyticsNarrativeBlock.tsx` | Presentational narrative summary block for analytics text sections |
+| `components/AiAnalyticsMetricGrid.tsx` | Presentational KPI metric-grid renderer |
+| `components/AiAnalyticsBarList.tsx` | Presentational ranked analytics bar-list renderer |
+| `components/AiAnalyticsTable.tsx` | Presentational analytics table renderer |
 | `components/AiOrderCard.tsx` | Presentational order card with optional click/keyboard interaction |
 | `components/AiOrdersTable.tsx` | Presentational order table with optional row click/keyboard interaction |
 | `controllers/useAiOrderRowClick.controller.ts` | Side-effect controller for opening order detail section |
 | `domain/resolveAiOrderDetailPayload.ts` | Pure resolver for clientId/serverId payload extraction |
 | `domain/adminAiPanelAdapter.ts` | DTO normalization + transport adapter implementation |
+| `domain/normalizeAiAnalyticsBlockData.ts` | Canonical analytics data guards/normalization by layout |
 | `domain/normalizeApplyOrderFiltersPayload.ts` | apply_order_filters payload normalization |
 | `api/ai.api.ts` | Raw HTTP calls |
 | `types/ai.ts` | Raw backend DTO contracts |

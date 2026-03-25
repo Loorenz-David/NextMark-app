@@ -1,10 +1,11 @@
-import { ChevronDownIcon, OrderIcon, PlanIcon, PlusIcon } from '@/assets/icons'
+import { ChevronDownIcon, PlanIcon, PlusIcon } from '@/assets/icons'
 import { BasicButton } from '@/shared/buttons/BasicButton'
 import type { PlanQueryFilters, PlanStats } from '../../types/planMeta'
-import { CalendarIcon } from '@mui/x-date-pickers'
 import { pluralLabel } from '@shared-utils'
 import { InfoHover } from '@/shared/layout/InfoHover'
 import { PLAN_MAIN_HEADER_INFO } from '../../info/planMainHeader.info'
+import { PlanDateFilterBar } from '../planDateFilter'
+import type { PlanDateFilterPayload } from '../planDateFilter'
 
 
 
@@ -12,6 +13,7 @@ type PlanMainHeaderProps = {
   onCreate: () => void
   applySearch: (input: string) => void
   applyFilters: (filters: PlanQueryFilters) => void
+  applyFilterSelection?: (payload: PlanDateFilterPayload) => void
   onRequestClose?: () => void
   planStats?: PlanStats 
   showCloseButton?: boolean
@@ -19,6 +21,8 @@ type PlanMainHeaderProps = {
 
 export const PlanMainHeader = ({
   onCreate,
+  applyFilters,
+  applyFilterSelection,
   onRequestClose,
   showCloseButton = true,
   planStats
@@ -37,7 +41,7 @@ export const PlanMainHeader = ({
         {showCloseButton ? <HeaderButtons onRequestClose={onRequestClose} /> : null}
       </div>
 
-      <div className="flex gap-4 p-4 " >
+      <div className="flex items-center gap-4 p-4" >
        
         <BasicButton
           key="order-main-create"
@@ -50,6 +54,8 @@ export const PlanMainHeader = ({
           <PlusIcon className="mr-2 h-4 w-4 stroke-[var(--color-secondary)]" />
           Plan
         </BasicButton>
+
+        <PlanDateFilterBar onFiltersChange={applyFilters} onSelectionChange={applyFilterSelection} />
 
        
       </div>

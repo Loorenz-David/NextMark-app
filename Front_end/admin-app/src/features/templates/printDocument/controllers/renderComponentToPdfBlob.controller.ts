@@ -1,8 +1,6 @@
 import { createElement } from 'react'
 import type { ComponentType } from 'react'
 import { createRoot } from 'react-dom/client'
-import html2canvas from 'html2canvas'
-import { jsPDF } from 'jspdf'
 import type { availableOrientations } from '../types'
 
 const waitForRenderTick = async () => {
@@ -38,6 +36,11 @@ export const renderComponentToPdfBlob = async (
   if (typeof document === 'undefined') {
     throw new Error('PDF rendering is only available in browser environments.')
   }
+
+  const [{ default: html2canvas }, { jsPDF }] = await Promise.all([
+    import('html2canvas'),
+    import('jspdf'),
+  ])
 
   const orientedWidthCm = orientation === 'horizontal' ? heightCm : widthCm
   const orientedHeightCm = orientation === 'horizontal' ? widthCm : heightCm

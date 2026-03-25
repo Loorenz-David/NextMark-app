@@ -53,6 +53,12 @@ export const filterConfig: FilterConfig[] = [
       label: "Plan Type",
       value: "",
     },
+    {
+      type: 'number-list',
+      key: 'plan_id',
+      label: 'Plan ID',
+      placeholder: 'e.g. 173 or 173, 174',
+    },
 
     {
       type: 'option',

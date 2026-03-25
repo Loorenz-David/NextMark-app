@@ -89,6 +89,7 @@ const SegmentedSelect = ({
             {isSelected && (
               <motion.div
                 layoutId={`segmented-select-highlight-${layoutId}`}
+                layoutDependency={selectedValue}
                 className="absolute inset-0 rounded-lg"
                 style={{
                   background: styles.selectedBg,

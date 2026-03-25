@@ -4,6 +4,7 @@ import { clearPersistedThread, readPersistedThread, writePersistedThread } from 
 import { createAiPanelMessage } from '../message'
 import type {
   AiActionDescriptor,
+  AiMessageContext,
   AiPanelController,
   AiPanelMessage,
   AiTransportAdapter,
@@ -71,7 +72,7 @@ export function useAiPanelConversation({
   }, [storageKey])
 
   const send = useCallback(
-    async (message?: string, context?: unknown) => {
+    async (message?: string, context?: AiMessageContext) => {
       const nextMessage = (message ?? composerValue).trim()
       if (!nextMessage || isLoading) {
         return
@@ -109,9 +110,15 @@ export function useAiPanelConversation({
             role: response.message.role ?? 'assistant',
             content: response.message.content,
             statusLabel: response.message.statusLabel,
+            intent: response.message.intent,
+            narrativePolicy: response.message.narrativePolicy,
+            renderingHints: response.message.renderingHints,
+            typedWarnings: response.message.typedWarnings,
+            blocks: response.message.blocks,
             actions: response.message.actions,
             toolTrace: response.message.toolTrace,
             data: response.message.data,
+            interactions: response.message.interactions,
           }),
         ])
       } catch (error) {

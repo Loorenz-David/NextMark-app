@@ -9,6 +9,7 @@ from Delivery_app_BK.services.infra.jobs.tasks.maintenance import (
     repair_stale_dispatch_claims_job,
     requeue_stale_message_actions_job,
 )
+from Delivery_app_BK.services.infra.jobs.tasks.analytics import aggregate_daily_metrics_job
 from Delivery_app_BK.services.infra.redis import get_current_rq_redis_connection
 from Delivery_app_BK.services.infra.redis import assert_current_redis_available, describe_redis_uri, get_redis_uri
 
@@ -58,6 +59,13 @@ def main() -> None:
             job_id="requeue-stale-message-actions",
             fn=requeue_stale_message_actions_job,
             interval_seconds=interval_seconds,
+            queue_name=queue_names.default,
+        )
+        _ensure_periodic_job(
+            scheduler=scheduler,
+            job_id="aggregate-daily-metrics",
+            fn=aggregate_daily_metrics_job,
+            interval_seconds=86400,
             queue_name=queue_names.default,
         )
 

@@ -1,6 +1,14 @@
 import type { Order } from '../types/order'
 import type { OrderQueryFilters } from '../types/orderMeta'
 
+const normalizePlanIdFilters = (value: OrderQueryFilters['plan_id']): number[] => {
+  if (value == null) return []
+  const values = Array.isArray(value) ? value : [value]
+  return values
+    .map((entry) => Number(entry))
+    .filter((entry) => Number.isFinite(entry))
+}
+
 export const reactiveOrderVisibility = (
   order: Order,
   filters: OrderQueryFilters,
@@ -38,6 +46,22 @@ export const reactiveOrderVisibility = (
       if (order.order_state_id !== stateFilter) {
         return false
       }
+    }
+  }
+
+  // plan id filtering
+  if (filters.plan_id != null) {
+    const planIds = normalizePlanIdFilters(filters.plan_id)
+    if (!planIds.length) {
+      return false
+    }
+
+    if (order.delivery_plan_id == null) {
+      return false
+    }
+
+    if (!planIds.includes(order.delivery_plan_id)) {
+      return false
     }
   }
 

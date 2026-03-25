@@ -27,9 +27,15 @@ def ready_for_delivery(
         return {}
 
     delivery_plan.state_id = PlanStateId.READY
+
+    _TERMINAL_ORDER_STATE_IDS = {OrderStateId.COMPLETED, OrderStateId.CANCELLED}
+    eligible_orders = [
+        o for o in (delivery_plan.orders or [])
+        if o.order_state_id not in _TERMINAL_ORDER_STATE_IDS
+    ]
     update_orders_state(
         ctx=ctx,
-        orders=delivery_plan.orders or [],
+        orders=eligible_orders,
         state_id=OrderStateId.READY,
     )
 

@@ -114,8 +114,8 @@ export const MainHeaderLocalDeliveryPage = ({
 
     const PlanTypeIcon = planIconTypeMap.local_delivery
     const title = plan?.label ?? 'undefined plan'
-    const totalVolume = (plan?.total_volume ?? 0) / 1_000_000
-    const totalWeight = (plan?.total_weight ?? 0) / 1000
+    const totalVolume = plan?.total_volume ?? 0
+    const totalWeight = plan?.total_weight ?? 0
 
     const hasRouteWarnings = selectedRouteSolution?.has_route_warnings
     const isNotOptimize = selectedRouteSolution?.is_optimized == 'not optimize'

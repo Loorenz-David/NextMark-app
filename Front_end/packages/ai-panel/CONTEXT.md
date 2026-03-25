@@ -2,7 +2,7 @@
 
 Package: `@nextmark/ai-panel`
 Path: `packages/ai-panel/`
-Last updated: 2026-03-22
+Last updated: 2026-03-24
 
 ---
 
@@ -23,12 +23,12 @@ The package owns:
 
 ```
 AiPanelProvider
+  ├─ capability selection state (auto/manual + selected id)
   ├─ useAiPanelLayoutState
   ├─ useAiPanelConversation
   │    ├─ thread/message state
   │    ├─ send/load/retry
   │    ├─ internal interaction action handling
-  │    ├─ capability selection state (auto/manual)
   │    ├─ message retention cap
   │    └─ diagnostics metric emission
   └─ AiPanelOverlay
@@ -74,6 +74,11 @@ Current default capability options (host can override via `AiPanelConfig.capabil
 - `statistical_reasoning`
 - `operations`
 - `app_configuration`
+
+Current send behavior:
+
+- `auto` mode sends `{ capability_mode: 'auto' }`
+- `manual` mode sends `{ capability_mode: 'manual', capability_id }`
 
 ### Action routing
 
@@ -125,6 +130,10 @@ If diagnostics are enabled, package emits metrics:
 
 Configured via `AiPanelConfig.diagnostics`.
 
+### Loading status UX
+
+Overlay currently passes `loadingStatusText = "The assistant is resolving the next step."` to the transcript surface while waiting.
+
 ---
 
 ## Rendering details
@@ -136,8 +145,11 @@ Configured via `AiPanelConfig.diagnostics`.
 - section titles from `rendering_hints`
 - optional raw data preview suppression
 - typed warnings and proposal/tool status notices
+- host-provided `renderBlock` takes precedence for custom block rendering
 
 Entity-collection heavy blocks use compact rendering with expand/collapse controls.
+
+Blocking interactions (`question` / `confirm`) currently replace the composer until handled; the close button remains available.
 
 ---
 

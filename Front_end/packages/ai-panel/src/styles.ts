@@ -216,6 +216,7 @@ export function dragHandleStyle(theme: AiPanelTheme["header"]): CSSProperties {
 export const headerActionsStyle: CSSProperties = {
   display: 'flex',
   alignItems: 'center',
+  justifyContent: 'end',
   gap: 10,
   flexWrap: 'wrap',
   minWidth: 88,
@@ -237,6 +238,7 @@ export function headerCloseButtonStyle(theme: AiPanelTheme["header"]): CSSProper
     height: 30,
     
     border: '1px solid rgba(255,255,255,0.08)',
+    borderRadius: 999,
     background: 'rgba(76, 78, 78, 0.64)',
     color: theme.muted,
     display: 'inline-flex',

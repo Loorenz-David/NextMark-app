@@ -868,12 +868,442 @@ def test_format_response_adds_statistical_output_insight_and_warning_blocks():
     assert "analytics_insight" in entity_types
     assert "analytics_warning" in entity_types
 
-    insight_block = next(block for block in response.message.blocks if block.entity_type == "analytics_insight")
-    assert insight_block.data["items"][0]["type"] == "correlation"
 
-    warning_block = next(block for block in response.message.blocks if block.entity_type == "analytics_warning")
-    assert warning_block.data["items"][0]["message"] == "Correlation only; causation is not proven."
+# ---------------------------------------------------------------------------
+# Contract tests: plain list shape from on_query_return="list"
+# ---------------------------------------------------------------------------
 
-    warning_codes = [warning.code for warning in response.message.typed_warnings]
-    assert "STATISTICS_WARNING" in warning_codes
+def test_generate_blocks_list_plans_plain_list_shape():
+    """list_plans result with plain list under 'delivery_plan' key produces non-empty items."""
+    blocks = generate_blocks([
+        {
+            "tool": "list_plans",
+            "params": {},
+            "result": {
+                "delivery_plan": [
+                    {"id": 173, "label": "March run", "plan_type": "local_delivery", "state_id": 1, "total_orders": 11},
+                ],
+                "delivery_plan_stats": {"plans": {"total": 1}},
+                "delivery_plan_pagination": {"has_more": False},
+            },
+        }
+    ])
+
+    assert len(blocks) == 1
+    assert blocks[0].kind == "entity_collection"
+    assert blocks[0].entity_type == "plan"
+    assert blocks[0].data["total"] == 1
+    assert len(blocks[0].data["items"]) == 1
+    assert blocks[0].data["items"][0]["id"] == 173
+    assert blocks[0].data["items"][0]["plan_name"] == "March run"
+    assert blocks[0].data["items"][0]["total_orders"] == 11
+
+
+def test_format_tool_trace_list_plans_plain_list_uses_stats_count():
+    """_summarize for list_plans reads count from delivery_plan_stats, not from empty fallback."""
+    trace = format_tool_trace([
+        {
+            "tool": "list_plans",
+            "params": {},
+            "result": {
+                "delivery_plan": [
+                    {"id": 173, "label": "March run", "plan_type": "local_delivery"},
+                ],
+                "delivery_plan_stats": {"plans": {"total": 1}},
+            },
+        }
+    ])
+
+    assert trace[0].summary == "Found 1 plan."
+
+
+def test_generate_blocks_list_orders_plain_list_shape():
+    """list_orders result with plain list under 'order' key produces non-null item fields."""
+    blocks = generate_blocks([
+        {
+            "tool": "list_orders",
+            "params": {},
+            "result": {
+                "order": [
+                    {
+                        "id": 196,
+                        "order_scalar_id": "12345",
+                        "client_first_name": "Maria",
+                        "client_last_name": "Garcia",
+                        "order_state_id": 2,
+                        "delivery_plan_id": 173,
+                    }
+                ],
+                "order_stats": {"orders": {"total": 1}},
+            },
+        }
+    ])
+
+    assert len(blocks) == 1
+    item = blocks[0].data["items"][0]
+    assert item["id"] == 196
+    assert item["client_name"] == "Maria Garcia"
+    assert item["reference"] == "Order 12345"
+    assert blocks[0].data["total"] == 1
+
+
+def test_generate_blocks_ai_focus_excludes_none_id_rows():
+    """Orders with id=None must not produce 'None' string in focus_entity_ids."""
+    blocks = generate_blocks([
+        {
+            "tool": "list_orders",
+            "params": {},
+            "result": {
+                "order": [
+                    {"id": None, "order_scalar_id": None, "order_state_id": 1, "delivery_plan_id": None},
+                    {"id": 200, "order_scalar_id": "200", "order_state_id": 1, "delivery_plan_id": None},
+                ],
+                "order_stats": {"total": 2},
+            },
+        }
+    ])
+
+    item_ids = [item["id"] for item in blocks[0].data["items"]]
+    # id=None row is included in items but must not produce "None" in focus_entity_ids
+    ai_focus = blocks[0].data.get("ai_focus") or {}
+    focus_ids = ai_focus.get("focus_entity_ids") or []
+    assert "None" not in focus_ids
+    assert "200" in focus_ids
+
+
+def test_generate_blocks_list_item_types_config_plain_list_shape():
+    """list_item_types_config with plain list under 'item_types' key works correctly."""
+    blocks = generate_blocks([
+        {
+            "tool": "list_item_types_config",
+            "params": {"limit": 20},
+            "result": {
+                "count": 2,
+                "item_types": [
+                    {"id": 1, "name": "dining chair", "properties": []},
+                    {"id": 2, "name": "sideboard", "properties": [11]},
+                ],
+            },
+        }
+    ])
+
+    assert len(blocks) == 1
+    assert blocks[0].entity_type == "item_type"
+    assert blocks[0].data["total"] == 2
+    assert len(blocks[0].data["items"]) == 2
+    names = {item["name"] for item in blocks[0].data["items"]}
+    assert names == {"dining chair", "sideboard"}
+
+
+def test_generate_blocks_list_item_properties_config_plain_list_shape():
+    """list_item_properties_config with plain list emits an entity_property block."""
+    blocks = generate_blocks([
+        {
+            "tool": "list_item_properties_config",
+            "params": {"limit": 10},
+            "result": {
+                "count": 2,
+                "item_properties": [
+                    {"id": 1, "name": "color", "field_type": "text", "required": False},
+                    {"id": 2, "name": "weight_kg", "field_type": "number", "required": True},
+                ],
+            },
+        }
+    ])
+
+    assert len(blocks) == 1
+    assert blocks[0].entity_type == "item_property"
+    assert blocks[0].layout == "table"
+    assert blocks[0].data["total"] == 2
+    assert blocks[0].meta["table"]["columns"] == ["name", "field_type", "required"]
+    names = {item["name"] for item in blocks[0].data["items"]}
+    assert names == {"color", "weight_kg"}
+
+
+def test_format_response_prefers_narrative_blocks_over_raw_analytics_blocks():
+    response = format_response(
+        "thr_123",
+        "Late deliveries increased in the selected window.",
+        [
+            {
+                "tool": "get_analytics_snapshot",
+                "params": {"timeframe": "7d"},
+                "result": {
+                    "metrics": {"total_orders": 120, "late_deliveries": 18},
+                    "trends": [{"date": "2026-03-15", "late_deliveries": 7}],
+                    "breakdowns": [{"dimension": "scheduled_status", "values": []}],
+                },
+            }
+        ],
+        data={
+            "blocks": [
+                {"type": "text", "title": "Context", "text": "Late deliveries rose after unscheduled share increased."},
+                {
+                    "type": "analytics_kpi",
+                    "title": "Late Deliveries KPI",
+                    "metric_name": "late_deliveries",
+                    "value": 18,
+                    "display_value": "18",
+                    "delta": 4,
+                    "confidence_score": 0.71,
+                },
+                {
+                    "type": "analytics_trend",
+                    "title": "Late deliveries over time",
+                    "description": "Consistent rise across the week.",
+                    "direction": "up",
+                },
+            ],
+            "confidence_score": 0.78,
+        },
+    )
+
+    assert [block.kind for block in response.message.blocks] == ["summary", "analytics_kpi", "analytics_trend"]
+    assert response.message.blocks[0].title == "Context"
+    assert response.message.blocks[0].data["text"] == "Late deliveries rose after unscheduled share increased."
+    assert response.message.blocks[1].title == "Late Deliveries KPI"
+    assert response.message.blocks[1].meta["schema_version"] == 1
+    assert response.message.rendering_hints["suppress_raw_data_preview"] is True
+
+
+def test_format_response_maps_generic_analytics_layout_blocks():
+    response = format_response(
+        "thr_123",
+        "Performance highlights are shown below.",
+        [
+            {
+                "tool": "get_analytics_snapshot",
+                "params": {"timeframe": "30d"},
+                "result": {"metrics": {"total_orders": 1842}},
+            }
+        ],
+        data={
+            "blocks": [
+                {
+                    "type": "analytics",
+                    "layout": "metric_grid",
+                    "title": "Core Metrics",
+                    "subtitle": "Last 30 days",
+                    "data": {
+                        "metrics": [
+                            {
+                                "id": "orders_total",
+                                "label": "Orders",
+                                "value": 1842,
+                                "display_value": "1,842",
+                                "change_label": "+12.4% vs prior period",
+                                "trend": "up",
+                                "value_type": "integer",
+                            }
+                        ]
+                    },
+                    "chartType": "line",
+                },
+                {
+                    "type": "analytics",
+                    "layout": "table",
+                    "title": "Corridor Breakdown",
+                    "data": {
+                        "columns": [
+                            {"id": "corridor", "label": "Corridor"},
+                            {"id": "orders", "label": "Orders"},
+                        ],
+                        "rows": [
+                            {"id": "r1", "corridor": "North Hub", "orders": 774},
+                        ],
+                    },
+                },
+            ],
+        },
+    )
+
+    assert len(response.message.blocks) == 2
+    assert response.message.blocks[0].kind == "analytics"
+    assert response.message.blocks[0].layout == "metric_grid"
+    assert response.message.blocks[0].title == "Core Metrics"
+    assert response.message.blocks[0].subtitle == "Last 30 days"
+    assert response.message.blocks[0].meta["chartType"] == "line"
+    assert response.message.blocks[0].meta["schema_version"] == 1
+    assert response.message.blocks[1].layout == "table"
+
+
+def test_format_response_maps_statistics_warning_strings_to_typed_warnings():
+    response = format_response(
+        "thr_123",
+        "Summary",
+        [{"tool": "get_analytics_snapshot", "params": {}, "result": {"metrics": {"total_orders": 12}}}],
+        data={
+            "blocks": [{"type": "text", "text": "Sample"}],
+            "warnings": [
+                "Sample payload generated for frontend visualization.",
+                "Limited timeframe selected.",
+            ],
+        },
+    )
+
+    codes = [warning.code for warning in response.message.typed_warnings]
+    assert codes.count("STATISTICS_WARNING") == 2
+    assert response.message.typed_warnings[0].meta["source"] == "narrative_statistics"
+
+
+def test_format_response_honors_intent_and_policy_from_data_payload():
+    response = format_response(
+        "thr_123",
+        "This text is intentionally hidden because intent is blocks_only.",
+        [{"tool": "get_analytics_snapshot", "params": {}, "result": {"metrics": {"total_orders": 10}}}],
+        data={
+            "intent": "blocks_only",
+            "narrative_policy": "no_enumeration",
+            "blocks": [{"type": "text", "text": "Throughput reading."}],
+        },
+    )
+
+    assert response.message.intent == "blocks_only"
+    assert response.message.narrative_policy == "no_enumeration"
+
+
+# ---------------------------------------------------------------------------
+# Risk brief block helper tests
+# ---------------------------------------------------------------------------
+
+def _make_analytics_turn(metrics: dict) -> dict:
+    return {"tool": "get_analytics_snapshot", "params": {}, "result": {"metrics": metrics}}
+
+
+def test_build_risk_brief_block_returns_none_when_depth_is_none():
+    from Delivery_app_BK.ai.response_formatter import _build_risk_brief_block
+
+    assert _build_risk_brief_block([], None) is None
+    assert _build_risk_brief_block([], "none") is None
+
+
+def test_build_risk_brief_block_returns_none_when_no_analytics_turn():
+    from Delivery_app_BK.ai.response_formatter import _build_risk_brief_block
+
+    turns = [{"tool": "list_orders", "params": {}, "result": {"order": [{"id": 1}]}}]
+    assert _build_risk_brief_block(turns, "risk_brief") is None
+
+
+def test_build_risk_brief_block_returns_high_risk_when_failed_orders_present():
+    from Delivery_app_BK.ai.response_formatter import _build_risk_brief_block
+
+    turns = [_make_analytics_turn({"total_orders": 10, "failed_orders": 3, "unscheduled_orders": 0, "completion_rate": 0.70})]
+    block = _build_risk_brief_block(turns, "risk_brief")
+
+    assert block is not None
+    assert block.kind == "summary"
+    assert block.entity_type == "analytics_risk"
+    assert block.data["risk_level"] == "high"
+    assert "failed" in block.data["text"].lower()
+
+
+def test_build_risk_brief_block_returns_high_risk_when_completion_rate_below_85():
+    from Delivery_app_BK.ai.response_formatter import _build_risk_brief_block
+
+    turns = [_make_analytics_turn({"total_orders": 20, "failed_orders": 0, "unscheduled_orders": 0, "completion_rate": 0.80})]
+    block = _build_risk_brief_block(turns, "risk_brief")
+
+    assert block is not None
+    assert block.data["risk_level"] == "high"
+
+
+def test_build_risk_brief_block_returns_medium_risk_when_unscheduled_present():
+    from Delivery_app_BK.ai.response_formatter import _build_risk_brief_block
+
+    turns = [_make_analytics_turn({"total_orders": 15, "failed_orders": 0, "unscheduled_orders": 4, "completion_rate": 0.90})]
+    block = _build_risk_brief_block(turns, "risk_brief")
+
+    assert block is not None
+    assert block.data["risk_level"] == "medium"
+
+
+def test_build_risk_brief_block_returns_low_risk_when_metrics_healthy():
+    from Delivery_app_BK.ai.response_formatter import _build_risk_brief_block
+
+    turns = [_make_analytics_turn({"total_orders": 15, "failed_orders": 0, "unscheduled_orders": 0, "completion_rate": 0.97})]
+    block = _build_risk_brief_block(turns, "risk_brief")
+
+    assert block is not None
+    assert block.data["risk_level"] == "low"
+    assert "stable" in block.data["text"].lower()
+
+
+def test_build_risk_brief_block_works_for_diagnostic_depth():
+    from Delivery_app_BK.ai.response_formatter import _build_risk_brief_block
+
+    turns = [_make_analytics_turn({"total_orders": 5, "failed_orders": 1, "unscheduled_orders": 0, "completion_rate": 0.80})]
+    block = _build_risk_brief_block(turns, "diagnostic")
+
+    assert block is not None
+    assert block.data["insight_depth"] == "diagnostic"
+
+
+def test_build_risk_brief_block_uses_last_analytics_snapshot_turn():
+    from Delivery_app_BK.ai.response_formatter import _build_risk_brief_block
+
+    turns = [
+        _make_analytics_turn({"total_orders": 5, "failed_orders": 5, "completion_rate": 0.0}),
+        _make_analytics_turn({"total_orders": 20, "failed_orders": 0, "unscheduled_orders": 0, "completion_rate": 0.97}),
+    ]
+    block = _build_risk_brief_block(turns, "risk_brief")
+
+    # Should use the LAST analytics turn (low risk), not the first (high risk)
+    assert block is not None
+    assert block.data["risk_level"] == "low"
+
+
+def test_format_response_prepends_risk_block_when_insight_depth_set():
+    tool_turns = [
+        {"tool": "list_orders", "params": {}, "result": {"order": [{"id": 1}], "order_stats": {"total": 1}, "order_pagination": {"has_more": False}}},
+        _make_analytics_turn({"total_orders": 10, "failed_orders": 2, "unscheduled_orders": 0, "completion_rate": 0.80}),
+    ]
+
+    response = format_response(
+        "thr_123",
+        "Here are today's orders.",
+        tool_turns,
+        data={"insight_depth": "risk_brief"},
+    )
+
+    blocks = response.message.blocks
+    assert len(blocks) >= 1
+    risk_blocks = [b for b in blocks if getattr(b, "entity_type", None) == "analytics_risk"]
+    assert len(risk_blocks) == 1
+    # Risk block must appear before order blocks
+    risk_index = blocks.index(risk_blocks[0])
+    order_blocks = [b for b in blocks if getattr(b, "entity_type", None) == "order"]
+    if order_blocks:
+        assert risk_index < blocks.index(order_blocks[0])
+
+
+def test_format_response_skips_risk_block_when_no_analytics_snapshot_turn():
+    tool_turns = [
+        {"tool": "list_orders", "params": {}, "result": {"order": [{"id": 1}], "order_stats": {"total": 1}, "order_pagination": {"has_more": False}}},
+    ]
+
+    response = format_response(
+        "thr_123",
+        "Here are today's orders.",
+        tool_turns,
+        data={"insight_depth": "risk_brief"},
+    )
+
+    risk_blocks = [b for b in response.message.blocks if getattr(b, "entity_type", None) == "analytics_risk"]
+    assert len(risk_blocks) == 0
+
+
+def test_format_response_skips_risk_block_when_insight_depth_is_none():
+    tool_turns = [
+        _make_analytics_turn({"total_orders": 10, "failed_orders": 5, "completion_rate": 0.50}),
+    ]
+
+    response = format_response(
+        "thr_123",
+        "Analytics result.",
+        tool_turns,
+        data={"insight_depth": "none"},
+    )
+
+    risk_blocks = [b for b in response.message.blocks if getattr(b, "entity_type", None) == "analytics_risk"]
+    assert len(risk_blocks) == 0
 

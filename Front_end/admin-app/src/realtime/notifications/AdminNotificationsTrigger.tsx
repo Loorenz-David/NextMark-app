@@ -54,7 +54,9 @@ export function AdminNotificationsTrigger() {
                 data-popover-close
                 onClick={() => {
                   openAdminNotificationTarget(notification, {
-                    openLocalDeliveryWorkspace: baseControls.openBase,
+                    openLocalDeliveryWorkspace: (payload) => {
+                      baseControls.openBase({ payload })
+                    },
                     openOrderDetail,
                     openCaseDetails,
                   })

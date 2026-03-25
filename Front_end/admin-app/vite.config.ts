@@ -7,6 +7,23 @@ import path from 'path'
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [ react(), tailwindcss(), svgr() ],
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (!id.includes('/node_modules/')) return
+
+          if (id.includes('/react/') || id.includes('/react-dom/')) return 'react-core'
+          if (id.includes('/@dnd-kit/')) return 'dnd'
+          if (id.includes('/framer-motion/')) return 'motion'
+          if (id.includes('/jspdf/')) return 'docs-export-jspdf'
+          if (id.includes('/html2canvas/')) return 'docs-export-html2canvas'
+          if (id.includes('/socket.io-client/')) return 'realtime'
+          if (id.includes('/lottie-web/') || id.includes('/lottie-react/')) return 'lottie'
+        },
+      },
+    },
+  },
   resolve: {
     alias: [
       { find: '@', replacement: path.resolve(__dirname, 'src') },
@@ -18,6 +35,9 @@ export default defineConfig({
       { find: /^zustand\/react\/shallow$/, replacement: path.resolve(__dirname, './node_modules/zustand/esm/react/shallow.mjs') },
       { find: /^react$/, replacement: path.resolve(__dirname, './node_modules/react/index.js') },
       { find: /^react\/jsx-runtime$/, replacement: path.resolve(__dirname, './node_modules/react/jsx-runtime.js') },
+      { find: /^react-dom$/, replacement: path.resolve(__dirname, './node_modules/react-dom/index.js') },
+      { find: /^react-dom\/client$/, replacement: path.resolve(__dirname, './node_modules/react-dom/client.js') },
+      { find: /^@floating-ui\/react$/, replacement: path.resolve(__dirname, './node_modules/@floating-ui/react/dist/floating-ui.react.mjs') },
       { find: /^framer-motion$/, replacement: path.resolve(__dirname, './node_modules/framer-motion/dist/es/index.mjs') },
       { find: /^libphonenumber-js$/, replacement: path.resolve(__dirname, './node_modules/libphonenumber-js/index.cjs.js') },
       { find: '@shared-utils', replacement: path.resolve(__dirname, '../packages/shared-utils/src') },

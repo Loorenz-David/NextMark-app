@@ -5,6 +5,8 @@ from sqlalchemy.orm.exc import NoResultFound
 
 from Delivery_app_BK.errors import NotFound, ValidationFailed
 from Delivery_app_BK.models import Order, OrderState, db
+from Delivery_app_BK.services.domain.state_transitions.order_count_engine import recompute_plan_order_counts
+from Delivery_app_BK.services.domain.state_transitions.plan_state_engine import maybe_auto_complete_plan
 from Delivery_app_BK.services.infra.events.builders.order import (
     build_order_state_transition_events,
 )
@@ -72,7 +74,27 @@ def update_orders_state(
     if pending_events:
         emit_order_events(ctx, pending_events)
 
+    if changed_orders_result:
+        _recompute_and_auto_complete_plans(changed_orders_result)
+
     return changed_orders_result
+
+
+def _recompute_and_auto_complete_plans(changed_orders: list[Order]) -> None:
+    """
+    After order states have been updated, refresh per-state counts on all
+    affected delivery plans and auto-complete any that are fully done.
+    Runs inside whatever transaction/session is already active.
+    """
+    affected_plans: dict[int, object] = {}
+    for order in changed_orders:
+        plan = getattr(order, "delivery_plan", None)
+        if plan is not None and getattr(plan, "id", None) is not None:
+            affected_plans[plan.id] = plan
+
+    for plan in affected_plans.values():
+        recompute_plan_order_counts(plan)
+        maybe_auto_complete_plan(plan)
 
 
 

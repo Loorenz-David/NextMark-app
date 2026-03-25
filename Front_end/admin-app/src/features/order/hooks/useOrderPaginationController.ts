@@ -45,7 +45,7 @@ export const useOrderPaginationController = ({ query, scrollToTop }: Params) => 
       ...query,
       filters: {
         ...query.filters,
-        limit: 200,
+        limit: 50,
         ...(append && cursor ? { after_cursor: cursor } : {}),
       },
     })

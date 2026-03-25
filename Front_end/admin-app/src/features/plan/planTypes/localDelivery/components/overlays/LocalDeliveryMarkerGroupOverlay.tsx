@@ -89,7 +89,7 @@ export const LocalDeliveryMarkerGroupOverlay = () => {
                   onClick={() => {
                     mapManager.selectOrder(order.client_id)
                     openOrderDetail(
-                      { mode: 'edit', clientId: order.client_id },
+                      { mode: 'edit', clientId: order.client_id, openSource: 'marker' },
                       { borderLeft: 'rgb(var(--color-light-blue-r),0.7)' },
                     )
                     closeGroupOverlay()

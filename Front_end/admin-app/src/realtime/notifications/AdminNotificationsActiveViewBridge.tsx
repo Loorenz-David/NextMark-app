@@ -36,7 +36,7 @@ export function AdminNotificationsActiveViewBridge() {
     const matchingIds = collectActiveNotificationIds(
       sectionEntries,
       baseControls.isBaseOpen,
-      baseControls.payload,
+      baseControls.payload ?? undefined,
     )
     if (matchingIds.length === 0) {
       return

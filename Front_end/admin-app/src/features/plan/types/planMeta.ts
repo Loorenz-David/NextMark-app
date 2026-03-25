@@ -30,6 +30,7 @@ export type DeliveryPlanStatePagination = {
 }
 
 export type PlanQueryFilters = {
+  mode?: 'month' | 'date' | 'range'
   team_id?: number | string
   label?: string
   plan_type?: PlanTypeKey
@@ -41,6 +42,7 @@ export type PlanQueryFilters = {
   sort?: 'date_asc' | 'date_desc'
   after_cursor?: string
   before_cursor?: string
+  filters?: Record<string, unknown>
   orders?: Record<string, unknown>
   limit?: number
 }

@@ -12,6 +12,8 @@ from Delivery_app_BK.services.requests.plan.local_delivery import (
     parse_mark_actual_time_request,
 )
 from Delivery_app_BK.services.commands.plan.local_delivery.event_helpers import create_route_solution_event
+from Delivery_app_BK.services.infra.jobs import enqueue_job
+from Delivery_app_BK.services.infra.jobs.tasks.analytics import compute_route_metrics_job
 from Delivery_app_BK.sockets.contracts.realtime import BUSINESS_EVENT_ROUTE_SOLUTION_UPDATED
 from Delivery_app_BK.sockets.emitters.route_solution_events import emit_route_solution_updated
 
@@ -35,6 +37,13 @@ def mark_route_solution_actual_end_time(
     route_solution.actual_end_time = resolve_actual_timestamp(parsed.time)
     db.session.add(route_solution)
     db.session.commit()
+
+    enqueue_job(
+        queue_key="default",
+        fn=compute_route_metrics_job,
+        args=(route_solution.id,),
+        description=f"analytics:route_metrics:{route_solution.id}",
+    )
 
     # Emit real-time event
     create_route_solution_event(

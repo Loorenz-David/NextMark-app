@@ -19,7 +19,7 @@ type ActiveFilterEntry =
 
 type ActiveFilterPillsProps = {
   filters: Record<string, unknown>
-  removeFilter: (key: string) => void
+  removeFilter: (key: string, value?: unknown) => void
   formatFilterLabel?: (key: string, value: unknown) => string
   className?: string
 }
@@ -94,7 +94,7 @@ export const ActiveFilterPills = ({
               aria-label={`Remove ${itemKey} filter`}
               onClick={() =>
                 type === 'array'
-                  ? removeFilter(itemKey)
+                  ? removeFilter(parentKey, value)
                   : removeFilter(parentKey)
               }
               className="inline-flex items-center justify-center rounded-full p-0.5 text-[rgb(var(--color-light-blue-r))] transition-colors hover:bg-[rgba(var(--color-light-blue-r),0.18)] hover:text-white"

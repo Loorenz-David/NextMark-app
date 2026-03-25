@@ -23,7 +23,6 @@ const OrderMainContent = ({ scrollContainerRef }: { scrollContainerRef: RefObjec
     hoveredClientId,
     handleOrderRowMouseEnter,
     handleOrderRowMouseLeave,
-    currentPage,
     hasMorePages,
     isLoadingNextPage,
     loadNextPage,
@@ -72,7 +71,7 @@ const OrderMainContent = ({ scrollContainerRef }: { scrollContainerRef: RefObjec
 
   const handleOpenOrder = (order: Order) => {
     orderActions.openOrderDetail(
-      { clientId: order.client_id, mode: 'view' },
+      { clientId: order.client_id, mode: 'view', openSource: 'card' },
       {pageClass:'bg-[var(--color-muted)]/10 ', borderLeft:'rgb(var(--color-light-blue-r),0.7)'}
     )
   }
@@ -120,20 +119,22 @@ const OrderMainContent = ({ scrollContainerRef }: { scrollContainerRef: RefObjec
             onOrderMouseEnter={handleOrderRowMouseEnter}
             onOrderMouseLeave={handleOrderRowMouseLeave}
           />
-          <div className="flex justify-center pb-6 pt-2">
-            <BasicButton
-              params={{
-                onClick: () => { void loadNextPage() },
-                disabled: isLoadingNextPage || !hasMorePages,
-                variant: 'secondary',
-                ariaLabel: 'Load next page of orders',
-              }}
-            >
-              {isLoadingNextPage ? 'Loading…' : hasMorePages ? `Next Page (${currentPage + 1})` : 'No more orders'}
-            </BasicButton>
-          </div>
         </div>
       </div>
+      {(isLoadingNextPage || hasMorePages) && (
+        <div className="flex justify-center  px-4 pb-4 pt-3">
+          <BasicButton
+            params={{
+              onClick: () => { void loadNextPage() },
+              disabled: isLoadingNextPage || !hasMorePages,
+              variant: 'secondary',
+              ariaLabel: 'Load next page of orders',
+            }}
+          >
+            {isLoadingNextPage ? 'Loading…' : 'Show more'}
+          </BasicButton>
+        </div>
+      )}
     </div>
   )
 }

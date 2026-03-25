@@ -8,6 +8,7 @@ from Delivery_app_BK.errors import NotFound
 from Delivery_app_BK.models import Order, DeliveryPlan, db
 from Delivery_app_BK.services.utils import model_requires_team, require_team_id
 from Delivery_app_BK.services.domain.plan.recompute_plan_totals import recompute_plan_totals
+from Delivery_app_BK.services.domain.state_transitions.order_count_engine import recompute_plan_order_counts
 
 from ...context import ServiceContext
 from ..utils import extract_ids
@@ -61,6 +62,7 @@ def delete_order(ctx: ServiceContext):
         # After deletion, deleted orders are excluded from SUM — totals now correct.
         for plan in affected_plans_by_id.values():
             recompute_plan_totals(plan)
+            recompute_plan_order_counts(plan)
 
         for action in extension_result.post_flush_actions:
             action()

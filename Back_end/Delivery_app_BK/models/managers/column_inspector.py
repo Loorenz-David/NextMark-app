@@ -187,7 +187,20 @@ class ColumnInspector:
         if self.is_relationship():
             return self.relationship.mapper.class_
         elif self.is_foreign_key():
-            return self.foreign_key.column.table.mapper.class_
+            # SQLAlchemy 2 no longer exposes ``table.mapper``.
+            # Resolve the target model through this model's mapped relationships.
+            for relationship in self.mapper.relationships:
+                local_columns = relationship.local_columns or set()
+                if self.column in local_columns:
+                    return relationship.mapper.class_
+
+            # Fallback: try matching by referenced table name when direct local
+            # column mapping is not available (defensive for custom mappings).
+            target_table_name = self.foreign_key.column.table.name
+            for relationship in self.mapper.relationships:
+                if relationship.mapper.persist_selectable.name == target_table_name:
+                    return relationship.mapper.class_
+            return None
         
         return None
 

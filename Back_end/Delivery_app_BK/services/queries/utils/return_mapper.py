@@ -19,6 +19,10 @@ def map_return_values(
 
     elif ctx.on_query_return == 'client_ids_map' :
         return build_client_ids_map( unpacked_instances, ctx, table )
+
+    elif ctx.on_query_return == 'list':
+        return unpacked_instances
+
     else:
         return unpacked_instances
 

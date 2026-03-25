@@ -2,12 +2,11 @@ import { useCallback, useEffect } from 'react'
 
 import type { BaseControls } from '@/shared/resource-manager/types'
 import type { StackActionManager } from '@/shared/stack-manager/StackActionManager'
-
-type BasePayload = { ordersPlanType: string | null; planId?: number | null; freshAfter?: string | null }
+import type { PayloadBase } from '@/features/home/types/types'
 
 type Params = {
   isMobile: boolean
-  baseControls: BaseControls<BasePayload>
+  baseControls: BaseControls<PayloadBase>
   popupManager: StackActionManager<Record<string, unknown>>
   sectionManager: StackActionManager<Record<string, unknown>>
 }

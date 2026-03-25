@@ -43,6 +43,11 @@ from Delivery_app_BK.services.domain.vehicle.apply_vehicle_warnings import (
     apply_vehicle_warnings_to_route_solution,
 )
 from Delivery_app_BK.models.tables.infrastructure.vehicle import Vehicle
+from Delivery_app_BK.services.domain.state_transitions.plan_state_engine import (
+    apply_plan_state,
+    should_reset_plan_to_open,
+)
+from Delivery_app_BK.services.domain.plan.plan_states import PlanStateId
 
 logger = logging.getLogger(__name__)
 
@@ -123,6 +128,13 @@ def apply_local_delivery_settings_request(
     )
     if plan_window_changed or request.delivery_plan.has_label or route_solution_changed:
         touch_route_freshness(delivery_plan)
+
+    # Reset plan to OPEN when the delivery window or route configuration changes,
+    # because any previously computed route may no longer be valid.
+    if (plan_window_changed or route_patch_requested) and should_reset_plan_to_open(
+        delivery_plan.state_id
+    ):
+        apply_plan_state(delivery_plan, PlanStateId.OPEN)
 
     db.session.add(delivery_plan)
     db.session.add(local_delivery_plan)

@@ -8,7 +8,7 @@ import { buildClientId } from '@/lib/utils/clientId'
 
 export type ItemConfigFormSubmitOptions<
   TPayload extends { client_id: string },
-  TFormState extends object,
+  TFormState extends Record<string, unknown>,
   TEntity extends TPayload & { id?: number },
 > = {
   entityPrefix: string
@@ -41,7 +41,7 @@ export type ItemConfigFormSubmitOptions<
  */
 export const useItemConfigFormSubmit = <
   TPayload extends { client_id: string },
-  TFormState extends object,
+  TFormState extends Record<string, unknown>,
   TEntity extends TPayload & { id?: number },
 >(
   options: ItemConfigFormSubmitOptions<TPayload, TFormState, TEntity>,
@@ -85,16 +85,17 @@ export const useItemConfigFormSubmit = <
     if (payload.mode === 'create') {
       const clientId = existing?.client_id ?? buildClientId(entityPrefix)
       const createPayload = buildCreatePayload(formState, clientId)
+      const optimisticEntity = { ...createPayload } as unknown as TEntity
 
       // Optimistic insert (no server id yet)
-      upsertFn({ ...createPayload } as TEntity)
+      upsertFn(optimisticEntity)
 
       try {
         const response = await createApi(createPayload)
         const serverId = response.data?.[clientId]
         const finalEntity = typeof serverId === 'number'
-          ? { ...createPayload, id: serverId } as TEntity
-          : { ...createPayload } as TEntity
+          ? ({ ...createPayload, id: serverId } as unknown as TEntity)
+          : optimisticEntity
         if (typeof serverId === 'number') {
           // Patch the store record with the real server id
           upsertFn(finalEntity)
@@ -107,19 +108,19 @@ export const useItemConfigFormSubmit = <
         showMessage({ status: 500, message: `Unable to create ${entityPrefix}.` })
       }
     } else if (existing?.id) {
-      const diff = getObjectDiff(initial, formState) as Partial<TFormState>
+      const diff = getObjectDiff(initial, formState)
       const snapshot = { ...existing }
 
       // Optimistic update
-      upsertFn({ ...existing, ...diff } as TEntity)
+      upsertFn({ ...existing, ...diff } as unknown as TEntity)
 
       try {
         await updateApi(existing.id, diff)
-        onSuccess?.({ ...existing, ...diff } as TEntity)
+        onSuccess?.({ ...existing, ...diff } as unknown as TEntity)
         closeForm()
       } catch (error) {
         console.error(`Failed to update ${entityPrefix}`, error)
-        upsertFn(snapshot as TEntity)
+        upsertFn(snapshot as unknown as TEntity)
         showMessage({ status: 500, message: `Unable to update ${entityPrefix}.` })
       }
     }
@@ -148,11 +149,11 @@ export const useItemConfigFormSubmit = <
 
     try {
       await deleteApi(existing.id)
-      onDelete?.(snapshot as TEntity)
+      onDelete?.(snapshot as unknown as TEntity)
       closeForm()
     } catch (error) {
       console.error(`Failed to delete ${entityPrefix}`, error)
-      upsertFn(snapshot as TEntity)
+      upsertFn(snapshot as unknown as TEntity)
       showMessage({ status: 500, message: `Unable to delete ${entityPrefix}.` })
     }
   }, [closeForm, deleteApi, entityPrefix, existing, onDelete, removeFn, showMessage, upsertFn])

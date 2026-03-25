@@ -16,7 +16,74 @@ import { upsertInternationalShippingPlans } from '@/features/plan/planTypes/inte
 import { upsertLocalDeliveryPlans } from '@/features/plan/planTypes/localDelivery/store/localDelivery.slice'
 import { upsertStorePickupPlans } from '@/features/plan/planTypes/storePickup/store/storePickup.slice'
 
-export const buildPlanQueryKey = (query?: PlanQueryFilters) => JSON.stringify(query ?? {})
+const isRecord = (value: unknown): value is Record<string, unknown> => (
+  typeof value === 'object' && value !== null && !Array.isArray(value)
+)
+
+const removeEmptyEntries = (input: Record<string, unknown>) => (
+  Object.fromEntries(
+    Object.entries(input).filter(([, value]) => value !== undefined && value !== null && value !== ''),
+  )
+)
+
+const buildNestedFilters = (query: PlanQueryFilters): Record<string, unknown> => {
+  const {
+    mode,
+    start_date,
+    end_date,
+    after_cursor,
+    before_cursor,
+    limit,
+    sort,
+    filters,
+    ...filterableFields
+  } = query
+
+  const base = isRecord(filters) ? filters : {}
+  return removeEmptyEntries({
+    ...base,
+    ...filterableFields,
+  })
+}
+
+export const normalizePlanQueryForRequest = (query?: PlanQueryFilters): PlanQueryFilters | undefined => {
+  if (!query) {
+    return undefined
+  }
+
+  const cleaned = removeEmptyEntries(query)
+  const nestedFilters = buildNestedFilters(cleaned as PlanQueryFilters)
+
+  const {
+    mode,
+    start_date,
+    end_date,
+    after_cursor,
+    before_cursor,
+    limit,
+    sort,
+  } = cleaned as PlanQueryFilters
+
+  const normalizedMode = mode === 'month' || mode === 'date' || mode === 'range'
+    ? mode
+    : undefined
+  const safeMode = normalizedMode && start_date && end_date ? normalizedMode : undefined
+
+  return {
+    ...removeEmptyEntries({
+      mode: safeMode,
+      start_date,
+      end_date,
+      after_cursor,
+      before_cursor,
+      limit,
+      sort,
+    }),
+    filters: nestedFilters,
+  }
+}
+
+export const buildPlanQueryKey = (query?: PlanQueryFilters) => JSON.stringify(normalizePlanQueryForRequest(query) ?? {})
 
 
 
@@ -50,7 +117,8 @@ export function usePlanQueries() {
   const fetchPlansPage = useCallback(
     async (query?: PlanQueryFilters) => {
       try {
-        const response = await planApi.listPlans(query)
+        const requestQuery = normalizePlanQueryForRequest(query)
+        const response = await planApi.listPlans(requestQuery)
 
         const payload = response.data
 

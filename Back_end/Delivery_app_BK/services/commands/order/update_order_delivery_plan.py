@@ -6,8 +6,10 @@ from sqlalchemy.orm.exc import NoResultFound
 
 from Delivery_app_BK.errors import NotFound, ValidationFailed
 from Delivery_app_BK.models import (
+    CaseChat,
     DeliveryPlan,
     Order,
+    OrderCase,
     RouteSolution,
     RouteSolutionStop,
     db,
@@ -27,6 +29,10 @@ from Delivery_app_BK.services.queries.route_solutions.serialize_route_solutions 
 )
 from Delivery_app_BK.services.domain.plan.route_freshness import touch_route_freshness
 from Delivery_app_BK.services.domain.plan.recompute_plan_totals import recompute_plan_totals
+from Delivery_app_BK.services.domain.state_transitions.order_count_engine import recompute_plan_order_counts
+from Delivery_app_BK.services.domain.state_transitions.plan_state_engine import apply_plan_state, maybe_auto_complete_plan
+from Delivery_app_BK.services.domain.state_transitions.order_move_rules import compute_destination_move_result, OrderMoveResult
+from Delivery_app_BK.services.domain.order.order_case_states import OrderCaseState
 from Delivery_app_BK.services.utils import model_requires_team, require_team_id
 
 from ...context import ServiceContext
@@ -167,6 +173,19 @@ def apply_orders_delivery_plan_change(
         recompute_plan_totals(plan)
     if _plans_to_recompute:
         db.session.flush()
+
+    # Recompute per-state order counts, apply state heritage, then check auto-complete.
+    for plan in _plans_to_recompute.values():
+        recompute_plan_order_counts(plan)
+    case_message = (ctx.incoming_data or {}).get("case_message") if ctx.incoming_data else None
+    _apply_move_state_heritage(
+        ctx=ctx,
+        changed_orders=changed_orders,
+        new_plan=new_plan,
+        plans_to_recompute=_plans_to_recompute,
+        case_message=case_message,
+    )
+    db.session.flush()
 
     old_local_delivery_bundle = _serialize_old_local_delivery_batch_bundle(
         updated_stops=old_local_delivery_batch["updated_stops"],
@@ -404,6 +423,68 @@ def _sanitize_instances_for_session(instances: list[object]) -> list[object]:
         sanitized.append(instance)
 
     return sanitized
+
+
+def _apply_move_state_heritage(
+    *,
+    ctx: ServiceContext,
+    changed_orders: list,
+    new_plan,
+    plans_to_recompute: dict,
+    case_message: str | None,
+) -> None:
+    from datetime import datetime, timezone
+
+    now = datetime.now(timezone.utc)
+    for order in changed_orders:
+        result = compute_destination_move_result(order, new_plan, now)
+        if result.new_order_state_id is not None:
+            order.order_state_id = result.new_order_state_id
+        if result.new_plan_state_id is not None:
+            apply_plan_state(new_plan, result.new_plan_state_id)
+        if result.should_create_case:
+            _create_move_case(ctx, order, result, case_message)
+
+    for plan in plans_to_recompute.values():
+        recompute_plan_order_counts(plan)
+
+    for plan in plans_to_recompute.values():
+        maybe_auto_complete_plan(plan)
+
+
+def _create_move_case(
+    ctx: ServiceContext,
+    order,
+    result: OrderMoveResult,
+    user_message: str | None,
+) -> None:
+    full_text = result.case_predefined_text or ""
+    if user_message:
+        full_text = f"{full_text}\n\n{user_message}".strip()
+
+    user_id = None
+    if ctx.identity:
+        user_id = ctx.identity.get("user_id")
+
+    case = OrderCase(
+        team_id=order.team_id,
+        order_id=order.id,
+        state=OrderCaseState.OPEN.value,
+        label="Order moved to ready plan",
+        created_by=user_id,
+    )
+    db.session.add(case)
+    db.session.flush()
+
+    if full_text:
+        chat = CaseChat(
+            team_id=order.team_id,
+            order_case_id=case.id,
+            message=full_text,
+            user_id=user_id,
+            user_name="System",
+        )
+        db.session.add(chat)
 
 
 def update_orders_delivery_plan(

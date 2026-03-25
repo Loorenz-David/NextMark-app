@@ -7,6 +7,7 @@ import { useAddressCurrentLocationFlow } from '@/shared/inputs/address-autocompl
 import { planApi } from '@/features/plan/api/plan.api'
 import { useOrderFlow, useOrderPlanPatchController } from '@/features/order'
 import { resolvePlanTypeDefaults } from '@/features/plan/domain/planTypeDefaults/planTypeDefaults.registry'
+import { reactivePlanVisibility } from '@/features/plan/domain/planReactiveVisibility'
 import { getQueryFilters, getQuerySearch } from '@/features/order/store/orderQuery.store'
 import type {
   DeliveryPlan,
@@ -125,7 +126,7 @@ const resolveError = (error: unknown, fallback: string) => ({
   status: error instanceof ApiError ? error.status : 500,
 })
 
-const canInsertCreatedPlanIntoCurrentList = () => {
+const canInsertCreatedPlanIntoCurrentList = (plan: DeliveryPlan) => {
   const { visibleIds } = usePlanStore.getState()
   const { query } = usePlanListStore.getState()
 
@@ -137,22 +138,11 @@ const canInsertCreatedPlanIntoCurrentList = () => {
     return true
   }
 
-  const hasFilterThatNeedsServerRequery = Boolean(
-    query.label
-      || query.plan_type
-      || query.start_date
-      || query.end_date
-      || query.created_at_from
-      || query.created_at_to
-      || query.plan_state_id
-      || query.orders,
-  )
-
-  return !hasFilterThatNeedsServerRequery
+  return reactivePlanVisibility(plan, query)
 }
 
 const syncCreatedPlanIntoVisibleList = (plan: DeliveryPlan) => {
-  if (!canInsertCreatedPlanIntoCurrentList()) {
+  if (!canInsertCreatedPlanIntoCurrentList(plan)) {
     return
   }
 

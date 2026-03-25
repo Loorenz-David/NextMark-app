@@ -25,6 +25,8 @@ const buildBaseFormState = (): OrderFormState => ({
   operation_type: 'dropoff',
   reference_number: 'REF-100',
   external_source: '',
+  external_tracking_number: '',
+  external_tracking_link: '',
   tracking_number: '',
   tracking_link: '',
   client_first_name: 'John',
@@ -41,6 +43,7 @@ const buildBaseFormState = (): OrderFormState => ({
   },
   delivery_windows: [],
   delivery_plan_id: 10,
+  order_note: '',
 })
 
 const buildItem = (overrides?: Partial<Item>): Item => ({

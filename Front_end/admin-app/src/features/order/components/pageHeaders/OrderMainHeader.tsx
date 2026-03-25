@@ -12,6 +12,7 @@ import { InfoHover } from '@/shared/layout/InfoHover'
 import { ORDER_MAIN_HEADER_INFO } from '../../info/orderMainHeader.info'
 import { motion } from 'framer-motion'
 import { cn } from '@/lib/utils/cn'
+import { createOrderFilterLabelFormatter } from '../../domain/orderFilterLabelFormatter'
 
 
 
@@ -24,8 +25,8 @@ type OrderMainHeaderProps = {
   isSelectionMode: boolean
   applySearch: (input: string) => void
   applyFilters: (filters: OrderQueryFilters) => void
-  updateFilters: (key: OrderQueryStringQueries, value: unknown) => void
-  deleteFilter: (key: OrderQueryStringQueries) => void
+  updateFilters: (key: string, value: unknown) => void
+  deleteFilter: (key: string, value?: unknown) => void
   orderStats?:OrderStats
   query: {
     q: string
@@ -53,12 +54,7 @@ export const OrderMainHeader = ({
   isActionStackVisible = true,
 }: OrderMainHeaderProps) => {
   const { setHeader } = useSectionPanel()
-  const filterLabelMap = filterConfig.reduce<Record<string, string>>((acc, filter) => {
-    if (filter.type === 'option') {
-      acc[filter.key] = filter.label
-    }
-    return acc
-  }, {})
+  const formatFilterLabel = createOrderFilterLabelFormatter(filterConfig)
 
   useEffect(()=>{
     const ordersCount = orderStats?.orders?.total ?? 0
@@ -110,7 +106,7 @@ export const OrderMainHeader = ({
             placeholder="Search orders..."
             applySearch={applySearch}
             config={filterConfig}
-            updateFilter={(key, value) => updateFilters(key as OrderQueryStringQueries, value)}
+            updateFilter={(key, value) => updateFilters(key, value)}
             filters={query.filters}
             searchValue={query.q}
           />
@@ -149,8 +145,8 @@ export const OrderMainHeader = ({
           <ActiveFilterPills
             className="px-4"
             filters={query.filters}
-            removeFilter={(key) => deleteFilter(key as OrderQueryStringQueries)}
-            formatFilterLabel={(key) => filterLabelMap[key] ?? key}
+            removeFilter={deleteFilter}
+            formatFilterLabel={(key) => formatFilterLabel(key)}
           />
         </div>
         {isSelectionMode && 

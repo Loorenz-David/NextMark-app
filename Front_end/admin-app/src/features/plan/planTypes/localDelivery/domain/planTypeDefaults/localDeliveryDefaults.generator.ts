@@ -24,14 +24,7 @@ export const buildLocalDeliveryPlanTypeDefaults = async (
   const stored = loadLocalDeliveryEditFormPreferences()
   const resolvedStartTime = resolveDefaultStartTime(ctx.planStartDate, stored.set_start_time)
 
-  let startLocation = stored.start_location
-  if (!startLocation) {
-    try {
-      startLocation = await ctx.getCurrentLocationAddress()
-    } catch {
-      startLocation = null
-    }
-  }
+  const startLocation = stored.start_location ?? null
 
   const endLocation = stored.end_location ?? startLocation
 

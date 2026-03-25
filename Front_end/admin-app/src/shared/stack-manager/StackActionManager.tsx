@@ -142,6 +142,60 @@ export class StackActionManager <
       this.notify()
     }
   }
+
+  closeExactWithDelay(entryId: string, delayMs: number) {
+    const index = this.stackEntries.findIndex((entry) => entry.id === entryId)
+    if (index === -1) return
+
+    const effectiveDelay = Math.max(0, delayMs)
+    if (effectiveDelay === 0) {
+      this.closeExact(entryId)
+      return
+    }
+
+    this.stackEntries[index] = {
+      ...this.stackEntries[index],
+      isClosing: true,
+    }
+    this.notify()
+
+    setTimeout(() => {
+      this.stackEntries = this.stackEntries.filter((entry) => entry.id !== entryId)
+      this.notify()
+    }, effectiveDelay)
+  }
+
+  /**
+   * Atomically removes an existing entry and opens a new one in a single notify().
+   * AnimatePresence receives both changes in the same React render cycle, so the
+   * exit animation (old entry) and enter animation (new entry) run simultaneously
+   * via mode="sync" — no visible close-then-open sequence.
+   */
+  atomicOpenClose<K extends keyof TPayloadMap>(
+    params: {
+      key: K
+      payload?: TPayloadMap[K]
+      parentParams?: Record<string, unknown>
+    },
+    closeEntryId: string,
+  ): void {
+    const component = this.stackRegistry[params.key]
+    if (!component) {
+      throw new Error(`No action component registered for key: ${String(params.key)}`)
+    }
+    const newEntry: ActionEntry<K, TPayloadMap[K]> = {
+      id: uuidv4(),
+      key: params.key,
+      payload: params.payload,
+      parentParams: params.parentParams,
+      isClosing: false,
+    }
+    this.stackEntries = [
+      ...this.stackEntries.filter((e) => e.id !== closeEntryId),
+      newEntry,
+    ]
+    this.notify()
+  }
   closeByKey<K extends keyof TPayloadMap>(keys:K | readonly K[]): boolean {
     const keyList = Array.isArray(keys) ? keys : [keys]
     if (keyList.length === 0) {
@@ -228,14 +282,24 @@ export class StackActionManager <
               key={entry.id}
               initial={{ x: panelWidth ?? 400}}
               animate={{ x: 0 }}
-              exit={{ x: panelWidth ?? 400 }}
               transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-              className={
-                isFirst
-                  ? baseClass
-                  : `${baseClass} absolute top-0 left-0`
-              }
-              style={panelWidth == null ? undefined : { width: panelWidth, maxWidth: '100%' }}
+               // custom drives the exit variant:
+               //   false (user-close) → spring slide-out
+               //   true  (replacement) → instant, invisible removal (B is already on top)
+               custom={entry.isClosing}
+               variants={{
+                 exit: (isReplacement: boolean) =>
+                   isReplacement
+                     ? { x: 0, transition: { duration: 0 } }
+                     : { x: panelWidth ?? 400, transition: { type: 'spring', stiffness: 300, damping: 30 } },
+               }}
+               exit="exit"
+               className={
+                 isFirst
+                   ? baseClass
+                   : `${baseClass} absolute top-0 left-0`
+               }
+               style={panelWidth == null ? undefined : { width: panelWidth, maxWidth: '100%' }}
             >
               {Blueprint  
                 ? <Blueprint

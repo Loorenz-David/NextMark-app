@@ -31,7 +31,7 @@ export function Field({
   warningController?: InputWarningController
   gap?: number
   warningPlacement?: 'atBottom' | 'besidesLabel'
-  info?: InfoHoverMessage | InfoHoverMessage[]
+  info?: string | InfoHoverMessage | InfoHoverMessage[]
   infoTriggerVariant?: 'icon' | 'text'
   infoTriggerText?: string
   infoTriggerClassName?: string
@@ -43,6 +43,7 @@ export function Field({
   infoInteractive?: boolean
 }) {
   const resolvedWarning = warningController?.warning ?? warning
+  const resolvedInfo = typeof info === 'string' ? { content: info } : info
   return (
     <label className={`flex w-full flex-col  ${'gap-' + gap}`}>
       <div className="flex justify-between">
@@ -51,9 +52,9 @@ export function Field({
             {label}
             {required && <span className="ml-1 text-red-500">*</span>}
           </span>
-          {info ? (
+          {resolvedInfo ? (
             <InfoHover
-              content={info}
+              content={resolvedInfo}
               triggerVariant={infoTriggerVariant}
               triggerText={infoTriggerText}
               triggerClassName={infoTriggerClassName}
