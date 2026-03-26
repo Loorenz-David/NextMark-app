@@ -102,7 +102,7 @@ def test_generate_order_test_data_builds_expected_default_orders(monkeypatch):
     assert len(captured_fields) == 43
 
     local_fields = [row for row in captured_fields if row.get("order_plan_objective") == "local_delivery"]
-    local_plan_ids = [row["delivery_plan_id"] for row in local_fields]
+    local_plan_ids = [row["route_plan_id"] for row in local_fields]
     assert len(local_plan_ids) == 33
     assert local_plan_ids[:10] == [10] * 10
     assert local_plan_ids[10:21] == [11] * 11
@@ -124,7 +124,7 @@ def test_generate_order_test_data_builds_expected_default_orders(monkeypatch):
     # Default: 2 orders per plan get delivery windows
     fields_by_plan: dict[int, list[dict]] = {}
     for row in captured_fields:
-        fields_by_plan.setdefault(row["delivery_plan_id"], []).append(row)
+        fields_by_plan.setdefault(row["route_plan_id"], []).append(row)
 
     assert len([row for row in fields_by_plan[10] if row.get("delivery_windows")]) == 2
     assert len([row for row in fields_by_plan[11] if row.get("delivery_windows")]) == 2

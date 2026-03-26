@@ -121,7 +121,7 @@ def _build_fields_for_plan_type(
     for index, template in enumerate(templates):
         plan = plans[index % len(plans)]
         fields = deepcopy(template)
-        fields["delivery_plan_id"] = plan.id
+        fields["route_plan_id"] = plan.id
         fields["order_plan_objective"] = plan_type
 
         # Generate random items for this order if config allows
@@ -174,7 +174,7 @@ def _build_fields_for_local_delivery_plan_type(
             template_cursor += 1
 
             fields = deepcopy(template)
-            fields["delivery_plan_id"] = plan.id
+            fields["route_plan_id"] = plan.id
             fields["order_plan_objective"] = "local_delivery"
 
             if item_gen_config.get("enabled", True):
@@ -330,7 +330,7 @@ def _assign_delivery_windows_to_plan_rows(
 
     rows_by_plan: dict[int, list[dict]] = {}
     for row in generated_rows:
-        plan_id = row.get("delivery_plan_id")
+        plan_id = row.get("route_plan_id")
         if isinstance(plan_id, int):
             rows_by_plan.setdefault(plan_id, []).append(row)
 

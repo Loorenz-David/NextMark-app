@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from types import SimpleNamespace
 
-from Delivery_app_BK.services.commands.delivery_plan.local_delivery.route_solution.plan_sync.stop_window_updates import (
+from Delivery_app_BK.services.commands.route_plan.local_delivery.route_solution.plan_sync.stop_window_updates import (
     apply_time_window_update,
 )
 

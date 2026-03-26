@@ -5,7 +5,7 @@ from types import SimpleNamespace
 
 from Delivery_app_BK.services.commands.order.plan_changes import local_delivery as module
 from Delivery_app_BK.services.commands.order.plan_changes.types import PlanChangeApplyContext
-from Delivery_app_BK.services.commands.delivery_plan.local_delivery.route_solution.plan_sync import (
+from Delivery_app_BK.services.commands.route_plan.local_delivery.route_solution.plan_sync import (
     incremental_sync as sync_module,
 )
 
@@ -85,7 +85,7 @@ def test_plan_change_bundle_includes_synced_old_route_stops(monkeypatch):
     monkeypatch.setattr(
         module,
         "remove_order_stops_for_local_delivery",
-        lambda order_id, local_delivery_plan_id: ([], [route_solution], {route_solution.id: 1}),
+        lambda order_id, route_group_id: ([], [route_solution], {route_solution.id: 1}),
     )
 
     def _refresh(**kwargs):
@@ -123,3 +123,76 @@ def test_plan_change_bundle_includes_synced_old_route_stops(monkeypatch):
     assert "route_solution" in bundle
     assert len(bundle["route_solution"]) == 1
     assert bundle["route_solution"][0]["id"] == 901
+
+
+def test_plan_change_bundle_uses_canonical_route_group_context(monkeypatch):
+    ctx = DummyCtx()
+    order = SimpleNamespace(id=500)
+
+    old_plan = SimpleNamespace(id=10, plan_type="local_delivery")
+    new_plan = SimpleNamespace(id=99, plan_type="international_shipping")
+
+    predecessor = _make_stop(
+        stop_id=21,
+        client_id="old_prev_2",
+        route_solution_id=902,
+        stop_order=1,
+        order_id=111,
+        to_next_polyline="old-segment-2",
+    )
+
+    route_solution = SimpleNamespace(
+        id=902,
+        is_optimized="optimize",
+        local_delivery_plan=SimpleNamespace(
+            delivery_plan=SimpleNamespace(
+                orders=[SimpleNamespace(id=111), SimpleNamespace(id=222)]
+            )
+        ),
+        stops=[predecessor],
+        start_leg_polyline="start",
+        end_leg_polyline="end",
+    )
+
+    route_group = SimpleNamespace(id=701, delivery_plan_id=old_plan.id)
+
+    apply_context = PlanChangeApplyContext(
+        route_group_by_route_plan_id={old_plan.id: route_group},
+        route_solutions_by_route_group_id={route_group.id: [route_solution]},
+    )
+
+    monkeypatch.setattr(
+        module,
+        "remove_order_stops_for_local_delivery",
+        lambda order_id, route_group_id: ([], [route_solution], {route_solution.id: 1}),
+    )
+    monkeypatch.setattr(sync_module, "refresh_route_solution_incremental", lambda **kwargs: [predecessor])
+    monkeypatch.setattr(
+        module,
+        "serialize_route_solution",
+        lambda route_solution: {
+            "id": route_solution.id,
+            "client_id": "route_902",
+            "start_leg_polyline": route_solution.start_leg_polyline,
+            "end_leg_polyline": route_solution.end_leg_polyline,
+        },
+    )
+
+    result = module.apply_local_delivery_plan_change(
+        ctx=ctx,
+        order_instance=order,
+        old_plan=old_plan,
+        new_plan=new_plan,
+        apply_context=apply_context,
+    )
+
+    for action in result.post_flush_actions:
+        action()
+
+    bundle = result.serialize_bundle()
+    assert "order_stops" in bundle
+    assert len(bundle["order_stops"]) == 1
+    assert bundle["order_stops"][0]["id"] == 21
+    assert "route_solution" in bundle
+    assert len(bundle["route_solution"]) == 1
+    assert bundle["route_solution"][0]["id"] == 902

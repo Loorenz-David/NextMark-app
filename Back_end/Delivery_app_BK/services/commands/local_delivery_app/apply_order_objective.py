@@ -18,10 +18,10 @@ from Delivery_app_BK.services.commands.order.create_serializers import (
 from Delivery_app_BK.services.queries.route_solutions.serialize_route_solutions import (
     serialize_route_solution,
 )
-from Delivery_app_BK.services.commands.delivery_plan.local_delivery.route_solution.stops import (
+from Delivery_app_BK.services.commands.route_plan.local_delivery.route_solution.stops import (
     build_route_solution_stops,
 )
-from Delivery_app_BK.services.commands.delivery_plan.local_delivery.route_solution.plan_sync import (
+from Delivery_app_BK.services.commands.route_plan.local_delivery.route_solution.plan_sync import (
     build_incremental_route_sync_action,
 )
 from ...context import ServiceContext
@@ -31,7 +31,7 @@ from ..order.plan_objectives.types import PlanObjectiveCreateResult
 def apply_order_objective(
     ctx: ServiceContext,
     order_instance,
-    delivery_plan,
+    route_plan,
     plan_objective: str,
 ) -> PlanObjectiveCreateResult:
     """Create route solution stops for order assigned to local delivery plan.
@@ -39,13 +39,13 @@ def apply_order_objective(
     Args:
         ctx: Service context
         order_instance: Order being processed
-        delivery_plan: DeliveryPlan instance
+        route_plan: RoutePlan instance
         plan_objective: Plan objective string
     
     Returns:
         PlanObjectiveCreateResult with created stops and side effects
     """
-    local_delivery = _get_local_delivery_plan(ctx, delivery_plan.id)
+    local_delivery = _get_local_delivery_plan(ctx, route_plan.id)
     route_solutions = list(local_delivery.route_solutions or [])
     if not route_solutions:
         raise ValidationFailed("Route solution not found for local delivery plan.")
@@ -87,7 +87,7 @@ def apply_order_objective(
                 route_solutions_by_id=route_solutions_by_id,
                 synced_stops=synced_stops,
                 changed_route_solutions=changed_route_solutions,
-                orders_by_route_solution_resolver=lambda _route_solution, created_order=order_instance, plan=delivery_plan: _resolve_orders_for_incremental_sync(
+                orders_by_route_solution_resolver=lambda _route_solution, created_order=order_instance, plan=route_plan: _resolve_orders_for_incremental_sync(
                     plan,
                     created_order,
                 ),
@@ -104,10 +104,10 @@ def apply_order_objective(
     )
 
 
-def _get_local_delivery_plan(ctx: ServiceContext, delivery_plan_id: int) -> LocalDeliveryPlan:
-    """Query local delivery plan by delivery plan id."""
+def _get_local_delivery_plan(ctx: ServiceContext, route_plan_id: int) -> LocalDeliveryPlan:
+    """Query local delivery plan by route plan id."""
     query = db.session.query(LocalDeliveryPlan).filter(
-        LocalDeliveryPlan.delivery_plan_id == delivery_plan_id
+        LocalDeliveryPlan.delivery_plan_id == route_plan_id
     )
     if ctx.team_id:
         query = query.filter(LocalDeliveryPlan.team_id == ctx.team_id)

@@ -29,7 +29,7 @@ from Delivery_app_BK.route_optimization.domain.models import (
 from Delivery_app_BK.directions.services.time_window_policy import (
     apply_stop_time_window_evaluation,
 )
-from Delivery_app_BK.services.domain.delivery_plan.local_delivery import (
+from Delivery_app_BK.services.domain.route_operations.local_delivery import (
     apply_expected_stop_schedule,
     clear_expected_stop_schedule,
 )
@@ -239,7 +239,7 @@ def _build_route_solution_payload(route_solution:RouteSolution) -> Dict[str, Any
         "set_end_time": route_solution.set_end_time,
         "stops_service_time": route_solution.stops_service_time,
         "driver_id": route_solution.driver_id,
-        "local_delivery_plan_id": route_solution.local_delivery_plan_id,
+        "route_group_id": route_solution.route_group_id,
         "has_route_warnings": route_solution.has_route_warnings,
         "route_warnings": route_solution.route_warnings,
     }

@@ -14,10 +14,10 @@ from Delivery_app_BK.models import (
     RouteSolutionStop,
     db,
 )
-from Delivery_app_BK.services.commands.delivery_plan.local_delivery.route_solution.plan_sync import (
+from Delivery_app_BK.services.commands.route_plan.local_delivery.route_solution.plan_sync import (
     build_incremental_route_sync_action,
 )
-from Delivery_app_BK.services.commands.delivery_plan.local_delivery.route_solution.stops import (
+from Delivery_app_BK.services.commands.route_plan.local_delivery.route_solution.stops import (
     remove_orders_stops_for_local_delivery,
 )
 from Delivery_app_BK.services.infra.events.builders.order import (
@@ -27,8 +27,8 @@ from Delivery_app_BK.services.infra.events.emiters.order import emit_order_event
 from Delivery_app_BK.services.queries.route_solutions.serialize_route_solutions import (
     serialize_route_solution,
 )
-from Delivery_app_BK.services.domain.delivery_plan.plan.route_freshness import touch_route_freshness
-from Delivery_app_BK.services.domain.delivery_plan.plan.recompute_plan_totals import recompute_plan_totals
+from Delivery_app_BK.services.domain.route_operations.plan.route_freshness import touch_route_freshness
+from Delivery_app_BK.services.domain.route_operations.plan.recompute_plan_totals import recompute_plan_totals
 from Delivery_app_BK.services.domain.state_transitions.order_count_engine import recompute_plan_order_counts
 from Delivery_app_BK.services.domain.state_transitions.plan_state_engine import apply_plan_state, maybe_auto_complete_plan
 from Delivery_app_BK.services.domain.state_transitions.order_move_rules import compute_destination_move_result, OrderMoveResult
@@ -767,14 +767,8 @@ def _load_delivery_plans_by_id(
 
 
 def _get_order_route_plan_id(order: Order) -> int | None:
-    route_plan_id = getattr(order, "route_plan_id", None)
-    if route_plan_id is None:
-        route_plan_id = getattr(order, "delivery_plan_id", None)
-    return route_plan_id
+    return getattr(order, "route_plan_id", None)
 
 
 def _set_order_route_plan_id(order: Order, route_plan_id: int | None) -> None:
-    if hasattr(order, "route_plan_id"):
-        order.route_plan_id = route_plan_id
-    else:
-        order.delivery_plan_id = route_plan_id
+    order.route_plan_id = route_plan_id

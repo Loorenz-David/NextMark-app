@@ -2,7 +2,7 @@ from typing import List
 
 from Delivery_app_BK.models import RoutePlan, RouteSolution
 from Delivery_app_BK.services.context import ServiceContext
-from Delivery_app_BK.services.queries.delivery_plan.plan_types.serialize_local_delivery_plan import (
+from Delivery_app_BK.services.queries.route_plan.plan_types.serialize_local_delivery_plan import (
     serialize_local_delivery_plan,
 )
 from Delivery_app_BK.services.queries.route_solutions import (
@@ -84,7 +84,6 @@ def serialize_active_route_summary(instance: RouteSolution, ctx: ServiceContext)
         "is_selected": bool(instance.is_selected),
         "driver_id": instance.driver_id,
         "route_group_id": route_group_id,
-        "local_delivery_plan_id": route_group_id,
         "created_at": created_at.isoformat() if created_at else None,
         "updated_at": updated_at.isoformat() if updated_at else None,
         "route_plan": _serialize_route_plan_collapsed(route_plan),

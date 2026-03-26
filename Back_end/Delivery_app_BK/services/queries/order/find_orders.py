@@ -87,11 +87,11 @@ def find_orders (
         # ---------------- DELIVERY PLAN ----------------
         "plan_label": {
             "column": DeliveryPlan.label,
-            "join": Order.delivery_plan,
+            "join": Order.route_plan,
         },
         "plan_type": {
             "column": DeliveryPlan.plan_type,
-            "join": Order.delivery_plan,
+            "join": Order.route_plan,
         },
     }
 
@@ -153,9 +153,9 @@ def find_orders (
 
 
     if "schedule_order" in params:
-        query = query.filter(Order.delivery_plan_id.isnot(None))
+        query = query.filter(Order.route_plan_id.isnot(None))
     if "unschedule_order" in params:
-        query = query.filter(Order.delivery_plan_id.is_(None))
+        query = query.filter(Order.route_plan_id.is_(None))
             
 
     if "earliest_delivery_date" in params:

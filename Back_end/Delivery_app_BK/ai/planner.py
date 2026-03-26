@@ -4,6 +4,7 @@ import logging
 
 from .providers.base import LLMProvider
 from .prompts.system_prompt import PLANNER_SYSTEM_PROMPT
+from .schemas import PlannerFinalStep, parse_planner_step
 
 logger = logging.getLogger(__name__)
 
@@ -13,7 +14,7 @@ def get_next_step(
     history: list[dict],
     provider: LLMProvider,
     system_prompt: str | None = None,
-) -> dict:
+) -> object:
     """
     Build a conversation and get the next planner step from the LLM.
 
@@ -53,15 +54,20 @@ def get_next_step(
                 "content": f"Tool result for {entry['tool']}: {json.dumps(entry['result'])}",
             })
 
-    # Current user message goes last — after all prior context
-    messages.append({"role": "user", "content": user_input})
+    # Current user message goes last unless history already ends with same user utterance.
+    if not history or not (
+        isinstance(history[-1], dict)
+        and history[-1].get("role") == "user"
+        and history[-1].get("content") == user_input
+    ):
+        messages.append({"role": "user", "content": user_input})
 
     try:
         content = _complete_with_history(provider, messages)
-        return json.loads(content)
+        return parse_planner_step(json.loads(content))
     except Exception:
         logger.warning("Failed to parse planner step from LLM response")
-        return {"type": "final", "message": "Failed to process the request. Please try again."}
+        return PlannerFinalStep(type="final", message="Failed to process the request. Please try again.")
 
 
 def _complete_with_history(provider: LLMProvider, messages: list[dict]) -> str:

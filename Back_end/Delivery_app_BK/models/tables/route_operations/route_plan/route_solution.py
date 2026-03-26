@@ -20,7 +20,7 @@ from Delivery_app_BK.route_optimization.constants.is_optimized import (
     IS_OPTIMIZED_VALUES,
 )
 from Delivery_app_BK.route_optimization.constants.route_end_strategy import ROUND_TRIP, CUSTOM_END_ADDRESS,LAST_STOP
-from Delivery_app_BK.services.domain.delivery_plan.route_solution import RouteActualEndTimeSource
+from Delivery_app_BK.services.domain.route_operations.route_solution import RouteActualEndTimeSource
 from Delivery_app_BK.services.domain.order.order_states import OrderState as OrderStateEnum
 
 

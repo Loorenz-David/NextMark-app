@@ -1,6 +1,6 @@
 from types import SimpleNamespace
 
-from Delivery_app_BK.services.commands.delivery_plan.local_delivery import response_builder as module
+from Delivery_app_BK.services.commands.route_plan.local_delivery import response_builder as module
 
 
 def test_response_builder_returns_route_solution_without_stops_when_only_route_changes(

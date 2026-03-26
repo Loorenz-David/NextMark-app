@@ -41,8 +41,8 @@ class Shipment:
 
 @dataclass(frozen=True)
 class OptimizationRequest:
-    delivery_plan_id: int
-    local_delivery_plan_id: int
+    route_plan_id: int
+    route_group_id: int
     route_solution_id: int
     shipments: List[Shipment]
     start_location: Dict[str, Any]
@@ -58,11 +58,13 @@ class OptimizationRequest:
     cost_per_kilometer: float
     pre_skipped_shipments: List["SkippedShipment"] = field(default_factory=list)
     excluded_shipments: List[Shipment] = field(default_factory=list)
-    route_plan_id: Optional[int] = None
-    route_group_id: Optional[int] = None
     populate_transition_polylines: bool = True
     injected_routes: Optional[List[Dict[str, Any]]] = None
     interpret_injected_solutions_using_labels: bool = False
+
+    @property
+    def delivery_plan_id(self) -> int:
+        return self.route_plan_id
 
 
 @dataclass(frozen=True)

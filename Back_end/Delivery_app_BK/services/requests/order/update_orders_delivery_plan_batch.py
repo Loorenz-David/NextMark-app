@@ -36,6 +36,7 @@ FORBIDDEN_PAGINATION_KEYS = {
 }
 
 ALLOWED_SNAPSHOT_FILTERS = {
+    "route_plan_id",
     "q",
     "s",
     "show_archived",
@@ -230,8 +231,20 @@ def _sanitize_snapshot_query(value: Any, *, field: str) -> dict[str, Any]:
         raise ValidationFailed(f"{field} contains unsupported filters: {unknown_keys}.")
 
     normalized: dict[str, Any] = {}
+
+    route_plan_id_raw = value.get("route_plan_id")
+    if route_plan_id_raw not in (None, ""):
+        route_plan_id = _normalize_int_or_int_list(
+            route_plan_id_raw,
+            field=f"{field}.route_plan_id",
+        )
+        if route_plan_id is not None:
+            normalized["route_plan_id"] = route_plan_id
+
     for key in sorted(ALLOWED_SNAPSHOT_FILTERS):
         if key not in value:
+            continue
+        if key in {"route_plan_id"}:
             continue
         raw = value.get(key)
         if raw is None or raw == "":

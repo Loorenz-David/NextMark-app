@@ -18,8 +18,6 @@ def load_optimization_context(ctx:ServiceContext) -> OptimizationContext:
     incoming_data = ctx.incoming_data or {}
     route_group_id = incoming_data.get("route_group_id")
     if route_group_id is None:
-        route_group_id = incoming_data.get("local_delivery_plan_id")
-    if route_group_id is None:
         raise ValidationFailed("Missing route_group_id.")
 
     route_group = get_instance(
@@ -38,7 +36,7 @@ def load_optimization_context(ctx:ServiceContext) -> OptimizationContext:
     orders = (
         db.session.query(Order)
         .options(selectinload(Order.delivery_windows), selectinload(Order.items))
-        .filter(Order.delivery_plan_id == route_plan.id)
+        .filter(Order.route_plan_id == route_plan.id)
         .all()
     )
     if not orders:

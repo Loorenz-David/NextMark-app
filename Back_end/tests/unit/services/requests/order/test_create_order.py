@@ -42,17 +42,59 @@ def test_parse_create_order_rejects_bool_nested_costumer_id():
 def test_parse_create_order_preserves_existing_fields_behavior():
     parsed = parse_create_order_request(
         {
-            "delivery_plan_id": 3,
+            "route_plan_id": 3,
             "reference_number": "REF-1",
             "order_state_id": 2,
         }
     )
 
-    assert parsed.delivery_plan_id == 3
+    assert parsed.route_plan_id == 3
     assert parsed.costumer is None
-    assert parsed.fields["delivery_plan_id"] == 3
+    assert parsed.fields["route_plan_id"] == 3
     assert parsed.fields["reference_number"] == "REF-1"
     assert parsed.fields["order_state_id"] == 2
+
+
+def test_parse_create_order_accepts_route_plan_id_alias():
+    parsed = parse_create_order_request(
+        {
+            "route_plan_id": 7,
+            "reference_number": "REF-2",
+        }
+    )
+
+    assert parsed.route_plan_id == 7
+    assert parsed.fields["route_plan_id"] == 7
+
+
+def test_parse_create_order_rejects_mismatched_plan_id_aliases():
+    with pytest.raises(ValidationFailed):
+        parse_create_order_request(
+            {
+                "route_plan_id": 7,
+                "delivery_plan_id": 8,
+            }
+        )
+
+
+def test_parse_create_order_rejects_legacy_delivery_plan_id_input_alias():
+    with pytest.raises(ValidationFailed):
+        parse_create_order_request(
+            {
+                "route_plan_id": 9,
+                "delivery_plan_id": 9,
+            }
+        )
+
+
+def test_parse_create_order_normalizes_route_operations_objective_alias():
+    parsed = parse_create_order_request(
+        {
+            "order_plan_objective": "route_operations",
+        }
+    )
+
+    assert parsed.fields["order_plan_objective"] == "local_delivery"
 
 
 def test_parse_create_order_preserves_delivery_windows_payload():

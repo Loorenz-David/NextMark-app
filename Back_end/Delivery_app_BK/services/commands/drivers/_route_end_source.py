@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from Delivery_app_BK.models import RouteSolution
-from Delivery_app_BK.services.domain.delivery_plan.route_solution import RouteActualEndTimeSource
+from Delivery_app_BK.services.domain.route_operations.route_solution import RouteActualEndTimeSource
 
 ROUTE_END_SOURCE_EXPECTED = RouteActualEndTimeSource.EXPECTED.value
 ROUTE_END_SOURCE_LAST_ORDER = RouteActualEndTimeSource.LAST_ORDER_PROJECTION.value

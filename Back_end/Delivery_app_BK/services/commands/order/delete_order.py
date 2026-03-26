@@ -7,7 +7,7 @@ from sqlalchemy.orm.exc import NoResultFound
 from Delivery_app_BK.errors import NotFound
 from Delivery_app_BK.models import Order, DeliveryPlan, db
 from Delivery_app_BK.services.utils import model_requires_team, require_team_id
-from Delivery_app_BK.services.domain.delivery_plan.plan.recompute_plan_totals import recompute_plan_totals
+from Delivery_app_BK.services.domain.route_operations.plan.recompute_plan_totals import recompute_plan_totals
 from Delivery_app_BK.services.domain.state_transitions.order_count_engine import recompute_plan_order_counts
 
 from ...context import ServiceContext
@@ -39,7 +39,7 @@ def delete_order(ctx: ServiceContext):
         OrderDeleteDelta(
             order_id=order.id,
             order_client_id=order.client_id,
-            delivery_plan=order.delivery_plan,
+                delivery_plan=order.route_plan,
         )
         for order in ordered_orders
     ]
@@ -51,7 +51,7 @@ def delete_order(ctx: ServiceContext):
         # Capture affected plans before deletion so we can recompute totals after flush.
         affected_plans_by_id: dict[int, DeliveryPlan] = {}
         for order in ordered_orders:
-            plan = getattr(order, "delivery_plan", None)
+            plan = getattr(order, "route_plan", None)
             if plan is not None and plan.id is not None:
                 affected_plans_by_id[plan.id] = plan
 
@@ -103,7 +103,7 @@ def _resolve_orders_by_targets(
     if int_ids:
         query = (
             db.session.query(Order)
-            .options(joinedload(Order.delivery_plan))
+            .options(joinedload(Order.route_plan))
             .filter(Order.id.in_(int_ids))
         )
         if team_id is not None:
@@ -113,7 +113,7 @@ def _resolve_orders_by_targets(
     if client_ids:
         query = (
             db.session.query(Order)
-            .options(joinedload(Order.delivery_plan))
+            .options(joinedload(Order.route_plan))
             .filter(Order.client_id.in_(client_ids))
         )
         if team_id is not None:

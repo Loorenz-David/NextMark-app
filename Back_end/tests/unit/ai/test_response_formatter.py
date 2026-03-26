@@ -161,7 +161,7 @@ def test_generate_blocks_maps_plan_and_route_tables_with_columns():
             "tool": "list_plans",
             "params": {"label": "Morning"},
             "result": {
-                "delivery_plans": [
+                "route_plans": [
                     {
                         "id": 91,
                         "label": "Morning route",
@@ -181,11 +181,11 @@ def test_generate_blocks_maps_plan_and_route_tables_with_columns():
                 "routes": [
                     {
                         "id": 501,
-                        "local_delivery_plan_id": 91,
+                        "route_group_id": 91,
                         "driver_id": 7,
                         "is_selected": True,
                         "stops": [{"id": 1}, {"id": 2}],
-                        "delivery_plan": {"label": "Morning route"},
+                        "route_plan": {"label": "Morning route"},
                     }
                 ],
             },
@@ -334,7 +334,7 @@ def test_generate_blocks_maps_item_search_and_plan_optimization():
         },
         {
             "tool": "optimize_plan",
-            "params": {"local_delivery_plan_id": 77},
+            "params": {"route_plan_id": 77},
             "result": {
                 "status": "optimized",
                 "route_id": 501,
@@ -428,8 +428,8 @@ def test_format_response_sets_intent_policy_and_rendering_hints_with_blocks():
                 "result": {
                     "count": 2,
                     "orders": [
-                        {"id": "ORD-1", "order_scalar_id": "ORD-1", "order_state_id": 1, "is_late": True, "delivery_plan_id": 10},
-                        {"id": "ORD-2", "order_scalar_id": "ORD-2", "order_state_id": 1, "is_late": False, "delivery_plan_id": None},
+                        {"id": "ORD-1", "order_scalar_id": "ORD-1", "order_state_id": 1, "is_late": True, "route_plan_id": 10},
+                        {"id": "ORD-2", "order_scalar_id": "ORD-2", "order_state_id": 1, "is_late": False, "route_plan_id": None},
                     ],
                 },
             }
@@ -490,8 +490,8 @@ def test_generate_actions_keeps_filters_but_omits_navigate_actions():
                 "result": {
                     "count": 2,
                     "orders": [
-                        {"id": 1, "order_scalar_id": "1054", "order_state_id": 2, "delivery_plan_id": 10},
-                        {"id": 2, "order_scalar_id": "1053", "order_state_id": 2, "delivery_plan_id": 11},
+                        {"id": 1, "order_scalar_id": "1054", "order_state_id": 2, "route_plan_id": 10},
+                        {"id": 2, "order_scalar_id": "1053", "order_state_id": 2, "route_plan_id": 11},
                     ],
                 },
             }
@@ -588,8 +588,8 @@ def test_generate_blocks_adds_ai_focus_for_late_or_unassigned_orders():
                 "params": {},
                 "result": {
                     "orders": [
-                        {"id": "ORD-11", "order_scalar_id": "ORD-11", "order_state_id": 1, "is_late": True, "delivery_plan_id": 20},
-                        {"id": "ORD-12", "order_scalar_id": "ORD-12", "order_state_id": 1, "is_late": False, "delivery_plan_id": None},
+                        {"id": "ORD-11", "order_scalar_id": "ORD-11", "order_state_id": 1, "is_late": True, "route_plan_id": 20},
+                        {"id": "ORD-12", "order_scalar_id": "ORD-12", "order_state_id": 1, "is_late": False, "route_plan_id": None},
                     ],
                     "count": 2,
                 },
@@ -638,7 +638,7 @@ def test_format_response_uses_ai_led_plan_focus_from_narrative_and_keeps_missing
                 "tool": "list_plans",
                 "params": {},
                 "result": {
-                    "delivery_plans": [
+                    "route_plans": [
                         {"id": 91, "label": "Morning", "plan_type": "local_delivery", "state_id": 2},
                         {"id": 92, "label": "Evening", "plan_type": "local_delivery", "state_id": 2},
                     ],
@@ -669,7 +669,7 @@ def test_format_response_uses_ai_led_route_focus_from_narrative():
                     "routes": [
                         {
                             "id": 501,
-                            "delivery_plan": {"label": "Morning route"},
+                            "route_plan": {"label": "Morning route"},
                             "driver_id": 7,
                             "is_selected": True,
                             "stops": [{"id": 1}],
@@ -710,7 +710,7 @@ def test_generate_interactions_adds_plan_type_question_when_plan_types_are_ambig
             "tool": "list_plans",
             "params": {},
             "result": {
-                "delivery_plans": [
+                    "route_plans": [
                     {"id": 1, "label": "A", "plan_type": "local_delivery"},
                     {"id": 2, "label": "B", "plan_type": "international_shipping"},
                 ],
@@ -874,17 +874,17 @@ def test_format_response_adds_statistical_output_insight_and_warning_blocks():
 # ---------------------------------------------------------------------------
 
 def test_generate_blocks_list_plans_plain_list_shape():
-    """list_plans result with plain list under 'delivery_plan' key produces non-empty items."""
+    """list_plans result with plain list under 'route_plan' key produces non-empty items."""
     blocks = generate_blocks([
         {
             "tool": "list_plans",
             "params": {},
             "result": {
-                "delivery_plan": [
+                "route_plan": [
                     {"id": 173, "label": "March run", "plan_type": "local_delivery", "state_id": 1, "total_orders": 11},
                 ],
-                "delivery_plan_stats": {"plans": {"total": 1}},
-                "delivery_plan_pagination": {"has_more": False},
+                "route_plan_stats": {"plans": {"total": 1}},
+                "route_plan_pagination": {"has_more": False},
             },
         }
     ])
@@ -900,16 +900,16 @@ def test_generate_blocks_list_plans_plain_list_shape():
 
 
 def test_format_tool_trace_list_plans_plain_list_uses_stats_count():
-    """_summarize for list_plans reads count from delivery_plan_stats, not from empty fallback."""
+    """_summarize for list_plans reads count from route_plan_stats, not from empty fallback."""
     trace = format_tool_trace([
         {
             "tool": "list_plans",
             "params": {},
             "result": {
-                "delivery_plan": [
+                "route_plan": [
                     {"id": 173, "label": "March run", "plan_type": "local_delivery"},
                 ],
-                "delivery_plan_stats": {"plans": {"total": 1}},
+                "route_plan_stats": {"plans": {"total": 1}},
             },
         }
     ])

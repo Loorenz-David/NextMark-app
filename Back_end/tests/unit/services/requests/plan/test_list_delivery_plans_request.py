@@ -1,7 +1,7 @@
 import pytest
 
 from Delivery_app_BK.errors import ValidationFailed
-from Delivery_app_BK.services.requests.delivery_plan.plan.list_delivery_plans import (
+from Delivery_app_BK.services.requests.route_plan.plan.list_delivery_plans import (
     parse_list_delivery_plans_query,
 )
 

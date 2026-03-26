@@ -6,8 +6,8 @@ from Delivery_app_BK.route_optimization.providers.google.mapper import GoogleRes
 
 def _build_request(*, populate_transition_polylines: bool = False) -> OptimizationRequest:
     return OptimizationRequest(
-        delivery_plan_id=1,
-        local_delivery_plan_id=124,
+        route_plan_id=1,
+        route_group_id=124,
         route_solution_id=77,
         shipments=[],
         start_location={},

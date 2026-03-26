@@ -28,7 +28,9 @@ from Delivery_app_BK.services.infra.events.builders.order import (
     build_order_edited_event,
 )
 from Delivery_app_BK.services.infra.events.emiters.order import emit_order_events
-from Delivery_app_BK.services.domain.plan.route_freshness import touch_route_freshness
+from Delivery_app_BK.services.domain.route_operations.plan.route_freshness import (
+    touch_route_freshness,
+)
 from Delivery_app_BK.services.utils import model_requires_team, require_team_id
 from Delivery_app_BK.services.domain.order.delivery_windows import (
     resolve_order_delivery_windows_timezone,
@@ -43,14 +45,14 @@ from ..utils.inject_fields import inject_fields
 
 FORBIDDEN_FIELD_KEYS = {
     "order_state_id",
-    "delivery_plan_id",
+    "route_plan_id",
 }
 
 FORBIDDEN_RELATIONSHIP_KEYS = {
     "state",
     "order_state",
     "state_history",
-    "delivery_plan",
+    "route_plan",
 }
 
 MUTABLE_FIELDS = {
@@ -305,15 +307,15 @@ def _resolve_changed_sections(
 
 
 def _resolve_delivery_plan_for_order(order: Order) -> DeliveryPlan | None:
-    existing_delivery_plan = getattr(order, "delivery_plan", None)
-    if existing_delivery_plan is not None:
-        return existing_delivery_plan
+    existing_route_plan = getattr(order, "route_plan", None)
+    if existing_route_plan is not None:
+        return existing_route_plan
 
-    delivery_plan_id = getattr(order, "delivery_plan_id", None)
-    if not delivery_plan_id:
+    route_plan_id = getattr(order, "route_plan_id", None)
+    if not route_plan_id:
         return None
 
-    return db.session.get(DeliveryPlan, delivery_plan_id)
+    return db.session.get(DeliveryPlan, route_plan_id)
 
 
 def _validate_targets_update_fields(targets: list[dict[str, Any]]) -> None:
@@ -400,7 +402,7 @@ def _resolve_orders_by_targets(
     if int_ids:
         query = (
             db.session.query(Order)
-            .options(joinedload(Order.delivery_plan), selectinload(Order.delivery_windows))
+            .options(joinedload(Order.route_plan), selectinload(Order.delivery_windows))
             .filter(Order.id.in_(int_ids))
         )
         if team_id is not None:
@@ -411,7 +413,7 @@ def _resolve_orders_by_targets(
     if client_ids:
         query = (
             db.session.query(Order)
-            .options(joinedload(Order.delivery_plan), selectinload(Order.delivery_windows))
+            .options(joinedload(Order.route_plan), selectinload(Order.delivery_windows))
             .filter(Order.client_id.in_(client_ids))
         )
         if team_id is not None:

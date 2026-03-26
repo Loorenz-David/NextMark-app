@@ -1,5 +1,5 @@
 from Delivery_app_BK.models import Order, db
-from Delivery_app_BK.services.domain.delivery_plan.plan.route_freshness import get_route_freshness_updated_at
+from Delivery_app_BK.services.domain.route_operations.plan.route_freshness import get_route_freshness_updated_at
 from Delivery_app_BK.services.domain.order.order_events import OrderEvent as StoredOrderEventName
 from Delivery_app_BK.sockets.contracts.realtime import (
     BUSINESS_EVENT_ORDER_CREATED,
@@ -34,7 +34,7 @@ def fanout_order_event(event_row) -> None:
         return
 
     order = db.session.get(Order, event_row.order_id) if event_row.order_id else None
-    route_freshness_updated_at = get_route_freshness_updated_at(getattr(order, "delivery_plan", None)) if order else None
+    route_freshness_updated_at = get_route_freshness_updated_at(getattr(order, "route_plan", None)) if order else None
     payload = {
         "order_id": event_row.order_id,
         "actor_id": event_row.actor_id,

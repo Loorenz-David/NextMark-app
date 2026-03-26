@@ -10,7 +10,7 @@ def _build_order_instance():
         id=10,
         client_id="order_10",
         costumer_id=77,
-        order_plan_objective=None,
+        order_plan_objective="local_delivery",
         operation_type="dropoff",
         order_scalar_id=1,
         reference_number="REF-10",
@@ -64,6 +64,7 @@ def test_serialize_created_order_includes_costumer_id(monkeypatch):
     serialized = create_module.serialize_created_order(_build_order_instance())
 
     assert serialized["costumer_id"] == 77
+    assert serialized["order_plan_workspace"] == "route_operations"
 
 
 def test_serialize_orders_includes_costumer_id(monkeypatch):
@@ -73,6 +74,7 @@ def test_serialize_orders_includes_costumer_id(monkeypatch):
     serialized = list_module.serialize_orders([_build_order_instance()], SimpleNamespace())
 
     assert serialized[0]["costumer_id"] == 77
+    assert serialized[0]["order_plan_workspace"] == "route_operations"
 
 
 def test_serializers_include_sorted_delivery_windows(monkeypatch):

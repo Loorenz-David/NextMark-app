@@ -21,10 +21,10 @@ from datetime import datetime, timezone
 from typing import TYPE_CHECKING
 
 from Delivery_app_BK.services.domain.order.order_states import OrderStateId
-from Delivery_app_BK.services.domain.delivery_plan.plan.plan_states import PlanStateId
+from Delivery_app_BK.services.domain.route_operations.plan.plan_states import PlanStateId
 
 if TYPE_CHECKING:
-    from Delivery_app_BK.models.tables.delivery_plan.delivery_plan import DeliveryPlan
+    from Delivery_app_BK.models import DeliveryPlan
     from Delivery_app_BK.models.tables.order.order import Order
 
 

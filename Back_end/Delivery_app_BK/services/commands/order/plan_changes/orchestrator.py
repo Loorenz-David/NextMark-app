@@ -108,35 +108,43 @@ def _load_local_delivery_context(
     plan_ids: list[int],
     apply_context: PlanChangeApplyContext,
 ) -> None:
-    local_query = db.session.query(LocalDeliveryPlan).filter(
-        LocalDeliveryPlan.delivery_plan_id.in_(plan_ids)
+    route_plan_ids = plan_ids
+    route_group_query = db.session.query(LocalDeliveryPlan).filter(
+        LocalDeliveryPlan.delivery_plan_id.in_(route_plan_ids)
     )
     if ctx.team_id:
-        local_query = local_query.filter(LocalDeliveryPlan.team_id == ctx.team_id)
+        route_group_query = route_group_query.filter(LocalDeliveryPlan.team_id == ctx.team_id)
 
-    local_delivery_instances = local_query.all()
+    route_group_instances = route_group_query.all()
+    route_group_by_route_plan_id = {
+        instance.delivery_plan_id: instance for instance in route_group_instances
+    }
+    apply_context.route_group_by_route_plan_id = route_group_by_route_plan_id
     apply_context.local_delivery_by_plan_id = {
-        instance.delivery_plan_id: instance for instance in local_delivery_instances
+        instance.delivery_plan_id: instance for instance in route_group_instances
     }
 
-    route_solutions_by_local_delivery_id: defaultdict[int, list[RouteSolution]] = defaultdict(
+    route_group_ids = [instance.id for instance in route_group_instances]
+    route_solutions_by_route_group_id: defaultdict[int, list[RouteSolution]] = defaultdict(
         list
     )
-    local_delivery_ids = [instance.id for instance in local_delivery_instances]
-    if local_delivery_ids:
+    if route_group_ids:
         route_query = db.session.query(RouteSolution).filter(
-            RouteSolution.local_delivery_plan_id.in_(local_delivery_ids)
+            RouteSolution.route_group_id.in_(route_group_ids)
         )
         if ctx.team_id:
             route_query = route_query.filter(RouteSolution.team_id == ctx.team_id)
 
         for route_solution in route_query.all():
-            route_solutions_by_local_delivery_id[
-                route_solution.local_delivery_plan_id
+            route_solutions_by_route_group_id[
+                route_solution.route_group_id
             ].append(route_solution)
 
+    apply_context.route_solutions_by_route_group_id = dict(
+        route_solutions_by_route_group_id
+    )
     apply_context.route_solutions_by_local_delivery_id = dict(
-        route_solutions_by_local_delivery_id
+        route_solutions_by_route_group_id
     )
 
 

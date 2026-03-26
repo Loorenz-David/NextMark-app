@@ -3,15 +3,15 @@ import importlib
 from types import SimpleNamespace
 
 select_module = importlib.import_module(
-    "Delivery_app_BK.services.commands.delivery_plan.local_delivery.route_solution.select_route_solution"
+    "Delivery_app_BK.services.commands.route_plan.local_delivery.route_solution.select_route_solution"
 )
 mark_module = importlib.import_module(
-    "Delivery_app_BK.services.commands.delivery_plan.local_delivery.route_solution.mark_route_solution_actual_end_time"
+    "Delivery_app_BK.services.commands.route_plan.local_delivery.route_solution.mark_route_solution_actual_end_time"
 )
 
 
 def test_select_route_solution_enqueues_compute_route_metrics_job(monkeypatch):
-    route = SimpleNamespace(id=77, team_id=10, local_delivery_plan_id=55, is_selected=True)
+    route = SimpleNamespace(id=77, team_id=10, route_group_id=55, is_selected=True)
     captured = {"job": None}
 
     monkeypatch.setattr(select_module, "get_instance", lambda **_kwargs: route)

@@ -36,6 +36,26 @@ Run from repo root:
 PYTHONPATH="$PWD" .venv/bin/python scripts/report_route_naming_legacy_refs.py
 ```
 
+## Canonical Optimize Contract
+Route optimization endpoints now require `route_group_id` explicitly in request JSON.
+
+- `POST /api_v2/route_solutions/optimize`
+- `PATCH /api_v2/route_solutions/optimize`
+- `POST /api_v2/route_operations/optimize`
+- `PATCH /api_v2/route_operations/optimize`
+
+Example payload:
+
+```json
+{
+	"route_group_id": 123,
+	"route_end_strategy": "round_trip",
+	"consider_traffic": true
+}
+```
+
+Legacy key `local_delivery_plan_id` is no longer accepted for optimize requests.
+
 ## Cleanup Order
 1. Services and requests imports
 2. Routers and handlers

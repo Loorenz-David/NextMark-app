@@ -3,6 +3,9 @@ from Delivery_app_BK.services.domain.order.order_case_states import OrderCaseSta
 from Delivery_app_BK.services.domain.order.delivery_windows import (
     sort_delivery_window_instances,
 )
+from Delivery_app_BK.services.domain.order.plan_objective_labels import (
+    resolve_order_plan_workspace,
+)
 from Delivery_app_BK.services.queries.utils import calculate_order_metrics
 
 
@@ -30,12 +33,12 @@ def serialize_created_order(instance: Order) -> dict:
     )
 
     route_plan_id = getattr(instance, "route_plan_id", None)
-    delivery_plan_id = getattr(instance, "delivery_plan_id", route_plan_id)
 
     return {
         "id": instance.id,
         "client_id": instance.client_id,
         "order_plan_objective": instance.order_plan_objective,
+        "order_plan_workspace": resolve_order_plan_workspace(instance.order_plan_objective),
         "operation_type": instance.operation_type,
         "order_scalar_id": instance.order_scalar_id,
         "reference_number": instance.reference_number,
@@ -54,7 +57,6 @@ def serialize_created_order(instance: Order) -> dict:
         "items_updated_at": instance.items_updated_at.isoformat() if instance.items_updated_at else None,
         "order_state_id": instance.order_state_id,
         "route_plan_id": route_plan_id,
-        "delivery_plan_id": delivery_plan_id,
         "costumer_id": instance.costumer_id,
         "delivery_windows": [
             {

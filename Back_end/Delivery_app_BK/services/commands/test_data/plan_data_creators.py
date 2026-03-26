@@ -20,7 +20,7 @@ from Delivery_app_BK.route_optimization.constants.is_optimized import (
     IS_OPTIMIZED_NOT_OPTIMIZED,
 )
 from Delivery_app_BK.route_optimization.constants.route_end_strategy import ROUND_TRIP
-from Delivery_app_BK.services.domain.delivery_plan.plan.plan_states import PlanStateId
+from Delivery_app_BK.services.domain.route_operations.plan.plan_states import PlanStateId
 from Delivery_app_BK.services.commands.base.create_instance import create_instance
 from Delivery_app_BK.services.commands.utils import generate_client_id
 from Delivery_app_BK.services.context import ServiceContext
@@ -146,8 +146,8 @@ def create_plan_bundle(
 
     db.session.flush()
     return {
-        "delivery_plan_id": plan.id,
-        "delivery_plan_client_id": plan.client_id,
+        "route_plan_id": plan.id,
+        "route_plan_client_id": plan.client_id,
         "plan_type": plan.plan_type,
         "plan_type_id": getattr(plan_type_instance, "id", None),
         "route_solution_ids": route_solution_ids,

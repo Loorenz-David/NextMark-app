@@ -30,7 +30,7 @@ def test_generate_plan_test_data_uses_expected_default_payload_mix(monkeypatch):
 
     def _fake_create_plan_bundle(_ctx, payload, sequence=1):
         seen_payloads.append((payload, sequence))
-        return {"delivery_plan_id": sequence}
+        return {"route_plan_id": sequence}
 
     monkeypatch.setattr(module, "create_plan_bundle", _fake_create_plan_bundle)
 
@@ -76,11 +76,11 @@ def test_generate_plan_test_data_uses_expected_default_payload_mix(monkeypatch):
     assert international_shipping["end_date"].date() == today + timedelta(days=1)
 
     assert result["created"] == [
-        {"delivery_plan_id": 1},
-        {"delivery_plan_id": 2},
-        {"delivery_plan_id": 3},
-        {"delivery_plan_id": 4},
-        {"delivery_plan_id": 5},
+        {"route_plan_id": 1},
+        {"route_plan_id": 2},
+        {"route_plan_id": 3},
+        {"route_plan_id": 4},
+        {"route_plan_id": 5},
     ]
 
 
@@ -127,7 +127,7 @@ def test_create_plan_bundle_local_delivery_creates_default_route_solution(monkey
     )
 
     assert route_calls == [1]
-    assert result["delivery_plan_id"] == 100
+    assert result["route_plan_id"] == 100
     assert result["plan_type_id"] == 200
     assert result["route_solution_ids"] == [501]
     assert result["event_ids"] == [300]

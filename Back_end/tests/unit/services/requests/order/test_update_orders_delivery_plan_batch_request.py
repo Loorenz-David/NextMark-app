@@ -95,3 +95,43 @@ def test_parse_batch_selection_payload_dedupes_identical_snapshots():
     )
 
     assert len(parsed.select_all_snapshots) == 1
+
+
+def test_parse_batch_selection_payload_accepts_route_plan_id_alias():
+    parsed = parse_update_orders_delivery_plan_batch_payload(
+        {
+            "selection": {
+                "manual_order_ids": [],
+                "excluded_order_ids": [],
+                "select_all_snapshots": [
+                    {
+                        "query": {
+                            "route_plan_id": 42,
+                        }
+                    }
+                ],
+            }
+        }
+    )
+
+    assert parsed.select_all_snapshots[0].query["route_plan_id"] == 42
+
+
+def test_parse_batch_selection_payload_rejects_mismatched_plan_aliases():
+    with pytest.raises(ValidationFailed):
+        parse_update_orders_delivery_plan_batch_payload(
+            {
+                "selection": {
+                    "manual_order_ids": [],
+                    "excluded_order_ids": [],
+                    "select_all_snapshots": [
+                        {
+                            "query": {
+                                "route_plan_id": 42,
+                                "delivery_plan_id": 43,
+                            }
+                        }
+                    ],
+                }
+            }
+        )

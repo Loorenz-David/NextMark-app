@@ -50,11 +50,11 @@ def _serialize_plan_totals(orders):
     seen_plan_ids = set()
     result = []
     for o in (orders or []):
-        plan_id = getattr(o, "delivery_plan_id", None)
+        plan_id = getattr(o, "route_plan_id", None)
         if plan_id is None or plan_id in seen_plan_ids:
             continue
         seen_plan_ids.add(plan_id)
-        plan = getattr(o, "delivery_plan", None) or db.session.get(DeliveryPlan, plan_id)
+        plan = getattr(o, "route_plan", None) or db.session.get(DeliveryPlan, plan_id)
         if plan is None or plan.id is None:
             continue
         result.append({

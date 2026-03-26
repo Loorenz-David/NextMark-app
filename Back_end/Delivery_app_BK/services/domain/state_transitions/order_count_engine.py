@@ -16,10 +16,7 @@ from typing import TYPE_CHECKING, Callable
 
 from sqlalchemy.orm import joinedload
 
-from Delivery_app_BK.models import RouteSolution, RouteSolutionStop, Order, OrderState, db
-
-if TYPE_CHECKING:
-    from Delivery_app_BK.models.tables.delivery_plan.delivery_plan import DeliveryPlan
+from Delivery_app_BK.models import DeliveryPlan, RouteSolution, RouteSolutionStop, Order, OrderState, db
 
 logger = logging.getLogger(__name__)
 
@@ -83,7 +80,7 @@ def _recompute_local_delivery_counts(plan: "DeliveryPlan") -> None:
 
     route_solutions = (
         db.session.query(RouteSolution)
-        .filter(RouteSolution.local_delivery_plan_id == local.id)
+        .filter(RouteSolution.route_group_id == local.id)
         .all()
     )
 

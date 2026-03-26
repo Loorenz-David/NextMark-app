@@ -22,7 +22,7 @@ from Delivery_app_BK.directions.services.time_window_policy import (
     build_stop_time_warnings,
     ensure_utc,
 )
-from Delivery_app_BK.services.domain.delivery_plan.local_delivery import (
+from Delivery_app_BK.services.domain.route_operations.local_delivery import (
     apply_expected_stop_schedule,
     clear_expected_stop_schedule,
     combine_plan_date_and_local_hhmm_to_utc,

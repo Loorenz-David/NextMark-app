@@ -19,7 +19,7 @@ def get_breakdowns(ctx: ServiceContext, timeframe: str = "7d") -> dict:
         if state_id is not None:
             state_counts[int(state_id)] += 1
 
-        if order.get("delivery_plan_id") is None:
+        if order.get("route_plan_id") is None:
             scheduled_counts["unscheduled"] += 1
         else:
             scheduled_counts["scheduled"] += 1

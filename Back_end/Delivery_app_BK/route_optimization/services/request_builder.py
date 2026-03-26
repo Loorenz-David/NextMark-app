@@ -12,7 +12,7 @@ from Delivery_app_BK.route_optimization.domain.models import (
     ShipmentMember,
     TimeWindow,
 )
-from Delivery_app_BK.services.domain.delivery_plan.local_delivery import (
+from Delivery_app_BK.services.domain.route_operations.local_delivery import (
     calculate_service_time_seconds,
     combine_plan_date_and_local_hhmm_to_utc,
     normalize_service_time_payload,
@@ -122,8 +122,6 @@ def build_request(context: OptimizationContext) -> OptimizationRequest:
     return OptimizationRequest(
         route_plan_id=route_plan.id,
         route_group_id=route_group.id,
-        delivery_plan_id=route_plan.id,
-        local_delivery_plan_id=route_group.id,
         route_solution_id=context.route_solution.id,
         shipments=shipments,
         start_location=start_location,
@@ -333,9 +331,13 @@ def _build_injected_routes(
         visited_group_labels.add(group_label)
         visits.append({"shipment_label": group_label})
 
+    route_group = getattr(context, "route_group", None)
+    if route_group is None:
+        route_group = context.local_delivery_plan
+
     return [
         {
-            "vehicle_label": f"vehicle-{context.local_delivery_plan.id}",
+            "vehicle_label": f"vehicle-{route_group.id}",
             "visits": visits,
         }
     ]

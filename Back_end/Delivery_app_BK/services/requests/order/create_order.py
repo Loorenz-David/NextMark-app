@@ -1,6 +1,11 @@
 from dataclasses import dataclass
 
 from Delivery_app_BK.errors import ValidationFailed
+from Delivery_app_BK.services.domain.order.plan_objective_labels import (
+    ORDER_PLAN_OBJECTIVE_ALIASES,
+    ORDER_PLAN_OBJECTIVES,
+    normalize_order_plan_objective,
+)
 from Delivery_app_BK.services.domain.item.item_states import ItemStateId
 from Delivery_app_BK.services.domain.order.order_states import OrderStateId
 from Delivery_app_BK.services.requests.common.fields import (
@@ -37,7 +42,7 @@ ORDER_ALLOWED_FIELDS = {
     "marketing_messages",
     "delivery_windows",
     "order_state_id",
-    "delivery_plan_id",
+    "route_plan_id",
     "items",
     "operation_type",
 }
@@ -104,11 +109,7 @@ ITEM_OPTIONAL_INT_FIELDS = {
     "weight",
 }
 
-ORDER_OBJECTIVES = {
-    "local_delivery",
-    "international_shipping",
-    "store_pickup",
-}
+ORDER_OBJECTIVES = ORDER_PLAN_OBJECTIVES | set(ORDER_PLAN_OBJECTIVE_ALIASES.keys())
 
 ORDER_OPERATION_TYPES ={
         "pickup",
@@ -147,7 +148,7 @@ class OrderCostumerRequest:
 class OrderCreateRequest:
     fields: dict
     items: list[ItemCreateRequest]
-    delivery_plan_id: int | None
+    route_plan_id: int | None
     costumer: OrderCostumerRequest | None
     delivery_windows: list[dict] | None = None
 
@@ -172,9 +173,12 @@ def parse_create_order_request(raw_fields: dict) -> OrderCreateRequest:
         "order_state_id": _parse_order_state_id(raw_fields.get("order_state_id")),
     }
 
-    delivery_plan_id = _parse_delivery_plan_id(raw_fields.get("delivery_plan_id"))
-    if delivery_plan_id is not None:
-        order_fields["delivery_plan_id"] = delivery_plan_id
+    route_plan_id = _parse_route_plan_id(
+        raw_fields.get("route_plan_id"),
+        field="route_plan_id",
+    )
+    if route_plan_id is not None:
+        order_fields["route_plan_id"] = route_plan_id
     costumer = _parse_costumer(raw_fields.get("costumer"))
 
     for field in ORDER_OPTIONAL_STRING_FIELDS:
@@ -184,6 +188,7 @@ def parse_create_order_request(raw_fields: dict) -> OrderCreateRequest:
                 field=field,
             )
             if field == "order_plan_objective" and parsed_value:
+                parsed_value = normalize_order_plan_objective(parsed_value)
                 if parsed_value not in ORDER_OBJECTIVES:
                     raise ValidationFailed(
                         f"Invalid order_plan_objective: {parsed_value}"
@@ -225,7 +230,7 @@ def parse_create_order_request(raw_fields: dict) -> OrderCreateRequest:
     return OrderCreateRequest(
         fields=order_fields,
         items=item_requests,
-        delivery_plan_id=delivery_plan_id,
+        route_plan_id=route_plan_id,
         costumer=costumer,
         delivery_windows=delivery_windows,
     )
@@ -346,10 +351,10 @@ def _parse_item_state_id(value) -> int:
     return parse_required_int(value, field="item_state_id")
 
 
-def _parse_delivery_plan_id(value) -> int | None:
+def _parse_route_plan_id(value, *, field: str) -> int | None:
     if value is None:
         return None
-    return parse_required_int(value, field="delivery_plan_id")
+    return parse_required_int(value, field=field)
 
 
 def _parse_costumer_id(value) -> int | None:

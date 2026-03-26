@@ -4,7 +4,7 @@ from datetime import datetime, timezone
 from types import SimpleNamespace
 
 from Delivery_app_BK.route_optimization.constants.is_optimized import IS_OPTIMIZED_OPTIMIZE
-from Delivery_app_BK.services.commands.delivery_plan.local_delivery.route_solution.update_route_solution_from_plan import (
+from Delivery_app_BK.services.commands.route_plan.local_delivery.route_solution.update_route_solution_from_plan import (
     update_route_solution_from_plan,
 )
 

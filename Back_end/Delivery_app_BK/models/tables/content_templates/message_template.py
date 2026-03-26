@@ -13,7 +13,7 @@ from Delivery_app_BK.services.domain.messaging import (
     validate_schedule_configuration,
 )
 from Delivery_app_BK.services.domain.order.order_events import OrderEvent
-from Delivery_app_BK.services.domain.delivery_plan.plan.plan_events import DeliveryPlanEvent
+from Delivery_app_BK.services.domain.route_operations.plan.plan_events import DeliveryPlanEvent
 
 class MessageTemplate(db.Model, TeamScopedMixin):
     __tablename__ = "message_template"

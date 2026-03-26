@@ -33,8 +33,8 @@ class _FakeOptimizeClient:
 
 def _build_request() -> OptimizationRequest:
     return OptimizationRequest(
-        delivery_plan_id=1,
-        local_delivery_plan_id=120,
+        route_plan_id=1,
+        route_group_id=120,
         route_solution_id=77,
         shipments=[],
         start_location={},

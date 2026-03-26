@@ -98,10 +98,10 @@ def test_compute_route_metrics_returns_none_when_route_missing(monkeypatch):
 
 def test_aggregate_daily_metrics_combines_order_and_route_snapshots(monkeypatch):
     orders = [
-        SimpleNamespace(order_state_id=OrderStateId.COMPLETED, delivery_plan_id=10),
-        SimpleNamespace(order_state_id=OrderStateId.FAIL, delivery_plan_id=11),
-        SimpleNamespace(order_state_id=OrderStateId.DRAFT, delivery_plan_id=None),
-        SimpleNamespace(order_state_id=OrderStateId.DRAFT, delivery_plan_id=12),
+        SimpleNamespace(order_state_id=OrderStateId.COMPLETED, route_plan_id=10),
+        SimpleNamespace(order_state_id=OrderStateId.FAIL, route_plan_id=11),
+        SimpleNamespace(order_state_id=OrderStateId.DRAFT, route_plan_id=None),
+        SimpleNamespace(order_state_id=OrderStateId.DRAFT, route_plan_id=12),
     ]
     routes = [
         SimpleNamespace(id=1, actual_end_time=datetime(2026, 3, 25, 12, 0, tzinfo=timezone.utc)),

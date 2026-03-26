@@ -39,7 +39,7 @@ def serialize_optimizations(instances: Type[Model], ctx: ServiceContext):
             "score": instance.score,
             "created_at": created_at.isoformat() if created_at else None,
             "is_selected": instance.is_selected,
-            "local_delivery_plan_id": instance.local_delivery_plan_id,
+            "route_group_id": instance.route_group_id,
             "actual_start_time": _serialize_datetime(instance.actual_start_time),
             "actual_end_time": _serialize_datetime(instance.actual_end_time),
             "eta_tolerance_seconds": instance.eta_tolerance_seconds,

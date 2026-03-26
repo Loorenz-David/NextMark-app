@@ -1,8 +1,8 @@
 import pytest
 
 from Delivery_app_BK.errors import ValidationFailed
-from Delivery_app_BK.services.domain.delivery_plan.plan.plan_states import PlanStateId
-from Delivery_app_BK.services.requests.delivery_plan.plan.update_plan_state import (
+from Delivery_app_BK.services.domain.route_operations.plan.plan_states import PlanStateId
+from Delivery_app_BK.services.requests.route_plan.plan.update_plan_state import (
     parse_update_plan_state_request,
 )
 

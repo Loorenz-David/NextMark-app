@@ -56,7 +56,7 @@ class GoogleRequestMapper:
             )
 
         vehicle = {
-            "label": f"vehicle-{request.local_delivery_plan_id}",
+            "label": f"vehicle-{request.route_group_id}",
             "start_location": request.start_coordinates,
             "end_location": request.end_coordinates,
             "travel_mode": request.travel_mode,

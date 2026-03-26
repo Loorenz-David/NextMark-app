@@ -4,12 +4,12 @@ from datetime import datetime, timezone
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from Delivery_app_BK.errors import ValidationFailed
-from Delivery_app_BK.services.commands.delivery_plan.local_delivery.update_settings import (
+from Delivery_app_BK.services.commands.route_plan.local_delivery.update_settings import (
     apply_local_delivery_settings_request,
 )
 from Delivery_app_BK.services.context import ServiceContext
 from Delivery_app_BK.services.requests.common.types import parse_optional_time_zone
-from Delivery_app_BK.services.requests.delivery_plan.plan.local_delivery.update_settings import (
+from Delivery_app_BK.services.requests.route_plan.plan.local_delivery.update_settings import (
     DeliveryPlanPatchRequest,
     LocalDeliveryPlanPatchRequest,
     LocalDeliverySettingsRequest,
@@ -51,7 +51,7 @@ def adjust_driver_route_dates_to_today(ctx: ServiceContext, route_id: int):
     new_end = new_start + duration
 
     request = LocalDeliverySettingsRequest(
-        local_delivery_plan_id=local_delivery_plan.id,
+        route_group_id=local_delivery_plan.id,
         delivery_plan=DeliveryPlanPatchRequest(
             start_date=new_start,
             end_date=new_end,

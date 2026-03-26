@@ -28,32 +28,32 @@ PLAN_OBJECTIVE_HANDLERS = {
 def apply_order_plan_objective(
     ctx: ServiceContext,
     order_instance: Order,
-    delivery_plan_id: int | None = None,
+    route_plan_id: int | None = None,
     plan_objective: str | None = None,
-    delivery_plan: DeliveryPlan | None = None,
+    route_plan: DeliveryPlan | None = None,
 ) -> PlanObjectiveCreateResult:
-    if not delivery_plan and not delivery_plan_id:
+    if not route_plan and not route_plan_id:
         return PlanObjectiveCreateResult()
 
-    if delivery_plan is None:
-        delivery_plan = get_instance(
+    if route_plan is None:
+        route_plan = get_instance(
             ctx=ctx,
             model=DeliveryPlan,
-            value=delivery_plan_id,
+            value=route_plan_id,
         )
 
     effective_objective = (
         order_instance.order_plan_objective
         or plan_objective
-        or delivery_plan.plan_type
+        or route_plan.plan_type
     )
     if not order_instance.order_plan_objective:
         order_instance.order_plan_objective = effective_objective
 
     handler: PlanObjectiveHandler | None = PLAN_OBJECTIVE_HANDLERS.get(
-        delivery_plan.plan_type
+        route_plan.plan_type
     )
     if not handler:
         return PlanObjectiveCreateResult()
 
-    return handler(ctx, order_instance, delivery_plan, effective_objective)
+    return handler(ctx, order_instance, route_plan, effective_objective)

@@ -28,7 +28,7 @@ def check_vehicle_availability(
             RoutePlan.start_date.label("start_date"),
             RoutePlan.end_date.label("end_date"),
         )
-        .join(RouteGroup, RouteSolution.local_delivery_plan_id == RouteGroup.id)
+        .join(RouteGroup, RouteSolution.route_group_id == RouteGroup.id)
         .join(RoutePlan, RouteGroup.route_plan_id == RoutePlan.id)
         .filter(RouteSolution.vehicle_id == vehicle_id)
         .filter(RouteSolution.is_selected == True)  # noqa: E712
@@ -48,9 +48,7 @@ def check_vehicle_availability(
         {
             "route_solution_id": row.route_solution_id,
             "route_plan_id": row.route_plan_id,
-            "delivery_plan_id": row.route_plan_id,
             "route_plan_label": row.route_plan_label,
-            "delivery_plan_label": row.route_plan_label,
             "start_date": row.start_date.strftime("%Y-%m-%d") if row.start_date else None,
             "end_date": row.end_date.strftime("%Y-%m-%d") if row.end_date else None,
         }

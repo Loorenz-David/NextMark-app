@@ -1,4 +1,4 @@
-from Delivery_app_BK.services.domain.delivery_plan.plan.plan_states import PlanStateId, PlanState
+from Delivery_app_BK.services.domain.route_operations.plan.plan_states import PlanStateId, PlanState
 
 PLAN_STATE_SEEDS = [
     {

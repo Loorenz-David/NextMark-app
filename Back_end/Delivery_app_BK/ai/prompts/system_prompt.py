@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from Delivery_app_BK.services.domain.order.order_states import OrderState, OrderStateId
-from Delivery_app_BK.services.domain.plan.plan_states import PlanState, PlanStateId
+from Delivery_app_BK.services.domain.route_operations.plan.plan_states import PlanState, PlanStateId
 
 # ---------------------------------------------------------------------------
 # State maps — built once from static enum classes (no DB needed)
@@ -109,8 +109,8 @@ AVAILABLE TOOLS:
     order_ids (list of integers): REQUIRED
     plan_id (integer): REQUIRED
 
-- optimize_plan: Run route optimization on a local delivery plan.
-  Parameters: {{ "local_delivery_plan_id": <integer> }}
+- optimize_plan: Run route optimization on a route plan.
+  Parameters: {{ "route_plan_id": <integer> }}
 
 - update_order_state: Transition orders to a new state.
   Parameters:
@@ -125,7 +125,7 @@ AVAILABLE TOOLS:
       reference_number, external_source, external_tracking_number, external_tracking_link,
       client_first_name, client_last_name, client_email,
       client_primary_phone, client_secondary_phone, client_address, order_notes
-  NEVER set order_state_id or delivery_plan_id here — use update_order_state or assign_orders_to_plan.
+  NEVER set order_state_id or route_plan_id here — use update_order_state or assign_orders_to_plan.
 
 - get_plan_execution_status: Get the active route and driver info for a delivery plan.
   Parameters: {{ "plan_id": <integer> }}
@@ -175,7 +175,7 @@ AVAILABLE TOOLS:
     order_notes (string): optional
     order_plan_objective (string): "local_delivery" | "international_shipping" | "store_pickup"
     operation_type (string): "pickup" | "dropoff" | "pickup_dropoff"
-    delivery_plan_id (integer): optional — immediately schedule to a plan
+    route_plan_id (integer): optional — immediately schedule to a plan
     delivery_windows (list): optional — list of {{ "start_at": ISO, "end_at": ISO, "window_type": "delivery" }}
     items (list): optional — each item:
       {{ "item_type": "table", "article_number": "TBL-001", "quantity": 1,

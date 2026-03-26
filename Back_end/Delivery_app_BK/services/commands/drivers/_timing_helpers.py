@@ -4,8 +4,8 @@ from datetime import datetime, timedelta
 
 from Delivery_app_BK.models import RouteSolution
 from Delivery_app_BK.services.context import ServiceContext
-from Delivery_app_BK.services.domain.delivery_plan.local_delivery import resolve_actual_timestamp
-from Delivery_app_BK.services.domain.delivery_plan.route_solution import RouteActualEndTimeSource
+from Delivery_app_BK.services.domain.route_operations.local_delivery import resolve_actual_timestamp
+from Delivery_app_BK.services.domain.route_operations.route_solution import RouteActualEndTimeSource
 
 from ._helpers import is_within_route_window
 from ._route_end_source import (

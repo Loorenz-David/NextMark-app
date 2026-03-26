@@ -32,6 +32,18 @@ def test_validate_targets_rejects_forbidden_state_change_fields():
         _validate_targets_update_fields(targets)
 
 
+def test_validate_targets_rejects_forbidden_route_plan_field():
+    targets = [
+        {
+            "target_id": 10,
+            "fields": {"route_plan_id": 2},
+        }
+    ]
+
+    with pytest.raises(ValidationFailed):
+        _validate_targets_update_fields(targets)
+
+
 def test_validate_targets_rejects_forbidden_delivery_plan_relationship():
     targets = [
         {

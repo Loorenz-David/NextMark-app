@@ -71,7 +71,9 @@ def aggregate_daily_metrics(
     total_orders_failed = sum(
         1 for o in all_orders if o.order_state_id == OrderStateId.FAIL
     )
-    scheduled_orders = sum(1 for o in all_orders if o.delivery_plan_id is not None)
+    scheduled_orders = sum(
+        1 for o in all_orders if getattr(o, "route_plan_id", None) is not None
+    )
     unscheduled_orders = total_orders_created - scheduled_orders
     completion_rate = (
         total_orders_completed / total_orders_created if total_orders_created else 0.0

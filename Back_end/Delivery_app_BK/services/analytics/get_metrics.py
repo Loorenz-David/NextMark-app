@@ -11,7 +11,7 @@ def get_metrics(ctx: ServiceContext, timeframe: str = "7d") -> dict:
     orders = payload["orders"]
 
     total_orders = len(orders)
-    scheduled_orders = sum(1 for order in orders if order.get("delivery_plan_id") is not None)
+    scheduled_orders = sum(1 for order in orders if order.get("route_plan_id") is not None)
     completed_orders = sum(1 for order in orders if order.get("order_state_id") == OrderStateId.COMPLETED)
     failed_orders = sum(1 for order in orders if order.get("order_state_id") == OrderStateId.FAIL)
 

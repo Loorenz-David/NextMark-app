@@ -11,10 +11,10 @@ from Delivery_app_BK.models import RouteSolution, RouteSolutionStop
 from Delivery_app_BK.services.commands.order.update_extensions.serializers import (
     merge_bundle_payload,
 )
-from Delivery_app_BK.services.commands.delivery_plan.local_delivery.route_solution.plan_sync import (
+from Delivery_app_BK.services.commands.route_plan.local_delivery.route_solution.plan_sync import (
     build_incremental_route_sync_action,
 )
-from Delivery_app_BK.services.commands.delivery_plan.local_delivery.route_solution.stops import (
+from Delivery_app_BK.services.commands.route_plan.local_delivery.route_solution.stops import (
     remove_orders_stops_for_local_delivery,
 )
 from ...context import ServiceContext

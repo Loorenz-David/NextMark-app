@@ -10,13 +10,22 @@ from .order_stats import order_stats
 MAX_ORDER_LIMIT = 200
 
 
-def list_orders(ctx: ServiceContext, plan_id: int | None = None):
+def list_orders(
+    ctx: ServiceContext,
+    plan_id: int | None = None,
+    route_plan_id: int | None = None,
+):
     base_query = db.session.query(Order).options(
         selectinload(Order.delivery_windows),
         selectinload(Order.items),
     )
-    if plan_id is not None:
-        base_query = base_query.filter(Order.delivery_plan_id == plan_id)
+    effective_route_plan_id = route_plan_id
+    if effective_route_plan_id is None:
+        effective_route_plan_id = plan_id
+    if effective_route_plan_id is not None:
+        base_query = base_query.filter(
+            Order.route_plan_id == effective_route_plan_id
+        )
 
     query = find_orders(ctx.query_params, ctx, query=base_query)
     stats_query_params = {

@@ -43,7 +43,7 @@ def _build_request(
             "client_email": email,
         },
         items=[],
-        delivery_plan_id=None,
+        route_plan_id=None,
         costumer=OrderCostumerRequest(
             costumer_id=costumer_id,
             client_id=costumer_client_id,
@@ -76,6 +76,11 @@ def _patch_create_order_dependencies(monkeypatch, requests):
         },
     )
     monkeypatch.setattr(module, "serialize_created_items", lambda _items: [])
+    monkeypatch.setattr(
+        module,
+        "reserve_order_scalar_ids",
+        lambda _ctx, count: list(range(1, count + 1)),
+    )
 
     def _create_instance(_ctx, model, fields):
         if model is module.Order:
@@ -83,8 +88,11 @@ def _patch_create_order_dependencies(monkeypatch, requests):
                 id=len(dummy_session.added) + 1,
                 client_id=fields["client_id"],
                 items=[],
+                delivery_windows=[],
                 delivery_plan_id=None,
                 costumer_id=None,
+                tracking_token_hash=None,
+                items_updated_at=None,
             )
         return SimpleNamespace(client_id=fields.get("client_id", "item"))
 
@@ -151,7 +159,7 @@ def test_create_order_fallback_input_uses_order_snapshot_fields(monkeypatch):
             "client_address": {"street_address": "Main 1"},
         },
         items=[],
-        delivery_plan_id=None,
+        route_plan_id=None,
         costumer=None,
     )
     _patch_create_order_dependencies(monkeypatch, [request])
@@ -184,7 +192,7 @@ def test_create_order_prefers_nested_costumer_defaults(monkeypatch):
             "client_address": {"street_address": "Order St"},
         },
         items=[],
-        delivery_plan_id=None,
+        route_plan_id=None,
         costumer=OrderCostumerRequest(
             costumer_id=None,
             client_id="costumer_front_client",

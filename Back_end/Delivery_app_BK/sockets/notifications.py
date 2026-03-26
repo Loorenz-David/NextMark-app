@@ -9,7 +9,7 @@ from sqlalchemy import func
 
 from Delivery_app_BK.models import (
     BaseRole,
-    LocalDeliveryPlan,
+    RouteGroup,
     Order,
     RouteSolution,
     RouteSolutionStop,
@@ -34,18 +34,7 @@ from Delivery_app_BK.sockets.contracts.realtime import (
 from Delivery_app_BK.sockets.rooms.names import build_user_app_room
 
 ADMIN_NOTIFICATION_BASE_ROLES = {"admin", "assistant"}
-LEGACY_ROUTE_PLAN_EVENT_PREFIX = "delivery_plan."
-LEGACY_ROUTE_PLAN_EVENT_CREATED = "delivery_plan.created"
-LEGACY_ROUTE_PLAN_EVENT_UPDATED = "delivery_plan.updated"
-LEGACY_ROUTE_PLAN_EVENT_DELETED = "delivery_plan.deleted"
-LEGACY_ROUTE_GROUP_EVENT_UPDATED = "local_delivery_plan.updated"
-LEGACY_ROUTE_PLAN_ID_KEY = "delivery_plan_id"
-LEGACY_ROUTE_GROUP_ID_KEY = "local_delivery_plan_id"
 DELIVERY_PLANNING_NOTIFICATION_EVENT_NAMES = {
-    LEGACY_ROUTE_PLAN_EVENT_CREATED,
-    LEGACY_ROUTE_PLAN_EVENT_UPDATED,
-    LEGACY_ROUTE_PLAN_EVENT_DELETED,
-    LEGACY_ROUTE_GROUP_EVENT_UPDATED,
     "route_plan.created",
     "route_plan.updated",
     "route_plan.deleted",
@@ -402,7 +391,7 @@ def resolve_driver_notification_recipients(
             db.session.query(RouteSolution.driver_id, RouteSolution.id)
             .filter(
                 RouteSolution.team_id == team_id,
-                RouteSolution.local_delivery_plan_id == route_group_id,
+                RouteSolution.route_group_id == route_group_id,
                 RouteSolution.is_selected.is_(True),
                 RouteSolution.driver_id.isnot(None),
             )
@@ -558,10 +547,6 @@ def _build_notification_title(event_name: str) -> str:
         "order_case.updated": "Order case updated",
         "order_case.state_changed": "Order case state changed",
         "order_chat.message_created": "New case message",
-        LEGACY_ROUTE_PLAN_EVENT_CREATED: "Delivery plan created",
-        LEGACY_ROUTE_PLAN_EVENT_UPDATED: "Delivery plan updated",
-        LEGACY_ROUTE_PLAN_EVENT_DELETED: "Delivery plan deleted",
-        LEGACY_ROUTE_GROUP_EVENT_UPDATED: "Local delivery updated",
         "route_plan.created": "Route plan created",
         "route_plan.updated": "Route plan updated",
         "route_plan.deleted": "Route plan deleted",
@@ -600,14 +585,6 @@ def _build_notification_description(*, event_name: str, order: Order | None, pay
         if message:
             return message[:140]
         return f"There is a new message for {order_label}."
-    if event_name == LEGACY_ROUTE_PLAN_EVENT_CREATED:
-        return f"{plan_label} was created."
-    if event_name == LEGACY_ROUTE_PLAN_EVENT_UPDATED:
-        return f"{plan_label} was updated."
-    if event_name == LEGACY_ROUTE_PLAN_EVENT_DELETED:
-        return f"{plan_label} was deleted."
-    if event_name == LEGACY_ROUTE_GROUP_EVENT_UPDATED:
-        return f"{plan_label} was updated."
     if event_name == "route_plan.created":
         return f"{plan_label} was created."
     if event_name == "route_plan.updated":
@@ -741,7 +718,6 @@ def _build_notification_target(
             params["planId"] = plan_id
         if route_group_id is not None:
             params["routeGroupId"] = route_group_id
-            params["localDeliveryPlanId"] = route_group_id
         if route_solution_id is not None:
             params["routeSolutionId"] = route_solution_id
         if route_solution_stop_id is not None:
@@ -758,7 +734,6 @@ def _build_notification_target(
         params = {"planId": plan_id}
         if route_group_id is not None:
             params["routeGroupId"] = route_group_id
-            params["localDeliveryPlanId"] = route_group_id
         if route_solution_id is not None:
             params["routeSolutionId"] = route_solution_id
         if route_solution_stop_id is not None:
@@ -803,8 +778,6 @@ def _build_notification_target(
 
 def _build_related_ids(*, payload: dict, order_id: int | None = None) -> dict:
     route_plan_id = _parse_int(payload.get("route_plan_id"))
-    if route_plan_id is None:
-        route_plan_id = _parse_int(payload.get(LEGACY_ROUTE_PLAN_ID_KEY))
 
     route_group_id = _resolve_route_group_id(payload)
 
@@ -814,7 +787,6 @@ def _build_related_ids(*, payload: dict, order_id: int | None = None) -> dict:
         "order_case_client_id": payload.get("order_case_client_id") if isinstance(payload.get("order_case_client_id"), str) else None,
         "plan_id": route_plan_id,
         "route_group_id": route_group_id,
-        LEGACY_ROUTE_GROUP_ID_KEY: route_group_id,
         "route_solution_id": _parse_int(payload.get("route_solution_id")),
         "route_solution_stop_id": _parse_int(payload.get("route_solution_stop_id")),
         "route_freshness_updated_at": payload.get("route_freshness_updated_at") if isinstance(payload.get("route_freshness_updated_at"), str) else None,
@@ -824,20 +796,15 @@ def _build_related_ids(*, payload: dict, order_id: int | None = None) -> dict:
 
 def _resolve_plan_id(*, event_name: str, payload: dict, entity_type: str | None, entity_id: int | None) -> int | None:
     plan_id = _parse_int(payload.get("route_plan_id"))
-    if plan_id is None:
-        plan_id = _parse_int(payload.get(LEGACY_ROUTE_PLAN_ID_KEY))
     if plan_id is not None:
         return plan_id
 
     if event_name.startswith("route_plan.") and entity_type == "route_plan" and isinstance(entity_id, int):
         return entity_id
 
-    if event_name.startswith(LEGACY_ROUTE_PLAN_EVENT_PREFIX) and entity_type == "delivery_plan" and isinstance(entity_id, int):
-        return entity_id
-
     route_group_id = _resolve_route_group_id(payload)
     if route_group_id is not None:
-        route_group = db.session.get(LocalDeliveryPlan, route_group_id)
+        route_group = db.session.get(RouteGroup, route_group_id)
         route_plan_id = _get_route_group_route_plan_id(route_group)
         if isinstance(route_plan_id, int):
             return route_plan_id
@@ -847,7 +814,7 @@ def _resolve_plan_id(*, event_name: str, payload: dict, entity_type: str | None,
         route_solution = db.session.get(RouteSolution, route_solution_id)
         route_group_id = _get_route_solution_route_group_id(route_solution)
         if isinstance(route_group_id, int):
-            route_group = db.session.get(LocalDeliveryPlan, route_group_id)
+            route_group = db.session.get(RouteGroup, route_group_id)
             route_plan_id = _get_route_group_route_plan_id(route_group)
             if isinstance(route_plan_id, int):
                 return route_plan_id
@@ -859,7 +826,7 @@ def _resolve_plan_id(*, event_name: str, payload: dict, entity_type: str | None,
             route_solution = db.session.get(RouteSolution, stop.route_solution_id)
             route_group_id = _get_route_solution_route_group_id(route_solution)
             if isinstance(route_group_id, int):
-                route_group = db.session.get(LocalDeliveryPlan, route_group_id)
+                route_group = db.session.get(RouteGroup, route_group_id)
                 route_plan_id = _get_route_group_route_plan_id(route_group)
                 if isinstance(route_plan_id, int):
                     return route_plan_id
@@ -868,28 +835,19 @@ def _resolve_plan_id(*, event_name: str, payload: dict, entity_type: str | None,
 
 
 def _resolve_route_group_id(payload: dict) -> int | None:
-    route_group_id = _parse_int(payload.get("route_group_id"))
-    if route_group_id is None:
-        route_group_id = _parse_int(payload.get(LEGACY_ROUTE_GROUP_ID_KEY))
-    return route_group_id
+    return _parse_int(payload.get("route_group_id"))
 
 
-def _get_route_group_route_plan_id(route_group: LocalDeliveryPlan | None) -> int | None:
+def _get_route_group_route_plan_id(route_group: RouteGroup | None) -> int | None:
     if route_group is None:
         return None
-    route_plan_id = getattr(route_group, "route_plan_id", None)
-    if route_plan_id is None:
-        route_plan_id = getattr(route_group, "delivery_plan_id", None)
-    return route_plan_id
+    return getattr(route_group, "route_plan_id", None)
 
 
 def _get_route_solution_route_group_id(route_solution: RouteSolution | None) -> int | None:
     if route_solution is None:
         return None
-    route_group_id = getattr(route_solution, "route_group_id", None)
-    if route_group_id is None:
-        route_group_id = getattr(route_solution, "local_delivery_plan_id", None)
-    return route_group_id
+    return getattr(route_solution, "route_group_id", None)
 
 
 def _resolve_plan_label(payload: dict) -> str:

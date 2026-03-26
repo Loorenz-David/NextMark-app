@@ -63,7 +63,7 @@ def _load_local_delivery_context(
         return
 
     route_query = db.session.query(RouteSolution).filter(
-        RouteSolution.local_delivery_plan_id.in_(route_group_ids)
+        RouteSolution.route_group_id.in_(route_group_ids)
     )
     if ctx.team_id:
         route_query = route_query.filter(RouteSolution.team_id == ctx.team_id)
@@ -72,7 +72,7 @@ def _load_local_delivery_context(
     grouped: defaultdict[int, list[RouteSolution]] = defaultdict(list)
     route_solutions_by_id: dict[int, RouteSolution] = {}
     for route_solution in route_solutions:
-        grouped[route_solution.local_delivery_plan_id].append(route_solution)
+        grouped[route_solution.route_group_id].append(route_solution)
         if route_solution.id is not None:
             route_solutions_by_id[route_solution.id] = route_solution
 

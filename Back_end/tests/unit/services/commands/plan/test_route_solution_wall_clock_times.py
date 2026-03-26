@@ -3,10 +3,10 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from types import SimpleNamespace
 
-from Delivery_app_BK.services.domain.delivery_plan.local_delivery import (
+from Delivery_app_BK.services.domain.route_operations.local_delivery import (
     normalize_local_delivery_route_solution_defaults,
 )
-from Delivery_app_BK.services.commands.delivery_plan.local_delivery.route_solution.plan_sync.window import (
+from Delivery_app_BK.services.commands.route_plan.local_delivery.route_solution.plan_sync.window import (
     resolve_window,
 )
 

@@ -6,7 +6,7 @@ from typing import Any, Dict, List, Optional, Tuple
 
 from Delivery_app_BK.errors import ValidationFailed
 from Delivery_app_BK.models import Order, RouteSolution, RouteSolutionStop
-from Delivery_app_BK.services.domain.delivery_plan.local_delivery import (
+from Delivery_app_BK.services.domain.route_operations.local_delivery import (
     calculate_service_time_seconds,
     combine_plan_date_and_local_hhmm_to_utc,
     ensure_utc_datetime,

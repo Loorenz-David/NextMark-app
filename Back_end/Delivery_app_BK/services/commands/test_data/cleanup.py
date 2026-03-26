@@ -100,7 +100,7 @@ def _load_test_order_ids(
     query = db.session.query(Order.id).filter(Order.team_id == team_id)
     conditions = []
     if plan_ids:
-        conditions.append(Order.delivery_plan_id.in_(plan_ids))
+        conditions.append(Order.route_plan_id.in_(plan_ids))
     if reference_prefix:
         conditions.append(Order.reference_number.like(f"{reference_prefix}%"))
     if not conditions:
@@ -114,7 +114,7 @@ def _delete_orders(team_id: int, plan_ids: list[int], reference_prefix: str) -> 
     query = db.session.query(Order).filter(Order.team_id == team_id)
     conditions = []
     if plan_ids:
-        conditions.append(Order.delivery_plan_id.in_(plan_ids))
+        conditions.append(Order.route_plan_id.in_(plan_ids))
     if reference_prefix:
         conditions.append(Order.reference_number.like(f"{reference_prefix}%"))
     if not conditions:

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from Delivery_app_BK.models.tables.delivery_plan.delivery_plan import DeliveryPlan
+from Delivery_app_BK.models import DeliveryPlan
 from Delivery_app_BK.services.context import ServiceContext
 
 

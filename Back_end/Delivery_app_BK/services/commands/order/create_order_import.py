@@ -146,7 +146,7 @@ def _build_order_group_key(row):
     order_key_fields = [
         "external_order_id",
         "order_reference_number",
-        "delivery_plan_id",
+        "route_plan_id",
         "external_source",
         "tracking_number",
         "client_first_name",
@@ -164,16 +164,16 @@ def _build_order_group_key(row):
 
 def create_order_import( ctx:ServiceContext  ):
     file:FileStorage = ctx.incoming_file
-    delivery_plan_id = None
+    route_plan_id = None
 
     if ctx.query_params:
-        delivery_plan_id = ctx.query_params.get("delivery_plan_id")
+        route_plan_id = ctx.query_params.get("route_plan_id")
 
-    if not delivery_plan_id and ctx.incoming_data:
-        delivery_plan_id = ctx.incoming_data.get("delivery_plan_id")
+    if not route_plan_id and ctx.incoming_data:
+        route_plan_id = ctx.incoming_data.get("route_plan_id")
 
-    if delivery_plan_id is not None:
-        delivery_plan_id = str(delivery_plan_id).strip() or None
+    if route_plan_id is not None:
+        route_plan_id = str(route_plan_id).strip() or None
 
     _validate_file(file, ctx)
 
@@ -193,10 +193,10 @@ def create_order_import( ctx:ServiceContext  ):
 
             if order_key != last_order_key:
                 current_order = _order_import_mapper(row)
-                if delivery_plan_id:
-                    parsed_plan_id = _parse_int(delivery_plan_id)
+                if route_plan_id:
+                    parsed_plan_id = _parse_int(route_plan_id)
                     if parsed_plan_id is not None:
-                        current_order["delivery_plan_id"] = parsed_plan_id
+                        current_order["route_plan_id"] = parsed_plan_id
                 current_order["items"] = []
                 orders.append(current_order)
                 last_order_key = order_key

@@ -1,7 +1,7 @@
 from __future__ import annotations
 from typing import Callable
 
-from Delivery_app_BK.models.tables.delivery_plan.delivery_plan import DeliveryPlan
+from Delivery_app_BK.models import DeliveryPlan
 from Delivery_app_BK.services.context import ServiceContext
 
 from . import local_delivery_handler

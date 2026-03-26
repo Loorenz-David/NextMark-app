@@ -14,10 +14,10 @@ from Delivery_app_BK.services.queries.route_solutions.serialize_route_solutions 
     serialize_route_solution,
 )
 from ....context import ServiceContext
-from Delivery_app_BK.services.commands.delivery_plan.local_delivery.route_solution.stops import (
+from Delivery_app_BK.services.commands.route_plan.local_delivery.route_solution.stops import (
     build_route_solution_stops,
 )
-from Delivery_app_BK.services.commands.delivery_plan.local_delivery.route_solution.plan_sync import (
+from Delivery_app_BK.services.commands.route_plan.local_delivery.route_solution.plan_sync import (
     build_incremental_route_sync_action,
 )
 from .types import PlanObjectiveCreateResult
@@ -29,7 +29,8 @@ def apply_local_delivery_objective(
     delivery_plan,
     plan_objective: str,
 ) -> PlanObjectiveCreateResult:
-    local_delivery = _get_local_delivery_plan(ctx, delivery_plan.id)
+    route_plan = delivery_plan
+    local_delivery = _get_local_delivery_plan(ctx, route_plan.id)
     route_solutions = list(local_delivery.route_solutions or [])
     if not route_solutions:
         raise ValidationFailed("Route solution not found for local delivery plan.")
@@ -71,7 +72,7 @@ def apply_local_delivery_objective(
                 route_solutions_by_id=route_solutions_by_id,
                 synced_stops=synced_stops,
                 changed_route_solutions=changed_route_solutions,
-                orders_by_route_solution_resolver=lambda _route_solution, created_order=order_instance, plan=delivery_plan: _resolve_orders_for_incremental_sync(
+                orders_by_route_solution_resolver=lambda _route_solution, created_order=order_instance, plan=route_plan: _resolve_orders_for_incremental_sync(
                     plan,
                     created_order,
                 ),
@@ -88,9 +89,9 @@ def apply_local_delivery_objective(
     )
 
 
-def _get_local_delivery_plan(ctx: ServiceContext, delivery_plan_id: int) -> LocalDeliveryPlan:
+def _get_local_delivery_plan(ctx: ServiceContext, route_plan_id: int) -> LocalDeliveryPlan:
     query = db.session.query(LocalDeliveryPlan).filter(
-        LocalDeliveryPlan.delivery_plan_id == delivery_plan_id
+        LocalDeliveryPlan.delivery_plan_id == route_plan_id
     )
     if ctx.team_id:
         query = query.filter(LocalDeliveryPlan.team_id == ctx.team_id)
@@ -107,12 +108,12 @@ def _skip_reason_value(reason) -> str | None:
 
 
 def _resolve_orders_for_incremental_sync(
-    delivery_plan,
+    route_plan,
     created_order,
 ) -> dict[int, object]:
     orders_by_id = {
         order.id: order
-        for order in (delivery_plan.orders or [])
+        for order in (route_plan.orders or [])
         if getattr(order, "id", None) is not None
     }
     created_order_id = getattr(created_order, "id", None)

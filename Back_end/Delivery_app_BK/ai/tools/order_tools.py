@@ -218,7 +218,7 @@ def create_order_tool(
     order_plan_objective: str | None = None,
     operation_type: str | None = None,
     # ── scheduling ───────────────────────────────────────────────────────
-    delivery_plan_id: int | None = None,
+    route_plan_id: int | None = None,
     delivery_windows: list[dict] | None = None,
     # ── items ────────────────────────────────────────────────────────────
     items: list[dict] | None = None,
@@ -279,8 +279,8 @@ def create_order_tool(
         fields["order_plan_objective"] = order_plan_objective
     if operation_type is not None:
         fields["operation_type"] = operation_type
-    if delivery_plan_id is not None:
-        fields["delivery_plan_id"] = delivery_plan_id
+    if route_plan_id is not None:
+        fields["route_plan_id"] = route_plan_id
     if delivery_windows is not None:
         fields["delivery_windows"] = delivery_windows
 

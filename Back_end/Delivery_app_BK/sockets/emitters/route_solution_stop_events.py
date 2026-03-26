@@ -1,7 +1,7 @@
 from flask import current_app
 
 from Delivery_app_BK.models import RouteSolutionStop, RouteSolution, RouteGroup, db
-from Delivery_app_BK.services.domain.delivery_plan.plan.route_freshness import get_route_freshness_updated_at
+from Delivery_app_BK.services.domain.route_operations.plan.route_freshness import get_route_freshness_updated_at
 from Delivery_app_BK.sockets.contracts.realtime import (
     BUSINESS_EVENT_ROUTE_SOLUTION_STOP_UPDATED,
 )
@@ -18,8 +18,6 @@ def emit_route_solution_stop_updated(route_solution_stop: RouteSolutionStop, *, 
 
     route_solution = db.session.get(RouteSolution, route_solution_stop.route_solution_id)
     route_group_id = getattr(route_solution, "route_group_id", None) if route_solution is not None else None
-    if route_group_id is None and route_solution is not None:
-        route_group_id = getattr(route_solution, "local_delivery_plan_id", None)
     if not route_solution or not route_group_id:
         current_app.logger.warning(
             "Cannot emit route_solution_stop.updated: missing route_solution (solution_id=%s)",
@@ -88,7 +86,4 @@ def _plan_id_aliases(*, route_group_id: int, route_plan_id: int) -> dict:
     return {
         "route_group_id": route_group_id,
         "route_plan_id": route_plan_id,
-        # Backward-compatible payload keys while route naming migration is active.
-        "local_delivery_plan_id": route_group_id,
-        "delivery_plan_id": route_plan_id,
     }

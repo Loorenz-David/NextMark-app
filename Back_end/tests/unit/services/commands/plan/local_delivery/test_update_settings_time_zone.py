@@ -1,7 +1,7 @@
 from datetime import datetime, timezone
 from types import SimpleNamespace
 
-from Delivery_app_BK.services.commands.delivery_plan.local_delivery import (
+from Delivery_app_BK.services.commands.route_plan.local_delivery import (
     update_settings as module,
 )
 
@@ -26,7 +26,7 @@ def _make_route_patch():
 
 def _make_request(time_zone):
     return SimpleNamespace(
-        local_delivery_plan_id=1,
+        route_group_id=1,
         create_variant_on_save=False,
         time_zone=time_zone,
         delivery_plan=SimpleNamespace(),

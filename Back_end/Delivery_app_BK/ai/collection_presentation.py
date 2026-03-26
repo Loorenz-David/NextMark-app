@@ -12,7 +12,7 @@ COLLECTION_COLUMN_REGISTRY: dict[str, dict[str, Any]] = {
             "status",
             "street_address",
             "total_items",
-            "delivery_plan_id",
+            "route_plan_id",
             "reference_number",
         },
     },
@@ -54,7 +54,7 @@ _ORDER_SEARCH_FIELD_TO_COLUMN = {
     "client_email": "client_name",
     "client_address": "street_address",
     "client_address.street_address": "street_address",
-    "delivery_plan_id": "delivery_plan_id",
+    "route_plan_id": "route_plan_id",
 }
 
 
@@ -125,6 +125,8 @@ def build_collection_meta(
 
 def _infer_order_intent(source_tool: str, params: dict) -> dict:
     focus: list[str] = []
+    search_fields = params.get("s") or []
+    plan_id_column = "route_plan_id"
 
     for field in params.get("s") or []:
         column_id = _ORDER_SEARCH_FIELD_TO_COLUMN.get(field)
@@ -134,11 +136,11 @@ def _infer_order_intent(source_tool: str, params: dict) -> dict:
     if params.get("scheduled") is not None:
         if "status" not in focus:
             focus.append("status")
-        if "delivery_plan_id" not in focus:
-            focus.append("delivery_plan_id")
+        if plan_id_column not in focus:
+            focus.append(plan_id_column)
 
-    if params.get("plan_id") is not None and "delivery_plan_id" not in focus:
-        focus.append("delivery_plan_id")
+    if params.get("plan_id") is not None and plan_id_column not in focus:
+        focus.append(plan_id_column)
 
     return {
         "mode": "search" if params.get("q") else "default",

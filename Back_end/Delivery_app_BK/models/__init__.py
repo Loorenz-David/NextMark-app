@@ -38,10 +38,10 @@ from .tables.route_operations.route_plan.route_plan import RoutePlan
 from .tables.route_operations.route_plan.route_plan_event import RoutePlanEvent
 from .tables.route_operations.route_plan.route_plan_event_action import RoutePlanEventAction
 from .tables.route_operations.route_plan.route_group import RouteGroup
-from .tables.delivery_plan.delivery_plan_types.international_shipping_plan import (
+from .tables.international_shipping_plan.international_shipping_plan import (
     InternationalShippingPlan,
 )
-from .tables.delivery_plan.delivery_plan_types.store_pickup_plan import StorePickupPlan
+from .tables.store_pickup_plan.store_pickup_plan import StorePickupPlan
 from .tables.route_operations.route_plan.route_solution import (
     RouteSolution,
 )

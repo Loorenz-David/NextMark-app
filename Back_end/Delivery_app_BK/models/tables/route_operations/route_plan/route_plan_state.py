@@ -5,7 +5,7 @@ from sqlalchemy.orm import relationship, validates
 from Delivery_app_BK.errors.validation import ValidationFailed
 from Delivery_app_BK.models import db
 from Delivery_app_BK.models.mixins.team_mixings.team_id import TeamScopedMixin
-from Delivery_app_BK.services.domain.delivery_plan.plan.plan_states import PlanState as PlanStateEnum
+from Delivery_app_BK.services.domain.route_operations.plan.plan_states import PlanState as PlanStateEnum
 
 """
 current static states are:

@@ -124,7 +124,7 @@ def _make_context(*, with_existing_stops: bool) -> SimpleNamespace:
         route_warnings=None,
         stop_count=0,
         driver_id=None,
-        local_delivery_plan_id=20,
+        route_group_id=20,
         local_delivery_plan=local_delivery_plan,
         start_location_id=None,
     )
@@ -386,7 +386,7 @@ def test_persist_solution_temporarily_displaces_existing_stop_orders_before_swap
         route_warnings=None,
         stop_count=0,
         driver_id=None,
-        local_delivery_plan_id=20,
+        route_group_id=20,
         local_delivery_plan=local_delivery_plan,
         start_location_id=None,
         vehicle_id=None,
@@ -404,8 +404,8 @@ def test_persist_solution_temporarily_displaces_existing_stop_orders_before_swap
         ctx=None,
     )
     request = OptimizationRequest(
-        delivery_plan_id=10,
-        local_delivery_plan_id=20,
+        route_plan_id=10,
+        route_group_id=20,
         route_solution_id=30,
         shipments=[
             Shipment(

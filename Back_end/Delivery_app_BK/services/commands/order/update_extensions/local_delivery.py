@@ -6,7 +6,7 @@ from Delivery_app_BK.directions.services.time_window_policy import (
     apply_stop_time_window_evaluation,
 )
 from Delivery_app_BK.models import RouteSolution, RouteSolutionStop
-from Delivery_app_BK.services.commands.delivery_plan.local_delivery.route_solution.plan_sync import (
+from Delivery_app_BK.services.commands.route_plan.local_delivery.route_solution.plan_sync import (
     build_incremental_route_sync_action,
 )
 
