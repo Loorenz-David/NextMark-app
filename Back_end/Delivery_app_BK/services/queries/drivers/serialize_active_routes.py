@@ -39,11 +39,7 @@ def _serialize_delivery_plan_collapsed(instance: RoutePlan | None):
 
 def serialize_active_route(instance: RouteSolution, ctx: ServiceContext):
     route_group = getattr(instance, "route_group", None)
-    if route_group is None:
-        route_group = getattr(instance, "local_delivery_plan", None)
     route_plan = getattr(route_group, "route_plan", None) if route_group else None
-    if route_plan is None and route_group is not None:
-        route_plan = getattr(route_group, "delivery_plan", None)
 
     serialized_route_plan = _serialize_route_plan_collapsed(route_plan)
 
@@ -68,11 +64,7 @@ def serialize_active_route(instance: RouteSolution, ctx: ServiceContext):
 
 def serialize_active_route_summary(instance: RouteSolution, ctx: ServiceContext):
     route_group = getattr(instance, "route_group", None)
-    if route_group is None:
-        route_group = getattr(instance, "local_delivery_plan", None)
     route_plan = getattr(route_group, "route_plan", None) if route_group else None
-    if route_plan is None and route_group is not None:
-        route_plan = getattr(route_group, "delivery_plan", None)
     created_at = instance.created_at
     updated_at = instance.updated_at
     route_group_id = getattr(instance, "route_group_id", None)

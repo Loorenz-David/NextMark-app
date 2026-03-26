@@ -104,12 +104,12 @@ def resolve_current_order_future_anchor(order_event) -> datetime | None:
 
 
 def resolve_current_delivery_plan_future_anchor(plan_event) -> datetime | None:
-    delivery_plan = getattr(plan_event, "delivery_plan", None) or getattr(plan_event, "plan", None)
-    if delivery_plan is None:
+    route_plan = getattr(plan_event, "delivery_plan", None)
+    if route_plan is None:
         return None
 
     baseline = getattr(plan_event, "occurred_at", None) or datetime.now(timezone.utc)
-    return _resolve_delivery_plan_future_anchor(delivery_plan, baseline)
+    return _resolve_delivery_plan_future_anchor(route_plan, baseline)
 
 
 def _resolve_channel(action_name: str) -> str:
@@ -167,15 +167,15 @@ def _resolve_delivery_plan_anchor(plan_event) -> tuple[str | None, datetime | No
     if not event_supports_future_anchor(getattr(plan_event, "event_name", None)):
         return SCHEDULE_ANCHOR_OCCURRED_AT, occurred_at, None
 
-    delivery_plan = getattr(plan_event, "delivery_plan", None) or getattr(plan_event, "plan", None)
-    if delivery_plan is None:
+    route_plan = getattr(plan_event, "delivery_plan", None)
+    if route_plan is None:
         return (
             SCHEDULE_ANCHOR_FUTURE_BUSINESS_TIME,
             None,
             "Future business anchor could not be resolved because the delivery plan context is missing.",
         )
 
-    anchor_at = _resolve_delivery_plan_future_anchor(delivery_plan, occurred_at)
+    anchor_at = _resolve_delivery_plan_future_anchor(route_plan, occurred_at)
     if anchor_at is None:
         return (
             SCHEDULE_ANCHOR_FUTURE_BUSINESS_TIME,
@@ -196,9 +196,9 @@ def _resolve_order_future_anchor(order, baseline: datetime) -> datetime | None:
     if candidate_windows:
         return min(candidate_windows)
 
-    delivery_plan = getattr(order, "delivery_plan", None)
-    if delivery_plan is not None:
-        start_date = getattr(delivery_plan, "start_date", None)
+    route_plan = getattr(order, "route_plan", None)
+    if route_plan is not None:
+        start_date = getattr(route_plan, "start_date", None)
         if start_date is not None and start_date > baseline:
             return start_date
 

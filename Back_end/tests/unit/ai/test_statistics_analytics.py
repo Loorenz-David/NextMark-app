@@ -10,7 +10,7 @@ def _order(order_id: int, *, creation_date: str = "2026-03-22T12:00:00Z", state_
         "id": order_id,
         "creation_date": creation_date,
         "order_state_id": state_id,
-        "delivery_plan_id": plan_id,
+        "route_plan_id": plan_id,
     }
 
 

@@ -20,13 +20,9 @@ def touch_route_freshness_by_route(route_solution: RouteSolution | None) -> date
 
     route_group = getattr(route_solution, "route_group", None)
     if route_group is None:
-        route_group = getattr(route_solution, "local_delivery_plan", None)
-    if route_group is None:
         return None
 
     route_plan = getattr(route_group, "route_plan", None)
-    if route_plan is None:
-        route_plan = getattr(route_group, "delivery_plan", None)
     return touch_route_freshness(route_plan)
 
 
