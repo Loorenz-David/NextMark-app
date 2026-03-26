@@ -80,7 +80,7 @@ export const selectOrdersByPlanId = (planId: number | null | undefined) =>
     if (planId == null) return []
     return state.allIds.reduce<Order[]>((acc, clientId) => {
       const order = state.byClientId[clientId]
-      if (order?.delivery_plan_id === planId) {
+      if (order?.route_plan_id === planId) {
         acc.push(order)
       }
       return acc
@@ -131,7 +131,7 @@ export const setOrderPlanId = (clientId: string, planId: number | null) =>
 {
   useOrderStore.getState().update(clientId, (order) => ({
     ...order,
-    delivery_plan_id: planId,
+    route_plan_id: planId,
   }))
   syncOrdersByCostumerIdIndex()
 }

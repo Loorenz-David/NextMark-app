@@ -24,7 +24,7 @@ const buildState = (): OrderFormState => ({
   client_secondary_phone: { prefix: '+1', number: '2222222222' },
   client_address: null,
   delivery_windows: [],
-  delivery_plan_id: null,
+  route_plan_id: null,
   order_note: '',
 })
 

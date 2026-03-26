@@ -24,7 +24,7 @@ export const usePlanHeaderAction = () => {
             sectionManager.closeAll()
         }
         baseControlls.openBase({
-            payload: { planId: plan.id, ordersPlanType: plan.plan_type },
+            payload: { planId: plan.id },
         })
     }
 

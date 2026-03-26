@@ -17,7 +17,7 @@ export const runOrderFormBootstrapFlowTests = () => {
     payloadDeliveryPlanId: 42,
   })
 
-  assert(createState.delivery_plan_id === 42, 'create state should use payload delivery plan id')
+  assert(createState.route_plan_id === 42, 'create state should use payload route plan id')
   assert(createState.client_id.length > 0, 'create state should generate client id')
   assert(
     typeof createState.reference_number === 'string' && createState.reference_number.length > 0,
@@ -31,14 +31,14 @@ export const runOrderFormBootstrapFlowTests = () => {
       client_id: 'order-client-1',
       reference_number: 'REF-100',
       external_source: 'shopify',
-      delivery_plan_id: 55,
+      route_plan_id: 55,
     },
     payloadDeliveryPlanId: null,
   })
 
   assert(editState.client_id === 'order-client-1', 'edit state should keep existing client id')
   assert(editState.reference_number === 'REF-100', 'edit state should keep existing reference')
-  assert(editState.delivery_plan_id === 55, 'edit state should keep existing delivery plan id')
+  assert(editState.route_plan_id === 55, 'edit state should keep existing route plan id')
 
   const keyA = buildOrderFormReinitKey({
     mode: 'edit',

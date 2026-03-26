@@ -7,8 +7,8 @@ import type { Vehicle, VehicleInput, VehicleMap } from '../types/vehicle'
 
 export type VehicleConflict = {
   route_solution_id: number
-  delivery_plan_id: number
-  delivery_plan_label: string | null
+  route_plan_id: number
+  route_plan_label: string | null
   start_date: string
   end_date: string
 }

@@ -35,7 +35,7 @@ export type OrderFormState = {
   client_secondary_phone: Phone
   client_address: address | null
   delivery_windows: OrderDeliveryWindow[]
-  delivery_plan_id?: number | null
+  route_plan_id?: number | null
   order_note: string
 }
 

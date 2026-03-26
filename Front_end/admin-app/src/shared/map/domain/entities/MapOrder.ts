@@ -7,7 +7,7 @@ export type MapMarkerOperationDirection = 'up' | 'down'
 export type MapOrder = {
   id: string
   coordinates: Coordinates 
-  delivery_plan_id?: number | null
+  route_plan_id?: number | null
   markerColor?: string
   status?: MapOrderStatus
   sequence?: number | null

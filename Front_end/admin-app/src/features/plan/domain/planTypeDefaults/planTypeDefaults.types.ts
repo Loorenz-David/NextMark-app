@@ -1,5 +1,5 @@
 import type { address } from '@/types/address'
-import type { PlanTypeDefaults, PlanTypeKey } from '@/features/plan/types/plan'
+import type { PlanTypeDefaults } from '@/features/plan/types/plan'
 
 export type PlanTypeDefaultsContext = {
   getCurrentLocationAddress: () => Promise<address>
@@ -11,6 +11,6 @@ export type PlanTypeDefaultsGenerator = (
 ) => Promise<PlanTypeDefaults | undefined>
 
 export type PlanTypeDefaultsResolver = (
-  planType: PlanTypeKey,
+  planType: 'local_delivery',
   ctx: PlanTypeDefaultsContext,
 ) => Promise<PlanTypeDefaults | undefined>

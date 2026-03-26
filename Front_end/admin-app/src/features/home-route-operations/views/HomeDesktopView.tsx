@@ -6,12 +6,14 @@ import { ChevronDownIcon } from '@/assets/icons'
 
 import { OrderPage } from '@/features/order/pages/order.page'
 import { OrderMapOverlay } from '@/features/order/components/OrderMapOverlay'
-import { LocalDeliveryMapOverlay } from '@/features/plan/planTypes/localDelivery/components'
+import { RouteGroupMapOverlay } from '@/features/plan/routeGroup/components'
+import { RouteGroupWorkspaceRuntime } from '@/features/plan/routeGroup/providers/RouteGroupWorkspaceRuntime'
 import { useBaseControlls } from '@/shared/resource-manager/useResourceManager'
 import { useMapSelectionModeGuardFlow } from '@/features/home-route-operations/flows/mapSelectionModeGuard.flow'
 import { useHomeDesktopKeyboardFlow } from '@/features/home-route-operations/flows/homeDesktopKeyboard.flow'
 import { useHomeDesktopRailSettleFlow } from '@/features/home-route-operations/flows/homeDesktopRailSettle.flow'
 import { useHomeDesktopDerivedStateFlow } from '@/features/home-route-operations/flows/homeDesktopDerivedState.flow'
+import { RouteGroupsPage } from '@/features/plan/routeGroup/pages/RouteGroups.page'
 
 import { HomeDesktopLayout } from '../layout/HomeDesktopLayout'
 import { useHomeDesktopLayout } from '../hooks/useHomeDesktopLayout'
@@ -65,9 +67,12 @@ export function HomeDesktopView() {
   const sectionManager = useSectionManager()
   const popupManager = usePopupManager()
   const baseControlls = useBaseControlls<PayloadBase>()
+  const isOrderOverlayOpen = baseControlls.isBaseOpen && typeof baseControlls.payload?.planId === 'number'
 
   const derivedState = useHomeDesktopDerivedStateFlow({ sectionManager, baseControlls })
-  const layout = useHomeDesktopLayout({ openSectionsCount: derivedState.openSectionsCount })
+  const layout = useHomeDesktopLayout({
+    openSectionsCount: derivedState.openSectionsCount,
+  })
 
   useEffect(() => {
     void initialize(mapContainerRef.current)
@@ -86,6 +91,7 @@ export function HomeDesktopView() {
       mapRowHeight: layout.mapRowHeight,
       planRowHeight: layout.planRowHeight,
       hasOverlay: layout.hasOverlay,
+      isOrderOverlayOpen,
       isPlanVisible: layout.isPlanVisible,
     },
     resize,
@@ -99,24 +105,35 @@ export function HomeDesktopView() {
     closeAllSections: () => sectionManager.closeAll(),
   })
 
-  const SelectedOrdersPlanType = derivedState.SelectedOrdersPlanType
   const splitMode = layout.viewMode === 'split'
+  const activeRoutePlanId = typeof baseControlls.payload?.planId === 'number'
+    ? baseControlls.payload.planId
+    : null
 
   return (
     <>
+      {derivedState.isRouteOperationsOverlayActive ? (
+        <RouteGroupWorkspaceRuntime
+          planId={activeRoutePlanId}
+          isActive={derivedState.isRouteOperationsOverlayActive}
+        />
+      ) : null}
       <HomeDesktopLayout
         viewMode={layout.viewMode}
         splitMode={splitMode}
         planColumnWidth={layout.planColumnWidth}
         mapRowHeight={layout.mapRowHeight}
         planRowHeight={layout.planRowHeight}
+        orderOverlayWidth={layout.orderOverlayWidth}
         overlayWidth={layout.overlayWidth}
         hasOverlay={layout.hasOverlay}
+        baseWidth={layout.baseWidth}
+        isOrderOverlayOpen={isOrderOverlayOpen}
         onPlanLayoutChange={handleRailLayoutChange}
         onRailTransitionEnd={handleRailTransitionEnd}
         map={<div ref={mapContainerRef} style={MAP_CONTAINER_STYLE} />}
         mapOverlay={
-          derivedState.isLocalDeliveryOverlayActive ? <LocalDeliveryMapOverlay /> : <OrderMapOverlay />
+          derivedState.isRouteOperationsOverlayActive ? <RouteGroupMapOverlay /> : <OrderMapOverlay />
         }
         plan={<PlanDesktopShell onRequestClose={layout.closePlan} viewMode={layout.viewMode} />}
         base={
@@ -128,8 +145,16 @@ export function HomeDesktopView() {
         }
         orderOverlay={
           baseControlls.isBaseOpen ? (
-            <SectionPanel onRequestClose={baseControlls.closeBase} style={{ width: layout.planWidth }}>
-              {SelectedOrdersPlanType && <SelectedOrdersPlanType payload={baseControlls.payload} />}
+            <SectionPanel onRequestClose={baseControlls.closeBase} style={{ width: layout.orderOverlayWidth }}>
+              {baseControlls.payload ? (
+                <RouteGroupsPage
+                  payload={{
+                    ...baseControlls.payload,
+                    planId: baseControlls.payload.planId ?? undefined,
+                  }}
+                  onRequestClose={baseControlls.closeBase}
+                />
+              ) : null}
             </SectionPanel>
           ) : null
         }
@@ -168,5 +193,3 @@ export function HomeDesktopView() {
     </>
   )
 }
-
-

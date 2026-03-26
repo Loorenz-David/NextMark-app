@@ -1,6 +1,6 @@
 import { useOrderMutations } from '@/features/order'
 import { useOrderBatchDeliveryPlanController } from '@/features/order/controllers/orderBatchDeliveryPlan.controller'
-import { useRouteSolutionStopMutations } from '@/features/plan/planTypes/localDelivery/controllers/routeSolutionStop.controller'
+import { useRouteSolutionStopMutations } from '@/features/plan/routeGroup/controllers/routeSolutionStop.controller'
 import { selectRoutePlanByClientId, useRoutePlanStore } from '@/features/plan/store/routePlan.slice'
 import type { PlanDndIntent } from '@/features/plan/domain/planDndIntent'
 
@@ -45,7 +45,7 @@ export const useExecutePlanDndIntent = () => {
 
       const success = await updateOrdersDeliveryPlanBatch({
         planId: deliveryPlan.id,
-        planType: deliveryPlan.plan_type,
+        planType: 'local_delivery',
         selection: intent.selection,
       })
       return { droppedPlanClientId: intent.planClientId, success }

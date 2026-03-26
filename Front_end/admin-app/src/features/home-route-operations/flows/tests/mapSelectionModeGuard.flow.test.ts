@@ -11,8 +11,8 @@ export const runMapSelectionModeGuardFlowTests = () => {
     const decision = resolveSelectionConflict({
       isOrderMode: true,
       wasOrderMode: false,
-      isLocalDeliveryMode: true,
-      wasLocalDeliveryMode: true,
+      isRouteGroupMode: true,
+      wasRouteGroupMode: true,
     })
     assert(decision === 'disable_local_delivery', 'order activation should disable local delivery mode')
   }
@@ -21,8 +21,8 @@ export const runMapSelectionModeGuardFlowTests = () => {
     const decision = resolveSelectionConflict({
       isOrderMode: true,
       wasOrderMode: true,
-      isLocalDeliveryMode: true,
-      wasLocalDeliveryMode: false,
+      isRouteGroupMode: true,
+      wasRouteGroupMode: false,
     })
     assert(decision === 'disable_order', 'local delivery activation should disable order mode')
   }
@@ -31,10 +31,9 @@ export const runMapSelectionModeGuardFlowTests = () => {
     const decision = resolveSelectionConflict({
       isOrderMode: true,
       wasOrderMode: true,
-      isLocalDeliveryMode: false,
-      wasLocalDeliveryMode: false,
+      isRouteGroupMode: false,
+      wasRouteGroupMode: false,
     })
     assert(decision === 'none', 'no conflict should produce no action')
   }
 }
-

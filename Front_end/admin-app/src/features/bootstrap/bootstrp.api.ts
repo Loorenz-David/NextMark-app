@@ -17,7 +17,7 @@ export type BootstrapResponse = {
   label_templates: PrintTemplateMap
   message_templates_email: EmailMessageTemplateMap 
   message_templates_sms: SmsMessageTemplateMap
-  plan_states: DeliveryPlanStateMap
+  route_plan_states: DeliveryPlanStateMap
   vehicles?: VehicleMap
 }
 

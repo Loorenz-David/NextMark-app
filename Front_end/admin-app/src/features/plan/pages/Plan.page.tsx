@@ -14,7 +14,7 @@ import type { PlanDateFilterPayload } from "../components/planDateFilter";
 import type { PlanQueryFilters } from "../types/planMeta";
 
 
-type PlanListPage = {
+type RoutePlanPageProps = {
   onRequestClose?: () => void
   showCloseButton?: boolean
 }
@@ -41,10 +41,10 @@ const queryEquals = (left: PlanQueryFilters | undefined, right: PlanQueryFilters
   return JSON.stringify(left ?? {}) === JSON.stringify(right ?? {})
 }
 
-export const PlanPage = ({
+export const RoutePlanPage = ({
     onRequestClose,
     showCloseButton
-}:PlanListPage) => {
+}:RoutePlanPageProps) => {
     const [activeQuery, setActiveQuery] = useState<PlanQueryFilters | undefined>(undefined)
     const scrollContainerRef = useRef<HTMLDivElement | null>(null)
     const handleScrollToTop = useCallback(() => {

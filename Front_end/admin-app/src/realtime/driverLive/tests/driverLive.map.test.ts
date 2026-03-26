@@ -83,7 +83,7 @@ export const runDriverLiveMapTests = () => {
         {
           client_id: 'solution-old',
           driver_id: 7,
-          local_delivery_plan_id: 21,
+          route_group_id: 21,
           actual_start_time: '2026-03-18T09:00:00Z',
           actual_end_time: null,
           route_end_strategy: 'round_trip',
@@ -91,15 +91,15 @@ export const runDriverLiveMapTests = () => {
         {
           client_id: 'solution-new',
           driver_id: 7,
-          local_delivery_plan_id: 22,
+          route_group_id: 22,
           actual_start_time: '2026-03-18T10:00:00Z',
           actual_end_time: null,
           route_end_strategy: 'round_trip',
         },
       ],
-      localDeliveryPlans: [
-        { client_id: 'plan-21', id: 21, delivery_plan_id: 101 },
-        { client_id: 'plan-22', id: 22, delivery_plan_id: 202 },
+      routeGroups: [
+        { client_id: 'plan-21', id: 21, route_plan_id: 101 },
+        { client_id: 'plan-22', id: 22, route_plan_id: 202 },
       ],
     })
 
@@ -113,14 +113,14 @@ export const runDriverLiveMapTests = () => {
         {
           client_id: 'solution-ended',
           driver_id: 8,
-          local_delivery_plan_id: 30,
+          route_group_id: 30,
           actual_start_time: '2026-03-18T08:00:00Z',
           actual_end_time: '2026-03-18T11:00:00Z',
           route_end_strategy: 'round_trip',
         },
       ],
-      localDeliveryPlans: [
-        { client_id: 'plan-30', id: 30, delivery_plan_id: 300 },
+      routeGroups: [
+        { client_id: 'plan-30', id: 30, route_plan_id: 300 },
       ],
     })
 

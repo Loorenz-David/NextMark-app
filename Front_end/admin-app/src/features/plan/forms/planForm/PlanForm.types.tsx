@@ -1,9 +1,7 @@
 import type { ChangeEvent, Dispatch, SetStateAction } from 'react'
-import type { DeliveryPlan, PlanTypeKey } from '../../types/plan'
+import type { DeliveryPlan } from '../../types/plan'
 
-import type { LocalDeliveryPlanInput } from '../../planTypes/localDelivery/types/localDeliveryPlan'
-import type { StorePickupPlanInput } from '../../types/storePickupPlan'
-import type { InternationalShippingPlanInput } from '../../types/internationalShippingPlan'
+import type { RouteGroupInput } from '../../routeGroup/types/routeGroup'
 import { usePlanFormWarnings } from './PlanForm.warnings'
 import { usePlanFormActions } from './planForm.actions'
 import type { usePlanFormSetters } from './planForm.setters'
@@ -18,11 +16,7 @@ export type PopupPayload = {
     source?: 'order_multi_select'
 }
 
-export type PlanTypeState =
-  | LocalDeliveryPlanInput 
-  | InternationalShippingPlanInput 
-  | StorePickupPlanInput 
-
+export type PlanTypeState = RouteGroupInput
 
 export type PropsPlanFormContext = {
     planForm: DeliveryPlan

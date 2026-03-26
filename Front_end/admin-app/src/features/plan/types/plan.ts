@@ -1,48 +1,14 @@
-import type { InternationalShippingPlanInput } from '@/features/plan/types/internationalShippingPlan'
-import type { InternationalShippingPlan } from '@/features/plan/types/internationalShippingPlan'
-import type { LocalDeliveryPlanInput } from '@/features/plan/planTypes/localDelivery/types/localDeliveryPlan'
-import type { LocalDeliveryPlan } from '@/features/plan/planTypes/localDelivery/types/localDeliveryPlan'
-import type { StorePickupPlanInput } from '@/features/plan/types/storePickupPlan'
-import type { StorePickupPlan } from '@/features/plan/types/storePickupPlan'
-import type { RouteSolution } from '@/features/plan/planTypes/localDelivery/types/routeSolution'
-import type { ServiceTime } from '@/features/plan/planTypes/localDelivery/types/serviceTime'
+import type { RouteGroupInput, RouteGroup } from '@/features/plan/routeGroup/types/routeGroup'
+import type { RouteSolution } from '@/features/plan/routeGroup/types/routeSolution'
+import type { ServiceTime } from '@/features/plan/routeGroup/types/serviceTime'
 import type { address } from '@/types/address'
 
-export const PLAN_TYPE_KEYS = [
-  'local_delivery',
-  'international_shipping',
-  'store_pickup',
-] as const
-
-export type PlanTypeKey = typeof PLAN_TYPE_KEYS[number]
-
-export const PLAN_TYPE_STORE_KEYS = [
-  'local_delivery_plan',
-  'international_shipping_plan',
-  'store_pickup_plan',
-] as const
-
-export type PlanTypeStoreKey = typeof PLAN_TYPE_STORE_KEYS[number]
-
-export type PlanTypePayloadKey = PlanTypeKey 
-
-export const PLAN_TYPE_KEY_MAP: Record<PlanTypeStoreKey, PlanTypeKey> = {
-  local_delivery_plan: 'local_delivery',
-  international_shipping_plan: 'international_shipping',
-  store_pickup_plan: 'store_pickup',
-}
-
-export const PLAN_TYPE_STORE_KEY_MAP: Record<PlanTypeKey, PlanTypeStoreKey> = {
-  local_delivery: 'local_delivery_plan',
-  international_shipping: 'international_shipping_plan',
-  store_pickup: 'store_pickup_plan',
-}
+export type RoutePlanObjective = 'local_delivery'
 
 export type DeliveryPlan = {
   id?: number
   client_id: string
   label: string
-  plan_type: PlanTypeKey
   start_date?: string | null
   end_date?: string | null
   created_at?: string | null
@@ -63,7 +29,6 @@ export type DeliveryPlanMap = {
 export type DeliveryPlanFields = {
   client_id: string
   label: string
-  plan_type: PlanTypePayloadKey
   start_date?: string | null
   end_date?: string | null
   state_id?: number | null
@@ -74,20 +39,14 @@ export type DeliveryPlanFields = {
 }
 
 export type PlanTypeFields = {
-  local_delivery?: LocalDeliveryPlanInput
-  international_shipping?: InternationalShippingPlanInput
-  store_pickup?: StorePickupPlanInput
+  local_delivery?: RouteGroupInput
 }
-
-
 
 export type PlanTypeStoreFields = {
-  local_delivery_plan?: LocalDeliveryPlanInput
-  international_shipping_plan?: InternationalShippingPlanInput
-  store_pickup_plan?: StorePickupPlanInput
+  local_delivery_plan?: RouteGroupInput
 }
 
-export type LocalDeliveryPlanTypeDefaults = {
+export type RouteGroupDefaults = {
   route_solution?: {
     start_location?: address | null
     end_location?: address | null
@@ -100,12 +59,12 @@ export type LocalDeliveryPlanTypeDefaults = {
   }
 }
 
-export type PlanTypeDefaults = LocalDeliveryPlanTypeDefaults | Record<string, unknown>
+export type PlanTypeDefaults = RouteGroupDefaults | Record<string, unknown>
+export type RouteGroupPlanTypeDefaults = RouteGroupDefaults
 
 export type PlanCreatePayload = {
   client_id?: string
   label: string
-  plan_type: PlanTypePayloadKey
   start_date: string
   end_date?: string | null
   order_ids?: number[]
@@ -122,7 +81,7 @@ export type ClientIdMap = Record<string, number> & {
 
 export type PlanCreateResultBundle = {
   delivery_plan: DeliveryPlan
-  delivery_plan_type: LocalDeliveryPlan | InternationalShippingPlan | StorePickupPlan
+  route_group: RouteGroup
   route_solution?: RouteSolution
 }
 

@@ -15,12 +15,12 @@ export function useDeliveryPlanStateQueries() {
         const response = await planApi.listDeliveryPlanStates(query)
         const payload = response.data
 
-        if (!payload?.plan_states) {
-          console.warn('Plan states response missing plan_states', payload)
+        if (!payload?.route_plan_states) {
+          console.warn('Plan states response missing route_plan_states', payload)
           return null
         }
 
-        insertRoutePlanStates(payload.plan_states)
+        insertRoutePlanStates(payload.route_plan_states)
         return payload
       } catch (error) {
         const message = error instanceof ApiError ? error.message : 'Unable to load plan states.'

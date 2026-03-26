@@ -1,6 +1,6 @@
 import type { Dispatch, SetStateAction } from 'react'
 import type { ChangeEvent } from 'react'
-import type { DeliveryPlan, PlanTypeKey } from '../../types/plan'
+import type { DeliveryPlan } from '../../types/plan'
 import type { PlanTypeState } from './PlanForm.types'
 import type { PlanWarningsControllers } from './PlanForm.types'
 type SetDeliveryPlanState = Dispatch< SetStateAction<DeliveryPlan> >
@@ -17,9 +17,7 @@ export const usePlanFormSetters = ({
     planFormWarnings
 
 }:PropsUsePlanFormSetters )=>{
-    const handlePlanType = (value: PlanTypeKey)=>{
-        setPlanForm(prev => ({...prev, plan_type: value }))
-    }
+    const handlePlanType = () => undefined
     const handlePlanName = (event: ChangeEvent<HTMLInputElement>)=>{
         const value = event.target.value
         planFormWarnings.planNameWarning.validate( value )

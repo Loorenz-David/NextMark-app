@@ -4,11 +4,11 @@ import { clearRoutePlans, insertRoutePlan } from '@/features/plan/store/routePla
 import {
   clearRouteSolutions,
   useRouteSolutionStore,
-} from '@/features/plan/planTypes/localDelivery/store/routeSolution.store'
+} from '@/features/plan/routeGroup/store/routeSolution.store'
 import {
   clearRouteSolutionStops,
   useRouteSolutionStopStore,
-} from '@/features/plan/planTypes/localDelivery/store/routeSolutionStop.store'
+} from '@/features/plan/routeGroup/store/routeSolutionStop.store'
 import type { OrderCreateBundle } from '@/features/order/types/order'
 
 const assert = (condition: boolean, message: string) => {
@@ -21,7 +21,7 @@ const buildBundle = (deliveryPlanId?: number): OrderCreateBundle => ({
   order: {
     client_id: 'order_1',
     id: 1,
-    delivery_plan_id: deliveryPlanId ?? null,
+    route_plan_id: deliveryPlanId ?? null,
   },
   order_stops: [
     {
@@ -35,7 +35,7 @@ const buildBundle = (deliveryPlanId?: number): OrderCreateBundle => ({
     {
       client_id: 'route_10',
       id: 10,
-      local_delivery_plan_id: 20,
+      route_group_id: 20,
       route_end_strategy: 'round_trip',
     },
   ],
@@ -53,52 +53,22 @@ export const runOrderCreationBridgeTests = () => {
     handlePlanOrderCreation(buildBundle(undefined))
     assert(
       useRouteSolutionStopStore.getState().allIds.length === 0,
-      'missing delivery_plan_id should no-op',
+      'missing route_plan_id should no-op',
     )
   }
 
   {
     resetStores()
-    handlePlanOrderCreation(buildBundle(999))
-    assert(
-      useRouteSolutionStore.getState().allIds.length === 0,
-      'missing plan should no-op',
-    )
-  }
-
-  {
-    resetStores()
-    insertRoutePlan({
-      client_id: 'plan_local_1',
-      id: 101,
-      label: 'Plan',
-      plan_type: 'local_delivery',
-    })
     handlePlanOrderCreation(buildBundle(101))
-
     assert(
       useRouteSolutionStore.getState().allIds.includes('route_10'),
-      'local_delivery plan should apply route solution updates',
+      'route plan should apply route solution updates',
     )
     assert(
       useRouteSolutionStopStore.getState().allIds.includes('stop_1'),
-      'local_delivery plan should apply route stop updates',
+      'route plan should apply route stop updates',
     )
-  }
-
-  {
-    resetStores()
-    insertRoutePlan({
-      client_id: 'plan_pickup_1',
-      id: 201,
-      label: 'Plan',
-      plan_type: 'store_pickup',
-    })
-    handlePlanOrderCreation(buildBundle(201))
-    assert(
-      useRouteSolutionStore.getState().allIds.length === 0,
-      'non-local plan types should no-op',
-    )
+    insertRoutePlan({ client_id: 'plan_1', id: 101, label: 'Plan' })
   }
 
   resetStores()

@@ -17,12 +17,12 @@ export const reactiveOrderVisibility = (
   const isArchived = order.archive_at != null
 
   // unscheduled orders
-  if (filters.unschedule_order && order.delivery_plan_id != null) {
+  if (filters.unschedule_order && order.route_plan_id != null) {
     return false
   }
 
   // scheduled orders
-  if (filters.schedule_order && order.delivery_plan_id == null) {
+  if (filters.schedule_order && order.route_plan_id == null) {
     return false
   }
 
@@ -56,11 +56,11 @@ export const reactiveOrderVisibility = (
       return false
     }
 
-    if (order.delivery_plan_id == null) {
+    if (order.route_plan_id == null) {
       return false
     }
 
-    if (!planIds.includes(order.delivery_plan_id)) {
+    if (!planIds.includes(order.route_plan_id)) {
       return false
     }
   }

@@ -1,5 +1,5 @@
-import type { ReactElement, ReactNode, RefObject } from 'react'
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import type { ReactElement, RefObject } from 'react'
+import { useMemo } from 'react'
 
 import type { Order } from '../../types/order'
 import { DraggableOrderCard } from '../cards/DraggableOrderCard'
@@ -27,48 +27,6 @@ type OrderRow = {
   render: () => ReactElement | null
 }
 
-const DEFAULT_ROW_HEIGHT = 180
-const OVERSCAN_PX = 700
-
-const MeasuredOrderRow = ({
-  top,
-  onHeightChange,
-  children,
-}: {
-  top: number
-  onHeightChange: (height: number) => void
-  children: ReactNode
-}) => {
-  const rowRef = useRef<HTMLDivElement | null>(null)
-
-  useLayoutEffect(() => {
-    const element = rowRef.current
-    if (!element) return
-
-    const measure = () => {
-      onHeightChange(element.getBoundingClientRect().height)
-    }
-
-    measure()
-    const observer = new ResizeObserver(() => measure())
-    observer.observe(element)
-
-    return () => {
-      observer.disconnect()
-    }
-  }, [onHeightChange])
-
-  return (
-    <div
-      ref={rowRef}
-      className="absolute left-0 right-0 px-2"
-      style={{ top }}
-    >
-      {children}
-    </div>
-  )
-}
-
 export const OrderList = ({
   orders,
   isSelectionMode = false,
@@ -80,15 +38,11 @@ export const OrderList = ({
   hoveredClientId,
   onOrderMouseEnter,
   onOrderMouseLeave,
-  scrollContainerRef,
+  scrollContainerRef: _scrollContainerRef,
 }: OrderListProps) => {
   const groups = useMemo(() => buildOrderAddressGroups(orders), [orders])
   const expandedGroupsByKey = useOrderGroupUIStore((state) => state.expandedGroupsByKey)
   const { toggleGroup } = useOrderGroupUIActions()
-  const [scrollTop, setScrollTop] = useState(0)
-  const [viewportHeight, setViewportHeight] = useState(0)
-  const [measureVersion, setMeasureVersion] = useState(0)
-  const heightMapRef = useRef(new Map<string, number>())
 
   const rows = useMemo<OrderRow[]>(() => groups.map((group) => {
     if (group.orders.length <= 1) {
@@ -158,26 +112,6 @@ export const OrderList = ({
     toggleGroup,
   ])
 
-  useEffect(() => {
-    const scrollElement = scrollContainerRef?.current
-    if (!scrollElement) return
-
-    const updateViewport = () => {
-      setScrollTop(scrollElement.scrollTop)
-      setViewportHeight(scrollElement.clientHeight)
-    }
-
-    updateViewport()
-    scrollElement.addEventListener('scroll', updateViewport, { passive: true })
-    const observer = new ResizeObserver(updateViewport)
-    observer.observe(scrollElement)
-
-    return () => {
-      scrollElement.removeEventListener('scroll', updateViewport)
-      observer.disconnect()
-    }
-  }, [scrollContainerRef])
-
   if (orders.length === 0) {
     return (
       <div className="flex h-full w-full items-center justify-center">
@@ -186,52 +120,9 @@ export const OrderList = ({
     )
   }
 
-  if (!scrollContainerRef?.current) {
-    return (
-      <div className="flex h-full flex-col gap-4 overflow-x-hidden px-2 pb-10 pt-4">
-        {rows.map((row) => row.render())}
-      </div>
-    )
-  }
-
-  let runningTop = 0
-  const layout = rows.map((row) => {
-    const height = heightMapRef.current.get(row.key) ?? DEFAULT_ROW_HEIGHT
-    const currentTop = runningTop
-    runningTop += height + 16
-    return {
-      ...row,
-      height,
-      top: currentTop,
-      bottom: runningTop,
-    }
-  })
-  const totalHeight = Math.max(runningTop, viewportHeight)
-  const visibleTop = Math.max(scrollTop - OVERSCAN_PX, 0)
-  const visibleBottom = scrollTop + viewportHeight + OVERSCAN_PX
-  const visibleRows = layout.filter((row) => row.bottom >= visibleTop && row.top <= visibleBottom)
-
   return (
-    <div
-      className="relative overflow-x-hidden px-2 pb-10 pt-4"
-      style={{ height: totalHeight }}
-      data-measure-version={measureVersion}
-    >
-      
-      {visibleRows.map((row) => (
-        <MeasuredOrderRow
-          key={row.key}
-          top={row.top}
-          onHeightChange={(height) => {
-            const roundedHeight = Math.ceil(height)
-            if (heightMapRef.current.get(row.key) === roundedHeight) return
-            heightMapRef.current.set(row.key, roundedHeight)
-            setMeasureVersion((version) => version + 1)
-          }}
-        >
-          {row.render()}
-        </MeasuredOrderRow>
-      ))}
+    <div className="flex h-full flex-col gap-4 overflow-x-hidden px-2 pb-10 pt-4">
+      {rows.map((row) => row.render())}
     </div>
   )
 }

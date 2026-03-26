@@ -6,12 +6,12 @@ import {
 import {
   getRouteSolutionSnapshot,
   restoreRouteSolutionSnapshot,
-} from '@/features/plan/planTypes/localDelivery/store/routeSolution.store'
+} from '@/features/plan/routeGroup/store/routeSolution.store'
 
 import {
   getRouteSolutionStopSnapshot,
   restoreRouteSolutionStopSnapshot,
-} from '@/features/plan/planTypes/localDelivery/store/routeSolutionStop.store'
+} from '@/features/plan/routeGroup/store/routeSolutionStop.store'
 
 export const createOrderOptimisticSnapshot = () => ({
   orders: getOrderSnapshot(),

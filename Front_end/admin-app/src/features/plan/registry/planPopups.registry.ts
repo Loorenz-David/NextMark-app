@@ -1,8 +1,8 @@
 import { PlanForm } from "../popups/PlanForm"
-import { LocalDeliveryEditForm } from "../planTypes/localDelivery/popups/editLocalDeliveryPlan/LocalDeliveryEditForm"
+import { RouteGroupEditForm } from "../routeGroup/popups/editRouteGroup/RouteGroupEditForm"
 
 
 export const planPopupRegistry = {
   PlanForm: PlanForm,
-  LocalDeliveryEditForm: LocalDeliveryEditForm,
+  RouteGroupEditForm: RouteGroupEditForm,
 }

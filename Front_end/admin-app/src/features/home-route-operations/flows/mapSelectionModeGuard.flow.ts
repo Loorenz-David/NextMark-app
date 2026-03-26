@@ -5,28 +5,28 @@ import {
   useOrderSelectionMode,
 } from '@/features/order/store/orderSelectionHooks.store'
 import {
-  useLocalDeliverySelectionActions,
-  useLocalDeliverySelectionMode,
-} from '@/features/plan/planTypes/localDelivery/store/localDeliverySelectionHooks.store'
+  useRouteGroupSelectionActions,
+  useRouteGroupSelectionMode,
+} from '@/features/plan/routeGroup/store/routeGroupSelectionHooks.store'
 
 type SelectionConflictDecision = 'none' | 'disable_order' | 'disable_local_delivery'
 
 export const resolveSelectionConflict = (params: {
   isOrderMode: boolean
   wasOrderMode: boolean
-  isLocalDeliveryMode: boolean
-  wasLocalDeliveryMode: boolean
+  isRouteGroupMode: boolean
+  wasRouteGroupMode: boolean
 }): SelectionConflictDecision => {
-  const { isOrderMode, wasOrderMode, isLocalDeliveryMode, wasLocalDeliveryMode } = params
+  const { isOrderMode, wasOrderMode, isRouteGroupMode, wasRouteGroupMode } = params
 
-  if (!isOrderMode || !isLocalDeliveryMode) {
+  if (!isOrderMode || !isRouteGroupMode) {
     return 'none'
   }
 
   const orderActivatedNow = isOrderMode && !wasOrderMode
-  const localActivatedNow = isLocalDeliveryMode && !wasLocalDeliveryMode
+  const routeGroupActivatedNow = isRouteGroupMode && !wasRouteGroupMode
 
-  if (localActivatedNow && !orderActivatedNow) {
+  if (routeGroupActivatedNow && !orderActivatedNow) {
     return 'disable_order'
   }
 
@@ -35,37 +35,36 @@ export const resolveSelectionConflict = (params: {
 
 export const useMapSelectionModeGuardFlow = () => {
   const isOrderMode = useOrderSelectionMode()
-  const isLocalDeliveryMode = useLocalDeliverySelectionMode()
+  const isRouteGroupMode = useRouteGroupSelectionMode()
   const { disableSelectionMode: disableOrderSelectionMode } = useOrderSelectionActions()
-  const { disableSelectionMode: disableLocalDeliverySelectionMode } = useLocalDeliverySelectionActions()
+  const { disableSelectionMode: disableRouteGroupSelectionMode } = useRouteGroupSelectionActions()
   const previousModesRef = useRef({
     isOrderMode: false,
-    isLocalDeliveryMode: false,
+    isRouteGroupMode: false,
   })
 
   useEffect(() => {
     const decision = resolveSelectionConflict({
       isOrderMode,
       wasOrderMode: previousModesRef.current.isOrderMode,
-      isLocalDeliveryMode,
-      wasLocalDeliveryMode: previousModesRef.current.isLocalDeliveryMode,
+      isRouteGroupMode,
+      wasRouteGroupMode: previousModesRef.current.isRouteGroupMode,
     })
 
     if (decision === 'disable_order') {
       disableOrderSelectionMode()
     } else if (decision === 'disable_local_delivery') {
-      disableLocalDeliverySelectionMode()
+      disableRouteGroupSelectionMode()
     }
 
     previousModesRef.current = {
       isOrderMode,
-      isLocalDeliveryMode,
+      isRouteGroupMode,
     }
   }, [
-    disableLocalDeliverySelectionMode,
+    disableRouteGroupSelectionMode,
     disableOrderSelectionMode,
-    isLocalDeliveryMode,
+    isRouteGroupMode,
     isOrderMode,
   ])
 }
-

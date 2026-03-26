@@ -24,7 +24,9 @@ const resolveInitialViewMode = (): DesktopPlanViewMode => {
   return DEFAULT_VIEW_MODE
 }
 
-export function useHomeDesktopLayout({ openSectionsCount = 0 }: HomeDesktopLayoutParams ) {
+export function useHomeDesktopLayout({
+  openSectionsCount = 0,
+}: HomeDesktopLayoutParams ) {
   const [isPlanOpen, setIsPlanOpen] = useState(true)
   const [viewMode, setViewModeState] = useState<DesktopPlanViewMode>(() => resolveInitialViewMode())
 
@@ -42,6 +44,7 @@ export function useHomeDesktopLayout({ openSectionsCount = 0 }: HomeDesktopLayou
 
   const PLAN_WIDTH = 450
   const BASE_WIDTH = 450
+  const ORDER_OVERLAY_WIDTH = 550
   const OVERLAY_WIDTH = 450
 
   const hasOverlay = openSectionsCount > 0
@@ -49,8 +52,6 @@ export function useHomeDesktopLayout({ openSectionsCount = 0 }: HomeDesktopLayou
   const planColumnWidth = isRailView && isPlanVisible ? PLAN_WIDTH : 0
   const mapRowHeight = viewMode === 'split' ? (isPlanVisible ? SPLIT_RATIO : 100) : 100
   const planRowHeight = viewMode === 'split' ? (isPlanVisible ? 100 - SPLIT_RATIO : 0) : 0
-  const railWidth = BASE_WIDTH + planColumnWidth + (hasOverlay ? OVERLAY_WIDTH : 0)
-  const mapWidth = `calc(100% - ${railWidth}px)`
 
   const setViewMode = (mode: DesktopPlanViewMode) => {
     setViewModeState(mode)
@@ -77,13 +78,12 @@ export function useHomeDesktopLayout({ openSectionsCount = 0 }: HomeDesktopLayou
     // layout values (tune later)
     mapFlex: 1,
     baseWidth: BASE_WIDTH,
+    orderOverlayWidth: ORDER_OVERLAY_WIDTH,
     planWidth:  PLAN_WIDTH,
     planColumnWidth,
     mapRowHeight,
     planRowHeight,
     overlayWidth: OVERLAY_WIDTH,
     hasOverlay,
-    railWidth,
-    mapWidth
   }
 }

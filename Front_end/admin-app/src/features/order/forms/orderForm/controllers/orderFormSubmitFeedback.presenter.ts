@@ -69,7 +69,7 @@ export const presentOrderFormSubmitOutcome = ({
       data: itemsForDownloading(
         createdItems,
         normalizedCurrent?.reference_number,
-        normalizedCurrent?.delivery_plan_id,
+        normalizedCurrent?.route_plan_id,
       ),
       fileName: 'first test',
     })

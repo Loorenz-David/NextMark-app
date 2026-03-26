@@ -25,17 +25,22 @@ const HomeRouteOperationsContent = () => {
   const { isMobile } = useMobile()
   const baseControlls = useBaseControlls<PayloadBase>()
   const disableAuroraBackground =
-    baseControlls.isBaseOpen && baseControlls.payload?.ordersPlanType === 'local_delivery'
+    baseControlls.isBaseOpen && typeof baseControlls.payload?.planId === 'number'
 
   return (
     <div className="admin-app-shell h-full overflow-hidden bg-[var(--color-page)] text-[var(--color-text)]">
-      {!disableAuroraBackground ? (
-        <>
-          <div className="admin-shell-aurora admin-shell-aurora--one" />
-          <div className="admin-shell-aurora admin-shell-aurora--two" />
-          <div className="admin-shell-aurora admin-shell-aurora--three" />
-        </>
-      ) : null}
+      <div
+        className="admin-shell-aurora admin-shell-aurora--one transition-opacity duration-200"
+        style={{ opacity: disableAuroraBackground ? 0 : 1 }}
+      />
+      <div
+        className="admin-shell-aurora admin-shell-aurora--two transition-opacity duration-200"
+        style={{ opacity: disableAuroraBackground ? 0 : 1 }}
+      />
+      <div
+        className="admin-shell-aurora admin-shell-aurora--three transition-opacity duration-200"
+        style={{ opacity: disableAuroraBackground ? 0 : 1 }}
+      />
       <HomeOverlays />
       <div className="relative z-10 flex h-full w-full flex-col overflow-hidden">
         {isMobile ? <HomeMobileView /> : <HomeDesktopView />}

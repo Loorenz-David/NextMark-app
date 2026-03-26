@@ -2,35 +2,53 @@ import type { ReactNode } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 
 interface OverlayRailProps {
+  baseWidth: number
   base: ReactNode
   overlay: ReactNode
   orderOverlay?: ReactNode
+  isOrderOverlayOpen: boolean
   hasOverlay: boolean
+  orderOverlayWidth: number
   overlayWidth: number
   onPlanLayoutChange?: () => void
 }
 
 export function OverlayRail({
+  baseWidth,
   base,
   overlay,
   orderOverlay,
+  isOrderOverlayOpen,
   hasOverlay,
+  orderOverlayWidth,
   overlayWidth,
   onPlanLayoutChange,
 }: OverlayRailProps) {
   return (
-    <div className="relative z-30 h-full shrink-0">
+    <div
+      className="relative z-30 h-full shrink-0 layout-animate"
+      style={{
+        width: `${isOrderOverlayOpen ? orderOverlayWidth : baseWidth}px`,
+        willChange: 'width',
+        transition: 'width 220ms cubic-bezier(0.22, 1, 0.36, 1)',
+      }}
+      onTransitionEnd={(event) => {
+        if (event.propertyName !== 'width') return
+        onPlanLayoutChange?.()
+      }}
+    >
       {base}
 
       <AnimatePresence mode="sync">
         {orderOverlay && (
           <motion.div
-            className="absolute inset-0 z-39 h-full w-full"
+            className="absolute inset-y-0 left-0 z-39 h-full"
             key="for overlay"
             initial={{ x: 450 }}
             animate={{ x: 0 }}
             exit={{ x: 450 }}
             transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+            style={{ width: `${orderOverlayWidth}px` }}
           >
             {orderOverlay}
           </motion.div>

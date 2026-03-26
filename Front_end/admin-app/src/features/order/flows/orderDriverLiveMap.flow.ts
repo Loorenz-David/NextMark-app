@@ -10,8 +10,8 @@ import {
   useDriverLiveStore,
   useDriverLiveVisibilityStore,
 } from '@/realtime/driverLive'
-import { useLocalDeliveryPlans } from '@/features/plan/planTypes/localDelivery/store/useLocalDeliveryPlan.selector'
-import { useRouteSolutions } from '@/features/plan/planTypes/localDelivery/store/useRouteSolution.selector'
+import { useRouteGroups } from '@/features/plan/routeGroup/store/useRouteGroup.selector'
+import { useRouteSolutions } from '@/features/plan/routeGroup/store/useRouteSolution.selector'
 import type { PayloadBase } from '@/features/home-route-operations/types/types'
 import { MAP_MARKER_LAYERS } from '@/shared/map'
 import { useBaseControlls, useMapManager } from '@/shared/resource-manager/useResourceManager'
@@ -23,7 +23,7 @@ export const useOrderDriverLiveMapFlow = () => {
   const openBase = baseControls.openBase
   const liveDriverPositions = useDriverLiveStore(useShallow(selectDriverLivePositions))
   const routeSolutions = useRouteSolutions()
-  const localDeliveryPlans = useLocalDeliveryPlans()
+  const routeGroups = useRouteGroups()
   const isDriverLiveVisible = useDriverLiveVisibilityStore(selectDriverLiveVisibility)
 
   useEffect(() => {
@@ -35,13 +35,12 @@ export const useOrderDriverLiveMapFlow = () => {
         resolveActiveLocalDeliveryPlanIdByDriverId({
           driverId,
           routeSolutions,
-          localDeliveryPlans,
+          routeGroups,
         }),
       onResolvedPlanClick: (planId) => {
         openBase({
           payload: {
             planId,
-            ordersPlanType: 'local_delivery',
           },
         })
       },
@@ -73,7 +72,7 @@ export const useOrderDriverLiveMapFlow = () => {
     isDriverLiveVisible,
     isBaseOpen,
     liveDriverPositions,
-    localDeliveryPlans,
+    routeGroups,
     mapManager,
     openBase,
     routeSolutions,

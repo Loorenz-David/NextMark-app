@@ -12,7 +12,7 @@ type PatchOrdersPlanParams = {
 type OrderPlanLinkSnapshot = Record<
   string,
   {
-    delivery_plan_id: number | null
+    route_plan_id: number | null
     order_plan_objective: string | null
   }
 >
@@ -50,7 +50,7 @@ export const useOrderPlanPatchController = () => {
 
       if (patchedClientIds.length > 0) {
         state.patchMany(patchedClientIds, {
-          delivery_plan_id: planId,
+          route_plan_id: planId,
           order_plan_objective: planType,
         })
       }
@@ -77,18 +77,18 @@ export const useOrderPlanPatchController = () => {
 
     state.allIds.forEach((clientId) => {
       const order = state.byClientId[clientId]
-      if (!order || order.delivery_plan_id !== planId) return
+      if (!order || order.route_plan_id !== planId) return
 
       patchedClientIds.push(clientId)
       previousByClientId[clientId] = {
-        delivery_plan_id: order.delivery_plan_id ?? null,
+        route_plan_id: order.route_plan_id ?? null,
         order_plan_objective: order.order_plan_objective ?? null,
       }
     })
 
     if (patchedClientIds.length > 0) {
       state.patchMany(patchedClientIds, {
-        delivery_plan_id: null,
+        route_plan_id: null,
         order_plan_objective: null,
       })
     }
@@ -111,7 +111,7 @@ export const useOrderPlanPatchController = () => {
       if (!state.byClientId[clientId]) return
       state.update(clientId, (order: Order) => ({
         ...order,
-        delivery_plan_id: previous.delivery_plan_id,
+        route_plan_id: previous.route_plan_id,
         order_plan_objective: previous.order_plan_objective,
       }))
       restoredClientIds.push(clientId)

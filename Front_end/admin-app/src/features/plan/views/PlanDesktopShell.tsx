@@ -1,6 +1,6 @@
 import { PlanMainHeader } from '../components'
 import { usePlanHeaderAction } from '../actions/usePlanActions'
-import { PlanPage } from '../pages/Plan.page'
+import { RoutePlanPage } from '../pages/Plan.page'
 import type { DesktopPlanViewMode } from '@/features/home-route-operations/hooks/useHomeDesktopLayout'
 import { PlanDesktopTimeline } from './PlanDesktopTimeline'
 
@@ -27,7 +27,7 @@ export const PlanDesktopShell = ({
   }
 
   return (
-        <PlanPage 
+        <RoutePlanPage 
           onRequestClose={onRequestClose}
           showCloseButton={showCloseButton}
         />

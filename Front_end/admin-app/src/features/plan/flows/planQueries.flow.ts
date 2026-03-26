@@ -5,16 +5,10 @@ import { ApiError } from '@/lib/api/ApiClient'
 import { useMessageHandler } from '@shared-message-handler'
 
 import { planApi } from '@/features/plan/api/plan.api'
-import { planTypesApi } from '@/features/plan/api/planTypes.api'
-import type { DeliveryPlan, DeliveryPlanMap, PlanTypeKey } from '@/features/plan/types/plan'
+import type { DeliveryPlan, DeliveryPlanMap } from '@/features/plan/types/plan'
 import type { PlanQueryFilters } from '@/features/plan/types/planMeta'
-import { insertRoutePlans, selectRoutePlanByServerId, upsertRoutePlan, useRoutePlanStore } from '@/features/plan/store/routePlan.slice'
-import {
-  setRoutePlanListError,
-} from '@/features/plan/store/routePlanList.store'
-import { upsertInternationalShippingPlans } from '@/features/plan/planTypes/internationalShipping/store/internationalShipping.slice'
-import { upsertLocalDeliveryPlans } from '@/features/plan/planTypes/localDelivery/store/localDelivery.slice'
-import { upsertStorePickupPlans } from '@/features/plan/planTypes/storePickup/store/storePickup.slice'
+import { insertRoutePlans, upsertRoutePlan } from '@/features/plan/store/routePlan.slice'
+import { setRoutePlanListError } from '@/features/plan/store/routePlanList.store'
 
 const isRecord = (value: unknown): value is Record<string, unknown> => (
   typeof value === 'object' && value !== null && !Array.isArray(value)
@@ -85,32 +79,6 @@ export const normalizePlanQueryForRequest = (query?: PlanQueryFilters): PlanQuer
 
 export const buildPlanQueryKey = (query?: PlanQueryFilters) => JSON.stringify(normalizePlanQueryForRequest(query) ?? {})
 
-
-
-const upsertPlanTypePayload = (
-  planType: PlanTypeKey,
-  payload: unknown,
-) => {
-  const map = normalizeEntityMap(payload as Record<string, { client_id: string }>)
-  if (!map) {
-    return
-  }
-
-  switch (planType) {
-    case 'local_delivery':
-      upsertLocalDeliveryPlans(map)
-      break
-    case 'international_shipping':
-      upsertInternationalShippingPlans(map)
-      break
-    case 'store_pickup':
-      upsertStorePickupPlans(map)
-      break
-    default:
-      break
-  }
-}
-
 export function usePlanQueries() {
   const { showMessage } = useMessageHandler()
 
@@ -122,13 +90,14 @@ export function usePlanQueries() {
 
         const payload = response.data
 
-        if (!payload?.delivery_plan) {
-          console.warn('Plan list response missing delivery_plan', payload)
-          setRoutePlanListError('Missing delivery plans response.')
+        if (!payload?.route_plan) {
+          console.warn('Plan list response missing route_plan', payload)
+          setRoutePlanListError('Missing route plans response.')
           return null
         }
 
-        insertRoutePlans(payload.delivery_plan)
+        insertRoutePlans(payload.route_plan)
+
         return payload
       } catch (error) {
         const message = error instanceof ApiError ? error.message : 'Unable to load delivery plans.'
@@ -148,9 +117,9 @@ export function usePlanQueries() {
         const response = await planApi.getPlan(planId)
         const payload = response.data
 
-        const normalized = normalizeEntityMap<DeliveryPlan>(payload?.delivery_plan as DeliveryPlanMap | DeliveryPlan)
+        const normalized = normalizeEntityMap<DeliveryPlan>(payload?.route_plan as DeliveryPlanMap | DeliveryPlan)
         if (!normalized) {
-          console.warn('Plan response missing delivery_plan', payload)
+          console.warn('Plan response missing route_plan', payload)
           return null
         }
 
@@ -172,38 +141,8 @@ export function usePlanQueries() {
     [showMessage],
   )
 
-  const fetchPlanTypeForPlan = useCallback(
-    async (planId: number) => {
-      const plan = selectRoutePlanByServerId(planId)(useRoutePlanStore.getState())
-      if (!plan) {
-        showMessage({ status: 404, message: 'Plan not found for type lookup.' })
-        return null
-      }
-
-      try {
-        const response = await planTypesApi.getPlanType(planId, plan.plan_type)
-        const payload = response.data
-        if (!payload?.delivery_plan_type) {
-          console.warn('Plan type response missing delivery_plan_type', payload)
-          return null
-        }
-
-        upsertPlanTypePayload(plan.plan_type, payload.delivery_plan_type)
-        return payload.delivery_plan_type
-      } catch (error) {
-        const message = error instanceof ApiError ? error.message : 'Unable to load plan type.'
-        const status = error instanceof ApiError ? error.status : 500
-        console.error('Failed to fetch plan type', error)
-        showMessage({ status, message })
-        return null
-      }
-    },
-    [showMessage],
-  )
-
   return {
     fetchPlansPage,
     fetchPlanById,
-    fetchPlanTypeForPlan,
   }
 }

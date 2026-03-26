@@ -29,7 +29,7 @@ export const normalizeFormStateForSave = (state: OrderFormState): OrderUpdateFie
     client_id: state.client_id,
     operation_type: state.operation_type,
     order_plan_objective:
-    state.delivery_plan_id == null ? toNullableString(state.order_plan_objective) : null,
+    state.route_plan_id == null ? toNullableString(state.order_plan_objective) : null,
     reference_number: state.reference_number != null ? state.reference_number.trim() : null,
     external_source: toNullableString(state.external_source),
     external_tracking_number: toNullableString(state.external_tracking_number),
@@ -49,7 +49,7 @@ export const normalizeFormStateForSave = (state: OrderFormState): OrderUpdateFie
       : null,
     client_address: state.client_address,
     delivery_windows: sortDeliveryWindowsUtc(state.delivery_windows),
-    delivery_plan_id: state.delivery_plan_id ?? null,
+    route_plan_id: state.route_plan_id ?? null,
     order_notes: state.order_note.trim() ? [state.order_note.trim()] : [],
   }
 }

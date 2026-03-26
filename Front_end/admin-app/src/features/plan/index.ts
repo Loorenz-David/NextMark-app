@@ -5,4 +5,3 @@
 export { usePlanOrders } from "./hooks/usePlanOrders";
 export { planPopupRegistry } from './registry/planPopups.registry'
 export { handlePlanOrderCreation } from './bridges/orderCreation.bridge'
-export { resolveOrderCreationHandler } from './registry/planTypeOrderCreation.registry'

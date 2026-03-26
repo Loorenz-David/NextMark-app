@@ -24,12 +24,14 @@ import { useOrderGroupUIStore } from '../store/orderGroupUI.store'
 import { useOrderPaginationController } from '../hooks/useOrderPaginationController'
 import { useOrderMapDataFlow } from '../flows/orderMapData.flow'
 import { useOrderDriverLiveMapFlow } from '../flows/orderDriverLiveMap.flow'
+import { isRouteOperationsFixtureModeEnabled } from '@/features/home-route-operations/dev/routeOperationsFixtureMode'
 
 type OrderProviderProps = PropsWithChildren<{
   scrollContainerRef?: RefObject<HTMLElement | null>
 }>
 
 export const OrderProvider = ({ children, scrollContainerRef }: OrderProviderProps) => {
+  const isFixtureMode = isRouteOperationsFixtureModeEnabled()
   const orders = useVisibleOrders()
   const orderStats = useOrderStats()
   const orderActions = useOrderActions()
@@ -125,7 +127,7 @@ export const OrderProvider = ({ children, scrollContainerRef }: OrderProviderPro
     onMarkerMouseLeave: handleOrderMarkerMouseLeave,
     markerClassName: 'order-marker',
     visible: !baseControlls.isBaseOpen,
-    refreshEnabled: activeOrderDetailClientId == null,
+    refreshEnabled: !isFixtureMode && activeOrderDetailClientId == null,
   })
   useOrderDriverLiveMapFlow()
   useOrderCircleSelectionFlow()

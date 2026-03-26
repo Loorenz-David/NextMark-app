@@ -70,8 +70,8 @@ const getPlanColor = (planId: number): string => {
 }
 
 const getOrderMarkerColor = (order: Order): string => {
-  if (!order.delivery_plan_id) return UNSCHEDULED_COLOR
-  return getPlanColor(order.delivery_plan_id)
+  if (!order.route_plan_id) return UNSCHEDULED_COLOR
+  return getPlanColor(order.route_plan_id)
 }
 
 const buildMarkersFromResponse = ({
@@ -134,7 +134,7 @@ const buildMarkersFromResponse = ({
       id: marker.id,
       coordinates: marker.coordinates,
       markerColor: getOrderMarkerColor(primaryOrder),
-      delivery_plan_id: primaryOrder.delivery_plan_id ?? null,
+      route_plan_id: primaryOrder.route_plan_id ?? null,
       className: markerClassName,
       interactionVariant: 'order',
       label: marker.count > 1 ? String(marker.count) : undefined,
@@ -325,7 +325,19 @@ export const useOrderMapDataFlow = ({
   }, [normalizedQuery, refreshMarkers])
 
   useEffect(() => {
-    if (!visible || hasBootstrappedRef.current || bootstrapOrders.length === 0) {
+    if (refreshEnabled) {
+      return
+    }
+
+    if (!visible) {
+      mapManager.setMarkerLayerVisibility(MAP_MARKER_LAYERS.orders, false)
+      return
+    }
+
+    if (bootstrapOrders.length === 0) {
+      mapManager.setMarkerLayer(MAP_MARKER_LAYERS.orders, [])
+      clearMarkerLookup()
+      hasBootstrappedRef.current = false
       return
     }
 
@@ -338,23 +350,24 @@ export const useOrderMapDataFlow = ({
       onMarkerMouseLeave,
     })
 
-    if (markers.length === 0) {
-      return
-    }
-
-    hasBootstrappedRef.current = true
     setMarkerLookup(lookup)
     mapManager.setMarkerLayer(MAP_MARKER_LAYERS.orders, markers)
     mapManager.setMarkerLayerVisibility(MAP_MARKER_LAYERS.orders, true)
-    mapManager.reframeToVisibleArea()
+
+    if (!hasBootstrappedRef.current) {
+      hasBootstrappedRef.current = true
+      mapManager.reframeToVisibleArea()
+    }
   }, [
     bootstrapOrders,
+    clearMarkerLookup,
     mapManager,
     markerClassName,
     onGroupMarkerClick,
     onMarkerClick,
     onMarkerMouseEnter,
     onMarkerMouseLeave,
+    refreshEnabled,
     setMarkerLookup,
     visible,
   ])

@@ -1,8 +1,8 @@
 import { normalizeOrderStopResponse } from '@/features/order/domain/orderStopResponse'
-import { upsertRouteSolution } from '@/features/local-delivery-orders/store/routeSolution.store'
-import { upsertRouteSolutionStops } from '@/features/local-delivery-orders/store/routeSolutionStop.store'
-import type { RouteSolution } from '@/features/local-delivery-orders/types/routeSolution'
-import type { RouteSolutionStop } from '@/features/local-delivery-orders/types/routeSolutionStop'
+import { upsertRouteSolution } from '@/features/plan/routeGroup/store/routeSolution.store'
+import { upsertRouteSolutionStops } from '@/features/plan/routeGroup/store/routeSolutionStop.store'
+import type { RouteSolution } from '@/features/plan/routeGroup/types/routeSolution'
+import type { RouteSolutionStop } from '@/features/plan/routeGroup/types/routeSolutionStop'
 
 type RouteArtifactsBundle = {
   order_stops?: RouteSolutionStop[]

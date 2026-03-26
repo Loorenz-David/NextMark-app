@@ -6,7 +6,7 @@ import type { Order } from '@/features/order/types/order'
 import { useOrderSelectionStore } from '@/features/order/store/orderSelection.store'
 import { buildBatchSelectionPayload } from '@/features/order/store/orderSelectionHooks.store'
 import { resolveSelectionAuthorityBatchCount } from '@/features/order/domain/orderBatchTargetIds'
-import type { RouteSolutionStop } from '@/features/plan/planTypes/localDelivery/types/routeSolutionStop'
+import type { RouteSolutionStop } from '@/features/plan/routeGroup/types/routeSolutionStop'
 import { useMessageHandler } from '@shared-message-handler'
 
 import { useExecutePlanDndIntent } from '@/features/plan/controllers/useExecutePlanDndIntent'
@@ -17,7 +17,7 @@ import type { PlanDropFeedback } from '@/shared/resource-manager/ResourceManager
 import {
   selectRouteSolutionStopsBySolutionId,
   useRouteSolutionStopStore,
-} from '@/features/plan/planTypes/localDelivery/store/routeSolutionStop.store'
+} from '@/features/plan/routeGroup/store/routeSolutionStop.store'
 
 const MAX_BATCH_IDS = 200
 

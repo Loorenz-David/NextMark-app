@@ -38,7 +38,8 @@ const OrderMainContent = ({ scrollContainerRef }: { scrollContainerRef: RefObjec
     }
 
     const updateHeight = () => {
-      setActionStackHeight(element.getBoundingClientRect().height)
+      const nextHeight = element.getBoundingClientRect().height
+      setActionStackHeight((current) => (current === nextHeight ? current : nextHeight))
     }
 
     updateHeight()

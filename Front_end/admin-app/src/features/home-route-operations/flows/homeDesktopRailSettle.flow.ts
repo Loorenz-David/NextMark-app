@@ -8,6 +8,7 @@ type RailLayoutDeps = {
   mapRowHeight: number
   planRowHeight: number
   hasOverlay: boolean
+  isOrderOverlayOpen: boolean
   isPlanVisible: boolean
 }
 
@@ -66,6 +67,7 @@ export const useHomeDesktopRailSettleFlow = ({
     }
   }, [
     layoutDeps.hasOverlay,
+    layoutDeps.isOrderOverlayOpen,
     layoutDeps.isPlanVisible,
     layoutDeps.mapRowHeight,
     layoutDeps.planColumnWidth,

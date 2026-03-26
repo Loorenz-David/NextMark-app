@@ -51,7 +51,6 @@ export const openAdminNotificationTarget = (
 
   if (target.kind === 'local_delivery_workspace' && typeof target.params.planId === 'number') {
     dependencies.openLocalDeliveryWorkspace({
-      ordersPlanType: 'local_delivery',
       planId: target.params.planId,
       freshAfter: notification.occurred_at,
     })
@@ -93,9 +92,11 @@ export const matchesAdminNotificationTarget = (
   }
 
   if (target.kind === 'local_delivery_workspace') {
-    return isBaseOpen
-      && basePayload?.ordersPlanType === 'local_delivery'
-      && basePayload.planId === target.params.planId
+    if (!isBaseOpen || !basePayload) {
+      return false
+    }
+
+    return basePayload.planId === target.params.planId
   }
 
   return false

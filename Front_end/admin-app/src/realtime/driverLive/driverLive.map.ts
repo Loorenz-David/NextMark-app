@@ -1,7 +1,7 @@
 import type { DriverLocationUpdatedPayload } from '@shared-realtime'
 
-import type { LocalDeliveryPlan } from '@/features/plan/planTypes/localDelivery/types/localDeliveryPlan'
-import type { RouteSolution } from '@/features/plan/planTypes/localDelivery/types/routeSolution'
+import type { RouteGroup } from '@/features/plan/routeGroup/types/routeGroup'
+import type { RouteSolution } from '@/features/plan/routeGroup/types/routeSolution'
 import type { MapOrder } from '@/shared/map'
 
 export const DRIVER_LIVE_ACTIVE_MAX_AGE_MS = 5 * 60 * 1000
@@ -127,11 +127,11 @@ export const buildOrderDriverLocationMarkers = ({
 export const resolveActiveLocalDeliveryPlanIdByDriverId = ({
   driverId,
   routeSolutions,
-  localDeliveryPlans,
+  routeGroups,
 }: {
   driverId: number
   routeSolutions: RouteSolution[]
-  localDeliveryPlans: LocalDeliveryPlan[]
+  routeGroups: RouteGroup[]
 }): number | null => {
   const bestMatch = routeSolutions
     .filter(
@@ -146,13 +146,13 @@ export const resolveActiveLocalDeliveryPlanIdByDriverId = ({
       return rightTime - leftTime
     })[0]
 
-  if (!bestMatch?.local_delivery_plan_id) {
+  if (!bestMatch?.route_group_id) {
     return null
   }
 
-  const localDeliveryPlan = localDeliveryPlans.find(
-    (plan) => plan.id === bestMatch.local_delivery_plan_id,
+  const routeGroup = routeGroups.find(
+    (plan) => plan.id === bestMatch.route_group_id,
   )
 
-  return localDeliveryPlan?.delivery_plan_id ?? null
+  return routeGroup?.route_plan_id ?? null
 }

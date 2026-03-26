@@ -39,7 +39,7 @@ export const reactivePlanVisibility = (
 ): boolean => {
   const filters = resolvePlanQueryFilters(query)
 
-  if (filters.plan_type && plan.plan_type !== filters.plan_type) {
+  if (filters.plan_type && filters.plan_type !== 'local_delivery') {
     return false
   }
 

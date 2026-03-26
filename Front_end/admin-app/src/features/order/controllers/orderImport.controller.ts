@@ -2,13 +2,13 @@ import { useCallback, useState } from 'react'
 
 import { ApiError } from '@/lib/api/ApiClient'
 import { useMessageHandler } from '@shared-message-handler'
-import { useLocalDeliveryOverviewFlow } from '@/features/plan/planTypes/localDelivery/flows/localDeliveryOverview.flow'
+import { useRouteGroupOverviewFlow } from '@/features/plan/routeGroup/flows/routeGroupOverview.flow'
 
 import { useUploadOrderCsv } from '../api/orderImport.api'
 
 export const useOrderImport = (planId?: number | null) => {
   const uploadOrderCsv = useUploadOrderCsv()
-  const { fetchLocalDeliveryOverview } = useLocalDeliveryOverviewFlow()
+  const { fetchRouteGroupOverview } = useRouteGroupOverviewFlow()
   const { showMessage } = useMessageHandler()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -29,7 +29,7 @@ export const useOrderImport = (planId?: number | null) => {
 
       try {
         await uploadOrderCsv(file, planId)
-        await fetchLocalDeliveryOverview(planId)
+        await fetchRouteGroupOverview(planId)
         showMessage({ status: 200, message: 'Orders imported successfully.' })
         return true
       } catch (err) {
@@ -42,7 +42,7 @@ export const useOrderImport = (planId?: number | null) => {
         setLoading(false)
       }
     },
-    [fetchLocalDeliveryOverview, loading, planId, showMessage, uploadOrderCsv],
+    [fetchRouteGroupOverview, loading, planId, showMessage, uploadOrderCsv],
   )
 
   return {

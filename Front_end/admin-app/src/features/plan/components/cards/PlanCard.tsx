@@ -1,4 +1,3 @@
-
 import type { ReactNode  } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { formatMetric } from '@shared-utils'
@@ -26,7 +25,7 @@ export const PlanCard = ({ plan, isOver, dropFeedback }: PropsPlanCard) => {
    
     const {openPlanSection} = usePlanHeaderAction()
 
-    const PlanTypeIcon = planIconTypeMap[plan.plan_type]
+    const PlanTypeIcon = planIconTypeMap.local_delivery
     const startDate = formatPlanDate(plan.start_date)
     const endDate = formatPlanDate(plan.end_date)
     const orderCount = plan.total_orders ?? 0

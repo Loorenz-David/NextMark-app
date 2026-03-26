@@ -53,7 +53,7 @@ const patchOrdersPlan = (
 
   if (patchedClientIds.length > 0) {
     state.patchMany(patchedClientIds, {
-      delivery_plan_id: planId,
+      route_plan_id: planId,
       order_plan_objective: planType,
     })
   }
@@ -89,7 +89,7 @@ export const runOrderPlanPatchControllerTests = () => {
     assert(result.skippedServerIds[0] === 999, 'should skip unmatched id')
     assert(!!patched, 'should call patchMany once')
     assert(patched!.clientIds.length === 2, 'should deduplicate mapped ids')
-    assert(patched!.partial.delivery_plan_id === 100, 'should patch delivery plan id')
+    assert(patched!.partial.route_plan_id === 100, 'should patch route plan id')
     assert(patched!.partial.order_plan_objective === 'local_delivery', 'should patch plan objective')
   }
 
@@ -114,4 +114,3 @@ export const runOrderPlanPatchControllerTests = () => {
     assert(patchCallCount === 0, 'should not patch for empty ids')
   }
 }
-

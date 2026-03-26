@@ -15,6 +15,7 @@ import {
   selectRoutePlanNextCursor,
   useRoutePlanPaginationStore,
 } from '../store/routePlanPagination.store'
+import { isRouteOperationsFixtureModeEnabled } from '@/features/home-route-operations/dev/routeOperationsFixtureMode'
 
 type Params = {
   query?: PlanQueryFilters
@@ -22,6 +23,7 @@ type Params = {
 }
 
 export const usePlanPaginationController = ({ query, scrollToTop }: Params = {}) => {
+  const isFixtureMode = isRouteOperationsFixtureModeEnabled()
   const { fetchPlansPage } = usePlanQueries()
   const fetchPlansPageRef = useRef(fetchPlansPage)
   fetchPlansPageRef.current = fetchPlansPage
@@ -33,6 +35,10 @@ export const usePlanPaginationController = ({ query, scrollToTop }: Params = {})
   const queryKey = useMemo(() => buildPlanQueryKey(query), [query])
 
   const loadPage = useCallback(async (append: boolean) => {
+    if (isFixtureMode) {
+      return null
+    }
+
     const paginationState = useRoutePlanPaginationStore.getState()
     const cursor = append ? paginationState.nextCursor : null
 
@@ -55,16 +61,16 @@ export const usePlanPaginationController = ({ query, scrollToTop }: Params = {})
       return null
     }
 
-    if (!response?.delivery_plan) {
+    if (!response?.route_plan) {
       useRoutePlanPaginationStore.getState().setLoadingPage(false)
-      setRoutePlanListError('Missing delivery plans response.')
+      setRoutePlanListError('Missing route plans response.')
       return null
     }
 
     if (append) {
-      appendVisibleRoutePlans(response.delivery_plan.allIds)
+      appendVisibleRoutePlans(response.route_plan.allIds)
     } else {
-      setVisibleRoutePlans(response.delivery_plan.allIds)
+      setVisibleRoutePlans(response.route_plan.allIds)
     }
 
     setRoutePlanListResult({
@@ -73,19 +79,19 @@ export const usePlanPaginationController = ({ query, scrollToTop }: Params = {})
         ...query,
         limit: 25,
       },
-      stats: response.delivery_plan_stats,
-      pagination: response.delivery_plan_pagination,
+      stats: response.route_plan_stats,
+      pagination: response.route_plan_pagination,
     })
 
     useRoutePlanPaginationStore.getState().applyPageResult({
       queryKey,
-      nextCursor: response.delivery_plan_pagination?.next_cursor ?? null,
-      hasMore: response.delivery_plan_pagination?.has_more ?? false,
+      nextCursor: response.route_plan_pagination?.next_cursor ?? null,
+      hasMore: response.route_plan_pagination?.has_more ?? false,
       append,
     })
 
     return response
-  }, [query, queryKey, scrollToTop])
+  }, [isFixtureMode, query, queryKey, scrollToTop])
 
   const loadFirstPage = useCallback(async () => loadPage(false), [loadPage])
   const loadNextPage = useCallback(async () => {

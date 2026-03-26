@@ -1,7 +1,7 @@
 import type {
   RouteSolutionStop,
   RouteSolutionStopMap,
-} from '@/features/plan/planTypes/localDelivery/types/routeSolutionStop'
+} from '@/features/plan/routeGroup/types/routeSolutionStop'
 
 import type { OrderStopResponseMap } from '../types/order'
 

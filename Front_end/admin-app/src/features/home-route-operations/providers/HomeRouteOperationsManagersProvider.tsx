@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { useCallback, useEffect, useMemo } from 'react'
+import { useCallback, useEffect } from 'react'
 
 import { DndContext, DragOverlay } from '@dnd-kit/core'
 
@@ -10,9 +10,9 @@ import { useMobile } from '@/app/contexts/MobileContext'
 import { homeCollisionDetection } from '../dnd/collisionStrategies'
 import type { PayloadBase } from '../types/types'
 import { useBaseControlls } from '../hooks/useBaseControlls'
-import { usePlanTypeDndController } from '../hooks/usePlanTypeDndController'
-import { getPlanTypeProvider } from '../registry/planTypeProviders.map'
-import { PlanTypeDragOverlay } from '../components/PlanTypeDragOverlay'
+import { useRouteOperationsDndController } from '../hooks/useRouteOperationsDndController'
+import { RouteOperationsDragOverlay } from '../components/RouteOperationsDragOverlay'
+import { useRouteOperationsFixtureBootstrap } from '../dev/useRouteOperationsFixtureBootstrap'
 
 /**
  * Workspace-specific managers provider for route-operations.
@@ -22,8 +22,8 @@ import { PlanTypeDragOverlay } from '../components/PlanTypeDragOverlay'
  */
 export function HomeRouteOperationsManagersProvider({ children }: { children: ReactNode }) {
   const { isMobile } = useMobile()
+  useRouteOperationsFixtureBootstrap()
   const baseControlls = useBaseControlls<PayloadBase>()
-  const ordersPlanType = baseControlls.payload?.ordersPlanType ?? null
 
   const mapManager = useMap()
 
@@ -47,7 +47,7 @@ export function HomeRouteOperationsManagersProvider({ children }: { children: Re
     }
   }, [handleKeyDown, isMobile])
 
-  const dndController = usePlanTypeDndController(ordersPlanType)
+  const dndController = useRouteOperationsDndController()
 
   const {
     onDragStart,
@@ -68,9 +68,6 @@ export function HomeRouteOperationsManagersProvider({ children }: { children: Re
     routeReorderPreview: null,
     sensors: [],
   }
-
-  const PlanTypeProvider = getPlanTypeProvider(ordersPlanType)
-  const planId = baseControlls.payload?.planId
 
   return (
     <ResourcesManagerProvider
@@ -95,14 +92,10 @@ export function HomeRouteOperationsManagersProvider({ children }: { children: Re
         onDragEnd={onDragEnd}
         onDragCancel={onDragCancel}
       >
-        {PlanTypeProvider && planId ? (
-          <PlanTypeProvider planId={planId}>{children}</PlanTypeProvider>
-        ) : (
-          children
-        )}
+        {children}
 
         <DragOverlay>
-          <PlanTypeDragOverlay planType={ordersPlanType} activeDrag={activeDrag} />
+          <RouteOperationsDragOverlay activeDrag={activeDrag} />
         </DragOverlay>
       </DndContext>
     </ResourcesManagerProvider>

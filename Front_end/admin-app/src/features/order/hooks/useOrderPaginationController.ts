@@ -11,6 +11,7 @@ import {
   selectOrderIsLoadingPage,
   selectOrderNextCursor,
 } from '../store/orderPagination.store'
+import { isRouteOperationsFixtureModeEnabled } from '@/features/home-route-operations/dev/routeOperationsFixtureMode'
 
 type Params = {
   query: OrderQueryStoreFilters
@@ -18,6 +19,7 @@ type Params = {
 }
 
 export const useOrderPaginationController = ({ query, scrollToTop }: Params) => {
+  const isFixtureMode = isRouteOperationsFixtureModeEnabled()
   const { loadOrdersPage } = useOrderFlow()
   const loadOrdersPageRef = useRef(loadOrdersPage)
   loadOrdersPageRef.current = loadOrdersPage
@@ -29,6 +31,10 @@ export const useOrderPaginationController = ({ query, scrollToTop }: Params) => 
   const queryKey = useMemo(() => buildOrderQueryKey(query), [query])
 
   const loadPage = useCallback(async (append: boolean) => {
+    if (isFixtureMode) {
+      return null
+    }
+
     const paginationState = useOrderPaginationStore.getState()
     const cursor = append ? paginationState.nextCursor : null
 
@@ -86,7 +92,7 @@ export const useOrderPaginationController = ({ query, scrollToTop }: Params) => 
     })
 
     return response
-  }, [query, queryKey, scrollToTop])
+  }, [isFixtureMode, query, queryKey, scrollToTop])
 
   const loadFirstPage = useCallback(async () => loadPage(false), [loadPage])
   const loadNextPage = useCallback(async () => {

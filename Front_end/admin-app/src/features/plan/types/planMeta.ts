@@ -1,4 +1,4 @@
-import type { PlanTypeKey } from '@/features/plan/types/plan'
+import type { RoutePlanObjective } from '@/features/plan/types/plan'
 
 export type PlanStats = {
   plans: {
@@ -33,7 +33,7 @@ export type PlanQueryFilters = {
   mode?: 'month' | 'date' | 'range'
   team_id?: number | string
   label?: string
-  plan_type?: PlanTypeKey
+  plan_type?: RoutePlanObjective
   start_date?: string
   end_date?: string
   created_at_from?: string

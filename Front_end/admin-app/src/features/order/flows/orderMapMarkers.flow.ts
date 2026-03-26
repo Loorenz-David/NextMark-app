@@ -50,8 +50,8 @@ const getPlanColor = (planId: number): string => {
 }
 
 const getOrderMarkerColor = (order: Order): string => {
-  if (!order.delivery_plan_id) return UNSCHEDULED_COLOR
-  return getPlanColor(order.delivery_plan_id)
+  if (!order.route_plan_id) return UNSCHEDULED_COLOR
+  return getPlanColor(order.route_plan_id)
 }
 
 const hasValidCoordinates = (order: Order) => {
@@ -112,7 +112,7 @@ export const buildOrderMarkers = ({
         lng: markerRepresentative.client_address.coordinates.lng,
       },
       markerColor: getOrderMarkerColor(primaryOrder),
-      delivery_plan_id: primaryOrder.delivery_plan_id ?? null,
+      route_plan_id: primaryOrder.route_plan_id ?? null,
       className: markerClassName,
       interactionVariant: 'order',
       label: group.orders.length > 1 ? String(group.orders.length) : undefined,

@@ -1,10 +1,7 @@
 import type { SVGProps, ComponentType } from 'react'
+import { RouteIcon } from '@/assets/icons/index'
 
-import type { PlanTypeKey } from '@/features/plan/types/plan'
-import { InternationalIcon, StoreIcon, RouteIcon } from '@/assets/icons/index'
-
-export const planIconTypeMap: Record<PlanTypeKey, ComponentType<SVGProps<SVGSVGElement>>> = {
+export const routePlanIcon: ComponentType<SVGProps<SVGSVGElement>> = RouteIcon
+export const planIconTypeMap = {
   local_delivery: RouteIcon,
-  international_shipping: InternationalIcon,
-  store_pickup: StoreIcon,
-}
+} as const

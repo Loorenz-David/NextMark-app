@@ -48,7 +48,7 @@ const reopenOrderFormOnRollback = ({
     payload: {
       mode,
       clientId: order?.client_id,
-      deliveryPlanId: formState.delivery_plan_id ?? null,
+      deliveryPlanId: formState.route_plan_id ?? null,
       restoreFormState: structuredClone(formState),
       controllBodyLayout: true,
     },

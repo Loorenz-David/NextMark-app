@@ -6,18 +6,15 @@ import { useMessageHandler } from '@shared-message-handler'
 import { useAddressCurrentLocationFlow } from '@/shared/inputs/address-autocomplete/hooks/useAddressCurrentLocationFlow'
 import { planApi } from '@/features/plan/api/plan.api'
 import { useOrderFlow, useOrderPlanPatchController } from '@/features/order'
-import { resolvePlanTypeDefaults } from '@/features/plan/domain/planTypeDefaults/planTypeDefaults.registry'
+import { buildRouteGroupPlanTypeDefaults } from '@/features/plan/routeGroup/domain/planTypeDefaults/routeGroupDefaults.generator'
 import { reactivePlanVisibility } from '@/features/plan/domain/planReactiveVisibility'
 import { getQueryFilters, getQuerySearch } from '@/features/order/store/orderQuery.store'
 import type {
   DeliveryPlan,
   DeliveryPlanFields,
   PlanCreatePayload,
-  PlanTypeKey,
 } from '@/features/plan/types/plan'
-import type { InternationalShippingPlan } from '@/features/plan/types/internationalShippingPlan'
-import type { LocalDeliveryPlan } from '@/features/plan/planTypes/localDelivery/types/localDeliveryPlan'
-import type { StorePickupPlan } from '@/features/plan/types/storePickupPlan'
+import type { RouteGroup } from '@/features/plan/routeGroup/types/routeGroup'
 import {
   addVisibleRoutePlan,
   appendVisibleRoutePlans,
@@ -29,97 +26,15 @@ import {
   useRoutePlanStore,
 } from '@/features/plan/store/routePlan.slice'
 import {
-  insertInternationalShippingPlan,
-  removeInternationalShippingPlan,
-  selectInternationalShippingPlanByPlanId,
-  upsertInternationalShippingPlan,
-  useInternationalShippingPlanStore,
-} from '@/features/plan/planTypes/internationalShipping/store/internationalShipping.slice'
-import {
-  insertLocalDeliveryPlan,
-  removeLocalDeliveryPlan,
-  selectLocalDeliveryPlanByPlanId,
-  upsertLocalDeliveryPlan,
-  useLocalDeliveryPlanStore,
-} from '@/features/plan/planTypes/localDelivery/store/localDelivery.slice'
-import {
-  insertStorePickupPlan,
-  removeStorePickupPlan,
-  selectStorePickupPlanByPlanId,
-  upsertStorePickupPlan,
-  useStorePickupPlanStore,
-} from '@/features/plan/planTypes/storePickup/store/storePickup.slice'
-import { upsertRouteSolution } from '@/features/plan/planTypes/localDelivery/store/routeSolution.store'
+  insertRouteGroup,
+  removeRouteGroup,
+  selectRouteGroupsByPlanId,
+  upsertRouteGroup,
+  useRouteGroupStore,
+} from '@/features/plan/routeGroup/store/routeGroup.slice'
+import { upsertRouteSolution } from '@/features/plan/routeGroup/store/routeSolution.store'
 import { incrementRoutePlanListTotal, useRoutePlanListStore } from '@/features/plan/store/routePlanList.store'
 
-type PlanTypeFields = LocalDeliveryPlan | InternationalShippingPlan | StorePickupPlan
-
-
-
-
-const insertPlanType = (planType: PlanTypeKey, planTypeFields: PlanTypeFields) => {
-  switch (planType) {
-    case 'local_delivery':
-      insertLocalDeliveryPlan(planTypeFields as LocalDeliveryPlan)
-      break
-    case 'international_shipping':
-      insertInternationalShippingPlan(planTypeFields as InternationalShippingPlan)
-      break
-    case 'store_pickup':
-      insertStorePickupPlan(planTypeFields as StorePickupPlan)
-      break
-    default:
-      break
-  }
-}
-
-const upsertPlanType = (
-  planType: PlanTypeKey,
-  payload: PlanTypeFields,
-) => {
-  switch (planType) {
-    case 'local_delivery':
-      upsertLocalDeliveryPlan(payload as LocalDeliveryPlan)
-      break
-    case 'international_shipping':
-      upsertInternationalShippingPlan(payload as InternationalShippingPlan)
-      break
-    case 'store_pickup':
-      upsertStorePickupPlan(payload as StorePickupPlan)
-      break
-    default:
-      break
-  }
-}
-
-const removePlanType = (planType: PlanTypeKey, clientId: string) => {
-  switch (planType) {
-    case 'local_delivery':
-      removeLocalDeliveryPlan(clientId)
-      break
-    case 'international_shipping':
-      removeInternationalShippingPlan(clientId)
-      break
-    case 'store_pickup':
-      removeStorePickupPlan(clientId)
-      break
-    default:
-      break
-  }
-}
-
-const findPlanTypeByPlanId = (planType: PlanTypeKey, planId: number) => {
-  switch (planType) {
-    case 'local_delivery':
-      return selectLocalDeliveryPlanByPlanId(planId)(useLocalDeliveryPlanStore.getState())
-    case 'international_shipping':
-      return selectInternationalShippingPlanByPlanId(planId)(useInternationalShippingPlanStore.getState())
-    case 'store_pickup':
-      return selectStorePickupPlanByPlanId(planId)(useStorePickupPlanStore.getState())
-    default:
-      return null
-  }
-}
 
 const resolveError = (error: unknown, fallback: string) => ({
   message: error instanceof ApiError ? error.message : fallback,
@@ -170,14 +85,13 @@ export function usePlanController() {
 
   const createPlan = useCallback(
     async (payload: DeliveryPlanFields, options?: { newOrderLinks?: number[] }) => {
-    
-      const planTypeKey = payload.plan_type
+
       const sanitizedNewOrderLinks = Array.isArray(options?.newOrderLinks)
         ? options.newOrderLinks.filter((id) => Number.isFinite(id))
         : []
 
       const planClientId = payload.client_id || buildClientId('delivery_plan')
-      const planTypeClientId =  buildClientId( planTypeKey )
+      const routeGroupClientId = buildClientId('route_group')
 
       const normalizedPlanFields: DeliveryPlan = {
         ...payload,
@@ -185,28 +99,22 @@ export function usePlanController() {
       }
 
       insertRoutePlan(normalizedPlanFields)
-
-      insertPlanType(planTypeKey, {
-        client_id: planTypeClientId,
-      })
+      insertRouteGroup({ client_id: routeGroupClientId })
 
       try {
         const normalizedStartDate = normalizedPlanFields.start_date
         if (!normalizedStartDate) {
           throw new Error('start_date is required to create a plan.')
         }
-        const planTypeDefaults = await resolvePlanTypeDefaults(
-          planTypeKey,
-          {
-            getCurrentLocationAddress,
-            planStartDate: normalizedStartDate,
-          },
-        )
+
+        const routeGroupDefaults = await buildRouteGroupPlanTypeDefaults({
+          getCurrentLocationAddress,
+          planStartDate: normalizedStartDate,
+        })
 
         const planPayloadApi: PlanCreatePayload = {
           client_id: planClientId,
           label: normalizedPlanFields.label,
-          plan_type: normalizedPlanFields.plan_type,
           start_date: normalizedStartDate,
           ...(typeof normalizedPlanFields.end_date !== 'undefined'
             ? { end_date: normalizedPlanFields.end_date }
@@ -214,20 +122,20 @@ export function usePlanController() {
           ...(sanitizedNewOrderLinks.length > 0
             ? { order_ids: sanitizedNewOrderLinks }
             : {}),
-          ...(typeof planTypeDefaults !== 'undefined'
-            ? { plan_type_defaults: planTypeDefaults }
+          ...(typeof routeGroupDefaults !== 'undefined'
+            ? { plan_type_defaults: routeGroupDefaults }
             : {}),
         }
 
-        const response = await planApi.createPlan( planPayloadApi )
+        const response = await planApi.createPlan(planPayloadApi)
         const created = response.data?.created?.[0]
 
-        if (!created?.delivery_plan || !created?.delivery_plan_type) {
+        if (!created?.delivery_plan || !created?.route_group) {
           throw new Error('Plan create response is missing created entities.')
         }
 
         const createdPlan = created.delivery_plan
-        const createdPlanType = created.delivery_plan_type
+        const createdRouteGroup = created.route_group as RouteGroup
         const createdPlanId = createdPlan.id
 
         if (createdPlan.client_id === planClientId) {
@@ -242,18 +150,16 @@ export function usePlanController() {
 
         syncCreatedPlanIntoVisibleList(createdPlan)
 
-        if (typeof createdPlanId === 'number') {
-          if (sanitizedNewOrderLinks.length > 0) {
-            patchOrdersPlanByServerIds({
-              orderServerIds: sanitizedNewOrderLinks,
-              planId: createdPlanId,
-              planType: createdPlan.plan_type,
-            })
-          }
+        if (typeof createdPlanId === 'number' && sanitizedNewOrderLinks.length > 0) {
+          patchOrdersPlanByServerIds({
+            orderServerIds: sanitizedNewOrderLinks,
+            planId: createdPlanId,
+            planType: 'local_delivery',
+          })
         }
 
-        removePlanType(planTypeKey, planTypeClientId)
-        upsertPlanType(createdPlan.plan_type, createdPlanType as PlanTypeFields)
+        removeRouteGroup(routeGroupClientId)
+        upsertRouteGroup(createdRouteGroup)
 
         if (created.route_solution) {
           upsertRouteSolution(created.route_solution)
@@ -265,7 +171,7 @@ export function usePlanController() {
         const resolved = resolveError(error, 'Unable to create delivery plan.')
         console.error('Failed to create plan', error)
         removeRoutePlan(planClientId)
-        removePlanType(planTypeKey, planTypeClientId)
+        removeRouteGroup(routeGroupClientId)
         showMessage({ status: resolved.status, message: resolved.message })
         return null
       }
@@ -289,14 +195,14 @@ export function usePlanController() {
         return null
       }
 
-      const planTypeInstance = findPlanTypeByPlanId(plan.plan_type, plan.id)
+      const routeGroupInstances = selectRouteGroupsByPlanId(plan.id)(useRouteGroupStore.getState())
       const previousPlan = { ...plan }
-      const previousPlanType = planTypeInstance ? { ...planTypeInstance } : null
+      const previousRouteGroups = routeGroupInstances.map((routeGroupInstance) => ({ ...routeGroupInstance }))
 
       removeRoutePlan(plan.client_id)
-      if (planTypeInstance) {
-        removePlanType(plan.plan_type, planTypeInstance.client_id)
-      }
+      routeGroupInstances.forEach((routeGroupInstance) => {
+        removeRouteGroup(routeGroupInstance.client_id)
+      })
       const clearedOrderLinks = clearOrdersPlanByPlanId(plan.id)
 
       try {
@@ -310,9 +216,9 @@ export function usePlanController() {
         const resolved = resolveError(error, 'Unable to delete delivery plan.')
         console.error('Failed to delete plan', error)
         insertRoutePlan(previousPlan)
-        if (previousPlanType) {
-          insertPlanType(plan.plan_type, previousPlanType)
-        }
+        previousRouteGroups.forEach((previousRouteGroup) => {
+          insertRouteGroup(previousRouteGroup)
+        })
         restoreOrdersPlanLinks(clearedOrderLinks.previousByClientId)
         showMessage({ status: resolved.status, message: resolved.message })
         return null
@@ -326,6 +232,5 @@ export function usePlanController() {
   return {
     createPlan,
     deletePlan: deletePlanInstance,
-
   }
 }

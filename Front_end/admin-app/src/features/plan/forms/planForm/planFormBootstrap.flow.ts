@@ -2,7 +2,7 @@ import { useMemo } from 'react'
 
 import { buildClientId } from '@/lib/utils/clientId'
 
-import type { DeliveryPlan, PlanTypeKey } from '../../types/plan'
+import type { DeliveryPlan } from '../../types/plan'
 
 import { usePlanStateRegistryFlow } from '../../flows/planStateRegistry.flow'
 import { formatIsoDateFriendly } from '@/shared/utils/formatIsoDate'
@@ -16,7 +16,6 @@ const createInitialPlanForm = (planStateId: number | null | undefined): Delivery
   return {
     client_id: buildClientId('delivery_plan'),
     label: planLabel,
-    plan_type: 'local_delivery',
     start_date: nowIso,
     end_date: nowIso,
     state_id: planStateId ?? null,

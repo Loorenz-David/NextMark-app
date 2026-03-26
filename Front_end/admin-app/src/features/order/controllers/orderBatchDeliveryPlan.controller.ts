@@ -7,8 +7,8 @@ import { optimisticTransaction } from '@shared-optimistic'
 import {
   removeRouteSolutionStopsByOrderId,
   upsertRouteSolutionStops,
-} from '@/features/plan/planTypes/localDelivery/store/routeSolutionStop.store'
-import { upsertRouteSolution } from '@/features/plan/planTypes/localDelivery/store/routeSolution.store'
+} from '@/features/plan/routeGroup/store/routeSolutionStop.store'
+import { upsertRouteSolution } from '@/features/plan/routeGroup/store/routeSolution.store'
 
 import { useUpdateOrdersDeliveryPlanBatch } from '../api/orderApi'
 import { useOrderFlow } from '../flows/order.flow'

@@ -13,12 +13,15 @@ interface HomeDesktopLayoutProps {
   overlay: ReactNode
   orderOverlay?: ReactNode
   buttonTogglePlan?: ReactNode
+  baseWidth: number
+  isOrderOverlayOpen: boolean
   isPlanVisible: boolean
   viewMode: DesktopPlanViewMode
   splitMode: boolean
   planColumnWidth: number
   mapRowHeight: number
   planRowHeight: number
+  orderOverlayWidth: number
   overlayWidth: number
   hasOverlay: boolean
   onPlanLayoutChange?: () => void
@@ -33,22 +36,37 @@ export function HomeDesktopLayout({
   overlay,
   orderOverlay,
   buttonTogglePlan,
+  baseWidth,
+  isOrderOverlayOpen,
   isPlanVisible,
   viewMode,
   splitMode,
   planColumnWidth,
   mapRowHeight,
   planRowHeight,
+  orderOverlayWidth,
   overlayWidth,
   hasOverlay,
   onPlanLayoutChange,
   onRailTransitionEnd,
 }: HomeDesktopLayoutProps) {
-
+  const planColumnGridWidth = splitMode ? 0 : planColumnWidth
+  const railColumnWidth = isOrderOverlayOpen ? orderOverlayWidth : baseWidth
 
   return (
-    <main className="flex flex-1 overflow-hidden">
-      <div className="flex h-full min-w-0 flex-1 flex-col">
+    <main
+      className="grid flex-1 overflow-hidden layout-animate"
+      style={{
+        gridTemplateColumns: `minmax(0, 1fr) ${planColumnGridWidth}px ${railColumnWidth}px`,
+        willChange: 'grid-template-columns',
+        transition: 'grid-template-columns 220ms cubic-bezier(0.22, 1, 0.36, 1)',
+      }}
+      onTransitionEnd={(event) => {
+        if (event.propertyName !== 'grid-template-columns') return
+        onRailTransitionEnd?.()
+      }}
+    >
+      <div className="flex h-full min-w-0 flex-col">
         <div
           className={splitMode ? 'relative min-h-0 shrink-0 layout-animate' : 'relative min-h-0 flex-1'}
           style={
@@ -97,10 +115,13 @@ export function HomeDesktopLayout({
       ) : null}
 
       <OverlayRail
+        baseWidth={baseWidth}
         base={base}
         overlay={overlay}
         orderOverlay={orderOverlay}
+        isOrderOverlayOpen={isOrderOverlayOpen}
         hasOverlay={hasOverlay}
+        orderOverlayWidth={orderOverlayWidth}
         overlayWidth={overlayWidth}
         onPlanLayoutChange={onPlanLayoutChange}
       />

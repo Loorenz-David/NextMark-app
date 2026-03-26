@@ -12,11 +12,11 @@ type ItemForDownloading = {
     itemPayload:Item & ExtraProps
 }
 
-export const itemsForDownloading = (items:Item[], order_reference_number?:string | null, delivery_plan_id?:number | null  )=>{
+export const itemsForDownloading = (items:Item[], order_reference_number?:string | null, route_plan_id?:number | null  )=>{
 
     let planDeliveryDate:string | null = null
-    if(delivery_plan_id){
-        const plan = selectRoutePlanByServerId(delivery_plan_id)(useRoutePlanStore.getState())
+    if(route_plan_id){
+        const plan = selectRoutePlanByServerId(route_plan_id)(useRoutePlanStore.getState())
 
         const startDate = plan?.start_date ?? ''
         const endDate = plan?.end_date ?? ''

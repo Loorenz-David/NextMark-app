@@ -1,5 +1,5 @@
 import { OrderPage } from "@/features/order/pages/order.page";
-import { useSelectedPlanOrders } from "@/features/plan/hooks/useSelectedPlanOrders";
+import { RouteGroupsPage } from "@/features/plan/routeGroup/pages/RouteGroups.page";
 import { useBaseControlls } from "@/shared/resource-manager/useResourceManager";
 import { SectionPanel } from "@/shared/section-panel/SectionPanel";
 import { SectionManagerHost } from "../components/SectionManagerHost";
@@ -10,8 +10,14 @@ import type { PayloadBase } from "../types/types";
 export const HomeMobileView = () => {
 
     const baseControlls = useBaseControlls<PayloadBase>()
-    const ordersPlanType = baseControlls.payload ? baseControlls.payload?.ordersPlanType ?? null : null
-    const SelectedOrdersPlanType = useSelectedPlanOrders(ordersPlanType)
+    const routeGroupPayload = (
+        baseControlls.payload && typeof baseControlls.payload.planId === 'number'
+    )
+        ? {
+            ...baseControlls.payload,
+            planId: baseControlls.payload.planId,
+        }
+        : null
     const windowWidth = window.innerWidth
     return ( 
         <div className="relative flex min-w-0 flex-1 overflow-hidden">
@@ -40,8 +46,8 @@ export const HomeMobileView = () => {
                         style={{ width: '100%', minWidth: 0, maxWidth: '100%' }}
                         >
                         {
-                        SelectedOrdersPlanType && 
-                        <SelectedOrdersPlanType payload={baseControlls.payload} />
+                        routeGroupPayload &&
+                        <RouteGroupsPage payload={routeGroupPayload} onRequestClose={baseControlls.closeBase} />
                         }
                     </SectionPanel>
                 </motion.div>

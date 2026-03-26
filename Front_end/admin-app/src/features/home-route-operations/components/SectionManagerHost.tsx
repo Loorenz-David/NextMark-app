@@ -27,7 +27,7 @@ export function SectionManagerHost({ stackKey, isBaseOpen, containerClassName, w
   const sectionCount = openSections.length
 
   useEffect(()=>{
-    const allowedOpenOnce = new Set(['orderCase.orderCases', 'orderCase.details', "LocalDeliveryStatsPage"])
+    const allowedOpenOnce = new Set(['orderCase.orderCases', 'orderCase.details'])
 
     const seen= new Map<string,Section>()
     const toClose: string[] = []

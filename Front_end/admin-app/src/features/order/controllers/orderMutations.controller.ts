@@ -8,12 +8,12 @@ import {
   selectRouteSolutionStopsByOrderId,
   useRouteSolutionStopStore,
   upsertRouteSolutionStops,
-} from '@/features/plan/planTypes/localDelivery/store/routeSolutionStop.store'
-import { upsertRouteSolution } from '@/features/plan/planTypes/localDelivery/store/routeSolution.store'
+} from '@/features/plan/routeGroup/store/routeSolutionStop.store'
+import { upsertRouteSolution } from '@/features/plan/routeGroup/store/routeSolution.store'
 
 import { useUpdateOrderDeliveryPlan as useUpdateOrderDeliveryPlanApi } from '../api/orderApi'
 import { normalizeOrderStopResponse } from '../domain/orderStopResponse'
-import type { RouteSolutionStop } from '@/features/plan/planTypes/localDelivery/types/routeSolutionStop'
+import type { RouteSolutionStop } from '@/features/plan/routeGroup/types/routeSolutionStop'
 import {
   setOrder,
   selectOrderByClientId,
@@ -65,7 +65,7 @@ export const useOrderMutations = () => {
         total_orders: number | null
       }
       const planStoreState = useRoutePlanStore.getState()
-      const oldPlanId = order.delivery_plan_id ?? null
+      const oldPlanId = order.route_plan_id ?? null
       const oldPlan = oldPlanId != null ? selectRoutePlanByServerId(oldPlanId)(planStoreState) : null
       const newPlan = selectRoutePlanByServerId(parsedPlanId)(planStoreState)
 
@@ -91,7 +91,7 @@ export const useOrderMutations = () => {
 
       return optimisticTransaction({
         snapshot: () => ({
-          previousPlanId: order.delivery_plan_id ?? null,
+          previousPlanId: order.route_plan_id ?? null,
           previousStops: selectRouteSolutionStopsByOrderId(orderServerId)(
             useRouteSolutionStopStore.getState(),
           ),

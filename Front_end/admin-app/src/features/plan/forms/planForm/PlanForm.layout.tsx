@@ -1,7 +1,6 @@
 import { Field } from '@/shared/inputs/FieldContainer'
 import { InputField, PLAIN_INPUT_CLASS, PLAIN_INPUT_CONTAINER_CLASS } from '@/shared/inputs/InputField'
 import { CustomDatePicker } from '@/shared/inputs/CustomDatePicker'
-import { PlanTypeDescription, PlanTypeSelector } from '../../components'
 import { InputWarning } from '@/shared/inputs/InputWarning'
 import { BasicButton } from '@/shared/buttons/BasicButton'
 import { ConfirmActionButton } from '@/shared/buttons/DeleteButton'
@@ -45,22 +44,6 @@ export const PlanFormLayout = ({}) => {
                             />
                         </Field>
                     </Cell>
-                    
-                    
-                    { mode == 'create' && 
-                        <div className={`border-t border-[var(--color-border-accent)] cell-default`}>
-                            <Field label="Plan type:" required={true}  warningPlacement ='besidesLabel'
-                            >
-                                <PlanTypeSelector
-                                    selectedValue={ planForm.plan_type }
-                                    onChange={ planSetters.handlePlanType }
-                                    buttonClassName="w-full flex items-center px-4 pr-6 py-1 text-left justify-between"
-                                    sectionClassName=""
-                                />
-                                {/* <PlanTypeDescription planType={planForm.plan_type} /> */}
-                            </Field>
-                        </div>
-                    }
                     <SplitRow splitRowClass={'grid grid-cols-2 divide-x divide-[var(--color-border-accent)]'}>
                         <Cell cellClass="py-2 px-3">
                             <Field label="From:" required={true}  >
