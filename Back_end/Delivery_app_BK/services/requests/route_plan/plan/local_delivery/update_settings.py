@@ -19,9 +19,7 @@ from Delivery_app_BK.services.domain.route_operations.local_delivery import (
 
 ALLOWED_TOP_LEVEL_FIELDS = {
     "route_group_id",
-    "delivery_plan",
     "route_plan",
-    "local_delivery_plan",
     "route_group",
     "route_solution",
     "create_variant_on_save",
@@ -103,14 +101,8 @@ def parse_update_local_delivery_settings_request(raw: dict) -> LocalDeliverySett
         field="route_group_id",
     )
 
-    delivery_plan_raw = _as_dict(
-        raw.get("route_plan") if "route_plan" in raw else raw.get("delivery_plan"),
-        field="route_plan",
-    )
-    local_delivery_raw = _as_dict(
-        raw.get("route_group") if "route_group" in raw else raw.get("local_delivery_plan"),
-        field="route_group",
-    )
+    delivery_plan_raw = _as_dict(raw.get("route_plan"), field="route_plan")
+    local_delivery_raw = _as_dict(raw.get("route_group"), field="route_group")
     route_solution_raw = _as_dict(raw.get("route_solution"), field="route_solution")
 
     route_solution_id = (
