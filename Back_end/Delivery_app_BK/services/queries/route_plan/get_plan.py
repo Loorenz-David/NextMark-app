@@ -15,7 +15,7 @@ def get_plan(plan_id: int, ctx: ServiceContext):
     )
 
     if not found_plan:
-        raise NotFound(f"Delivery plan with id: {plan_id} does not exist.")
+        raise NotFound(f"Route plan with id: {plan_id} does not exist.")
 
     serialized = serialize_plans(
         instances=[found_plan],
@@ -23,5 +23,5 @@ def get_plan(plan_id: int, ctx: ServiceContext):
     )
 
     return {
-        "delivery_plan": serialized[0] if isinstance(serialized, list) else serialized
+        "route_plan": serialized[0] if isinstance(serialized, list) else serialized
     }

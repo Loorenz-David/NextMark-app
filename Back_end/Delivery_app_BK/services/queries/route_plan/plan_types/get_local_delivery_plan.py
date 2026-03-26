@@ -16,5 +16,5 @@ def get_route_group_plan_type(plan_id: int, ctx: ServiceContext):
     serialized = serialize_local_delivery_plan(route_group, ctx) if route_group else None
 
     return {
-        "delivery_plan_type": serialized,
+        "route_group_type": serialized,
     }

@@ -36,4 +36,4 @@ def serialize_plans( instances: List[ Type[ RoutePlan ] ], ctx:ServiceContext  )
 
         unpacked_instances.append( unpacked )
 
-    return map_return_values(unpacked_instances, ctx, "delivery_plan")
+    return map_return_values(unpacked_instances, ctx, "route_plan")
