@@ -66,3 +66,27 @@ Legacy key `local_delivery_plan_id` is no longer accepted for optimize requests.
 ## Notes
 - Do not remove wrappers ad hoc.
 - Remove wrappers in bounded batches and run tests after each batch.
+
+## 2026-03-26 Status
+- Namespace migration wave is applied across router/service/event/socket surfaces.
+- Residual non-AI unit regressions were stabilized in a dedicated follow-up commit.
+- Non-AI completion gate now passes: `226 passed, 1 warning`.
+
+### Verified Commands
+Run from repo root:
+
+```bash
+.venv/bin/python -m pytest tests/unit --ignore=tests/unit/ai
+PYTHONPATH="$PWD" .venv/bin/python scripts/report_route_naming_legacy_refs.py
+```
+
+### Legacy Scan Snapshot (2026-03-26)
+- Files scanned: `981`
+- `delivery_plan` token: `232`
+- `local_delivery_plan` token: `94`
+- `delivery_plan_id` key: `32`
+- `local_delivery_plan_id` key: `0`
+
+### Open Work
+- AI-only unit failures remain outside this migration gate and should be triaged in a separate stream.
+- Runtime ORM alias retirement and payload key canonicalization are still in progress; keep wrappers until their dedicated gates pass.
