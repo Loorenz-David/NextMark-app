@@ -104,9 +104,10 @@ def is_within_route_window(route_solution: RouteSolution, candidate_time: dateti
     )
 
     if start is None and end is None:
-        delivery_plan = getattr(getattr(route_solution, "local_delivery_plan", None), "delivery_plan", None)
-        start_date = getattr(delivery_plan, "start_date", None)
-        end_date = getattr(delivery_plan, "end_date", None)
+        route_group = getattr(route_solution, "route_group", None)
+        route_plan = getattr(route_group, "route_plan", None) if route_group is not None else None
+        start_date = getattr(route_plan, "start_date", None)
+        end_date = getattr(route_plan, "end_date", None)
         if not isinstance(start_date, datetime) or not isinstance(end_date, datetime):
             return False
         start = start_date.astimezone(timezone.utc) if start_date.tzinfo else start_date.replace(tzinfo=timezone.utc)

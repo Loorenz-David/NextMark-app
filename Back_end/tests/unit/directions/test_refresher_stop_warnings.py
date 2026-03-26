@@ -16,10 +16,10 @@ from Delivery_app_BK.directions.services.refresher import (
 
 
 def _make_route_solution(plan_start: datetime | None, plan_end: datetime | None):
-    delivery_plan = SimpleNamespace(start_date=plan_start, end_date=plan_end)
-    local_delivery_plan = SimpleNamespace(delivery_plan=delivery_plan)
+    route_plan = SimpleNamespace(start_date=plan_start, end_date=plan_end)
+    route_group = SimpleNamespace(route_plan=route_plan)
     return SimpleNamespace(
-        local_delivery_plan=local_delivery_plan,
+        route_group=route_group,
         set_end_time=None,
         route_warnings=None,
         has_route_warnings=False,

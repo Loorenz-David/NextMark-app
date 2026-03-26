@@ -133,9 +133,8 @@ def _normalize_windows(
 def _resolve_plan_window_bounds(
     route_solution: RouteSolution,
 ) -> Tuple[Optional[datetime], Optional[datetime]]:
-    plan = None
-    if getattr(route_solution, "local_delivery_plan", None) is not None:
-        plan = getattr(route_solution.local_delivery_plan, "delivery_plan", None)
+    route_group = getattr(route_solution, "route_group", None)
+    plan = getattr(route_group, "route_plan", None) if route_group is not None else None
     if not plan:
         return None, None
     return _coerce_datetime(getattr(plan, "start_date", None)), _coerce_datetime(getattr(plan, "end_date", None))

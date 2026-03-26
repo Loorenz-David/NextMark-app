@@ -44,12 +44,11 @@ def mark_driver_route_actual_start_time(
   
     route_solution.actual_start_time = candidate_time
 
-    # Transition the delivery plan to PROCESSING when the driver starts the route.
-    local = getattr(route_solution, "local_delivery_plan", None)
-    if local is not None:
-        delivery_plan = getattr(local, "delivery_plan", None)
-        if delivery_plan is not None:
-            apply_plan_state(delivery_plan, PlanStateId.PROCESSING)
+    # Transition the route plan to PROCESSING when the driver starts the route.
+    route_group = getattr(route_solution, "route_group", None)
+    route_plan = getattr(route_group, "route_plan", None) if route_group is not None else None
+    if route_plan is not None:
+        apply_plan_state(route_plan, PlanStateId.PROCESSING)
 
     db.session.add(route_solution)
     db.session.commit()

@@ -293,13 +293,9 @@ def _mark_stop_stale(stop: RouteSolutionStop) -> None:
 def _resolve_allowed_end(route_solution: RouteSolution) -> Optional[datetime]:
     route_group = getattr(route_solution, "route_group", None)
     if route_group is None:
-        route_group = getattr(route_solution, "local_delivery_plan", None)
-    if route_group is None:
         return None
-    delivery_plan = getattr(route_group, "route_plan", None)
-    if delivery_plan is None:
-        delivery_plan = getattr(route_group, "delivery_plan", None)
-    if not delivery_plan or not delivery_plan.end_date:
+    route_plan = getattr(route_group, "route_plan", None)
+    if not route_plan or not route_plan.end_date:
         return None
     request_timezone = resolve_request_timezone(
         plan_instance=route_group,
@@ -309,13 +305,13 @@ def _resolve_allowed_end(route_solution: RouteSolution) -> Optional[datetime]:
         parsed = _parse_time_string(route_solution.set_end_time)
         if parsed:
             return combine_plan_date_and_local_hhmm_to_utc(
-                plan_date=delivery_plan.end_date,
+                plan_date=route_plan.end_date,
                 hhmm=route_solution.set_end_time,
                 tz=request_timezone,
             )
 
     return combine_plan_date_and_local_hhmm_to_utc(
-        plan_date=delivery_plan.end_date,
+        plan_date=route_plan.end_date,
         hhmm="23:59:59",
         tz=request_timezone,
     )

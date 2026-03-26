@@ -10,9 +10,9 @@ from Delivery_app_BK.directions.services.time_window_policy import (
 
 
 def _route_solution(plan_start: datetime | None = None, plan_end: datetime | None = None):
-    delivery_plan = SimpleNamespace(start_date=plan_start, end_date=plan_end)
-    local_delivery_plan = SimpleNamespace(delivery_plan=delivery_plan)
-    return SimpleNamespace(local_delivery_plan=local_delivery_plan)
+    route_plan = SimpleNamespace(start_date=plan_start, end_date=plan_end)
+    route_group = SimpleNamespace(route_plan=route_plan)
+    return SimpleNamespace(route_group=route_group)
 
 
 def test_delivery_windows_are_authoritative_over_legacy_fields():

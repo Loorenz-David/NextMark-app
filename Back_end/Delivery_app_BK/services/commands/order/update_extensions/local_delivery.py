@@ -124,12 +124,11 @@ def handle_local_delivery_order_update_extension(
 
 
 def _orders_by_route_solution(route_solution: RouteSolution) -> dict[int, object]:
-    delivery_plan = None
-    if getattr(route_solution, "local_delivery_plan", None):
-        delivery_plan = route_solution.local_delivery_plan.delivery_plan
+    route_group = getattr(route_solution, "route_group", None)
+    route_plan = getattr(route_group, "route_plan", None) if route_group is not None else None
     return {
         order.id: order
-        for order in ((delivery_plan.orders or []) if delivery_plan else [])
+        for order in ((route_plan.orders or []) if route_plan else [])
         if getattr(order, "id", None) is not None
     }
 

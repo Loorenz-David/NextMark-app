@@ -21,18 +21,18 @@ from ._helpers import resolve_driver_route_solution
 
 def adjust_driver_route_dates_to_today(ctx: ServiceContext, route_id: int):
     route_solution = resolve_driver_route_solution(ctx, route_id)
-    local_delivery_plan = getattr(route_solution, "local_delivery_plan", None)
-    delivery_plan = getattr(local_delivery_plan, "delivery_plan", None)
+    route_group = getattr(route_solution, "route_group", None)
+    route_plan = getattr(route_group, "route_plan", None) if route_group is not None else None
 
-    if local_delivery_plan is None or delivery_plan is None:
-        raise ValidationFailed("Selected route is missing its delivery plan context.")
+    if route_group is None or route_plan is None:
+        raise ValidationFailed("Selected route is missing its route plan context.")
 
-    start_date = _ensure_utc_datetime(getattr(delivery_plan, "start_date", None))
-    end_date = _ensure_utc_datetime(getattr(delivery_plan, "end_date", None))
+    start_date = _ensure_utc_datetime(getattr(route_plan, "start_date", None))
+    end_date = _ensure_utc_datetime(getattr(route_plan, "end_date", None))
     if start_date is None or end_date is None:
-        raise ValidationFailed("Route delivery plan has no valid schedule to adjust.")
+        raise ValidationFailed("Route plan has no valid schedule to adjust.")
     if end_date < start_date:
-        raise ValidationFailed("Route delivery plan end date cannot be before start date.")
+        raise ValidationFailed("Route plan end date cannot be before start date.")
 
     effective_zone_name = _resolve_time_zone_name(ctx)
     effective_zone = _resolve_time_zone(effective_zone_name)
@@ -51,7 +51,7 @@ def adjust_driver_route_dates_to_today(ctx: ServiceContext, route_id: int):
     new_end = new_start + duration
 
     request = LocalDeliverySettingsRequest(
-        route_group_id=local_delivery_plan.id,
+        route_group_id=route_group.id,
         delivery_plan=DeliveryPlanPatchRequest(
             start_date=new_start,
             end_date=new_end,

@@ -40,11 +40,11 @@ def _make_stop(stop_id: int, order_id: int, stop_order: int, minutes: int):
 
 
 def _make_route_solution(stops):
-    delivery_plan = SimpleNamespace(
+    route_plan = SimpleNamespace(
         start_date=datetime(2026, 3, 7, 8, 0, 0, tzinfo=timezone.utc),
         end_date=datetime(2026, 3, 7, 23, 59, 59, tzinfo=timezone.utc),
     )
-    local_delivery_plan = SimpleNamespace(delivery_plan=delivery_plan)
+    route_group = SimpleNamespace(route_plan=route_plan)
     return SimpleNamespace(
         id=1,
         stops=stops,
@@ -54,7 +54,7 @@ def _make_route_solution(stops):
         stops_service_time=None,
         set_start_time=None,
         set_end_time=None,
-        local_delivery_plan=local_delivery_plan,
+        route_group=route_group,
         route_warnings=None,
         has_route_warnings=False,
         expected_start_time=None,
