@@ -70,6 +70,7 @@ from .tables.zones.order_zone_assignment import OrderZoneAssignment
 # Keep until route naming migration gates are complete across service, router,
 # event payload, and test monkeypatch layers.
 DeliveryPlan = RoutePlan
+DeliveryPlanState = RoutePlanState
 LocalDeliveryPlan = RouteGroup
 DeliveryPlanEvent = RoutePlanEvent
 DeliveryPlanEventAction = RoutePlanEventAction

@@ -30,9 +30,11 @@ def test_parse_login_request_accepts_valid_iana_timezone():
         {
             "email": "user@example.com",
             "password": "secret",
+            "app_scope": "admin",
             "time_zone": "Europe/Stockholm",
         }
     )
     assert request.email == "user@example.com"
     assert request.password == "secret"
+    assert request.app_scope == "admin"
     assert request.time_zone == "Europe/Stockholm"

@@ -1,6 +1,9 @@
 from types import SimpleNamespace
+import importlib
 
-import Delivery_app_BK.services.commands.costumer.resolve_or_create_costumer as module
+module = importlib.import_module(
+    "Delivery_app_BK.services.commands.costumer.resolve_or_create_costumer"
+)
 
 
 def test_resolve_batch_uses_explicit_costumer_id(monkeypatch):

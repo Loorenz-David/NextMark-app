@@ -458,7 +458,7 @@ def _ensure_future_start(start_at: datetime, now_utc: datetime) -> datetime:
 
 def _load_plans_by_type(ctx: ServiceContext) -> dict[str, list[DeliveryPlan]]:
     """Load test plans filtered by plan type and test plan labels."""
-    query = db.session.query(DeliveryPlan).filter(DeliveryPlan.plan_type.in_(DEFAULT_ORDER_PLAN_TYPES))
+    query = db.session.query(DeliveryPlan)
     if isinstance(ctx.team_id, int):
         query = query.filter(DeliveryPlan.team_id == ctx.team_id)
 
@@ -469,15 +469,20 @@ def _load_plans_by_type(ctx: ServiceContext) -> dict[str, list[DeliveryPlan]]:
     query = query.filter(DeliveryPlan.label.in_(test_labels_flat))
 
     plans = query.order_by(
-        DeliveryPlan.plan_type.asc(),
         DeliveryPlan.start_date.asc(),
         DeliveryPlan.id.asc(),
     ).all()
 
     grouped: dict[str, list[DeliveryPlan]] = {plan_type: [] for plan_type in DEFAULT_ORDER_PLAN_TYPES}
+    plan_type_by_label = {
+        label: plan_type
+        for plan_type, labels in TEST_PLAN_LABELS.items()
+        for label in labels
+    }
     for plan in plans:
-        if plan.plan_type in grouped:
-            grouped[plan.plan_type].append(plan)
+        plan_type = getattr(plan, "plan_type", None) or plan_type_by_label.get(plan.label)
+        if plan_type in grouped:
+            grouped[plan_type].append(plan)
     return grouped
 
 
