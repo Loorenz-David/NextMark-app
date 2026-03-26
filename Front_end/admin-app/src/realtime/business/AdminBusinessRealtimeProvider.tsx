@@ -34,7 +34,7 @@ import { useOrderCaseListStore } from '@/features/orderCase/store/orderCaseList.
 import { useOrderCaseQueryStore } from '@/features/orderCase/store/orderCaseQueryStore'
 import { planApi } from '@/features/plan/api/plan.api'
 import type { DeliveryPlan } from '@/features/plan/types/plan'
-import { addVisiblePlan, upsertPlan, patchPlanTotals } from '@/features/plan/store/plan.slice'
+import { addVisibleRoutePlan, upsertRoutePlan, patchRoutePlanTotals } from '@/features/plan/store/routePlan.slice'
 import { normalizeEntityMap, type EntityMap } from '@/lib/utils/entities/normalizeEntityMap'
 import {
   markAdminBusinessEventHandled,
@@ -119,8 +119,8 @@ export function AdminBusinessRealtimeProvider({ children }: PropsWithChildren) {
       }
 
       normalized.allIds.forEach((clientId) => {
-        upsertPlan(normalized.byClientId[clientId] as DeliveryPlan)
-        addVisiblePlan(clientId)
+        upsertRoutePlan(normalized.byClientId[clientId] as DeliveryPlan)
+        addVisibleRoutePlan(clientId)
       })
     }
 
@@ -239,7 +239,7 @@ export function AdminBusinessRealtimeProvider({ children }: PropsWithChildren) {
       const planId = getPayloadNumber(payload, 'delivery_plan_id') ?? event.entity_id
       if (!planId) return
 
-      patchPlanTotals(planId, {
+      patchRoutePlanTotals(planId, {
         total_weight: payload.total_weight as number | null,
         total_volume: payload.total_volume as number | null,
         total_items: payload.total_items as number | null,

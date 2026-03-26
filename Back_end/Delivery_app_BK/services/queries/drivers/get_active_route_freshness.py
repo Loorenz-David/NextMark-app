@@ -1,9 +1,9 @@
 from sqlalchemy.orm import selectinload
 
 from Delivery_app_BK.errors import NotFound, PermissionDenied, ValidationFailed
-from Delivery_app_BK.models import LocalDeliveryPlan, RouteSolution, db
+from Delivery_app_BK.models import RouteGroup, RouteSolution, db
 from Delivery_app_BK.services.context import ServiceContext
-from Delivery_app_BK.services.domain.plan.route_freshness import get_route_freshness_updated_at
+from Delivery_app_BK.services.domain.delivery_plan.plan.route_freshness import get_route_freshness_updated_at
 from Delivery_app_BK.services.utils import require_team_id
 
 
@@ -15,8 +15,8 @@ def get_active_route_freshness(route_id: int, ctx: ServiceContext):
     route = (
         db.session.query(RouteSolution)
         .options(
-            selectinload(RouteSolution.local_delivery_plan).selectinload(
-                LocalDeliveryPlan.delivery_plan
+            selectinload(RouteSolution.route_group).selectinload(
+                RouteGroup.route_plan
             ),
         )
         .filter(
@@ -33,14 +33,16 @@ def get_active_route_freshness(route_id: int, ctx: ServiceContext):
     if ctx.app_scope == "driver" and route.driver_id != ctx.user_id:
         raise PermissionDenied("You are not authorized to access this route.")
 
-    delivery_plan = (
-        route.local_delivery_plan.delivery_plan
-        if route.local_delivery_plan is not None
-        else None
-    )
+    route_group = getattr(route, "route_group", None)
+    if route_group is None:
+        route_group = getattr(route, "local_delivery_plan", None)
+    route_plan = getattr(route_group, "route_plan", None) if route_group is not None else None
+    if route_plan is None and route_group is not None:
+        route_plan = getattr(route_group, "delivery_plan", None)
 
     return {
         "route_id": route.id,
-        "delivery_plan_id": delivery_plan.id if delivery_plan is not None else None,
-        "route_freshness_updated_at": get_route_freshness_updated_at(delivery_plan),
+        "route_plan_id": route_plan.id if route_plan is not None else None,
+        "delivery_plan_id": route_plan.id if route_plan is not None else None,
+        "route_freshness_updated_at": get_route_freshness_updated_at(route_plan),
     }

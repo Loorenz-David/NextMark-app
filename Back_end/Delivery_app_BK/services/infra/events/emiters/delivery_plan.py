@@ -15,24 +15,26 @@ def emit_delivery_plan_events(
     actor_id = ctx.user_id if ctx.user_id else None
 
     for event in events:
-        delivery_plan_id = event.get("delivery_plan_id")
+        route_plan_id = event.get("route_plan_id") or event.get("delivery_plan_id")
         event_name = event.get("event_name")
-        if not delivery_plan_id or not event_name:
+        if not route_plan_id or not event_name:
             continue
 
         payload = event.get("payload")
         if not isinstance(payload, dict):
             payload = {}
+        payload.setdefault("route_plan_id", route_plan_id)
+        payload.setdefault("delivery_plan_id", route_plan_id)
 
         row = DeliveryPlanEvent(
             event_id=event.get("event_id", str(uuid4())),
-            delivery_plan_id=delivery_plan_id,
+            delivery_plan_id=route_plan_id,
             event_name=event_name,
             payload=payload,
             actor_id=event.get("actor_id", actor_id),
             team_id=event.get("team_id", ctx.team_id),
             entity_type="delivery_plan",
-            entity_id=str(delivery_plan_id),
+            entity_id=str(route_plan_id),
             entity_version=event.get("entity_version"),
             dispatch_status=(
                 DeliveryPlanEvent.DISPATCH_STATUS_DISPATCHED

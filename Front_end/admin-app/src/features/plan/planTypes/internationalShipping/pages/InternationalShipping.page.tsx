@@ -4,7 +4,7 @@ import { OrderList } from '@/features/order/components/lists/OrderList'
 import { useOrdersByPlanId } from '@/features/order/store/orderHooks.store'
 import { usePlanOrders } from '@/features/plan/hooks/usePlanOrders'
 import { useInternationalShippingHeaderAction } from '@/features/plan/planTypes/internationalShipping/hooks/useInternationalShippingHeaderAction'
-import { usePlanByServerId } from '@/features/plan/store/usePlan.selector'
+import { useRoutePlanByServerId } from '@/features/plan/store/useRoutePlan.selector'
 import { InternationalShippingMainHeader } from '@/features/plan/planTypes/internationalShipping/components/pageHeaders/internationalShippingMainHeader'
 import { useOrderActions } from '@/features/order'
 import type { Order } from '@/features/order/types/order'
@@ -32,7 +32,7 @@ export const InternationalShippingPage = ({ payload }: InternationalShippingPage
   const { fetchPlanOrders } = usePlanOrders()
   const planId = resolvePlanId(payload?.planId)
   const actions = useInternationalShippingHeaderAction({ planId })
-  const plan = usePlanByServerId(planId)
+  const plan = useRoutePlanByServerId(planId)
   const orders = useOrdersByPlanId(planId)
   const {openOrderDetail} = useOrderActions()
 

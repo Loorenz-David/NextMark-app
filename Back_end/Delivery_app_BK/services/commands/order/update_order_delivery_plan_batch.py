@@ -41,9 +41,6 @@ def update_orders_delivery_plan_batch(
     plan_id: int,
 ) -> dict:
     selection = parse_update_orders_delivery_plan_batch_payload(ctx.incoming_data)
-    print('Debugging: ', 'selection')
-    print(selection)
-    print('-------------')
     resolved = _run_selection_resolution_transaction(
         lambda: resolve_order_batch_selection(
             ctx=ctx,

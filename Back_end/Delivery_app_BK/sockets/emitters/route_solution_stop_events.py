@@ -1,7 +1,7 @@
 from flask import current_app
 
-from Delivery_app_BK.models import RouteSolutionStop, RouteSolution, LocalDeliveryPlan, db
-from Delivery_app_BK.services.domain.plan.route_freshness import get_route_freshness_updated_at
+from Delivery_app_BK.models import RouteSolutionStop, RouteSolution, RouteGroup, db
+from Delivery_app_BK.services.domain.delivery_plan.plan.route_freshness import get_route_freshness_updated_at
 from Delivery_app_BK.sockets.contracts.realtime import (
     BUSINESS_EVENT_ROUTE_SOLUTION_STOP_UPDATED,
 )
@@ -17,22 +17,26 @@ def emit_route_solution_stop_updated(route_solution_stop: RouteSolutionStop, *, 
         return
 
     route_solution = db.session.get(RouteSolution, route_solution_stop.route_solution_id)
-    if not route_solution or not route_solution.local_delivery_plan_id:
+    route_group_id = getattr(route_solution, "route_group_id", None) if route_solution is not None else None
+    if route_group_id is None and route_solution is not None:
+        route_group_id = getattr(route_solution, "local_delivery_plan_id", None)
+    if not route_solution or not route_group_id:
         current_app.logger.warning(
             "Cannot emit route_solution_stop.updated: missing route_solution (solution_id=%s)",
             route_solution_stop.route_solution_id
         )
         return
 
-    local_delivery_plan = db.session.get(LocalDeliveryPlan, route_solution.local_delivery_plan_id)
-    if not local_delivery_plan or not local_delivery_plan.delivery_plan_id:
+    route_group = db.session.get(RouteGroup, route_group_id)
+    if not route_group or not route_group.route_plan_id:
         current_app.logger.warning(
-            "Cannot emit route_solution_stop.updated: missing local_delivery_plan (plan_id=%s)",
-            route_solution.local_delivery_plan_id
+            "Cannot emit route_solution_stop.updated: missing route_group (route_group_id=%s)",
+            route_group_id
         )
         return
 
     team_id = route_solution_stop.team_id
+    route_plan_id = route_group.route_plan_id
 
     envelope = build_business_event_envelope(
         event_name=BUSINESS_EVENT_ROUTE_SOLUTION_STOP_UPDATED,
@@ -43,10 +47,9 @@ def emit_route_solution_stop_updated(route_solution_stop: RouteSolutionStop, *, 
         payload={
             "route_solution_stop_id": route_solution_stop.id,
             "route_solution_id": route_solution_stop.route_solution_id,
-            "local_delivery_plan_id": local_delivery_plan.id,
-            "delivery_plan_id": local_delivery_plan.delivery_plan_id,
+            **_plan_id_aliases(route_group_id=route_group_id, route_plan_id=route_plan_id),
             "label": route_solution.label,
-            "route_freshness_updated_at": get_route_freshness_updated_at(local_delivery_plan.delivery_plan),
+            "route_freshness_updated_at": get_route_freshness_updated_at(route_group.route_plan),
             "driver_id": route_solution.driver_id,
             "order_id": route_solution_stop.order_id,
             "stop_order": route_solution_stop.stop_order,
@@ -79,3 +82,13 @@ def emit_route_solution_stop_updated(route_solution_stop: RouteSolutionStop, *, 
         "Emitted route_solution_stop.updated: stop_id=%d, route_id=%d, order_id=%d, team_id=%d",
         route_solution_stop.id, route_solution_stop.route_solution_id, route_solution_stop.order_id, team_id
     )
+
+
+def _plan_id_aliases(*, route_group_id: int, route_plan_id: int) -> dict:
+    return {
+        "route_group_id": route_group_id,
+        "route_plan_id": route_plan_id,
+        # Backward-compatible payload keys while route naming migration is active.
+        "local_delivery_plan_id": route_group_id,
+        "delivery_plan_id": route_plan_id,
+    }

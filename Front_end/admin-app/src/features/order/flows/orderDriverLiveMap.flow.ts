@@ -12,7 +12,7 @@ import {
 } from '@/realtime/driverLive'
 import { useLocalDeliveryPlans } from '@/features/plan/planTypes/localDelivery/store/useLocalDeliveryPlan.selector'
 import { useRouteSolutions } from '@/features/plan/planTypes/localDelivery/store/useRouteSolution.selector'
-import type { PayloadBase } from '@/features/home/types/types'
+import type { PayloadBase } from '@/features/home-route-operations/types/types'
 import { MAP_MARKER_LAYERS } from '@/shared/map'
 import { useBaseControlls, useMapManager } from '@/shared/resource-manager/useResourceManager'
 

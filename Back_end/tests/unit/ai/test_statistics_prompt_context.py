@@ -18,3 +18,5 @@ def test_statistics_execute_prompt_defaults_without_team_context():
 
     assert "You are a senior logistics data analyst." in prompt
     assert "TIMEFRAME RULES:" in prompt
+    assert "get_daily_summary" in prompt
+    assert "get_route_metrics_tool" in prompt

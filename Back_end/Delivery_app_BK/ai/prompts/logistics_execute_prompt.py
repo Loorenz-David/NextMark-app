@@ -4,7 +4,7 @@ from datetime import datetime
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from Delivery_app_BK.services.domain.order.order_states import OrderState, OrderStateId
-from Delivery_app_BK.services.domain.plan.plan_states import PlanState, PlanStateId
+from Delivery_app_BK.services.domain.delivery_plan.plan.plan_states import PlanState, PlanStateId
 
 
 ORDER_STATE_MAP: dict[str, int] = {

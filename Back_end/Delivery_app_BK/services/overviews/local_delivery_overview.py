@@ -4,7 +4,7 @@ from Delivery_app_BK.models import DeliveryPlan
 from Delivery_app_BK.services.context import ServiceContext
 from Delivery_app_BK.services.queries.get_instance import get_instance
 from Delivery_app_BK.services.queries.order.serialize_order import serialize_orders
-from Delivery_app_BK.services.queries.plan_types.serialize_local_delivery_plan import (
+from Delivery_app_BK.services.queries.delivery_plan.plan_types.serialize_local_delivery_plan import (
     serialize_local_delivery_plan,
 )
 from Delivery_app_BK.services.queries.route_solutions import (

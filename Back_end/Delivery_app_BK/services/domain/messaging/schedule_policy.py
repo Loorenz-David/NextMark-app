@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from Delivery_app_BK.errors import ValidationFailed
 from Delivery_app_BK.services.domain.order.order_events import OrderEvent
-from Delivery_app_BK.services.domain.plan.plan_events import DeliveryPlanEvent
+from Delivery_app_BK.services.domain.delivery_plan.plan.plan_events import DeliveryPlanEvent
 
 SCHEDULE_ANCHOR_OCCURRED_AT = "event_occurred_at"
 SCHEDULE_ANCHOR_FUTURE_BUSINESS_TIME = "future_business_time"

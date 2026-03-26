@@ -25,11 +25,8 @@ def cleanup_old_events(retention_days: int = DEFAULT_EVENT_RETENTION_DAYS) -> di
     {
         "order_events": 100,
         "delivery_plan_events": 50,
-        "local_delivery_plan_events": 75,
-        "route_solution_events": 25,
-        "route_solution_stop_events": 30,
         "app_event_outbox": 10,
-        "total_deleted": 290
+        "total_deleted": 160
     }
     """
     cutoff_date = datetime.now(timezone.utc) - timedelta(days=retention_days)
@@ -38,9 +35,6 @@ def cleanup_old_events(retention_days: int = DEFAULT_EVENT_RETENTION_DAYS) -> di
     event_models = [
         (OrderEvent, "order_events"),
         (DeliveryPlanEvent, "delivery_plan_events"),
-        (LocalDeliveryPlanEvent, "local_delivery_plan_events"),
-        (RouteSolutionEvent, "route_solution_events"),
-        (RouteSolutionStopEvent, "route_solution_stop_events"),
         (AppEventOutbox, "app_event_outbox"),
     ]
     

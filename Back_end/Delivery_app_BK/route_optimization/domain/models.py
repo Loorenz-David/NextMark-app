@@ -6,9 +6,9 @@ from typing import Any, Dict, List, Optional, TYPE_CHECKING
 
 if TYPE_CHECKING:
     from Delivery_app_BK.services.context import ServiceContext
-    from Delivery_app_BK.models import DeliveryPlan
+    from Delivery_app_BK.models import RoutePlan
     from Delivery_app_BK.models import (
-        LocalDeliveryPlan,
+        RouteGroup,
     )
     from Delivery_app_BK.models.tables.order.order import Order
     from Delivery_app_BK.models import (
@@ -58,6 +58,8 @@ class OptimizationRequest:
     cost_per_kilometer: float
     pre_skipped_shipments: List["SkippedShipment"] = field(default_factory=list)
     excluded_shipments: List[Shipment] = field(default_factory=list)
+    route_plan_id: Optional[int] = None
+    route_group_id: Optional[int] = None
     populate_transition_polylines: bool = True
     injected_routes: Optional[List[Dict[str, Any]]] = None
     interpret_injected_solutions_using_labels: bool = False
@@ -90,8 +92,8 @@ class OptimizationResult:
 
 @dataclass(frozen=True)
 class OptimizationContext:
-    local_delivery_plan: "LocalDeliveryPlan"
-    delivery_plan: "DeliveryPlan"
+    local_delivery_plan: "RouteGroup"
+    delivery_plan: "RoutePlan"
     route_solution: "RouteSolution"
     orders: List["Order"]
     identity: Dict[str, Any]
@@ -101,3 +103,11 @@ class OptimizationContext:
     route_end_strategy: str =  ROUND_TRIP or CUSTOM_END_ADDRESS
     ctx: "ServiceContext | None" = None
     vehicle: "Vehicle | None" = None
+
+    @property
+    def route_group(self):
+        return self.local_delivery_plan
+
+    @property
+    def route_plan(self):
+        return self.delivery_plan

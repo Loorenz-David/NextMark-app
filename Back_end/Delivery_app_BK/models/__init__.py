@@ -34,21 +34,21 @@ from .tables.costumer.costumer import Costumer
 from .tables.costumer.costumer_address import CostumerAddress
 from .tables.costumer.costumer_phone import CostumerPhone
 from .tables.costumer.costumer_operating_hours import CostumerOperatingHours
-from .tables.delivery_plan.delivery_plan import DeliveryPlan
-from .tables.delivery_plan.delivery_plan_event import DeliveryPlanEvent
-from .tables.delivery_plan.delivery_plan_event_action import DeliveryPlanEventAction
-from .tables.delivery_plan.delivery_plan_types.local_delivery_plan.local_delivery_plan import LocalDeliveryPlan
+from .tables.route_operations.route_plan.route_plan import RoutePlan
+from .tables.route_operations.route_plan.route_plan_event import RoutePlanEvent
+from .tables.route_operations.route_plan.route_plan_event_action import RoutePlanEventAction
+from .tables.route_operations.route_plan.route_group import RouteGroup
 from .tables.delivery_plan.delivery_plan_types.international_shipping_plan import (
     InternationalShippingPlan,
 )
 from .tables.delivery_plan.delivery_plan_types.store_pickup_plan import StorePickupPlan
-from .tables.delivery_plan.delivery_plan_types.local_delivery_plan.route_solutions.route_solution import (
+from .tables.route_operations.route_plan.route_solution import (
     RouteSolution,
 )
-from .tables.delivery_plan.delivery_plan_types.local_delivery_plan.route_solutions.route_stop import (
+from .tables.route_operations.route_plan.route_stop import (
     RouteSolutionStop,
 )
-from .tables.delivery_plan.delivery_plan_state import DeliveryPlanState
+from .tables.route_operations.route_plan.route_plan_state import RoutePlanState
 from .tables.order.order_state import OrderState
 from .tables.order.order_state_history import OrderStateHistory
 from .tables.order.order_case import OrderCase, CaseChat
@@ -62,3 +62,14 @@ from .tables.integrations.shopify_integration import ShopifyIntegration
 from .tables.integrations.shopify_integration import ShopifyWebhookEvents
 from .tables.analytics.route_metrics_snapshot import RouteMetricsSnapshot as AnalyticsRouteMetricsSnapshot
 from .tables.analytics.analytics_daily_fact import AnalyticsDailyFact
+from .tables.zones.zone_version import ZoneVersion
+from .tables.zones.zone import Zone
+from .tables.zones.order_zone_assignment import OrderZoneAssignment
+
+# Transitional aliases while service/event layers complete RoutePlan renaming.
+# Keep until route naming migration gates are complete across service, router,
+# event payload, and test monkeypatch layers.
+DeliveryPlan = RoutePlan
+LocalDeliveryPlan = RouteGroup
+DeliveryPlanEvent = RoutePlanEvent
+DeliveryPlanEventAction = RoutePlanEventAction

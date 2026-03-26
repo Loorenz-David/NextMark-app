@@ -20,7 +20,7 @@ import logging
 from typing import TYPE_CHECKING
 
 from Delivery_app_BK.services.domain.order.order_states import OrderState as OrderStateEnum
-from Delivery_app_BK.services.domain.plan.plan_states import PlanStateId
+from Delivery_app_BK.services.domain.delivery_plan.plan.plan_states import PlanStateId
 
 if TYPE_CHECKING:
     from Delivery_app_BK.models.tables.delivery_plan.delivery_plan import DeliveryPlan

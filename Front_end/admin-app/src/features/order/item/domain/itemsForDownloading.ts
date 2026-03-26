@@ -1,4 +1,4 @@
-import { selectPlanByServerId, usePlanStore } from "@/features/plan/store/plan.slice";
+import { selectRoutePlanByServerId, useRoutePlanStore } from "@/features/plan/store/routePlan.slice";
 import type { Item } from "../types";
 import { toDateOnly, validateDateComparison } from "@/shared/data-validation/timeValidation";
 
@@ -16,7 +16,7 @@ export const itemsForDownloading = (items:Item[], order_reference_number?:string
 
     let planDeliveryDate:string | null = null
     if(delivery_plan_id){
-        const plan = selectPlanByServerId(delivery_plan_id)(usePlanStore.getState())
+        const plan = selectRoutePlanByServerId(delivery_plan_id)(useRoutePlanStore.getState())
 
         const startDate = plan?.start_date ?? ''
         const endDate = plan?.end_date ?? ''

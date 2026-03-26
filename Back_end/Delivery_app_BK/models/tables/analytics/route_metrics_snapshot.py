@@ -21,6 +21,8 @@ class RouteMetricsSnapshot(db.Model):
         Index("ix_analytics_rms_team_created", "team_id", "created_at"),
         Index("ix_analytics_rms_expected_start", "expected_start_time"),
         Index("ix_analytics_rms_zone_id", "zone_id"),
+        Index("ix_analytics_rms_zone_version_id", "zone_version_id"),
+        Index("ix_analytics_rms_team_zone_version_zone", "team_id", "zone_version_id", "zone_id"),
     )
 
     id = Column(Integer, primary_key=True)
@@ -54,6 +56,7 @@ class RouteMetricsSnapshot(db.Model):
 
     # Spatial dimension (NULL until Phase 4)
     zone_id = Column(Integer, nullable=True)
+    zone_version_id = Column(Integer, nullable=True)
 
     created_at = Column(
         UTCDateTime,

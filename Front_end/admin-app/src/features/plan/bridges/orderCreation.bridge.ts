@@ -1,12 +1,12 @@
 import type { OrderCreateBundle } from '@/features/order/types/order'
 import { resolveOrderCreationHandler } from '@/features/plan/registry/planTypeOrderCreation.registry'
-import { selectPlanByServerId, usePlanStore } from '@/features/plan/store/plan.slice'
+import { selectRoutePlanByServerId, useRoutePlanStore } from '@/features/plan/store/routePlan.slice'
 
 export const handlePlanOrderCreation = (bundle: OrderCreateBundle): void => {
   const deliveryPlanId = bundle?.order?.delivery_plan_id
   if (!deliveryPlanId) return
 
-  const plan = selectPlanByServerId(deliveryPlanId)(usePlanStore.getState())
+  const plan = selectRoutePlanByServerId(deliveryPlanId)(useRoutePlanStore.getState())
   if (!plan?.plan_type) return
 
   const handler = resolveOrderCreationHandler(plan.plan_type)
@@ -14,4 +14,3 @@ export const handlePlanOrderCreation = (bundle: OrderCreateBundle): void => {
     handler(bundle)
   }
 }
-

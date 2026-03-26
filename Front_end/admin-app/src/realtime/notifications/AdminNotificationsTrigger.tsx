@@ -1,20 +1,15 @@
 import { useMemo, useState, useSyncExternalStore } from 'react'
 import { BellIcon, CloseIcon } from '@/assets/icons'
-import { useOrderActions } from '@/features/order/actions/order.actions'
-import { useCaseOrderActions } from '@/features/orderCase/pages/order/order.actions'
 import { BasicButton } from '@/shared/buttons/BasicButton'
 import { FloatingPopover } from '@/shared/popups/FloatingPopover/FloatingPopover'
-import { useBaseControlls } from '@/shared/resource-manager/useResourceManager'
 import { formatIsoDateRelative } from '@/shared/utils/formatIsoDate'
 import { createNotificationsChannel } from '@shared-realtime'
 import { adminRealtimeClient } from '@/realtime/client'
-import type { PayloadBase } from '@/features/home/types/types'
 import {
   getAdminNotificationSnapshot,
   markAdminNotificationsReadLocally,
   subscribeAdminNotifications,
 } from './notification.store'
-import { openAdminNotificationTarget } from './adminNotificationTargets'
 
 const notificationsChannel = createNotificationsChannel(adminRealtimeClient)
 
@@ -25,10 +20,6 @@ export function AdminNotificationsTrigger() {
     getAdminNotificationSnapshot,
     getAdminNotificationSnapshot,
   )
-  const { openOrderDetail } = useOrderActions()
-  const { openCaseDetails } = useCaseOrderActions()
-  const baseControls = useBaseControlls<PayloadBase>()
-
   const content = useMemo(() => {
     if (items.length === 0) {
       return (
@@ -49,23 +40,7 @@ export function AdminNotificationsTrigger() {
               key={notification.notification_id}
               className="group flex gap-3 rounded-xl px-3 py-3 transition hover:bg-white/[0.05]"
             >
-              <button
-                className="flex min-w-0 flex-1 flex-col gap-2 text-left"
-                data-popover-close
-                onClick={() => {
-                  openAdminNotificationTarget(notification, {
-                    openLocalDeliveryWorkspace: (payload) => {
-                      baseControls.openBase({ payload })
-                    },
-                    openOrderDetail,
-                    openCaseDetails,
-                  })
-                  setIsOpen(false)
-                  markAdminNotificationsReadLocally([notification.notification_id])
-                  notificationsChannel.markRead([notification.notification_id])
-                }}
-                type="button"
-              >
+              <div className="flex min-w-0 flex-1 flex-col gap-2">
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
                     <p className="text-sm font-semibold text-[var(--color-text)]">{notification.title}</p>
@@ -80,7 +55,7 @@ export function AdminNotificationsTrigger() {
                     {notification.actor_username}
                   </span>
                 ) : null}
-              </button>
+              </div>
 
               <button
                 aria-label="Mark notification as read"
@@ -98,7 +73,7 @@ export function AdminNotificationsTrigger() {
         </div>
       </div>
     )
-  }, [baseControls.openBase, items, openCaseDetails, openOrderDetail])
+  }, [items])
 
   return (
     <FloatingPopover

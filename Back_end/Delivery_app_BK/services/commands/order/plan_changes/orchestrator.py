@@ -13,7 +13,9 @@ from Delivery_app_BK.models import (
 )
 
 from ....context import ServiceContext
-from .local_delivery import apply_local_delivery_plan_change
+from ...local_delivery_app import apply_order_plan_change as apply_local_delivery_plan_change
+from ...store_pickup_app import apply_order_plan_change as apply_store_pickup_plan_change
+from ...international_shipping_app import apply_order_plan_change as apply_international_shipping_plan_change
 from .types import PlanChangeApplyContext, PlanChangeResult
 
 
@@ -30,6 +32,8 @@ PlanChangeContextLoader = Callable[
 
 PLAN_CHANGE_HANDLERS: dict[str, PlanChangeHandler] = {
     "local_delivery": apply_local_delivery_plan_change,
+    "store_pickup": apply_store_pickup_plan_change,
+    "international_shipping": apply_international_shipping_plan_change,
 }
 
 

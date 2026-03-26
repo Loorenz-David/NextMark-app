@@ -1,4 +1,4 @@
-import { selectPlanByServerId, usePlanStore } from '@/features/plan/store/plan.slice'
+import { selectRoutePlanByServerId, useRoutePlanStore } from '@/features/plan/store/routePlan.slice'
 import {
   selectLocalDeliveryPlanByServerId,
   useLocalDeliveryPlanStore,
@@ -19,6 +19,6 @@ export const resolveRouteSolutionPlanClientId = (routeSolutionId: number | null 
   )
   if (!localDeliveryPlan?.delivery_plan_id) return null
 
-  const plan = selectPlanByServerId(localDeliveryPlan.delivery_plan_id)(usePlanStore.getState())
+  const plan = selectRoutePlanByServerId(localDeliveryPlan.delivery_plan_id)(useRoutePlanStore.getState())
   return plan?.client_id ?? null
 }

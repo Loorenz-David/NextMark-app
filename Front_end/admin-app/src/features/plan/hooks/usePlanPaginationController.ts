@@ -1,20 +1,20 @@
 import { useCallback, useMemo, useRef } from 'react'
 
-import { appendVisiblePlans, setVisiblePlans } from '../store/plan.slice'
+import { appendVisibleRoutePlans, setVisibleRoutePlans } from '../store/routePlan.slice'
 import { buildPlanQueryKey, usePlanQueries } from '../flows/planQueries.flow'
 import type { PlanQueryFilters } from '../types/planMeta'
 import {
-  setPlanListError,
-  setPlanListLoading,
-  setPlanListResult,
-} from '../store/planList.store'
+  setRoutePlanListError,
+  setRoutePlanListLoading,
+  setRoutePlanListResult,
+} from '../store/routePlanList.store'
 import {
-  selectPlanCurrentPage,
-  selectPlanHasMore,
-  selectPlanIsLoadingPage,
-  selectPlanNextCursor,
-  usePlanPaginationStore,
-} from '../store/planPagination.store'
+  selectRoutePlanCurrentPage,
+  selectRoutePlanHasMore,
+  selectRoutePlanIsLoadingPage,
+  selectRoutePlanNextCursor,
+  useRoutePlanPaginationStore,
+} from '../store/routePlanPagination.store'
 
 type Params = {
   query?: PlanQueryFilters
@@ -25,49 +25,49 @@ export const usePlanPaginationController = ({ query, scrollToTop }: Params = {})
   const { fetchPlansPage } = usePlanQueries()
   const fetchPlansPageRef = useRef(fetchPlansPage)
   fetchPlansPageRef.current = fetchPlansPage
-  const currentPage = usePlanPaginationStore(selectPlanCurrentPage)
-  const hasMore = usePlanPaginationStore(selectPlanHasMore)
-  const isLoadingPage = usePlanPaginationStore(selectPlanIsLoadingPage)
-  const nextCursor = usePlanPaginationStore(selectPlanNextCursor)
+  const currentPage = useRoutePlanPaginationStore(selectRoutePlanCurrentPage)
+  const hasMore = useRoutePlanPaginationStore(selectRoutePlanHasMore)
+  const isLoadingPage = useRoutePlanPaginationStore(selectRoutePlanIsLoadingPage)
+  const nextCursor = useRoutePlanPaginationStore(selectRoutePlanNextCursor)
 
   const queryKey = useMemo(() => buildPlanQueryKey(query), [query])
 
   const loadPage = useCallback(async (append: boolean) => {
-    const paginationState = usePlanPaginationStore.getState()
+    const paginationState = useRoutePlanPaginationStore.getState()
     const cursor = append ? paginationState.nextCursor : null
 
     if (!append) {
       paginationState.reset(queryKey)
-      setVisiblePlans([])
+      setVisibleRoutePlans([])
       scrollToTop?.()
     }
 
     const requestVersion = paginationState.startRequest()
 
-    setPlanListLoading(true)
+    setRoutePlanListLoading(true)
     const response = await fetchPlansPageRef.current({
       ...query,
       limit: 20,
       ...(append && cursor ? { after_cursor: cursor } : {}),
     })
 
-    if (usePlanPaginationStore.getState().requestVersion !== requestVersion) {
+    if (useRoutePlanPaginationStore.getState().requestVersion !== requestVersion) {
       return null
     }
 
     if (!response?.delivery_plan) {
-      usePlanPaginationStore.getState().setLoadingPage(false)
-      setPlanListError('Missing delivery plans response.')
+      useRoutePlanPaginationStore.getState().setLoadingPage(false)
+      setRoutePlanListError('Missing delivery plans response.')
       return null
     }
 
     if (append) {
-      appendVisiblePlans(response.delivery_plan.allIds)
+      appendVisibleRoutePlans(response.delivery_plan.allIds)
     } else {
-      setVisiblePlans(response.delivery_plan.allIds)
+      setVisibleRoutePlans(response.delivery_plan.allIds)
     }
 
-    setPlanListResult({
+    setRoutePlanListResult({
       queryKey,
       query: {
         ...query,
@@ -77,7 +77,7 @@ export const usePlanPaginationController = ({ query, scrollToTop }: Params = {})
       pagination: response.delivery_plan_pagination,
     })
 
-    usePlanPaginationStore.getState().applyPageResult({
+    useRoutePlanPaginationStore.getState().applyPageResult({
       queryKey,
       nextCursor: response.delivery_plan_pagination?.next_cursor ?? null,
       hasMore: response.delivery_plan_pagination?.has_more ?? false,

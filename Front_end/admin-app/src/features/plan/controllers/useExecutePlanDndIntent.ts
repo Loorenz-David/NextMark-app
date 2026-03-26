@@ -1,7 +1,7 @@
 import { useOrderMutations } from '@/features/order'
 import { useOrderBatchDeliveryPlanController } from '@/features/order/controllers/orderBatchDeliveryPlan.controller'
 import { useRouteSolutionStopMutations } from '@/features/plan/planTypes/localDelivery/controllers/routeSolutionStop.controller'
-import { selectPlanByClientId, usePlanStore } from '@/features/plan/store/plan.slice'
+import { selectRoutePlanByClientId, useRoutePlanStore } from '@/features/plan/store/routePlan.slice'
 import type { PlanDndIntent } from '@/features/plan/domain/planDndIntent'
 
 export const useExecutePlanDndIntent = () => {
@@ -29,7 +29,7 @@ export const useExecutePlanDndIntent = () => {
       return { droppedPlanClientId: null as string | null, success: true }
     }
     else if( intent.kind === 'ASSIGN_ORDER_TO_PLAN'){
-      const deliveryPlan = selectPlanByClientId(intent.planClientId)(usePlanStore.getState())
+      const deliveryPlan = selectRoutePlanByClientId(intent.planClientId)(useRoutePlanStore.getState())
       if (!deliveryPlan?.id) {
         return { droppedPlanClientId: null as string | null, success: false }
       }
@@ -38,7 +38,7 @@ export const useExecutePlanDndIntent = () => {
       return { droppedPlanClientId: intent.planClientId, success }
     }
     else if (intent.kind === 'ASSIGN_ORDERS_TO_PLAN_BATCH') {
-      const deliveryPlan = selectPlanByClientId(intent.planClientId)(usePlanStore.getState())
+      const deliveryPlan = selectRoutePlanByClientId(intent.planClientId)(useRoutePlanStore.getState())
       if (!deliveryPlan?.id) {
         return { droppedPlanClientId: null as string | null, success: false }
       }

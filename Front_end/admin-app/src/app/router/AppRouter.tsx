@@ -2,7 +2,7 @@ import { Navigate, Route, Routes } from 'react-router-dom'
 import type { ReactElement } from 'react'
 
 import { AuthPage } from '@/features/auth/pages/AuthPage'
-import { Home } from '@/features/home/pages/HomePage'
+import { Home } from '@/features/home-app/pages/HomeAppPage'
 import { SettingsPage } from '@/features/settings/pages/SettingsPage'
 
 import { useAuthSession } from '../../features/auth/login/hooks/useAuthSelectors'

@@ -7,7 +7,7 @@ import {
   selectLocalDeliveryPlanByServerId,
   useLocalDeliveryPlanStore,
 } from '@/features/plan/planTypes/localDelivery/store/localDelivery.slice'
-import { selectPlanByServerId, usePlanStore } from '@/features/plan/store/plan.slice'
+import { selectRoutePlanByServerId, useRoutePlanStore } from '@/features/plan/store/routePlan.slice'
 
 export const useRouteSolutionStore = createEntityStore<RouteSolution>()
 
@@ -56,7 +56,7 @@ export const getPlanEndDateByRouteSolutionId = (routeSolutionId?: number | null)
     useLocalDeliveryPlanStore.getState(),
   )
   if (!localPlan?.delivery_plan_id) return null
-  const plan = selectPlanByServerId(localPlan.delivery_plan_id)(usePlanStore.getState())
+  const plan = selectRoutePlanByServerId(localPlan.delivery_plan_id)(useRoutePlanStore.getState())
   return plan?.end_date ?? null
 }
 

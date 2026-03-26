@@ -11,7 +11,7 @@ import { insertItemStates } from '../itemConfigurations/store/itemStateStore'
 import { insertPrintTemplates } from '../templates/printDocument/store'
 import { insertEmailMessages } from '../messaging/emailMessage/store'
 import { insertSmsMessages } from '../messaging/smsMessage/store'
-import { insertDeliveryPlanStates } from '../plan/store/planState.store'
+import { insertRoutePlanStates } from '../plan/store/routePlanState.store'
 
 
 
@@ -56,7 +56,7 @@ export function useBootstrap() {
         }
 
         if (payload.plan_states) {
-          insertDeliveryPlanStates(payload.plan_states)
+          insertRoutePlanStates(payload.plan_states)
         }
 
         if (payload.vehicles) {

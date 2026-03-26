@@ -24,9 +24,12 @@ def find_optimizations(
     if "client_id" in params:
         query = query.filter(RouteSolution.client_id == params.get("client_id"))
 
-    if "local_delivery_plan_id" in params:
+    route_group_id = params.get("route_group_id")
+    if route_group_id is None:
+        route_group_id = params.get("local_delivery_plan_id")
+    if route_group_id is not None:
         query = query.filter(
-            RouteSolution.local_delivery_plan_id == params.get("local_delivery_plan_id")
+            RouteSolution.local_delivery_plan_id == route_group_id
         )
 
     if "is_selected" in params:

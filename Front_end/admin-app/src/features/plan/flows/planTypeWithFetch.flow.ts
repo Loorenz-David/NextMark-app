@@ -1,10 +1,10 @@
 import { useEffect } from 'react'
-import { usePlanType, usePlanByClientId } from '../store/usePlan.selector'
+import { useRoutePlanType, useRoutePlanByClientId } from '../store/useRoutePlan.selector'
 import { usePlanQueries } from './planQueries.flow'
 
 export const usePlanTypeWithFetch = (clientId: string | null | undefined) => {
-  const plan = usePlanByClientId(clientId)
-  const planType = usePlanType(clientId)
+  const plan = useRoutePlanByClientId(clientId)
+  const planType = useRoutePlanType(clientId)
   const { fetchPlanTypeForPlan } = usePlanQueries()
 
   useEffect(() => {

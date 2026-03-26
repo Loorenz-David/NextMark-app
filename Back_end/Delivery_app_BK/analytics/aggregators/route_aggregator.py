@@ -63,7 +63,7 @@ def compute_route_metrics(route_solution_id: int) -> Optional[RouteMetricsSnapsh
         (s.expected_service_duration_seconds or 0) for s in stops
     )
 
-    zone_id = derive_route_zone(route)
+    zone_id, zone_version_id = derive_route_zone(route)
 
     return RouteMetricsSnapshot(
         route_solution_id=route_solution_id,
@@ -82,6 +82,7 @@ def compute_route_metrics(route_solution_id: int) -> Optional[RouteMetricsSnapsh
         total_service_time_seconds=float(total_service_time),
         total_orders=len(stops),
         zone_id=zone_id,
+        zone_version_id=zone_version_id,
         computed_at=datetime.now(timezone.utc),
     )
 
@@ -118,6 +119,7 @@ def persist_route_metrics(snapshot: RouteMetricsSnapshot) -> RouteMetricsSnapsho
     row.total_service_time_seconds = snapshot.total_service_time_seconds
     row.total_orders = snapshot.total_orders
     row.zone_id = snapshot.zone_id
+    row.zone_version_id = snapshot.zone_version_id
 
     db.session.commit()
     return row

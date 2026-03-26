@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useRef } from 'react'
 
 import {
-  usePlanDateFilterUIActions,
-  usePlanDateFilterUIState,
-} from '@/features/plan/store/planDateFilterUI.store'
+  useRoutePlanDateFilterUIActions,
+  useRoutePlanDateFilterUIState,
+} from '@/features/plan/store/routePlanDateFilterUI.store'
 
 import { PLAN_DATE_FILTER_DEFAULT_MODE } from './domain/planDateFilter.constants'
 import type { PlanDateFilterControllerParams, PlanDateFilterMode } from './domain/planDateFilter.types'
@@ -21,8 +21,8 @@ export const usePlanDateFilterController = ({
   initialMode = PLAN_DATE_FILTER_DEFAULT_MODE,
 }: PlanDateFilterControllerParams = {}) => {
   void initialMode
-  const persistedState = usePlanDateFilterUIState()
-  const persistedActions = usePlanDateFilterUIActions()
+  const persistedState = useRoutePlanDateFilterUIState()
+  const persistedActions = useRoutePlanDateFilterUIActions()
   const lastEmissionKeyRef = useRef<string | null>(null)
 
   const mode = persistedState.mode

@@ -1,7 +1,7 @@
 import { useShallow } from 'zustand/react/shallow'
 
 import { useOrdersByPlanId } from '@/features/order/store/orderHooks.store'
-import { usePlanByServerId } from '@/features/plan/store/usePlan.selector'
+import { useRoutePlanByServerId } from '@/features/plan/store/useRoutePlan.selector'
 import { useLocalDeliveryPlanByPlanId } from '@/features/plan/planTypes/localDelivery/store/useLocalDeliveryPlan.selector'
 import {
   useRouteSolutionsByLocalDeliveryPlanId,
@@ -13,7 +13,7 @@ import {
 } from '@/features/plan/planTypes/localDelivery/store/routeSolutionStop.store'
 
 export const useLocalDeliveryResourcesFlow = (planId: number) => {
-  const plan = usePlanByServerId(planId)
+  const plan = useRoutePlanByServerId(planId)
   const localDeliveryPlan = useLocalDeliveryPlanByPlanId(planId)
   const orders = useOrdersByPlanId(planId)
   const localDeliveryPlanId = localDeliveryPlan?.id ?? null

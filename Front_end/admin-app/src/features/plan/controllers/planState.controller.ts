@@ -1,4 +1,4 @@
-import { selectPlanByClientId, selectPlanByServerId, usePlanStore } from '@/features/plan/store/plan.slice'
+import { selectRoutePlanByClientId, selectRoutePlanByServerId, useRoutePlanStore } from '@/features/plan/store/routePlan.slice'
 import type { PlanStates } from '@/features/plan/types/planState'
 import { usePlanStateRegistryFlow } from '@/features/plan/flows/planStateRegistry.flow'
 
@@ -6,11 +6,11 @@ export const usePlanStateChanges = () => {
   const planStateRegistry = usePlanStateRegistryFlow()
 
   const changePlanState = (planIdentity: string | number, state: PlanStates | number) => {
-    const planStore = usePlanStore.getState()
+    const planStore = useRoutePlanStore.getState()
     const plan =
       typeof planIdentity === 'number'
-        ? selectPlanByServerId(planIdentity)(planStore)
-        : selectPlanByClientId(planIdentity)(planStore)
+        ? selectRoutePlanByServerId(planIdentity)(planStore)
+        : selectRoutePlanByClientId(planIdentity)(planStore)
 
     if (!plan) {
       throw new Error(`No plan found with plan identity: ${planIdentity}`)

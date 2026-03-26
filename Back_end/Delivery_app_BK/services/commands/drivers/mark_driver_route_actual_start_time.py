@@ -3,7 +3,7 @@ from __future__ import annotations
 from Delivery_app_BK.models import db
 from Delivery_app_BK.services.context import ServiceContext
 from Delivery_app_BK.services.domain.state_transitions.plan_state_engine import apply_plan_state
-from Delivery_app_BK.services.domain.plan.plan_states import PlanStateId
+from Delivery_app_BK.services.domain.delivery_plan.plan.plan_states import PlanStateId
 
 from ._helpers import resolve_driver_route_solution
 from ._timing_helpers import (

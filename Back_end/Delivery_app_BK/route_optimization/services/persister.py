@@ -29,7 +29,7 @@ from Delivery_app_BK.route_optimization.domain.models import (
 from Delivery_app_BK.directions.services.time_window_policy import (
     apply_stop_time_window_evaluation,
 )
-from Delivery_app_BK.services.domain.local_delivery import (
+from Delivery_app_BK.services.domain.delivery_plan.local_delivery import (
     apply_expected_stop_schedule,
     clear_expected_stop_schedule,
 )

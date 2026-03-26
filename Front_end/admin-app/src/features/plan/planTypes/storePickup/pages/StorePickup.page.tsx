@@ -4,7 +4,7 @@ import { OrderList } from '@/features/order/components/lists/OrderList'
 import { useOrdersByPlanId } from '@/features/order/store/orderHooks.store'
 import { usePlanOrders } from '@/features/plan/hooks/usePlanOrders'
 import { useStorePickupHeaderAction } from '@/features/plan/planTypes/storePickup/hooks/useStorePickupHeaderAction'
-import { usePlanByServerId } from '@/features/plan/store/usePlan.selector'
+import { useRoutePlanByServerId } from '@/features/plan/store/useRoutePlan.selector'
 import { StorePickupMainHeader } from '@/features/plan/planTypes/storePickup/components/pageHeaders/storePickupMainHeader'
 import { useOrderActions } from '@/features/order'
 import type { Order } from '@/features/order/types/order'
@@ -32,7 +32,7 @@ export const StorePickupPage = ({ payload }: StorePickupPageProps) => {
   const { fetchPlanOrders } = usePlanOrders()
   const planId = resolvePlanId(payload?.planId)
   const actions = useStorePickupHeaderAction({ planId })
-  const plan = usePlanByServerId(planId)
+  const plan = useRoutePlanByServerId(planId)
   const orders = useOrdersByPlanId(planId)
 
   const {openOrderDetail} = useOrderActions()

@@ -5,7 +5,7 @@ from types import SimpleNamespace
 
 from Delivery_app_BK.services.commands.order.plan_changes import local_delivery as module
 from Delivery_app_BK.services.commands.order.plan_changes.types import PlanChangeApplyContext
-from Delivery_app_BK.services.commands.plan.local_delivery.route_solution.plan_sync import (
+from Delivery_app_BK.services.commands.delivery_plan.local_delivery.route_solution.plan_sync import (
     incremental_sync as sync_module,
 )
 

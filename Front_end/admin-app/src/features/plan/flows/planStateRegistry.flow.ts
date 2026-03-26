@@ -1,10 +1,10 @@
 import { useMemo } from 'react'
 
-import { useDeliveryPlanState } from '@/features/plan/store/planState.store'
+import { useRoutePlanState } from '@/features/plan/store/routePlanState.store'
 import { createPlanStateRegistry } from '@/features/plan/domain/createPlanStateRegistry'
 
 export const usePlanStateRegistryFlow = () => {
-  const states = useDeliveryPlanState()
+  const states = useRoutePlanState()
 
   return useMemo(() => createPlanStateRegistry(states), [states])
 }

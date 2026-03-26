@@ -1,0 +1,172 @@
+import { useRef, useEffect, type CSSProperties } from 'react'
+import { BasicButton } from '@/shared/buttons/BasicButton'
+import { useSectionManager, useMapManager, usePopupManager } from '@/shared/resource-manager/useResourceManager'
+
+import { ChevronDownIcon } from '@/assets/icons'
+
+import { OrderPage } from '@/features/order/pages/order.page'
+import { OrderMapOverlay } from '@/features/order/components/OrderMapOverlay'
+import { LocalDeliveryMapOverlay } from '@/features/plan/planTypes/localDelivery/components'
+import { useBaseControlls } from '@/shared/resource-manager/useResourceManager'
+import { useMapSelectionModeGuardFlow } from '@/features/home-route-operations/flows/mapSelectionModeGuard.flow'
+import { useHomeDesktopKeyboardFlow } from '@/features/home-route-operations/flows/homeDesktopKeyboard.flow'
+import { useHomeDesktopRailSettleFlow } from '@/features/home-route-operations/flows/homeDesktopRailSettle.flow'
+import { useHomeDesktopDerivedStateFlow } from '@/features/home-route-operations/flows/homeDesktopDerivedState.flow'
+
+import { HomeDesktopLayout } from '../layout/HomeDesktopLayout'
+import { useHomeDesktopLayout } from '../hooks/useHomeDesktopLayout'
+import { SectionManagerHost } from '../components/SectionManagerHost'
+import type { PayloadBase } from '../types/types'
+
+import { SectionPanel } from '../../../shared/section-panel/SectionPanel'
+import { PlanDesktopShell } from '@/features/plan/views/PlanDesktopShell'
+
+const SAFE_GUTTER = 24
+const DEFAULT_VIEWPORT_INSETS = {
+  top: SAFE_GUTTER,
+  right: SAFE_GUTTER,
+  bottom: SAFE_GUTTER,
+  left: SAFE_GUTTER,
+}
+
+const MAP_CONTAINER_STYLE: CSSProperties = {
+  height: '100%',
+  width: '100%',
+  position: 'absolute',
+  zIndex: 0,
+  top: '0',
+  left: '0',
+}
+
+const PLAN_TOGGLE_BUTTON_STYLE: CSSProperties = {
+  padding: '29px 6px',
+  backgroundColor: 'rgba(15, 23, 25, 0.78)',
+  borderRadius: '10px 0 0 10px',
+  border: '1px solid rgba(255, 255, 255, 0.12)',
+  boxShadow: '0 14px 32px rgba(0, 0, 0, 0.18)',
+  backdropFilter: 'blur(18px) saturate(120%)',
+  WebkitBackdropFilter: 'blur(18px) saturate(120%)',
+}
+const PLAN_TOGGLE_BUTTON_SPLIT_STYLE: CSSProperties = {
+  padding: '6px 29px ',
+  backgroundColor: 'rgba(15, 23, 25, 0.78)',
+  borderBottom:'2px solid rgba(15, 23, 25, 0.86)',
+  borderRadius: '15px 15px 0 0',
+  border: '1px solid rgba(255, 255, 255, 0.12)',
+  boxShadow: '0 14px 32px rgba(0, 0, 0, 0.18)',
+  backdropFilter: 'blur(18px) saturate(120%)',
+  WebkitBackdropFilter: 'blur(18px) saturate(120%)',
+}
+
+export function HomeDesktopView() {
+  const mapContainerRef = useRef<HTMLDivElement | null>(null)
+
+  const { initialize, resize, setViewportInsets, reframeToVisibleArea } = useMapManager()
+  const sectionManager = useSectionManager()
+  const popupManager = usePopupManager()
+  const baseControlls = useBaseControlls<PayloadBase>()
+
+  const derivedState = useHomeDesktopDerivedStateFlow({ sectionManager, baseControlls })
+  const layout = useHomeDesktopLayout({ openSectionsCount: derivedState.openSectionsCount })
+
+  useEffect(() => {
+    void initialize(mapContainerRef.current)
+  }, [initialize])
+
+  useMapSelectionModeGuardFlow()
+
+  useEffect(() => {
+    setViewportInsets(DEFAULT_VIEWPORT_INSETS)
+  }, [setViewportInsets])
+
+  const { handleRailLayoutChange, handleRailTransitionEnd } = useHomeDesktopRailSettleFlow({
+    layoutDeps: {
+      viewMode: layout.viewMode,
+      planColumnWidth: layout.planColumnWidth,
+      mapRowHeight: layout.mapRowHeight,
+      planRowHeight: layout.planRowHeight,
+      hasOverlay: layout.hasOverlay,
+      isPlanVisible: layout.isPlanVisible,
+    },
+    resize,
+    reframeToVisibleArea,
+  })
+
+  useHomeDesktopKeyboardFlow({
+    isEnabled: true,
+    isPopupOpen: popupManager.getOpenCount() > 0,
+    onTogglePlan: layout.togglePlan,
+    closeAllSections: () => sectionManager.closeAll(),
+  })
+
+  const SelectedOrdersPlanType = derivedState.SelectedOrdersPlanType
+  const splitMode = layout.viewMode === 'split'
+
+  return (
+    <>
+      <HomeDesktopLayout
+        viewMode={layout.viewMode}
+        splitMode={splitMode}
+        planColumnWidth={layout.planColumnWidth}
+        mapRowHeight={layout.mapRowHeight}
+        planRowHeight={layout.planRowHeight}
+        overlayWidth={layout.overlayWidth}
+        hasOverlay={layout.hasOverlay}
+        onPlanLayoutChange={handleRailLayoutChange}
+        onRailTransitionEnd={handleRailTransitionEnd}
+        map={<div ref={mapContainerRef} style={MAP_CONTAINER_STYLE} />}
+        mapOverlay={
+          derivedState.isLocalDeliveryOverlayActive ? <LocalDeliveryMapOverlay /> : <OrderMapOverlay />
+        }
+        plan={<PlanDesktopShell onRequestClose={layout.closePlan} viewMode={layout.viewMode} />}
+        base={
+          <div style={{ width: layout.baseWidth, height: '100%', overflowX: 'hidden' }}>
+            <SectionPanel style={{ width: layout.planWidth }} parentParams={{ borderLeft: '#8a8a8a5b' }}>
+              <OrderPage />
+            </SectionPanel>
+          </div>
+        }
+        orderOverlay={
+          baseControlls.isBaseOpen ? (
+            <SectionPanel onRequestClose={baseControlls.closeBase} style={{ width: layout.planWidth }}>
+              {SelectedOrdersPlanType && <SelectedOrdersPlanType payload={baseControlls.payload} />}
+            </SectionPanel>
+          ) : null
+        }
+        overlay={
+          <SectionManagerHost
+            stackKey="dynamicSectionPanels"
+            isBaseOpen={baseControlls.isBaseOpen}
+            width={layout.overlayWidth}
+          />
+        }
+        buttonTogglePlan={
+          layout.canTogglePlan ? (
+            <BasicButton
+              params={{
+                onClick: layout.togglePlan,
+                variant: 'ghost',
+                ariaLabel: 'Toggle delivery plan',
+                style: splitMode ?  PLAN_TOGGLE_BUTTON_SPLIT_STYLE : PLAN_TOGGLE_BUTTON_STYLE,
+              }}
+            >
+              <ChevronDownIcon 
+                className={`w-5 h-5  text-[var(--color-muted)] transition-transform 
+                  ${splitMode 
+                    ? layout.isPlanVisible 
+                          ? ''
+                          : 'rotate-180'
+                    
+                    : 'rotate-90'}
+                  ` }
+              />
+            </BasicButton>
+          ) : null
+        }
+        isPlanVisible={layout.isPlanVisible}
+      />
+    </>
+  )
+}
+
+

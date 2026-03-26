@@ -3,11 +3,11 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from types import SimpleNamespace
 
-from Delivery_app_BK.services.commands.plan.local_delivery.route_solution.plan_sync.window import (
-    resolve_window,
+from Delivery_app_BK.services.domain.delivery_plan.local_delivery import (
+    normalize_local_delivery_route_solution_defaults,
 )
-from Delivery_app_BK.services.commands.plan.plan_type_builder import (
-    _normalize_local_delivery_route_solution_defaults,
+from Delivery_app_BK.services.commands.delivery_plan.local_delivery.route_solution.plan_sync.window import (
+    resolve_window,
 )
 
 
@@ -18,7 +18,7 @@ def test_normalize_local_delivery_route_solution_defaults_builds_expected_start_
         team_id=3,
     )
 
-    normalized = _normalize_local_delivery_route_solution_defaults(
+    normalized = normalize_local_delivery_route_solution_defaults(
         ctx,
         plan_instance,
         {

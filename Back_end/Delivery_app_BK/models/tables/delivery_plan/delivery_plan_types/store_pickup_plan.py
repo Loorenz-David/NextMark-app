@@ -32,11 +32,11 @@ class StorePickupPlan(
     )
    
 
-    delivery_plan_id = Column(
+    route_plan_id = Column(
         Integer,
-        ForeignKey("delivery_plan.id", ondelete="CASCADE"),
+        ForeignKey("route_plan.id", ondelete="CASCADE"),
         unique=True,
-        nullable=False
+        nullable=False,
     )
 
     assigned_user = relationship(
@@ -44,7 +44,4 @@ class StorePickupPlan(
         back_populates="store_pickup_plans",
     )
 
-    delivery_plan = relationship(
-        "DeliveryPlan",
-        back_populates = 'store_pickup'
-    )
+    route_plan = relationship("RoutePlan")

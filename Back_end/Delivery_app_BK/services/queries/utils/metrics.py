@@ -1,6 +1,6 @@
 from typing import Iterable
 
-from Delivery_app_BK.models import Item, Order, DeliveryPlan
+from Delivery_app_BK.models import Item, Order, RoutePlan
 
 
 def calculate_item_totals(items: Iterable[Item]) -> dict:
@@ -26,7 +26,7 @@ def calculate_order_metrics(order: Order) -> dict:
     return calculate_item_totals(items)
 
 
-def calculate_plan_metrics(plan: DeliveryPlan) -> dict:
+def calculate_plan_metrics(plan: RoutePlan) -> dict:
     orders = getattr(plan, "orders", None) or []
     items = []
     for order in orders:

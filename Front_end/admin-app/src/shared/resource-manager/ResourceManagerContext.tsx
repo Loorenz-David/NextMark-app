@@ -1,4 +1,4 @@
-import { createContext } from 'react'
+import { createContext, useContext, useMemo } from 'react'
 import type { ReactNode } from 'react'
 
 import type { StackActionManager } from '../stack-manager/StackActionManager'
@@ -47,5 +47,11 @@ export function ResourcesManagerProvider<T extends Record<string, unknown> = Kno
   managers,
   children,
 }: ResourcesManagerProviderProps<T>) {
-  return <ResourcesManagerContext.Provider value={managers}>{children}</ResourcesManagerContext.Provider>
+  const parentManagers = useContext(ResourcesManagerContext)
+  const mergedManagers = useMemo(
+    () => ({ ...parentManagers, ...managers }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [parentManagers, managers],
+  )
+  return <ResourcesManagerContext.Provider value={mergedManagers}>{children}</ResourcesManagerContext.Provider>
 }

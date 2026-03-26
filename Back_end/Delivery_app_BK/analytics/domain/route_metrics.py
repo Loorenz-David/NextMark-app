@@ -28,5 +28,6 @@ class RouteMetricsSnapshot:
 
     # Spatial — populated once Phase 4 delivers zone attribution
     zone_id: Optional[int] = None
+    zone_version_id: Optional[int] = None
 
     computed_at: Optional[datetime] = field(default=None)

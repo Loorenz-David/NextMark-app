@@ -29,6 +29,9 @@ def serialize_created_order(instance: Order) -> dict:
         list(getattr(instance, "delivery_windows", None) or []),
     )
 
+    route_plan_id = getattr(instance, "route_plan_id", None)
+    delivery_plan_id = getattr(instance, "delivery_plan_id", route_plan_id)
+
     return {
         "id": instance.id,
         "client_id": instance.client_id,
@@ -50,7 +53,8 @@ def serialize_created_order(instance: Order) -> dict:
         "creation_date": creation_date.isoformat() if creation_date else None,
         "items_updated_at": instance.items_updated_at.isoformat() if instance.items_updated_at else None,
         "order_state_id": instance.order_state_id,
-        "delivery_plan_id": instance.delivery_plan_id,
+        "route_plan_id": route_plan_id,
+        "delivery_plan_id": delivery_plan_id,
         "costumer_id": instance.costumer_id,
         "delivery_windows": [
             {
@@ -99,27 +103,27 @@ def serialize_created_order_stops(instances: list[RouteSolutionStop]) -> list[di
             "route_solution_id": instance.route_solution_id,
             "order_id": instance.order_id,
             "service_duration": instance.service_duration,
-            "service_time": instance.service_time,
-            "in_range": instance.in_range,
-            "stop_order": instance.stop_order,
-            "reason_was_skipped": instance.reason_was_skipped,
-            "has_constraint_violation": instance.has_constraint_violation,
-            "constraint_warnings": instance.constraint_warnings,
-            "eta_status": instance.eta_status,
-            "expected_arrival_time": instance.expected_arrival_time.isoformat()
-            if instance.expected_arrival_time
+            "service_time": getattr(instance, "service_time", instance.service_duration),
+            "in_range": getattr(instance, "in_range", None),
+            "stop_order": getattr(instance, "stop_order", None),
+            "reason_was_skipped": getattr(instance, "reason_was_skipped", None),
+            "has_constraint_violation": getattr(instance, "has_constraint_violation", None),
+            "constraint_warnings": getattr(instance, "constraint_warnings", None),
+            "eta_status": getattr(instance, "eta_status", None),
+            "expected_arrival_time": getattr(instance, "expected_arrival_time", None).isoformat()
+            if getattr(instance, "expected_arrival_time", None)
             else None,
-            "expected_departure_time": instance.expected_departure_time.isoformat()
-            if instance.expected_departure_time
+            "expected_departure_time": getattr(instance, "expected_departure_time", None).isoformat()
+            if getattr(instance, "expected_departure_time", None)
             else None,
-            "expected_service_duration_seconds": instance.expected_service_duration_seconds,
-            "actual_arrival_time": instance.actual_arrival_time.isoformat()
-            if instance.actual_arrival_time
+            "expected_service_duration_seconds": getattr(instance, "expected_service_duration_seconds", None),
+            "actual_arrival_time": getattr(instance, "actual_arrival_time", None).isoformat()
+            if getattr(instance, "actual_arrival_time", None)
             else None,
-            "actual_departure_time": instance.actual_departure_time.isoformat()
-            if instance.actual_departure_time
+            "actual_departure_time": getattr(instance, "actual_departure_time", None).isoformat()
+            if getattr(instance, "actual_departure_time", None)
             else None,
-            "to_next_polyline": instance.to_next_polyline,
+            "to_next_polyline": getattr(instance, "to_next_polyline", None),
         }
         for instance in instances
     ]

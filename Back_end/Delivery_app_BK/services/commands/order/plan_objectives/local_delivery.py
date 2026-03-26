@@ -14,10 +14,10 @@ from Delivery_app_BK.services.queries.route_solutions.serialize_route_solutions 
     serialize_route_solution,
 )
 from ....context import ServiceContext
-from Delivery_app_BK.services.commands.plan.local_delivery.route_solution.stops import (
+from Delivery_app_BK.services.commands.delivery_plan.local_delivery.route_solution.stops import (
     build_route_solution_stops,
 )
-from Delivery_app_BK.services.commands.plan.local_delivery.route_solution.plan_sync import (
+from Delivery_app_BK.services.commands.delivery_plan.local_delivery.route_solution.plan_sync import (
     build_incremental_route_sync_action,
 )
 from .types import PlanObjectiveCreateResult

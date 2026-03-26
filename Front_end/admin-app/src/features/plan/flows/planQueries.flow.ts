@@ -8,10 +8,10 @@ import { planApi } from '@/features/plan/api/plan.api'
 import { planTypesApi } from '@/features/plan/api/planTypes.api'
 import type { DeliveryPlan, DeliveryPlanMap, PlanTypeKey } from '@/features/plan/types/plan'
 import type { PlanQueryFilters } from '@/features/plan/types/planMeta'
-import { insertPlans, selectPlanByServerId, upsertPlan, usePlanStore } from '@/features/plan/store/plan.slice'
+import { insertRoutePlans, selectRoutePlanByServerId, upsertRoutePlan, useRoutePlanStore } from '@/features/plan/store/routePlan.slice'
 import {
-  setPlanListError,
-} from '@/features/plan/store/planList.store'
+  setRoutePlanListError,
+} from '@/features/plan/store/routePlanList.store'
 import { upsertInternationalShippingPlans } from '@/features/plan/planTypes/internationalShipping/store/internationalShipping.slice'
 import { upsertLocalDeliveryPlans } from '@/features/plan/planTypes/localDelivery/store/localDelivery.slice'
 import { upsertStorePickupPlans } from '@/features/plan/planTypes/storePickup/store/storePickup.slice'
@@ -124,17 +124,17 @@ export function usePlanQueries() {
 
         if (!payload?.delivery_plan) {
           console.warn('Plan list response missing delivery_plan', payload)
-          setPlanListError('Missing delivery plans response.')
+          setRoutePlanListError('Missing delivery plans response.')
           return null
         }
 
-        insertPlans(payload.delivery_plan)
+        insertRoutePlans(payload.delivery_plan)
         return payload
       } catch (error) {
         const message = error instanceof ApiError ? error.message : 'Unable to load delivery plans.'
         const status = error instanceof ApiError ? error.status : 500
         console.error('Failed to fetch delivery plans', error)
-        setPlanListError(message)
+        setRoutePlanListError(message)
         showMessage({ status, message })
         return null
       }
@@ -155,9 +155,9 @@ export function usePlanQueries() {
         }
 
         if (normalized.allIds.length === 1) {
-          upsertPlan(normalized.byClientId[normalized.allIds[0]])
+          upsertRoutePlan(normalized.byClientId[normalized.allIds[0]])
         } else {
-          insertPlans(normalized)
+          insertRoutePlans(normalized)
         }
 
         return normalized
@@ -174,7 +174,7 @@ export function usePlanQueries() {
 
   const fetchPlanTypeForPlan = useCallback(
     async (planId: number) => {
-      const plan = selectPlanByServerId(planId)(usePlanStore.getState())
+      const plan = selectRoutePlanByServerId(planId)(useRoutePlanStore.getState())
       if (!plan) {
         showMessage({ status: 404, message: 'Plan not found for type lookup.' })
         return null

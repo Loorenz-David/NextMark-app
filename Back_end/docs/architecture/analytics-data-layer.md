@@ -11,6 +11,9 @@ It is intended for:
 - New team onboarding
 - Cross-team understanding of data flow and boundaries
 
+Related deep-dive:
+- AI statistics system and reasoning guide: [Delivery_app_BK/ai/docs/STATISTICS_SYSTEM.md](../../Delivery_app_BK/ai/docs/STATISTICS_SYSTEM.md)
+
 ## High-Level Architecture
 
 The analytics layer is built as a two-level system:

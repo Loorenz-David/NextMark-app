@@ -2,7 +2,7 @@ import { useCallback } from 'react'
 
 import { planApi } from '@/features/plan/api/plan.api'
 import { useMessageHandler } from '@shared-message-handler'
-import { insertDeliveryPlanStates } from '@/features/plan/store/planState.store'
+import { insertRoutePlanStates } from '@/features/plan/store/routePlanState.store'
 import type { DeliveryPlanStateQueryFilters } from '@/features/plan/types/planMeta'
 import { ApiError } from '@/lib/api/ApiClient'
 
@@ -20,7 +20,7 @@ export function useDeliveryPlanStateQueries() {
           return null
         }
 
-        insertDeliveryPlanStates(payload.plan_states)
+        insertRoutePlanStates(payload.plan_states)
         return payload
       } catch (error) {
         const message = error instanceof ApiError ? error.message : 'Unable to load plan states.'

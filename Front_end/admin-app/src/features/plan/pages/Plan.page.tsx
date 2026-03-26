@@ -3,11 +3,11 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 
 
-import { useVisiblePlans } from "../store/usePlan.selector";
+import { useVisibleRoutePlans } from "../store/useRoutePlan.selector";
 
 import { PlanList, PlanMainHeader } from "../components";
 import { usePlanHeaderAction } from "../actions/usePlanActions";
-import { usePlanListStats } from "../store/planList.selector";
+import { useRoutePlanListStats } from "../store/routePlanList.selector";
 import { BasicButton } from "@/shared/buttons/BasicButton";
 import { usePlanPaginationController } from "../hooks/usePlanPaginationController";
 import type { PlanDateFilterPayload } from "../components/planDateFilter";
@@ -52,8 +52,8 @@ export const PlanPage = ({
         scrollContainerRef.current.scrollTop = 0
       }
     }, [])
-    const plans = useVisiblePlans()
-    const plansStats = usePlanListStats()
+    const plans = useVisibleRoutePlans()
+    const plansStats = useRoutePlanListStats()
     const planActions = usePlanHeaderAction()
     const handleFilterSelection = useCallback((payload: PlanDateFilterPayload) => {
       const nextFilters = {

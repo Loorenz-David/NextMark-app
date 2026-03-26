@@ -1,7 +1,7 @@
 from sqlalchemy.orm import selectinload
 
 from Delivery_app_BK.errors import NotFound, PermissionDenied, ValidationFailed
-from Delivery_app_BK.models import LocalDeliveryPlan, Order, RouteSolution, db
+from Delivery_app_BK.models import Order, RouteGroup, RouteSolution, db
 from Delivery_app_BK.services.context import ServiceContext
 from Delivery_app_BK.services.queries.drivers.serialize_active_routes import serialize_active_route
 from Delivery_app_BK.services.queries.order.serialize_order import serialize_orders_with_items
@@ -17,8 +17,8 @@ def get_active_route(route_id: int, ctx: ServiceContext):
     route = (
         db.session.query(RouteSolution)
         .options(
-            selectinload(RouteSolution.local_delivery_plan).selectinload(
-                LocalDeliveryPlan.delivery_plan
+            selectinload(RouteSolution.route_group).selectinload(
+                RouteGroup.route_plan
             ),
             selectinload(RouteSolution.stops),
         )

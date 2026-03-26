@@ -5,7 +5,7 @@ from collections.abc import Callable
 
 from Delivery_app_BK.models import (
     InternationalShippingPlan,
-    LocalDeliveryPlan,
+    RouteGroup,
     RouteSolution,
     RouteSolutionStop,
     StorePickupPlan,
@@ -47,42 +47,44 @@ def _load_local_delivery_context(
 ) -> None:
     local_context: dict[str, object] = {}
 
-    local_query = db.session.query(LocalDeliveryPlan).filter(
-        LocalDeliveryPlan.delivery_plan_id.in_(plan_ids)
+    route_group_query = db.session.query(RouteGroup).filter(
+        RouteGroup.route_plan_id.in_(plan_ids)
     )
     if ctx.team_id:
-        local_query = local_query.filter(LocalDeliveryPlan.team_id == ctx.team_id)
-    local_delivery_instances = local_query.all()
-    local_context["local_delivery_by_plan_id"] = {
-        instance.delivery_plan_id: instance for instance in local_delivery_instances
+        route_group_query = route_group_query.filter(RouteGroup.team_id == ctx.team_id)
+    route_group_instances = route_group_query.all()
+    route_group_by_plan_id = {
+        instance.route_plan_id: instance for instance in route_group_instances
     }
+    local_context["route_group_by_plan_id"] = route_group_by_plan_id
+    local_context["local_delivery_by_plan_id"] = route_group_by_plan_id
 
-    local_delivery_ids = [instance.id for instance in local_delivery_instances]
-    if not local_delivery_ids:
+    route_group_ids = [instance.id for instance in route_group_instances]
+    if not route_group_ids:
         extension_context.by_plan_type["local_delivery"] = local_context
         return
 
     route_query = db.session.query(RouteSolution).filter(
-        RouteSolution.local_delivery_plan_id.in_(local_delivery_ids)
+        RouteSolution.local_delivery_plan_id.in_(route_group_ids)
     )
     if ctx.team_id:
         route_query = route_query.filter(RouteSolution.team_id == ctx.team_id)
     route_solutions = route_query.all()
 
-    route_solutions_by_local_delivery_id: defaultdict[int, list[RouteSolution]] = defaultdict(
+    route_solutions_by_route_group_id: defaultdict[int, list[RouteSolution]] = defaultdict(
         list
     )
     route_solutions_by_id: dict[int, RouteSolution] = {}
     for route_solution in route_solutions:
-        route_solutions_by_local_delivery_id[route_solution.local_delivery_plan_id].append(
+        route_solutions_by_route_group_id[route_solution.local_delivery_plan_id].append(
             route_solution
         )
         if route_solution.id is not None:
             route_solutions_by_id[route_solution.id] = route_solution
 
-    local_context["route_solutions_by_local_delivery_id"] = dict(
-        route_solutions_by_local_delivery_id
-    )
+    route_solutions_by_route_group_id = dict(route_solutions_by_route_group_id)
+    local_context["route_solutions_by_route_group_id"] = route_solutions_by_route_group_id
+    local_context["route_solutions_by_local_delivery_id"] = route_solutions_by_route_group_id
     local_context["route_solutions_by_id"] = route_solutions_by_id
 
     target_order_ids = sorted(

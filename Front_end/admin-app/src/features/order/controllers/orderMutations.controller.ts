@@ -21,7 +21,7 @@ import {
   setOrderPlanId,
   useOrderStore,
 } from '../store/order.store'
-import { patchPlanTotals, selectPlanByServerId, usePlanStore } from '@/features/plan/store/plan.slice'
+import { patchRoutePlanTotals, selectRoutePlanByServerId, useRoutePlanStore } from '@/features/plan/store/routePlan.slice'
 
 export const useOrderMutations = () => {
   const updateOrderDeliveryPlanApi = useUpdateOrderDeliveryPlanApi()
@@ -64,10 +64,10 @@ export const useOrderMutations = () => {
         total_items: number | null
         total_orders: number | null
       }
-      const planStoreState = usePlanStore.getState()
+      const planStoreState = useRoutePlanStore.getState()
       const oldPlanId = order.delivery_plan_id ?? null
-      const oldPlan = oldPlanId != null ? selectPlanByServerId(oldPlanId)(planStoreState) : null
-      const newPlan = selectPlanByServerId(parsedPlanId)(planStoreState)
+      const oldPlan = oldPlanId != null ? selectRoutePlanByServerId(oldPlanId)(planStoreState) : null
+      const newPlan = selectRoutePlanByServerId(parsedPlanId)(planStoreState)
 
       const oldPlanTotalSnapshot: PlanTotalsSnapshot | null =
         oldPlan?.id != null
@@ -106,7 +106,7 @@ export const useOrderMutations = () => {
 
           // Optimistic: subtract this order's weight/volume/items from the old plan
           if (oldPlan?.id != null && oldPlanTotalSnapshot != null) {
-            patchPlanTotals(oldPlan.id, {
+            patchRoutePlanTotals(oldPlan.id, {
               total_weight: Math.max(
                 0,
                 (oldPlanTotalSnapshot.total_weight ?? 0) - (order.total_weight ?? 0),
@@ -125,7 +125,7 @@ export const useOrderMutations = () => {
 
           // Optimistic: add this order's weight/volume/items to the new plan
           if (newPlan?.id != null) {
-            patchPlanTotals(newPlan.id, {
+            patchRoutePlanTotals(newPlan.id, {
               total_weight:
                 (newPlanTotalSnapshot?.total_weight ?? 0) + (order.total_weight ?? 0),
               total_volume:
@@ -160,7 +160,7 @@ export const useOrderMutations = () => {
 
           // Server-authoritative plan totals override the optimistic deltas
           response.data?.plan_totals?.forEach((p) => {
-            patchPlanTotals(p.id, {
+            patchRoutePlanTotals(p.id, {
               total_weight: p.total_weight,
               total_volume: p.total_volume,
               total_items: p.total_items,
@@ -203,10 +203,10 @@ export const useOrderMutations = () => {
 
           // Restore plan total snapshots
           if (snapOldPlanId != null && snapOldTotals != null) {
-            patchPlanTotals(snapOldPlanId, snapOldTotals)
+            patchRoutePlanTotals(snapOldPlanId, snapOldTotals)
           }
           if (snapNewTotals != null) {
-            patchPlanTotals(snapNewPlanId, snapNewTotals)
+            patchRoutePlanTotals(snapNewPlanId, snapNewTotals)
           }
         },
         onError: (error) => {

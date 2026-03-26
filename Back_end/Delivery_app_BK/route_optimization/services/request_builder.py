@@ -12,7 +12,7 @@ from Delivery_app_BK.route_optimization.domain.models import (
     ShipmentMember,
     TimeWindow,
 )
-from Delivery_app_BK.services.domain.local_delivery import (
+from Delivery_app_BK.services.domain.delivery_plan.local_delivery import (
     calculate_service_time_seconds,
     combine_plan_date_and_local_hhmm_to_utc,
     normalize_service_time_payload,
@@ -44,6 +44,12 @@ DEFAULT_VEHICLE_VALUES = {
 
 def build_request(context: OptimizationContext) -> OptimizationRequest:
     incoming_data = context.incoming_data
+    route_group = getattr(context, "route_group", None)
+    if route_group is None:
+        route_group = context.local_delivery_plan
+    route_plan = getattr(context, "route_plan", None)
+    if route_plan is None:
+        route_plan = context.delivery_plan
 
     start_location = (
         incoming_data.get("start_location")
@@ -114,8 +120,10 @@ def build_request(context: OptimizationContext) -> OptimizationRequest:
             cost_per_kilometer = float(vehicle.cost_per_km)
 
     return OptimizationRequest(
-        delivery_plan_id=context.delivery_plan.id,
-        local_delivery_plan_id=context.local_delivery_plan.id,
+        route_plan_id=route_plan.id,
+        route_group_id=route_group.id,
+        delivery_plan_id=route_plan.id,
+        local_delivery_plan_id=route_group.id,
         route_solution_id=context.route_solution.id,
         shipments=shipments,
         start_location=start_location,

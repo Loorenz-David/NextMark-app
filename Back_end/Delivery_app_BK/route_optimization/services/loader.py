@@ -2,7 +2,7 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from Delivery_app_BK.errors import ValidationFailed, NotFound
 from sqlalchemy.orm import selectinload
-from Delivery_app_BK.models import LocalDeliveryPlan, RouteSolution, DeliveryPlan, Order, db
+from Delivery_app_BK.models import RouteGroup, RouteSolution, RoutePlan, Order, db
 from Delivery_app_BK.models.tables.infrastructure.vehicle import Vehicle
 from Delivery_app_BK.route_optimization.domain.models import OptimizationContext
 from Delivery_app_BK.services.queries.get_instance import get_instance
@@ -16,31 +16,33 @@ def _ensure_utc(value: datetime | None) -> datetime | None:
 
 def load_optimization_context(ctx:ServiceContext) -> OptimizationContext:
     incoming_data = ctx.incoming_data or {}
-    local_delivery_plan_id = incoming_data.get("local_delivery_plan_id")
-    if local_delivery_plan_id is None:
-        raise ValidationFailed("Missing local_delivery_plan_id.")
+    route_group_id = incoming_data.get("route_group_id")
+    if route_group_id is None:
+        route_group_id = incoming_data.get("local_delivery_plan_id")
+    if route_group_id is None:
+        raise ValidationFailed("Missing route_group_id.")
 
-    local_delivery_plan = get_instance(
+    route_group = get_instance(
         ctx=ctx,
-        model=LocalDeliveryPlan,
-        value=local_delivery_plan_id,
+        model=RouteGroup,
+        value=route_group_id,
     )
-    delivery_plan: DeliveryPlan = local_delivery_plan.delivery_plan
-    if not delivery_plan:
-        raise ValidationFailed("Local delivery plan is missing delivery plan.")
+    route_plan: RoutePlan = route_group.route_plan
+    if not route_plan:
+        raise ValidationFailed("Route group is missing route plan.")
 
-    is_route_solution_end_date_valid(delivery_plan)
+    is_route_solution_end_date_valid(route_plan)
 
-    route_solution = _select_route_solution(local_delivery_plan)
+    route_solution = _select_route_solution(route_group)
 
     orders = (
         db.session.query(Order)
         .options(selectinload(Order.delivery_windows), selectinload(Order.items))
-        .filter(Order.delivery_plan_id == delivery_plan.id)
+        .filter(Order.delivery_plan_id == route_plan.id)
         .all()
     )
     if not orders:
-        raise ValidationFailed("Delivery plan has no orders to optimize.")
+        raise ValidationFailed("Route plan has no orders to optimize.")
 
     route_end_strategy = (incoming_data.get("route_end_strategy") or
                           route_solution.route_end_strategy or
@@ -52,8 +54,8 @@ def load_optimization_context(ctx:ServiceContext) -> OptimizationContext:
         vehicle = db.session.get(Vehicle, route_solution.vehicle_id)
 
     return OptimizationContext(
-        local_delivery_plan=local_delivery_plan,
-        delivery_plan=delivery_plan,
+        local_delivery_plan=route_group,
+        delivery_plan=route_plan,
         route_solution=route_solution,
         orders=orders,
         identity=ctx.identity,
@@ -68,28 +70,28 @@ def load_optimization_context(ctx:ServiceContext) -> OptimizationContext:
     )
 
 
-def _select_route_solution(local_delivery_plan: LocalDeliveryPlan) -> RouteSolution:
-    route_solutions = list(local_delivery_plan.route_solutions or [])
+def _select_route_solution(route_group: RouteGroup) -> RouteSolution:
+    route_solutions = list(route_group.route_solutions or [])
     if not route_solutions:
-        raise ValidationFailed("Local delivery plan has no route solutions.")
+        raise ValidationFailed("Route group has no route solutions.")
 
     for route_solution in route_solutions:
         if getattr(route_solution, "is_selected", False):
             return route_solution
 
-    raise ValidationFailed("Local delivery plan has no selected route solution.")
+    raise ValidationFailed("Route group has no selected route solution.")
 
 
-def is_route_solution_end_date_valid (delivery_plan :DeliveryPlan):
+def is_route_solution_end_date_valid (route_plan: RoutePlan):
     try:
 
-        if delivery_plan:
+        if route_plan:
             now = datetime.now(timezone.utc)
-            start_date = _ensure_utc(delivery_plan.start_date) or now
-            end_date = _ensure_utc(delivery_plan.end_date) or start_date
+            start_date = _ensure_utc(route_plan.start_date) or now
+            end_date = _ensure_utc(route_plan.end_date) or start_date
             
     except Exception:
-        raise NotFound('route solution has no local delivery or local delivery plan has no delivery plan linked.')
+        raise NotFound('route solution has no route group or route group has no route plan linked.')
 
     if end_date < now:
-        raise ValidationFailed('This route has already ended and cannot be optimized. Update the delivery plan end date to a future time to re-optimize.')
+        raise ValidationFailed('This route has already ended and cannot be optimized. Update the route plan end date to a future time to re-optimize.')

@@ -1,5 +1,5 @@
 from Delivery_app_BK.models import Order, db
-from Delivery_app_BK.services.domain.plan.route_freshness import get_route_freshness_updated_at
+from Delivery_app_BK.services.domain.delivery_plan.plan.route_freshness import get_route_freshness_updated_at
 from Delivery_app_BK.services.domain.order.order_events import OrderEvent as StoredOrderEventName
 from Delivery_app_BK.sockets.contracts.realtime import (
     BUSINESS_EVENT_ORDER_CREATED,

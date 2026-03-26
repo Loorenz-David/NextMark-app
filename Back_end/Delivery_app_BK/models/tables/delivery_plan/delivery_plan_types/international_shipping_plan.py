@@ -21,14 +21,11 @@ class InternationalShippingPlan(db.Model, TeamScopedMixin):
     
     carrier_name = Column(String)
     
-    delivery_plan_id = Column(
+    route_plan_id = Column(
         Integer,
-        ForeignKey("delivery_plan.id", ondelete="CASCADE"),
+        ForeignKey("route_plan.id", ondelete="CASCADE"),
         unique=True,
-        nullable=False
+        nullable=False,
     )
 
-    delivery_plan = relationship(
-        "DeliveryPlan",
-        back_populates = "international_shipping"
-    )
+    route_plan = relationship("RoutePlan")

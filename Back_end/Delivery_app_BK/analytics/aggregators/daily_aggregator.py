@@ -44,11 +44,12 @@ def aggregate_daily_metrics(
     target_date: date,
     team_timezone: str = "UTC",
     zone_id: Optional[int] = None,
+    zone_version_id: Optional[int] = None,
 ) -> AnalyticsDailyFact:
     """Compute daily aggregate metrics for a team on a given local date.
 
     zone_id=None → global (team-wide) aggregate.
-    zone_id=<int> → per-zone aggregate (active once Phase 4 populates zone_id).
+    zone_id=<int> → per-zone aggregate (active once zone attribution populates zone data).
     """
     from Delivery_app_BK.models.tables.order.order import Order
     from Delivery_app_BK.models.tables.delivery_plan.delivery_plan_types.local_delivery_plan.route_solutions.route_solution import (
@@ -100,6 +101,10 @@ def aggregate_daily_metrics(
         )
         if zone_id is not None:
             snap_q = snap_q.filter(RouteMetricsSnapshotModel.zone_id == zone_id)
+        if zone_version_id is not None:
+            snap_q = snap_q.filter(
+                RouteMetricsSnapshotModel.zone_version_id == zone_version_id
+            )
         snapshots = snap_q.all()
 
     avg_delay = (
@@ -129,6 +134,7 @@ def aggregate_daily_metrics(
         total_distance_meters=total_distance,
         total_travel_time_seconds=total_travel_time,
         zone_id=zone_id,
+        zone_version_id=zone_version_id,
     )
 
 
@@ -166,6 +172,7 @@ def persist_daily_metrics(metrics: AnalyticsDailyFact) -> AnalyticsDailyFactMode
     row.on_time_routes_count = metrics.on_time_routes_count
     row.total_distance_meters = metrics.total_distance_meters
     row.total_travel_time_seconds = metrics.total_travel_time_seconds
+    row.zone_version_id = metrics.zone_version_id
 
     db.session.commit()
     return row

@@ -5,11 +5,17 @@ from Delivery_app_BK.ai.prompts.statistics_clarify_prompt import build_statistic
 from Delivery_app_BK.ai.prompts.statistics_execute_prompt import build_statistics_execute_prompt
 from Delivery_app_BK.ai.prompts.statistics_intent_prompt import build_statistics_intent_prompt
 from Delivery_app_BK.ai.stages import CLARIFY_STAGE, EXECUTE_STAGE, INTENT_STAGE
-from Delivery_app_BK.ai.tools.analytics_tools import get_analytics_snapshot
+from Delivery_app_BK.ai.tools.analytics_tools import (
+    get_analytics_snapshot,
+    get_daily_summary,
+    get_route_metrics_tool,
+)
 
 
 STATISTICS_TOOLS = {
     "get_analytics_snapshot": get_analytics_snapshot,
+    "get_daily_summary": get_daily_summary,
+    "get_route_metrics_tool": get_route_metrics_tool,
 }
 
 

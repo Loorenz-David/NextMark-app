@@ -1,6 +1,6 @@
 from types import SimpleNamespace
 
-from Delivery_app_BK.services.commands.plan.plan_states import update_plan_state as module
+from Delivery_app_BK.services.commands.delivery_plan.plan_states import update_plan_state as module
 
 
 class _DummyTransaction:

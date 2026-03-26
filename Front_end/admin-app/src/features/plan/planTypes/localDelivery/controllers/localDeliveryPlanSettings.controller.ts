@@ -28,10 +28,10 @@ import type { RouteSolution } from '@/features/plan/planTypes/localDelivery/type
 import type { LocalDeliveryEditFormState } from '@/features/plan/planTypes/localDelivery/forms/localDeliveryEditForm/LocalDeliveryEditForm.types'
 
 import {
-  selectPlanByServerId,
-  updatePlan,
-  usePlanStore,
-} from '@/features/plan/store/plan.slice'
+  selectRoutePlanByServerId,
+  updateRoutePlan,
+  useRoutePlanStore,
+} from '@/features/plan/store/routePlan.slice'
 import {
   selectLocalDeliveryPlanByServerId,
   updateLocalDeliveryPlan,
@@ -114,10 +114,10 @@ export function useLocalDeliveryPlanSettingsMutations() {
       }
 
       if (payload.delivery_plan?.id) {
-        const plan = selectPlanByServerId(payload.delivery_plan.id)(usePlanStore.getState())
+        const plan = selectRoutePlanByServerId(payload.delivery_plan.id)(useRoutePlanStore.getState())
         if (plan) {
           snapshots.plan = { ...plan }
-          updatePlan(plan.client_id, (prev) => ({
+          updateRoutePlan(plan.client_id, (prev: DeliveryPlan) => ({
             ...prev,
             ...payload.delivery_plan,
           }))
@@ -177,7 +177,7 @@ export function useLocalDeliveryPlanSettingsMutations() {
         console.error('Failed to update local delivery settings', error)
 
         if (snapshots.plan?.client_id) {
-          updatePlan(snapshots.plan.client_id, () => snapshots.plan as DeliveryPlan)
+          updateRoutePlan(snapshots.plan.client_id, () => snapshots.plan as DeliveryPlan)
         }
         if (snapshots.local?.client_id) {
           updateLocalDeliveryPlan(snapshots.local.client_id, () => snapshots.local as LocalDeliveryPlan)

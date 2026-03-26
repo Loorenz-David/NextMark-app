@@ -5,7 +5,7 @@ import { toDateOnly, validateDateComparison } from '@/shared/data-validation/tim
 import type { address } from '@/types/address'
 
 
-import { usePlanStore, selectPlanByServerId } from '@/features/plan/store/plan.slice'
+import { useRoutePlanStore, selectRoutePlanByServerId } from '@/features/plan/store/routePlan.slice'
 
 import {
   useRouteSolutionStore,
@@ -31,7 +31,7 @@ export const serializeRouteSolutionForTemplate = (
 ): ClassicTemplateRouteProps | null => {
   if (!planId || !localDeliveryPlanId) return null
 
-  const plan = selectPlanByServerId(planId)(usePlanStore.getState())
+  const plan = selectRoutePlanByServerId(planId)(useRoutePlanStore.getState())
 
   const routeSolution = selectSelectedRouteSolutionByLocalDeliveryPlanId(localDeliveryPlanId)(
     useRouteSolutionStore.getState(),

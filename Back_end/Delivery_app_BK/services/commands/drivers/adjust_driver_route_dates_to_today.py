@@ -4,12 +4,12 @@ from datetime import datetime, timezone
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from Delivery_app_BK.errors import ValidationFailed
-from Delivery_app_BK.services.commands.plan.local_delivery.update_settings import (
+from Delivery_app_BK.services.commands.delivery_plan.local_delivery.update_settings import (
     apply_local_delivery_settings_request,
 )
 from Delivery_app_BK.services.context import ServiceContext
 from Delivery_app_BK.services.requests.common.types import parse_optional_time_zone
-from Delivery_app_BK.services.requests.plan.local_delivery.update_settings import (
+from Delivery_app_BK.services.requests.delivery_plan.plan.local_delivery.update_settings import (
     DeliveryPlanPatchRequest,
     LocalDeliveryPlanPatchRequest,
     LocalDeliverySettingsRequest,

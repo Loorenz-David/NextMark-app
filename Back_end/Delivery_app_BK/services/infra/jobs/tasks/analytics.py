@@ -59,9 +59,14 @@ def aggregate_daily_metrics_job() -> None:
         )
         persist_daily_metrics(global_metrics)
 
-        # Per-zone rows — no-op skeleton until Phase 4
-        distinct_zone_ids = (
-            db.session.query(RouteMetricsSnapshotModel.zone_id)
+        # Per-zone rows — query distinct (zone_id, zone_version_id) pairs so
+        # both dimensions flow into the daily fact and populate the composite
+        # index (team_id, date, zone_version_id, zone_id).
+        distinct_zone_pairs = (
+            db.session.query(
+                RouteMetricsSnapshotModel.zone_id,
+                RouteMetricsSnapshotModel.zone_version_id,
+            )
             .filter(
                 RouteMetricsSnapshotModel.team_id == team.id,
                 RouteMetricsSnapshotModel.zone_id.isnot(None),
@@ -69,11 +74,12 @@ def aggregate_daily_metrics_job() -> None:
             .distinct()
             .all()
         )
-        for (zid,) in distinct_zone_ids:
+        for zid, zvid in distinct_zone_pairs:
             zone_metrics = aggregate_daily_metrics(
                 team_id=team.id,
                 target_date=yesterday,
                 team_timezone=team_tz,
                 zone_id=zid,
+                zone_version_id=zvid,
             )
             persist_daily_metrics(zone_metrics)

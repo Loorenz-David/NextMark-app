@@ -1,8 +1,8 @@
 from typing import List
 
-from Delivery_app_BK.models import DeliveryPlan, RouteSolution
+from Delivery_app_BK.models import RoutePlan, RouteSolution
 from Delivery_app_BK.services.context import ServiceContext
-from Delivery_app_BK.services.queries.plan_types.serialize_local_delivery_plan import (
+from Delivery_app_BK.services.queries.delivery_plan.plan_types.serialize_local_delivery_plan import (
     serialize_local_delivery_plan,
 )
 from Delivery_app_BK.services.queries.route_solutions import (
@@ -11,7 +11,7 @@ from Delivery_app_BK.services.queries.route_solutions import (
 from Delivery_app_BK.services.queries.utils import map_return_values
 
 
-def _serialize_delivery_plan_collapsed(instance: DeliveryPlan | None):
+def _serialize_route_plan_collapsed(instance: RoutePlan | None):
     if instance is None:
         return None
 
@@ -22,7 +22,8 @@ def _serialize_delivery_plan_collapsed(instance: DeliveryPlan | None):
         "id": instance.id,
         "client_id": instance.client_id,
         "label": instance.label,
-        "plan_type": instance.plan_type,
+        "date_strategy": getattr(instance, "date_strategy", None),
+        "plan_type": getattr(instance, "plan_type", None),
         "start_date": start_date.isoformat() if start_date else None,
         "end_date": end_date.isoformat() if end_date else None,
         "created_at": created_at.isoformat() if created_at else None,
@@ -31,16 +32,33 @@ def _serialize_delivery_plan_collapsed(instance: DeliveryPlan | None):
     }
 
 
+def _serialize_delivery_plan_collapsed(instance: RoutePlan | None):
+    # Backward-compatible alias while route_plan naming is rolled out.
+    return _serialize_route_plan_collapsed(instance)
+
+
 def serialize_active_route(instance: RouteSolution, ctx: ServiceContext):
-    local_delivery_plan = getattr(instance, "local_delivery_plan", None)
-    delivery_plan = getattr(local_delivery_plan, "delivery_plan", None) if local_delivery_plan else None
+    route_group = getattr(instance, "route_group", None)
+    if route_group is None:
+        route_group = getattr(instance, "local_delivery_plan", None)
+    route_plan = getattr(route_group, "route_plan", None) if route_group else None
+    if route_plan is None and route_group is not None:
+        route_plan = getattr(route_group, "delivery_plan", None)
+
+    serialized_route_plan = _serialize_route_plan_collapsed(route_plan)
 
     unpacked = {
         **serialize_route_solution(instance),
-        "delivery_plan": _serialize_delivery_plan_collapsed(delivery_plan),
+        "route_plan": serialized_route_plan,
+        "delivery_plan": serialized_route_plan,
+        "route_group": (
+            serialize_local_delivery_plan(route_group, ctx)
+            if route_group is not None
+            else None
+        ),
         "local_delivery_plan": (
-            serialize_local_delivery_plan(local_delivery_plan, ctx)
-            if local_delivery_plan is not None
+            serialize_local_delivery_plan(route_group, ctx)
+            if route_group is not None
             else None
         ),
     }
@@ -49,10 +67,15 @@ def serialize_active_route(instance: RouteSolution, ctx: ServiceContext):
 
 
 def serialize_active_route_summary(instance: RouteSolution, ctx: ServiceContext):
-    local_delivery_plan = getattr(instance, "local_delivery_plan", None)
-    delivery_plan = getattr(local_delivery_plan, "delivery_plan", None) if local_delivery_plan else None
+    route_group = getattr(instance, "route_group", None)
+    if route_group is None:
+        route_group = getattr(instance, "local_delivery_plan", None)
+    route_plan = getattr(route_group, "route_plan", None) if route_group else None
+    if route_plan is None and route_group is not None:
+        route_plan = getattr(route_group, "delivery_plan", None)
     created_at = instance.created_at
     updated_at = instance.updated_at
+    route_group_id = getattr(instance, "route_group_id", None)
 
     return {
         "id": instance.id,
@@ -60,10 +83,12 @@ def serialize_active_route_summary(instance: RouteSolution, ctx: ServiceContext)
         "_representation": "summary",
         "is_selected": bool(instance.is_selected),
         "driver_id": instance.driver_id,
-        "local_delivery_plan_id": instance.local_delivery_plan_id,
+        "route_group_id": route_group_id,
+        "local_delivery_plan_id": route_group_id,
         "created_at": created_at.isoformat() if created_at else None,
         "updated_at": updated_at.isoformat() if updated_at else None,
-        "delivery_plan": _serialize_delivery_plan_collapsed(delivery_plan),
+        "route_plan": _serialize_route_plan_collapsed(route_plan),
+        "delivery_plan": _serialize_route_plan_collapsed(route_plan),
     }
 
 

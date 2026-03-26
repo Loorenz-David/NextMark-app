@@ -6,14 +6,13 @@ from typing import Any, Dict, List, Optional, Tuple
 
 from Delivery_app_BK.errors import ValidationFailed
 from Delivery_app_BK.models import Order, RouteSolution, RouteSolutionStop
-from Delivery_app_BK.services.domain.local_delivery import (
+from Delivery_app_BK.services.domain.delivery_plan.local_delivery import (
     calculate_service_time_seconds,
     combine_plan_date_and_local_hhmm_to_utc,
     ensure_utc_datetime,
     normalize_service_time_payload,
     parse_duration_seconds,
     parse_hhmm,
-    resolve_expected_service_duration_seconds,
     resolve_effective_service_time_payload,
     resolve_request_timezone,
     resolve_order_item_quantity,
@@ -354,14 +353,18 @@ def _resolve_departure_time(
     time_zone: str = None
 ) -> Optional[datetime]:
     now = datetime.now(timezone.utc)
-    min_start = now + timedelta(minutes=5)
 
     plan_start = None
     timezone_plan = None
-    if route_solution.local_delivery_plan and route_solution.local_delivery_plan.delivery_plan:
-        plan = route_solution.local_delivery_plan.delivery_plan
-        timezone_plan = route_solution.local_delivery_plan
-        if plan.start_date:
+    route_group = getattr(route_solution, "route_group", None)
+    if route_group is None:
+        route_group = getattr(route_solution, "local_delivery_plan", None)
+    if route_group is not None:
+        plan = getattr(route_group, "route_plan", None)
+        if plan is None:
+            plan = getattr(route_group, "delivery_plan", None)
+        timezone_plan = route_group
+        if plan is not None and getattr(plan, "start_date", None):
             plan_start = _coerce_datetime(plan.start_date)
 
     request_timezone = resolve_request_timezone(
@@ -372,7 +375,7 @@ def _resolve_departure_time(
     if route_solution.set_start_time:
         parsed = _coerce_datetime(route_solution.set_start_time)
         if parsed:
-            return parsed if parsed >= min_start else min_start
+            return parsed
         time_only = parse_hhmm(route_solution.set_start_time)
         if time_only:
             resolved_departure = combine_plan_date_and_local_hhmm_to_utc(
@@ -380,21 +383,13 @@ def _resolve_departure_time(
                 hhmm=route_solution.set_start_time,
                 tz=request_timezone,
             )
-            if resolved_departure >= min_start:
-                return resolved_departure
-            logger.info(
-                "Clamping past local-delivery departure time route_id=%s requested_departure=%s clamped_departure=%s",
-                getattr(route_solution, "id", None),
-                resolved_departure.isoformat() if resolved_departure else None,
-                min_start.isoformat(),
-            )
-            return min_start
+            return resolved_departure
 
     if plan_start:
         plan_start = ensure_utc_datetime(plan_start)
-        return plan_start if plan_start > min_start else min_start
+        return plan_start
 
-    return min_start
+    return now + timedelta(minutes=5)
 
 
 def _parse_time_string(value: Optional[str]) -> Optional[time_cls]:
@@ -420,12 +415,18 @@ def _resolve_stop_service_duration_seconds(
     default_service_time: dict | None,
 ) -> int | None:
     item_quantity = resolve_order_item_quantity(order) if order is not None else 0
-    return resolve_expected_service_duration_seconds(
-        stop_service_time=stop.service_time,
-        route_solution_service_time=default_service_time,
-        item_quantity=item_quantity,
-        legacy_service_duration=stop.service_duration,
+    effective_service_time = resolve_effective_service_time_payload(
+        getattr(stop, "service_time", None),
+        default_service_time,
     )
+    if effective_service_time is not None:
+        service_minutes = calculate_service_time_seconds(
+            effective_service_time,
+            item_quantity,
+        )
+        if service_minutes is not None:
+            return int(service_minutes) * 60
+    return parse_duration_seconds(getattr(stop, "service_duration", None))
 
 
 def _location_group_key(location: Dict[str, float]) -> str:

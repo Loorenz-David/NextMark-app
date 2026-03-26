@@ -6,7 +6,9 @@ from Delivery_app_BK.models import DeliveryPlan, Order
 from Delivery_app_BK.services.queries.get_instance import get_instance
 
 from ....context import ServiceContext
-from .local_delivery import apply_local_delivery_objective
+from ...local_delivery_app import apply_order_objective as apply_local_delivery_objective
+from ...store_pickup_app import apply_order_objective as apply_store_pickup_objective
+from ...international_shipping_app import apply_order_objective as apply_international_shipping_objective
 from .types import PlanObjectiveCreateResult
 
 
@@ -18,6 +20,8 @@ PlanObjectiveHandler = Callable[
 
 PLAN_OBJECTIVE_HANDLERS = {
     "local_delivery": apply_local_delivery_objective,
+    "store_pickup": apply_store_pickup_objective,
+    "international_shipping": apply_international_shipping_objective,
 }
 
 

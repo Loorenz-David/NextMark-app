@@ -15,7 +15,7 @@ import {
 } from '../store/item.store'
 import type {  Item, ItemUpdateFields } from '../types'
 import { patchOrderTotals, selectOrderByServerId, useOrderStore } from '../../store/order.store'
-import { patchPlanTotals } from '@/features/plan/store/plan.slice'
+import { patchRoutePlanTotals } from '@/features/plan/store/routePlan.slice'
 
 const stripImmutableFields = (draft: Item): ItemUpdateFields => {
   return {
@@ -119,7 +119,7 @@ export const useItemController = () => {
             patchOrderTotals(id, { total_weight, total_volume, total_items })
           })
           response.data?.plan_totals?.forEach((p) => {
-            patchPlanTotals(p.id, {
+            patchRoutePlanTotals(p.id, {
               total_weight: p.total_weight,
               total_volume: p.total_volume,
               total_items: p.total_items,
@@ -182,7 +182,7 @@ export const useItemController = () => {
           patchOrderTotals(id, { total_weight, total_volume, total_items })
         })
         response.data?.plan_totals?.forEach((p) => {
-          patchPlanTotals(p.id, {
+          patchRoutePlanTotals(p.id, {
             total_weight: p.total_weight,
             total_volume: p.total_volume,
             total_items: p.total_items,
@@ -251,7 +251,7 @@ export const useItemController = () => {
           patchOrderTotals(id, { total_weight, total_volume, total_items })
         })
         response.data?.plan_totals?.forEach((p) => {
-          patchPlanTotals(p.id, {
+          patchRoutePlanTotals(p.id, {
             total_weight: p.total_weight,
             total_volume: p.total_volume,
             total_items: p.total_items,

@@ -68,7 +68,7 @@ def test_compute_route_metrics_calculates_delay_and_rate_metrics(monkeypatch):
     )
     monkeypatch.setattr(
         "Delivery_app_BK.analytics.aggregators.route_aggregator.derive_route_zone",
-        lambda _route: None,
+        lambda _route: (None, None),
     )
 
     snapshot = compute_route_metrics(route_solution_id=99)

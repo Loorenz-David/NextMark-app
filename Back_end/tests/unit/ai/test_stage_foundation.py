@@ -146,7 +146,11 @@ def test_statistics_capability_is_read_only_and_scoped():
     tools = capability.get_tools(EXECUTE_STAGE)
 
     assert "senior logistics data analyst" in prompt.lower()
-    assert set(tools.keys()) == {"get_analytics_snapshot"}
+    assert set(tools.keys()) == {
+        "get_analytics_snapshot",
+        "get_daily_summary",
+        "get_route_metrics_tool",
+    }
     assert "create_order" not in prompt
 
 

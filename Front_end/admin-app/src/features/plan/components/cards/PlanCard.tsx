@@ -6,7 +6,7 @@ import { StateCard } from '@/shared/layout/StateCard'
 import { useBaseControlls } from '@/shared/resource-manager/useResourceManager'
 import type { DeliveryPlan } from '../../types/plan'
 import { DimensionsIcon, ItemIcon,  OrderIcon,  WeightIcon } from '@/assets/icons'
-import { useDeliveryPlanStateByServerId } from '../../store/usePlanState.selector'
+import { useRoutePlanStateByServerId } from '../../store/useRoutePlanState.selector'
 import { planIconTypeMap } from '../../utils/planIconTypeMap'
 import { PlusIcon } from '@/assets/icons/index'
 import { coerceUtcFromOffset } from '@/shared/data-validation/timeValidation'
@@ -33,7 +33,7 @@ export const PlanCard = ({ plan, isOver, dropFeedback }: PropsPlanCard) => {
     const itemCount = plan.total_items ?? 0
     const totalVolume = plan.total_volume ?? 0
     const totalWeight = plan.total_weight ?? 0
-    const DeliveryPlanState = useDeliveryPlanStateByServerId( plan.state_id ?? 1 )
+    const DeliveryPlanState = useRoutePlanStateByServerId( plan.state_id ?? 1 )
 
     
 

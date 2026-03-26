@@ -7,11 +7,11 @@ import {
   useRouteSolutionsByLocalDeliveryPlanId,
   useSelectedRouteSolutionByLocalDeliveryPlanId,
 } from '@/features/plan/planTypes/localDelivery/store/useRouteSolution.selector'
-import { usePlanByServerId } from '@/features/plan/store/usePlan.selector'
+import { useRoutePlanByServerId } from '@/features/plan/store/useRoutePlan.selector'
 
 export const useLocalDeliveryBootstrapFlow = (planId: number, freshAfter?: string | null) => {
   const { fetchLocalDeliveryOverview } = useLocalDeliveryOverviewFlow()
-  const plan = usePlanByServerId(planId)
+  const plan = useRoutePlanByServerId(planId)
   const localDeliveryPlan = useLocalDeliveryPlanByPlanId(planId)
   const localDeliveryPlanId = localDeliveryPlan?.id ?? null
   const routeSolutions = useRouteSolutionsByLocalDeliveryPlanId(localDeliveryPlanId)

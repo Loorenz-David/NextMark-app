@@ -9,7 +9,7 @@ import { formatIsoToTeamTimeZone } from '@/shared/utils/teamTimeZone'
 import { coerceUtcFromOffset } from '@/shared/data-validation/timeValidation'
 import { formatRouteTime } from '@/features/plan/planTypes/localDelivery/utils/formatRouteTime'
 import { useOrdersByPlanId } from '@/features/order/store/orderHooks.store'
-import { usePlanByServerId } from '@/features/plan/store/usePlan.selector'
+import { useRoutePlanByServerId } from '@/features/plan/store/useRoutePlan.selector'
 import { useLocalDeliveryPlanByPlanId, useLocalDeliveryPlanByServerId } from '@/features/plan/planTypes/localDelivery/store/useLocalDeliveryPlan.selector'
 import { useSelectedRouteSolutionByLocalDeliveryPlanId } from '@/features/plan/planTypes/localDelivery/store/useRouteSolution.selector'
 import { selectRouteSolutionStopsBySolutionId, useRouteSolutionStopStore } from '@/features/plan/planTypes/localDelivery/store/routeSolutionStop.store'
@@ -51,7 +51,7 @@ export const LocalDeliveryStatsPage = ({ payload }: LocalDeliveryStatsPageProps)
   const localDeliveryPlanFromId = useLocalDeliveryPlanByServerId(payloadLocalDeliveryPlanId)
   const localDeliveryPlan = localDeliveryPlanFromId ?? localDeliveryPlanFromPlan
   const localDeliveryPlanId = payloadLocalDeliveryPlanId ?? localDeliveryPlan?.id ?? null
-  const plan = usePlanByServerId(planId ?? localDeliveryPlan?.delivery_plan_id ?? null)
+  const plan = useRoutePlanByServerId(planId ?? localDeliveryPlan?.delivery_plan_id ?? null)
   const orders = useOrdersByPlanId( plan?.id ?? planId ?? localDeliveryPlan?.delivery_plan_id ?? null )
   const routeSolution = useSelectedRouteSolutionByLocalDeliveryPlanId(localDeliveryPlanId)
   const routeStops = useRouteSolutionStopStore(

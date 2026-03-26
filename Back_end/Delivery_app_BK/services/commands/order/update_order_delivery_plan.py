@@ -7,17 +7,17 @@ from sqlalchemy.orm.exc import NoResultFound
 from Delivery_app_BK.errors import NotFound, ValidationFailed
 from Delivery_app_BK.models import (
     CaseChat,
-    DeliveryPlan,
     Order,
     OrderCase,
+    RoutePlan,
     RouteSolution,
     RouteSolutionStop,
     db,
 )
-from Delivery_app_BK.services.commands.plan.local_delivery.route_solution.plan_sync import (
+from Delivery_app_BK.services.commands.delivery_plan.local_delivery.route_solution.plan_sync import (
     build_incremental_route_sync_action,
 )
-from Delivery_app_BK.services.commands.plan.local_delivery.route_solution.stops import (
+from Delivery_app_BK.services.commands.delivery_plan.local_delivery.route_solution.stops import (
     remove_orders_stops_for_local_delivery,
 )
 from Delivery_app_BK.services.infra.events.builders.order import (
@@ -27,8 +27,8 @@ from Delivery_app_BK.services.infra.events.emiters.order import emit_order_event
 from Delivery_app_BK.services.queries.route_solutions.serialize_route_solutions import (
     serialize_route_solution,
 )
-from Delivery_app_BK.services.domain.plan.route_freshness import touch_route_freshness
-from Delivery_app_BK.services.domain.plan.recompute_plan_totals import recompute_plan_totals
+from Delivery_app_BK.services.domain.delivery_plan.plan.route_freshness import touch_route_freshness
+from Delivery_app_BK.services.domain.delivery_plan.plan.recompute_plan_totals import recompute_plan_totals
 from Delivery_app_BK.services.domain.state_transitions.order_count_engine import recompute_plan_order_counts
 from Delivery_app_BK.services.domain.state_transitions.plan_state_engine import apply_plan_state, maybe_auto_complete_plan
 from Delivery_app_BK.services.domain.state_transitions.order_move_rules import compute_destination_move_result, OrderMoveResult
@@ -66,7 +66,7 @@ def apply_orders_delivery_plan_change(
 
     for target_id in normalized_order_ids:
         order_instance = orders_by_target_id[target_id]
-        old_plan_id = order_instance.delivery_plan_id
+        old_plan_id = _get_order_route_plan_id(order_instance)
 
         if old_plan_id == new_plan.id:
             ctx.set_warning(
@@ -126,7 +126,7 @@ def apply_orders_delivery_plan_change(
             else old_plan
         )
 
-        order_instance.delivery_plan_id = new_plan.id
+        _set_order_route_plan_id(order_instance, new_plan.id)
         order_instance.order_plan_objective = new_plan.plan_type
 
         change_result = apply_order_plan_change(
@@ -237,7 +237,7 @@ def _prepare_old_local_delivery_batch_changes(
     *,
     ctx: ServiceContext,
     apply_context,
-    old_plans_by_id: dict[int, DeliveryPlan],
+    old_plans_by_id: dict[int, RoutePlan],
     old_plan_id_by_order_id: dict[int, int | None],
 ) -> dict:
     order_ids_by_old_local_plan_id: dict[int, list[int]] = {}
@@ -490,15 +490,21 @@ def _create_move_case(
 def update_orders_delivery_plan(
     ctx: ServiceContext,
     order_ids: int | list[int],
-    plan_id: int,
+    plan_id: int | None,
 ) -> dict:
     try:
         with db.session.begin():
-            outcome = apply_orders_delivery_plan_change(ctx, order_ids, plan_id)
+            if plan_id is None:
+                outcome = apply_orders_delivery_plan_unassign(ctx, order_ids)
+            else:
+                outcome = apply_orders_delivery_plan_change(ctx, order_ids, plan_id)
     except InvalidRequestError as exc:
         if "already begun" not in str(exc).lower():
             raise
-        outcome = apply_orders_delivery_plan_change(ctx, order_ids, plan_id)
+        if plan_id is None:
+            outcome = apply_orders_delivery_plan_unassign(ctx, order_ids)
+        else:
+            outcome = apply_orders_delivery_plan_change(ctx, order_ids, plan_id)
 
     pending_events = outcome.get("pending_events") or []
     if pending_events:
@@ -513,6 +519,179 @@ def update_order_delivery_plan(
     plan_id: int,
 ) -> dict:
     return update_orders_delivery_plan(ctx, order_id, plan_id)
+
+
+def unassign_order_delivery_plan(
+    ctx: ServiceContext,
+    order_id: int,
+) -> dict:
+    return update_orders_delivery_plan(ctx, order_id, None)
+
+
+def apply_orders_delivery_plan_unassign(
+    ctx: ServiceContext,
+    order_ids: int | list[int],
+) -> dict:
+    normalized_order_ids = _normalize_order_ids(order_ids)
+    if not normalized_order_ids:
+        return {
+            "updated": [],
+            "pending_events": [],
+        }
+
+    orders_by_target_id = _resolve_orders_for_update(ctx, normalized_order_ids)
+
+    old_plan_ids: set[int] = set()
+    changed_orders: list[Order] = []
+    old_plan_id_by_order_id: dict[int, int | None] = {}
+
+    for target_id in normalized_order_ids:
+        order_instance = orders_by_target_id[target_id]
+        old_plan_id = _get_order_route_plan_id(order_instance)
+        if old_plan_id is None:
+            ctx.set_warning(
+                f"Order: {target_id}. Is already unassigned from any delivery plan"
+            )
+            continue
+
+        old_plan_ids.add(old_plan_id)
+        old_plan_id_by_order_id[order_instance.id] = old_plan_id
+        changed_orders.append(order_instance)
+
+    if not changed_orders:
+        return {
+            "updated": [],
+            "pending_events": [],
+        }
+
+    old_plans_by_id = _load_delivery_plans_by_id(ctx, list(old_plan_ids))
+    relevant_plan_types = {
+        plan.plan_type
+        for plan in old_plans_by_id.values()
+        if getattr(plan, "plan_type", None)
+    }
+    apply_context = build_plan_change_apply_context(
+        ctx=ctx,
+        plan_ids=list(old_plan_ids),
+        relevant_plan_types=relevant_plan_types,
+    )
+    old_local_delivery_batch = _prepare_old_local_delivery_batch_changes(
+        ctx=ctx,
+        apply_context=apply_context,
+        old_plans_by_id=old_plans_by_id,
+        old_plan_id_by_order_id=old_plan_id_by_order_id,
+    )
+    batched_old_local_delivery_order_ids: set[int] = old_local_delivery_batch["order_ids"]
+
+    pending_events: list[dict] = []
+    extra_instances: list[object] = list(old_local_delivery_batch["instances"])
+    post_flush_actions = list(old_local_delivery_batch["post_flush_actions"])
+    plan_change_result_by_order_id: dict[int, PlanChangeResult] = {}
+
+    for target_id in normalized_order_ids:
+        order_instance = orders_by_target_id[target_id]
+        if order_instance.id not in old_plan_id_by_order_id:
+            continue
+
+        old_plan_id = old_plan_id_by_order_id[order_instance.id]
+        old_plan = old_plans_by_id.get(old_plan_id) if old_plan_id else None
+        old_plan_for_apply = (
+            None
+            if order_instance.id in batched_old_local_delivery_order_ids
+            else old_plan
+        )
+
+        _set_order_route_plan_id(order_instance, None)
+        order_instance.order_plan_objective = None
+
+        change_result = apply_order_plan_change(
+            ctx=ctx,
+            order_instance=order_instance,
+            old_plan=old_plan_for_apply,
+            new_plan=None,
+            apply_context=apply_context,
+        )
+        plan_change_result_by_order_id[order_instance.id] = change_result
+        extra_instances.extend(change_result.instances)
+        post_flush_actions.extend(change_result.post_flush_actions)
+
+        pending_events.append(
+            build_delivery_plan_changed_event(order_instance, old_plan_id, None)
+        )
+
+    if extra_instances:
+        sanitized_extra_instances = _sanitize_instances_for_session(extra_instances)
+        if sanitized_extra_instances:
+            db.session.add_all(sanitized_extra_instances)
+
+    db.session.flush()
+
+    for action in post_flush_actions:
+        action()
+    if post_flush_actions:
+        db.session.flush()
+
+    plans_to_touch = {
+        plan.id: plan
+        for plan in old_plans_by_id.values()
+        if getattr(plan, "plan_type", None) == "local_delivery"
+    }
+    for delivery_plan in plans_to_touch.values():
+        touch_route_freshness(delivery_plan)
+    if plans_to_touch:
+        db.session.flush()
+
+    for plan in old_plans_by_id.values():
+        recompute_plan_totals(plan)
+        recompute_plan_order_counts(plan)
+        maybe_auto_complete_plan(plan)
+    if old_plans_by_id:
+        db.session.flush()
+
+    old_local_delivery_bundle = _serialize_old_local_delivery_batch_bundle(
+        updated_stops=old_local_delivery_batch["updated_stops"],
+        synced_stops=old_local_delivery_batch["synced_stops"],
+        updated_route_solutions=old_local_delivery_batch["updated_route_solutions"],
+        synced_route_solutions=old_local_delivery_batch["synced_route_solutions"],
+    )
+    old_local_delivery_bundle_attached = False
+    plan_totals_attached = False
+
+    updated_bundles: list[dict] = []
+    for target_id in normalized_order_ids:
+        order_instance = orders_by_target_id[target_id]
+        if order_instance.id not in old_plan_id_by_order_id:
+            continue
+
+        bundle = {
+            "order": serialize_created_order(order_instance),
+        }
+        change_result = plan_change_result_by_order_id.get(order_instance.id)
+        if change_result:
+            bundle.update(change_result.serialize_bundle())
+        if old_local_delivery_bundle and not old_local_delivery_bundle_attached:
+            bundle.update(old_local_delivery_bundle)
+            old_local_delivery_bundle_attached = True
+        if not plan_totals_attached:
+            bundle["plan_totals"] = [
+                {
+                    "id": plan.id,
+                    "total_weight": plan.total_weight_g,
+                    "total_volume": plan.total_volume_cm3,
+                    "total_items": plan.total_item_count,
+                    "total_orders": plan.total_orders,
+                }
+                for plan in old_plans_by_id.values()
+                if plan.id is not None
+            ]
+            plan_totals_attached = True
+
+        updated_bundles.append(bundle)
+
+    return {
+        "updated": updated_bundles,
+        "pending_events": pending_events,
+    }
 
 
 
@@ -536,11 +715,11 @@ def _normalize_order_ids(order_ids: int | list[int]) -> list[int]:
     return deduped_order_ids
 
 
-def _resolve_plan_instance(ctx: ServiceContext, plan_id: int) -> DeliveryPlan:
+def _resolve_plan_instance(ctx: ServiceContext, plan_id: int) -> RoutePlan:
     if isinstance(plan_id, bool) or not isinstance(plan_id, int):
         raise ValidationFailed("plan_id must be provided as an integer.")
     try:
-        return get_instance(ctx, DeliveryPlan, plan_id)
+        return get_instance(ctx, RoutePlan, plan_id)
     except NoResultFound as exc:
         raise NotFound(str(exc)) from exc
 
@@ -575,13 +754,27 @@ def _resolve_orders_for_update(
 def _load_delivery_plans_by_id(
     ctx: ServiceContext,
     plan_ids: list[int],
-) -> dict[int, DeliveryPlan]:
+) -> dict[int, RoutePlan]:
     deduped_plan_ids = list(dict.fromkeys(plan_ids))
     if not deduped_plan_ids:
         return {}
 
-    query = db.session.query(DeliveryPlan).filter(DeliveryPlan.id.in_(deduped_plan_ids))
+    query = db.session.query(RoutePlan).filter(RoutePlan.id.in_(deduped_plan_ids))
     if ctx.team_id:
-        query = query.filter(DeliveryPlan.team_id == ctx.team_id)
+        query = query.filter(RoutePlan.team_id == ctx.team_id)
 
     return {plan.id: plan for plan in query.all()}
+
+
+def _get_order_route_plan_id(order: Order) -> int | None:
+    route_plan_id = getattr(order, "route_plan_id", None)
+    if route_plan_id is None:
+        route_plan_id = getattr(order, "delivery_plan_id", None)
+    return route_plan_id
+
+
+def _set_order_route_plan_id(order: Order, route_plan_id: int | None) -> None:
+    if hasattr(order, "route_plan_id"):
+        order.route_plan_id = route_plan_id
+    else:
+        order.delivery_plan_id = route_plan_id

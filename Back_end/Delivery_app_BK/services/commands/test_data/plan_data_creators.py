@@ -20,7 +20,7 @@ from Delivery_app_BK.route_optimization.constants.is_optimized import (
     IS_OPTIMIZED_NOT_OPTIMIZED,
 )
 from Delivery_app_BK.route_optimization.constants.route_end_strategy import ROUND_TRIP
-from Delivery_app_BK.services.domain.plan.plan_states import PlanStateId
+from Delivery_app_BK.services.domain.delivery_plan.plan.plan_states import PlanStateId
 from Delivery_app_BK.services.commands.base.create_instance import create_instance
 from Delivery_app_BK.services.commands.utils import generate_client_id
 from Delivery_app_BK.services.context import ServiceContext

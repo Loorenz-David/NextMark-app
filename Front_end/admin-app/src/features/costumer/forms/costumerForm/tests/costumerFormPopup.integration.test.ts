@@ -1,4 +1,4 @@
-import { homePopupRegistry } from '@/features/home/registry/homePopups'
+import { homePopupRegistry } from '@/features/home-route-operations/registry/homePopups'
 import { costumerPopupRegistry } from '@/features/costumer/registry/costumerPopups.registry'
 
 const assert = (condition: boolean, message: string) => {

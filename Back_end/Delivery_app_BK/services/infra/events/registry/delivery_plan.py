@@ -1,4 +1,4 @@
-from Delivery_app_BK.services.domain.plan.plan_events import DeliveryPlanEvent
+from Delivery_app_BK.services.domain.delivery_plan.plan.plan_events import DeliveryPlanEvent
 from Delivery_app_BK.services.infra.events.event_bus import EventBus
 from Delivery_app_BK.services.infra.events.handlers.delivery_plan.delivery_plan_email import (
     send_email_on_plan_delivery_rescheduled,

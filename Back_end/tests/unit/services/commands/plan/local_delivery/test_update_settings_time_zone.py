@@ -1,7 +1,7 @@
 from datetime import datetime, timezone
 from types import SimpleNamespace
 
-from Delivery_app_BK.services.commands.plan.local_delivery import (
+from Delivery_app_BK.services.commands.delivery_plan.local_delivery import (
     update_settings as module,
 )
 

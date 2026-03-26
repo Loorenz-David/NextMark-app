@@ -1,4 +1,4 @@
-from .plan import (
+from .delivery_plan.plan import (
     PlanCreateRequest,
     PlanStateUpdateRequest,
     parse_create_plan_request,
@@ -14,7 +14,7 @@ from .order import (
     parse_update_orders_delivery_plan_batch_payload,
     parse_update_orders_delivery_plan_batch_request,
 )
-from .plan.local_delivery import (
+from .delivery_plan.plan.local_delivery import (
     DeliveryPlanPatchRequest,
     LocalDeliveryPlanPatchRequest,
     LocalDeliverySettingsRequest,

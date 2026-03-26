@@ -84,9 +84,9 @@ class User(
     )
 
 
-    local_delivery_plans = relationship(
-        "LocalDeliveryPlan",
-        back_populates = "driver"
+    route_groups = relationship(
+        "RouteGroup",
+        back_populates="driver",
     )
 
     store_pickup_plans = relationship(

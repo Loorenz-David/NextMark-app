@@ -7,9 +7,9 @@ from Delivery_app_BK.services.domain.item.order_item_freshness import (
     touch_orders_items_updated_at,
 )
 from Delivery_app_BK.services.domain.order.recompute_order_totals import recompute_order_totals
-from Delivery_app_BK.services.domain.plan.recompute_plan_totals import recompute_plan_totals
+from Delivery_app_BK.services.domain.delivery_plan.plan.recompute_plan_totals import recompute_plan_totals
 from Delivery_app_BK.services.domain.vehicle.recompute_vehicle_warnings_by_order import recompute_vehicle_warnings_by_order
-from Delivery_app_BK.services.domain.plan.route_freshness import touch_route_freshness_by_order
+from Delivery_app_BK.services.domain.delivery_plan.plan.route_freshness import touch_route_freshness_by_order
 from Delivery_app_BK.services.infra.events.builders.order import build_order_edited_event
 from Delivery_app_BK.services.infra.events.emiters.order import emit_order_events
 from Delivery_app_BK.sockets.emitters.delivery_plan_events import emit_delivery_plan_totals_updated

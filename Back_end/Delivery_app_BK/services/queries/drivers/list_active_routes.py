@@ -1,6 +1,6 @@
 from sqlalchemy.orm import selectinload
 
-from Delivery_app_BK.models import LocalDeliveryPlan, RouteSolution, db
+from Delivery_app_BK.models import RouteGroup, RouteSolution, db
 from Delivery_app_BK.services.context import ServiceContext
 from Delivery_app_BK.services.queries.drivers.serialize_active_routes import (
     serialize_active_routes,
@@ -14,8 +14,8 @@ def list_active_routes(ctx: ServiceContext):
     route_solutions = (
         db.session.query(RouteSolution)
         .options(
-            selectinload(RouteSolution.local_delivery_plan).selectinload(
-                LocalDeliveryPlan.delivery_plan
+            selectinload(RouteSolution.route_group).selectinload(
+                RouteGroup.route_plan
             ),
             selectinload(RouteSolution.stops),
         )

@@ -10,7 +10,7 @@ import type { OrderFormMode, OrderFormState } from '../state/OrderForm.types'
 import { normalizeFormStateForSave, stripImmutableItemFields } from '../../../api/mappers/orderForm.normalize'
 import type { Costumer } from '@/features/costumer'
 import { patchOrderTotals } from '../../../store/order.store'
-import { patchPlanTotals } from '@/features/plan/store/plan.slice'
+import { patchRoutePlanTotals } from '@/features/plan/store/routePlan.slice'
 
 type ItemDraftControllerApi = Pick<
   ReturnType<typeof useOrderItemDraftController>,
@@ -179,7 +179,7 @@ export const executeOrderFormSubmit = async (
           patchOrderTotals(id, { total_weight, total_volume, total_items })
         })
         res.data?.plan_totals?.forEach((p) => {
-          patchPlanTotals(p.id, {
+          patchRoutePlanTotals(p.id, {
             total_weight: p.total_weight,
             total_volume: p.total_volume,
             total_items: p.total_items,
@@ -212,7 +212,7 @@ export const executeOrderFormSubmit = async (
           patchOrderTotals(id, { total_weight, total_volume, total_items })
         })
         res.data?.plan_totals?.forEach((p) => {
-          patchPlanTotals(p.id, {
+          patchRoutePlanTotals(p.id, {
             total_weight: p.total_weight,
             total_volume: p.total_volume,
             total_items: p.total_items,
@@ -235,7 +235,7 @@ export const executeOrderFormSubmit = async (
           patchOrderTotals(id, { total_weight, total_volume, total_items })
         })
         res.data?.plan_totals?.forEach((p) => {
-          patchPlanTotals(p.id, {
+          patchRoutePlanTotals(p.id, {
             total_weight: p.total_weight,
             total_volume: p.total_volume,
             total_items: p.total_items,

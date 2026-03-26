@@ -19,15 +19,15 @@ import type { InternationalShippingPlan } from '@/features/plan/types/internatio
 import type { LocalDeliveryPlan } from '@/features/plan/planTypes/localDelivery/types/localDeliveryPlan'
 import type { StorePickupPlan } from '@/features/plan/types/storePickupPlan'
 import {
-  addVisiblePlan,
-  appendVisiblePlans,
-  insertPlan,
-  removePlan,
-  selectPlanByClientId,
-  selectPlanByServerId,
-  updatePlan,
-  usePlanStore,
-} from '@/features/plan/store/plan.slice'
+  addVisibleRoutePlan,
+  appendVisibleRoutePlans,
+  insertRoutePlan,
+  removeRoutePlan,
+  selectRoutePlanByClientId,
+  selectRoutePlanByServerId,
+  updateRoutePlan,
+  useRoutePlanStore,
+} from '@/features/plan/store/routePlan.slice'
 import {
   insertInternationalShippingPlan,
   removeInternationalShippingPlan,
@@ -50,7 +50,7 @@ import {
   useStorePickupPlanStore,
 } from '@/features/plan/planTypes/storePickup/store/storePickup.slice'
 import { upsertRouteSolution } from '@/features/plan/planTypes/localDelivery/store/routeSolution.store'
-import { incrementPlanListTotal, usePlanListStore } from '@/features/plan/store/planList.store'
+import { incrementRoutePlanListTotal, useRoutePlanListStore } from '@/features/plan/store/routePlanList.store'
 
 type PlanTypeFields = LocalDeliveryPlan | InternationalShippingPlan | StorePickupPlan
 
@@ -127,8 +127,8 @@ const resolveError = (error: unknown, fallback: string) => ({
 })
 
 const canInsertCreatedPlanIntoCurrentList = (plan: DeliveryPlan) => {
-  const { visibleIds } = usePlanStore.getState()
-  const { query } = usePlanListStore.getState()
+  const { visibleIds } = useRoutePlanStore.getState()
+  const { query } = useRoutePlanListStore.getState()
 
   if (!visibleIds) {
     return false
@@ -146,15 +146,15 @@ const syncCreatedPlanIntoVisibleList = (plan: DeliveryPlan) => {
     return
   }
 
-  const currentQuery = usePlanListStore.getState().query
+  const currentQuery = useRoutePlanListStore.getState().query
 
   if (currentQuery?.sort === 'date_asc') {
-    appendVisiblePlans([plan.client_id])
+    appendVisibleRoutePlans([plan.client_id])
   } else {
-    addVisiblePlan(plan.client_id)
+    addVisibleRoutePlan(plan.client_id)
   }
 
-  incrementPlanListTotal()
+  incrementRoutePlanListTotal()
 }
 
 export function usePlanController() {
@@ -184,7 +184,7 @@ export function usePlanController() {
         client_id: planClientId,
       }
 
-      insertPlan(normalizedPlanFields)
+      insertRoutePlan(normalizedPlanFields)
 
       insertPlanType(planTypeKey, {
         client_id: planTypeClientId,
@@ -231,13 +231,13 @@ export function usePlanController() {
         const createdPlanId = createdPlan.id
 
         if (createdPlan.client_id === planClientId) {
-          updatePlan(planClientId, (plan) => ({
+          updateRoutePlan(planClientId, (plan: DeliveryPlan) => ({
             ...plan,
             ...createdPlan,
           }))
         } else {
-          removePlan(planClientId)
-          insertPlan(createdPlan)
+          removeRoutePlan(planClientId)
+          insertRoutePlan(createdPlan)
         }
 
         syncCreatedPlanIntoVisibleList(createdPlan)
@@ -264,7 +264,7 @@ export function usePlanController() {
       } catch (error) {
         const resolved = resolveError(error, 'Unable to create delivery plan.')
         console.error('Failed to create plan', error)
-        removePlan(planClientId)
+        removeRoutePlan(planClientId)
         removePlanType(planTypeKey, planTypeClientId)
         showMessage({ status: resolved.status, message: resolved.message })
         return null
@@ -276,8 +276,8 @@ export function usePlanController() {
   const deletePlanInstance = useCallback(
     async (idOrClientId: number | string) => {
       const plan = typeof idOrClientId === 'number'
-        ? selectPlanByServerId(idOrClientId)(usePlanStore.getState())
-        : selectPlanByClientId(idOrClientId)(usePlanStore.getState())
+        ? selectRoutePlanByServerId(idOrClientId)(useRoutePlanStore.getState())
+        : selectRoutePlanByClientId(idOrClientId)(useRoutePlanStore.getState())
 
       if (!plan) {
         showMessage({ status: 404, message: 'Plan not found for deletion.' })
@@ -293,7 +293,7 @@ export function usePlanController() {
       const previousPlan = { ...plan }
       const previousPlanType = planTypeInstance ? { ...planTypeInstance } : null
 
-      removePlan(plan.client_id)
+      removeRoutePlan(plan.client_id)
       if (planTypeInstance) {
         removePlanType(plan.plan_type, planTypeInstance.client_id)
       }
@@ -309,7 +309,7 @@ export function usePlanController() {
       } catch (error) {
         const resolved = resolveError(error, 'Unable to delete delivery plan.')
         console.error('Failed to delete plan', error)
-        insertPlan(previousPlan)
+        insertRoutePlan(previousPlan)
         if (previousPlanType) {
           insertPlanType(plan.plan_type, previousPlanType)
         }

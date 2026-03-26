@@ -31,3 +31,4 @@ class AnalyticsDailyFact:
 
     # Spatial — None = global row
     zone_id: Optional[int] = None
+    zone_version_id: Optional[int] = None

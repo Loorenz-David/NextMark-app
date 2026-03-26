@@ -1,7 +1,6 @@
 from datetime import datetime, timezone
 
-from Delivery_app_BK.models.tables.delivery_plan.delivery_plan_event import DeliveryPlanEvent
-from Delivery_app_BK.models import db, DeliveryPlanEventAction
+from Delivery_app_BK.models import db, DeliveryPlanEvent, DeliveryPlanEventAction
 from Delivery_app_BK.services.infra.events.action_dispatch import enqueue_delivery_plan_action
 from Delivery_app_BK.services.infra.messaging.action_scheduling import resolve_delivery_plan_action_schedule
 

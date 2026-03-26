@@ -1,5 +1,5 @@
 // hooks/usePlanFormContextData.ts
-import { usePlanByServerId } from '@/features/plan/store/usePlan.selector'
+import { useRoutePlanByServerId } from '@/features/plan/store/useRoutePlan.selector'
 import type { PopupPayload } from './PlanForm.types'
 
 export const usePlanFormContextData = (entryPayload?: PopupPayload) => {
@@ -10,7 +10,7 @@ export const usePlanFormContextData = (entryPayload?: PopupPayload) => {
   const selectedOrderServerIds = entryPayload?.selectedOrderServerIds ?? []
   const source = entryPayload?.source ?? null
 
-  const planData = usePlanByServerId(serverId)
+  const planData = useRoutePlanByServerId(serverId)
 
 
   return {

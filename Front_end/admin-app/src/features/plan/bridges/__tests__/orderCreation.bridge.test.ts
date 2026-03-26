@@ -1,6 +1,6 @@
 import { handlePlanOrderCreation } from '../orderCreation.bridge'
 
-import { clearPlans, insertPlan } from '@/features/plan/store/plan.slice'
+import { clearRoutePlans, insertRoutePlan } from '@/features/plan/store/routePlan.slice'
 import {
   clearRouteSolutions,
   useRouteSolutionStore,
@@ -42,7 +42,7 @@ const buildBundle = (deliveryPlanId?: number): OrderCreateBundle => ({
 })
 
 const resetStores = () => {
-  clearPlans()
+  clearRoutePlans()
   clearRouteSolutions()
   clearRouteSolutionStops()
 }
@@ -68,7 +68,7 @@ export const runOrderCreationBridgeTests = () => {
 
   {
     resetStores()
-    insertPlan({
+    insertRoutePlan({
       client_id: 'plan_local_1',
       id: 101,
       label: 'Plan',
@@ -88,7 +88,7 @@ export const runOrderCreationBridgeTests = () => {
 
   {
     resetStores()
-    insertPlan({
+    insertRoutePlan({
       client_id: 'plan_pickup_1',
       id: 201,
       label: 'Plan',

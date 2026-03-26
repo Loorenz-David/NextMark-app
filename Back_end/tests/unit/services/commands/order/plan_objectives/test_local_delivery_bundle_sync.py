@@ -8,7 +8,7 @@ from Delivery_app_BK.route_optimization.constants.is_optimized import (
     IS_OPTIMIZED_OPTIMIZE,
 )
 from Delivery_app_BK.services.commands.order.plan_objectives import local_delivery as module
-from Delivery_app_BK.services.commands.plan.local_delivery.route_solution.plan_sync import (
+from Delivery_app_BK.services.commands.delivery_plan.local_delivery.route_solution.plan_sync import (
     incremental_sync as sync_module,
 )
 

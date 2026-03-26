@@ -1,5 +1,5 @@
 import { useLocalDeliveryPlanByServerId } from '@/features/plan/planTypes/localDelivery/store/useLocalDeliveryPlan.selector'
-import { usePlanByServerId } from '@/features/plan/store/usePlan.selector'
+import { useRoutePlanByServerId } from '@/features/plan/store/useRoutePlan.selector'
 import {
   useRouteSolutionsByLocalDeliveryPlanId,
   useSelectedRouteSolutionByLocalDeliveryPlanId,
@@ -21,7 +21,7 @@ export const useLocalDeliveryEditFormContextData = (entryPayload?: PopupPayload)
       : parsedLocalDeliveryPlanId
 
   const localDeliveryPlan = useLocalDeliveryPlanByServerId(localDeliveryPlanId)
-  const plan = usePlanByServerId(localDeliveryPlan?.delivery_plan_id)
+  const plan = useRoutePlanByServerId(localDeliveryPlan?.delivery_plan_id)
   const selectedRouteSolution = useSelectedRouteSolutionByLocalDeliveryPlanId(localDeliveryPlanId)
   const routeSolutions = useRouteSolutionsByLocalDeliveryPlanId(localDeliveryPlanId)
 

@@ -13,7 +13,7 @@ from Delivery_app_BK.models.utils import UTCDateTime
 
 from Delivery_app_BK.services.domain.order.order_events import OrderEventPrintDocuments
 from Delivery_app_BK.services.domain.item.item_events import itemEventPrintDocuments
-from Delivery_app_BK.services.domain.plan.plan_events import planEventPrintDocuments
+from Delivery_app_BK.services.domain.delivery_plan.plan.plan_events import planEventPrintDocuments
 
 class LabelTemplate(db.Model, TeamScopedMixin):
     __tablename__ = "label_template"

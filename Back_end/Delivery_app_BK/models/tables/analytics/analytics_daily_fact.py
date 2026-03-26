@@ -33,12 +33,19 @@ class AnalyticsDailyFact(db.Model):
             "uix_analytics_daily_zoned",
             "team_id",
             "date",
+            "zone_version_id",
             "zone_id",
             unique=True,
             postgresql_where=text("zone_id IS NOT NULL"),
         ),
         # Query index
-        Index("ix_analytics_daily_fact_team_date_zone", "team_id", "date", "zone_id"),
+        Index(
+            "ix_analytics_daily_fact_team_date_zone",
+            "team_id",
+            "date",
+            "zone_version_id",
+            "zone_id",
+        ),
     )
 
     id = Column(Integer, primary_key=True)
@@ -65,6 +72,7 @@ class AnalyticsDailyFact(db.Model):
 
     # Spatial — None = global aggregate row
     zone_id = Column(Integer, nullable=True)
+    zone_version_id = Column(Integer, nullable=True)
 
     created_at = Column(
         UTCDateTime,

@@ -43,7 +43,7 @@ export const useOrderActions = () => {
   )
   const openOrderForm = useCallback(
     (payload?: { clientId?: string; mode?: 'create' | 'edit'; deliveryPlanId?: number | null }) => {
-
+      console.log('Opening order form with payload:', payload)
       popupManager.open({ key: 'order.edit', payload:{...payload, controllBodyLayout:true} })
     },
     [popupManager],
