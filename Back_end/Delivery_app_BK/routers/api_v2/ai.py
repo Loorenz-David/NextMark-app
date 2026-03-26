@@ -1,5 +1,6 @@
 import json
 import logging
+import re
 
 from flask import Blueprint, request, jsonify, abort
 from flask_jwt_extended import jwt_required, get_jwt
@@ -22,10 +23,251 @@ from Delivery_app_BK.ai.thread_store import (
     list_turns,
 )
 from Delivery_app_BK.ai.capabilities.statistics import NarrativeStatisticalOutput
+from Delivery_app_BK.ai.capabilities.registry import CAPABILITY_REGISTRY
+from Delivery_app_BK.ai.providers.openai_provider import OpenAIProvider
+from Delivery_app_BK.ai.schemas import AIInteraction, AIInteractionOption
 
 logger = logging.getLogger(__name__)
 
 ai_bp = Blueprint("api_v2_ai_bp", __name__)
+
+_READONLY_CAPABILITIES = {"analytics", "statistics"}
+
+_TOOL_TO_CAPABILITY: dict[str, str] = {
+    "list_orders": "logistics",
+    "list_plans": "logistics",
+    "create_plan": "logistics",
+    "list_routes": "logistics",
+    "update_order_state": "logistics",
+    "create_order": "logistics",
+    "optimize_plan": "logistics",
+    "assign_orders_to_plan": "logistics",
+    "get_analytics_snapshot": "analytics",
+    "get_daily_summary": "analytics",
+    "get_route_metrics_tool": "analytics",
+    "list_item_types_config": "user_config",
+    "create_item_taxonomy_proposal": "user_config",
+}
+
+_OPERATION_TO_TOOL_ALLOWLIST: dict[str, list[str]] = {
+    "list_orders": ["list_orders"],
+    "list_plans": ["list_plans"],
+    "create_plan": ["create_plan"],
+    "list_routes": ["list_routes"],
+    "update_order_state": ["update_order_state"],
+    "item_taxonomy_config": ["list_item_types_config", "create_item_taxonomy_proposal"],
+    "create_order": ["create_order"],
+    "analyze_metrics": ["get_analytics_snapshot"],
+}
+
+_ANALYTICS_HINT_WORDS = {
+    "analytics",
+    "analysis",
+    "metric",
+    "metrics",
+    "performance",
+    "trend",
+    "trends",
+    "kpi",
+    "why",
+    "late",
+    "failure",
+    "fail",
+}
+
+_ACTION_HINT_WORDS = {
+    "create",
+    "update",
+    "assign",
+    "reschedule",
+    "cancel",
+    "optimize",
+}
+
+
+def _message_capability_hint(message: str) -> str | None:
+    lowered = (message or "").lower()
+    if any(word in lowered for word in _ANALYTICS_HINT_WORDS):
+        return "analytics"
+    if "item taxonomy" in lowered or "taxonomy" in lowered:
+        return "user_config"
+    return None
+
+
+def _has_mixed_capability_intent(message: str) -> bool:
+    lowered = (message or "").lower()
+    has_analytics = _message_capability_hint(lowered) == "analytics"
+    has_action = any(word in lowered for word in _ACTION_HINT_WORDS)
+    return has_analytics and has_action
+
+
+def _resolve_capability_auto(message: str, prior_turns: list) -> tuple[str | None, str, list[str]]:
+    if _has_mixed_capability_intent(message):
+        return None, "mixed", ["mixed_intent_needs_clarification"]
+
+    hint = _message_capability_hint(message)
+    if hint:
+        return hint, "keyword_hint", []
+
+    lowered = (message or "").strip().lower()
+    short_followup = len(lowered.split()) <= 4 and any(
+        lowered.startswith(prefix)
+        for prefix in ("also", "and", "for", "what about", "same for")
+    )
+    if short_followup:
+        for turn in reversed(prior_turns or []):
+            data = getattr(turn, "data", None) or {}
+            sticky = data.get("resolved_capability_id")
+            if sticky in CAPABILITY_REGISTRY:
+                return sticky, "sticky_followup", ["capability_auto_sticky_applied"]
+
+    return "logistics", "default", []
+
+
+def _build_mixed_intent_interaction(message: str) -> AIInteraction:
+    _ = message
+    return AIInteraction(
+        id="int_clarify_capability_target",
+        kind="single_select",
+        label="Your request mixes analysis and actions. Which should I do first?",
+        response_mode="options",
+        options=[
+            AIInteractionOption(id="analytics", label="Analytics", description="Read-only analysis"),
+            AIInteractionOption(id="logistics", label="Logistics", description="Operational changes"),
+        ],
+    )
+
+
+def _parse_capability_router_output(raw: str) -> dict | None:
+    try:
+        payload = json.loads(raw)
+    except (TypeError, json.JSONDecodeError):
+        return None
+    if not isinstance(payload, dict):
+        return None
+
+    known = set(CAPABILITY_REGISTRY.keys())
+    capability_ids = [c for c in (payload.get("capability_ids") or []) if c in known]
+    ordered_capability_ids = [c for c in (payload.get("ordered_capability_ids") or []) if c in known]
+    if not ordered_capability_ids:
+        ordered_capability_ids = capability_ids
+
+    return {
+        "capability_ids": capability_ids,
+        "ordered_capability_ids": ordered_capability_ids,
+        "needs_clarification": bool(payload.get("needs_clarification", False)),
+        "clarification_question": payload.get("clarification_question") or "",
+        "reason": payload.get("reason") or "",
+    }
+
+
+def _resolve_capability_plan_auto_with_llm(message: str, prior_turns: list) -> dict:
+    try:
+        provider = OpenAIProvider()
+        raw = provider.complete(
+            "Route capability requests to capabilities: analytics, statistics, logistics, user_config.",
+            message,
+        )
+        parsed = _parse_capability_router_output(raw)
+        if parsed and parsed["ordered_capability_ids"]:
+            warnings: list[str] = []
+            if len(parsed["ordered_capability_ids"]) > 1:
+                warnings.append("capability_chain_detected")
+            return {
+                "resolved_capability_id": parsed["ordered_capability_ids"][0],
+                "ordered_capability_ids": parsed["ordered_capability_ids"],
+                "resolution_source": "llm_router",
+                "policy_warnings": warnings,
+            }
+    except Exception:
+        pass
+
+    capability_id, source, warnings = _resolve_capability_auto(message, prior_turns)
+    return {
+        "resolved_capability_id": capability_id,
+        "ordered_capability_ids": [capability_id] if capability_id else [],
+        "resolution_source": source,
+        "policy_warnings": ["capability_router_llm_fallback_used", *warnings],
+    }
+
+
+def _parse_requested_capability_policy(
+    payload: dict,
+    *,
+    invalid_input_behavior: str = "error",
+) -> tuple[dict | None, dict | None]:
+    context = (payload or {}).get("context") or {}
+    requested_mode = context.get("capability_mode") or "auto"
+    requested_id = context.get("capability_id")
+    warnings: list[str] = []
+
+    def _fallback(error_code: str, fallback_warning_code: str):
+        if invalid_input_behavior == "fallback_auto":
+            return {
+                "requested_capability_mode": "auto",
+                "requested_capability_id": None,
+                "policy_warnings": [fallback_warning_code],
+            }, None
+        return None, {"code": error_code}
+
+    if requested_mode not in {"auto", "manual"}:
+        return _fallback("capability_policy_invalid_mode", "capability_mode_invalid_fallback_auto")
+
+    if requested_mode == "manual":
+        if not requested_id:
+            return _fallback("capability_policy_missing_id", "capability_id_missing_fallback_auto")
+        if requested_id not in CAPABILITY_REGISTRY:
+            return _fallback("capability_policy_unknown_id", "capability_id_unknown_fallback_auto")
+        return {
+            "requested_capability_mode": "manual",
+            "requested_capability_id": requested_id,
+            "policy_warnings": warnings,
+        }, None
+
+    if requested_id:
+        warnings.append("capability_id_ignored_in_auto_mode")
+    return {
+        "requested_capability_mode": "auto",
+        "requested_capability_id": None,
+        "policy_warnings": warnings,
+    }, None
+
+
+def _resolve_tool_policy(capability_id: str | None) -> str:
+    if capability_id in _READONLY_CAPABILITIES:
+        return "readonly"
+    if capability_id is None:
+        return "none"
+    return "action"
+
+
+def _merge_policy_metadata(
+    *,
+    data: dict | None,
+    requested_mode: str,
+    requested_capability_id: str | None,
+    resolved_mode: str,
+    resolved_capability_id: str | None,
+    tool_policy: str,
+    policy_warnings: list[str],
+) -> dict:
+    merged = dict(data or {})
+    merged.update(
+        {
+            "requested_capability_mode": requested_mode,
+            "requested_capability_id": requested_capability_id,
+            "resolved_capability_mode": resolved_mode,
+            "resolved_capability_id": resolved_capability_id,
+            "tool_policy": tool_policy,
+            "policy_warnings": policy_warnings,
+        }
+    )
+    return merged
+
+
+def _apply_tool_policy_to_response(response, tool_policy: str) -> None:
+    if tool_policy in {"readonly", "none"} and getattr(response, "message", None) is not None:
+        response.message.actions = []
 
 
 # ---------------------------------------------------------------------------
