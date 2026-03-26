@@ -9,7 +9,6 @@ from .tools.plan_tools import (
 from .tools.order_tools import (
     list_orders_tool,
     assign_orders_to_plan_tool,
-    assign_orders_tool,
     update_order_state_tool,
     update_order_tool,
     create_order_tool,
@@ -25,7 +24,6 @@ TOOLS: dict[str, callable] = {
     "list_routes": list_routes_tool,
     "list_orders": list_orders_tool,
     "assign_orders_to_plan": assign_orders_to_plan_tool,
-    "assign_orders": assign_orders_tool,
     "update_order_state": update_order_state_tool,
     "update_order": update_order_tool,
     "create_order": create_order_tool,

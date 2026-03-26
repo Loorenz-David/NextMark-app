@@ -49,12 +49,12 @@ def test_update_local_delivery_settings_uses_identity_timezone_when_missing_in_p
     )
     monkeypatch.setattr(
         module,
-        "load_local_delivery_settings_entities",
+        "load_route_group_settings_entities",
         lambda ctx, request: (local_delivery_plan, delivery_plan, route_solution),
     )
     monkeypatch.setattr(
         module,
-        "apply_delivery_plan_patch",
+        "apply_route_plan_patch",
         lambda delivery_plan, patch: (delivery_plan.start_date, delivery_plan.end_date, []),
     )
 
@@ -62,14 +62,14 @@ def test_update_local_delivery_settings_uses_identity_timezone_when_missing_in_p
         captured["time_zone"] = kwargs.get("time_zone")
         return route_solution, False, None
 
-    monkeypatch.setattr(module, "update_route_solution_from_plan", _fake_update_route_solution_from_plan)
+    monkeypatch.setattr(module, "update_route_solution_from_route_plan", _fake_update_route_solution_from_plan)
     monkeypatch.setattr(module.db.session, "add", lambda *_args, **_kwargs: None)
     monkeypatch.setattr(module.db.session, "add_all", lambda *_args, **_kwargs: None)
     monkeypatch.setattr(module.db.session, "commit", lambda: None)
     monkeypatch.setattr(module, "emit_pending_delivery_plan_events", lambda ctx, events: None)
     monkeypatch.setattr(
         module,
-        "build_local_delivery_settings_response",
+        "build_route_group_settings_response",
         lambda ctx, route_solution, stops_changed, route_solution_changed: {},
     )
 
@@ -99,12 +99,12 @@ def test_update_local_delivery_settings_uses_context_timezone_even_when_payload_
     )
     monkeypatch.setattr(
         module,
-        "load_local_delivery_settings_entities",
+        "load_route_group_settings_entities",
         lambda ctx, request: (local_delivery_plan, delivery_plan, route_solution),
     )
     monkeypatch.setattr(
         module,
-        "apply_delivery_plan_patch",
+        "apply_route_plan_patch",
         lambda delivery_plan, patch: (delivery_plan.start_date, delivery_plan.end_date, []),
     )
 
@@ -112,14 +112,14 @@ def test_update_local_delivery_settings_uses_context_timezone_even_when_payload_
         captured["time_zone"] = kwargs.get("time_zone")
         return route_solution, False, None
 
-    monkeypatch.setattr(module, "update_route_solution_from_plan", _fake_update_route_solution_from_plan)
+    monkeypatch.setattr(module, "update_route_solution_from_route_plan", _fake_update_route_solution_from_plan)
     monkeypatch.setattr(module.db.session, "add", lambda *_args, **_kwargs: None)
     monkeypatch.setattr(module.db.session, "add_all", lambda *_args, **_kwargs: None)
     monkeypatch.setattr(module.db.session, "commit", lambda: None)
     monkeypatch.setattr(module, "emit_pending_delivery_plan_events", lambda ctx, events: None)
     monkeypatch.setattr(
         module,
-        "build_local_delivery_settings_response",
+        "build_route_group_settings_response",
         lambda ctx, route_solution, stops_changed, route_solution_changed: {},
     )
 

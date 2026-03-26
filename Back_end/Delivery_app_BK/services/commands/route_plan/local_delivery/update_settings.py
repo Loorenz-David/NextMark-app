@@ -54,23 +54,6 @@ from Delivery_app_BK.services.domain.route_operations.plan.plan_states import Pl
 
 logger = logging.getLogger(__name__)
 
-# Backward-compatible module symbols kept for existing monkeypatch/test callsites.
-# MIGRATION NOTE (route naming): remove these aliases only after canonical
-# route_plan/route_group imports are fully adopted and legacy monkeypatch
-# targets are gone from unit/integration tests.
-load_local_delivery_settings_entities = load_route_group_settings_entities
-build_local_delivery_settings_response = build_route_group_settings_response
-apply_delivery_plan_patch = apply_route_plan_patch
-_LEGACY_UPDATE_ROUTE_SOLUTION_FROM_PLAN = update_route_solution_from_plan
-
-
-def sync_route_solution_from_route_plan(**kwargs):
-    updater = update_route_solution_from_plan
-    if updater is _LEGACY_UPDATE_ROUTE_SOLUTION_FROM_PLAN:
-        updater = update_route_solution_from_route_plan
-    return updater(**kwargs)
-
-
 def update_local_delivery_settings(ctx: ServiceContext) -> dict:
     incoming_data = ctx.incoming_data or {}
     _warn_if_driver_conflict(ctx, incoming_data)
@@ -95,7 +78,7 @@ def apply_route_group_settings_request(
     *,
     reset_route_execution_timing: bool = False,
 ) -> dict:
-    route_group, route_plan, route_solution = load_local_delivery_settings_entities(
+    route_group, route_plan, route_solution = load_route_group_settings_entities(
         ctx=ctx,
         request=request,
     )
@@ -104,14 +87,14 @@ def apply_route_group_settings_request(
     old_route_solution_driver_id = getattr(route_solution, "driver_id", None)
     old_route_group_driver_id = getattr(route_group, "driver_id", None)
 
-    previous_start, previous_end, pending_plan_events = apply_delivery_plan_patch(
+    previous_start, previous_end, pending_plan_events = apply_route_plan_patch(
         delivery_plan=route_plan,
         patch=request.delivery_plan,
     )
 
     route_updates = _build_route_solution_updates(request.route_solution)
     effective_time_zone = ctx.time_zone or request.time_zone
-    route_solution, stops_changed, original_route_solution = sync_route_solution_from_route_plan(
+    route_solution, stops_changed, original_route_solution = update_route_solution_from_route_plan(
         route_solution=route_solution,
         updates=route_updates,
         plan_start=route_plan.start_date,
@@ -260,7 +243,7 @@ def apply_route_group_settings_request(
             )
             emit_route_solution_stop_updated(stop)
 
-    return build_local_delivery_settings_response(
+    return build_route_group_settings_response(
         ctx=ctx,
         route_solution=route_solution,
         stops_changed=stops_changed,

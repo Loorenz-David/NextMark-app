@@ -177,11 +177,6 @@ def assign_orders_to_plan_tool(
     }
 
 
-def assign_orders_tool(ctx: ServiceContext, plan_id: int, order_ids: list) -> dict:
-    """Alias kept for compatibility. Use assign_orders_to_plan instead."""
-    return assign_orders_to_plan_tool(ctx, order_ids=order_ids, plan_id=plan_id)
-
-
 # ---------------------------------------------------------------------------
 # State name → ID map (system states only — matches OrderStateId constants)
 # ---------------------------------------------------------------------------
