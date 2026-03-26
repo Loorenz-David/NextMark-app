@@ -43,10 +43,6 @@ def update_route_group_settings():
     )
 
 
-# Backward-compatible alias for modules/tests importing old handler symbol.
-update_local_delivery_plan_settings = update_route_group_settings
-
-
 @route_groups_bp.route("/route_plans/<int:route_plan_id>", methods=["GET"])
 @jwt_required()
 @role_required([ADMIN, ASSISTANT])
@@ -69,7 +65,3 @@ def get_route_group_plan_type(route_plan_id: int):
         outcome.data,
         warnings=ctx.warnings,
     )
-
-
-# Backward-compatible alias for modules/tests importing old handler symbol.
-get_local_delivery_plan_type = get_route_group_plan_type

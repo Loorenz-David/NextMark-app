@@ -1,12 +1,9 @@
 from typing import Iterable
 
 from Delivery_app_BK.services.infra.events.emiters.route_plan import (
-    emit_delivery_plan_events,
+    emit_route_plan_events,
 )
 from Delivery_app_BK.services.context import ServiceContext
-from Delivery_app_BK.services.infra.events.builders.route_plan import (
-    build_delivery_plan_rescheduled_event,
-)
 
 
 def emit_pending_delivery_plan_events(
@@ -16,4 +13,4 @@ def emit_pending_delivery_plan_events(
     events = list(pending_events)
     if not events:
         return
-    emit_delivery_plan_events(ctx, events)
+    emit_route_plan_events(ctx, events)

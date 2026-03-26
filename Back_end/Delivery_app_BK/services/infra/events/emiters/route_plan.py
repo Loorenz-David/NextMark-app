@@ -53,6 +53,3 @@ def emit_route_plan_events(
     db.session.commit()
 
     return event_rows
-
-
-emit_delivery_plan_events = emit_route_plan_events

@@ -21,6 +21,3 @@ def build_route_plan_rescheduled_event(
             "new_end_date": new_end_date.isoformat() if new_end_date else None,
         },
     }
-
-
-build_delivery_plan_rescheduled_event = build_route_plan_rescheduled_event

@@ -17,6 +17,3 @@ def register_route_plan_event_handlers(event_bus: EventBus) -> None:
         DeliveryPlanEvent.DELIVERY_PLAN_RESCHEDULED.value,
         send_email_on_route_plan_rescheduled,
     )
-
-
-register_delivery_plan_event_handlers = register_route_plan_event_handlers

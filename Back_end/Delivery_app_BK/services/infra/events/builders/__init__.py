@@ -1,6 +1,5 @@
 from .route_plan import (
     build_route_plan_rescheduled_event,
-    build_delivery_plan_rescheduled_event,
 )
 from .order import (
     build_delivery_plan_changed_event,
@@ -15,7 +14,6 @@ from .order import (
 __all__ = [
     "build_route_plan_rescheduled_event",
     "build_delivery_plan_changed_event",
-    "build_delivery_plan_rescheduled_event",
     "build_delivery_window_rescheduled_by_user_event",
     "build_order_edited_event",
     "build_order_state_lifecycle_event",
