@@ -1,13 +1,13 @@
 import pytest
 
 from Delivery_app_BK.errors import ValidationFailed
-from Delivery_app_BK.services.requests.route_plan.plan.list_delivery_plans import (
-    parse_list_delivery_plans_query,
+from Delivery_app_BK.services.requests.route_plan.plan.list_route_plans import (
+    parse_list_route_plans_query,
 )
 
 
 def test_parse_list_delivery_plans_query_accepts_new_payload_shape():
-    parsed = parse_list_delivery_plans_query(
+    parsed = parse_list_route_plans_query(
         query_params={"limit": "10", "label": "legacy"},
         incoming_data={
             "mode": "month",
@@ -30,7 +30,7 @@ def test_parse_list_delivery_plans_query_accepts_new_payload_shape():
 
 
 def test_parse_list_delivery_plans_query_payload_overrides_legacy_filters():
-    parsed = parse_list_delivery_plans_query(
+    parsed = parse_list_route_plans_query(
         query_params={"plan_type": "regional"},
         incoming_data={
             "mode": "range",
@@ -44,7 +44,7 @@ def test_parse_list_delivery_plans_query_payload_overrides_legacy_filters():
 
 
 def test_parse_list_delivery_plans_query_supports_legacy_only_shape():
-    parsed = parse_list_delivery_plans_query(
+    parsed = parse_list_route_plans_query(
         query_params={"label": "March", "limit": "25"},
         incoming_data=None,
     )
@@ -54,7 +54,7 @@ def test_parse_list_delivery_plans_query_supports_legacy_only_shape():
 
 def test_parse_list_delivery_plans_query_rejects_non_object_payload():
     with pytest.raises(ValidationFailed):
-        parse_list_delivery_plans_query(
+        parse_list_route_plans_query(
             query_params={},
             incoming_data=["invalid"],
         )
@@ -62,7 +62,7 @@ def test_parse_list_delivery_plans_query_rejects_non_object_payload():
 
 def test_parse_list_delivery_plans_query_rejects_invalid_mode():
     with pytest.raises(ValidationFailed):
-        parse_list_delivery_plans_query(
+        parse_list_route_plans_query(
             query_params={},
             incoming_data={
                 "mode": "week",
@@ -74,7 +74,7 @@ def test_parse_list_delivery_plans_query_rejects_invalid_mode():
 
 def test_parse_list_delivery_plans_query_rejects_missing_dates_when_mode_present():
     with pytest.raises(ValidationFailed):
-        parse_list_delivery_plans_query(
+        parse_list_route_plans_query(
             query_params={},
             incoming_data={
                 "mode": "date",
@@ -85,7 +85,7 @@ def test_parse_list_delivery_plans_query_rejects_missing_dates_when_mode_present
 
 def test_parse_list_delivery_plans_query_rejects_non_object_filters():
     with pytest.raises(ValidationFailed):
-        parse_list_delivery_plans_query(
+        parse_list_route_plans_query(
             query_params={},
             incoming_data={
                 "mode": "range",
@@ -98,7 +98,7 @@ def test_parse_list_delivery_plans_query_rejects_non_object_filters():
 
 def test_parse_list_delivery_plans_query_rejects_pagination_keys_inside_filters():
     with pytest.raises(ValidationFailed):
-        parse_list_delivery_plans_query(
+        parse_list_route_plans_query(
             query_params={},
             incoming_data={
                 "mode": "range",

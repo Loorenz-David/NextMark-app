@@ -11,8 +11,8 @@ from Delivery_app_BK.routers.http.response import Response
 from Delivery_app_BK.services.context import ServiceContext
 from Delivery_app_BK.services.run_service import run_service
 from Delivery_app_BK.services.domain.route_operations.plan.plan_states import PlanStateId
-from Delivery_app_BK.services.queries.route_plan.list_delivery_plans import (
-    list_delivery_plans as list_delivery_plans_service,
+from Delivery_app_BK.services.queries.route_plan.list_route_plans import (
+    list_route_plans as list_route_plans_service,
 )
 from Delivery_app_BK.services.queries.route_plan.get_plan import (
     get_plan as get_plan_service,
@@ -59,7 +59,7 @@ def list_route_plans():
         identity=identity,
     )
 
-    outcome = run_service(lambda c: list_delivery_plans_service(c), ctx)
+    outcome = run_service(lambda c: list_route_plans_service(c), ctx)
     response = Response()
 
     if outcome.error:

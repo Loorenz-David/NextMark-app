@@ -18,8 +18,3 @@ def get_route_group_plan_type(plan_id: int, ctx: ServiceContext):
     return {
         "delivery_plan_type": serialized,
     }
-
-
-def get_local_delivery_plan(plan_id: int, ctx: ServiceContext):
-    # Backward-compatible alias while route_group naming is rolled out.
-    return get_route_group_plan_type(plan_id, ctx)

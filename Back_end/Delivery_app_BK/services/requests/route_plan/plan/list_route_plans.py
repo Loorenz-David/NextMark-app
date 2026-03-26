@@ -9,7 +9,7 @@ ALLOWED_TIME_MODES = {"month", "date", "range"}
 PAGINATION_KEYS = {"after_cursor", "before_cursor", "limit", "sort"}
 
 
-def parse_list_delivery_plans_query(
+def parse_list_route_plans_query(
     query_params: Any,
     incoming_data: Any,
 ) -> dict[str, Any]:
