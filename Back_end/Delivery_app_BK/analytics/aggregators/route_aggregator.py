@@ -24,9 +24,7 @@ def compute_route_metrics(route_solution_id: int) -> Optional[RouteMetricsSnapsh
 
     Returns None if the route cannot be found.
     """
-    from Delivery_app_BK.models.tables.delivery_plan.delivery_plan_types.local_delivery_plan.route_solutions.route_solution import (
-        RouteSolution,
-    )
+    from Delivery_app_BK.models import RouteSolution
 
     route = db.session.get(RouteSolution, route_solution_id)
     if route is None:

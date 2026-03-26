@@ -24,7 +24,7 @@ from .compute_vehicle_warnings import compute_vehicle_warnings
 
 if TYPE_CHECKING:
     from Delivery_app_BK.models.tables.infrastructure.vehicle import Vehicle
-    from Delivery_app_BK.models.tables.delivery_plan.delivery_plan_types.local_delivery_plan.route_solutions.route_solution import RouteSolution
+    from Delivery_app_BK.models import RouteSolution
 
 logger = logging.getLogger(__name__)
 

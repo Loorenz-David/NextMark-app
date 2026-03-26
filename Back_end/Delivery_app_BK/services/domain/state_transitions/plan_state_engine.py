@@ -23,8 +23,8 @@ from Delivery_app_BK.services.domain.order.order_states import OrderState as Ord
 from Delivery_app_BK.services.domain.delivery_plan.plan.plan_states import PlanStateId
 
 if TYPE_CHECKING:
-    from Delivery_app_BK.models.tables.delivery_plan.delivery_plan import DeliveryPlan
-    from Delivery_app_BK.models.tables.delivery_plan.delivery_plan_types.local_delivery_plan.route_solutions.route_solution import RouteSolution
+    from Delivery_app_BK.models import DeliveryPlan
+    from Delivery_app_BK.models import RouteSolution
 
 logger = logging.getLogger(__name__)
 

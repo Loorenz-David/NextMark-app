@@ -52,9 +52,7 @@ def aggregate_daily_metrics(
     zone_id=<int> → per-zone aggregate (active once zone attribution populates zone data).
     """
     from Delivery_app_BK.models.tables.order.order import Order
-    from Delivery_app_BK.models.tables.delivery_plan.delivery_plan_types.local_delivery_plan.route_solutions.route_solution import (
-        RouteSolution,
-    )
+    from Delivery_app_BK.models import RouteSolution
 
     utc_start, utc_end = _team_day_window_utc(target_date, team_timezone)
 
