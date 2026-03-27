@@ -57,7 +57,6 @@ def _load_local_delivery_context(
         instance.route_plan_id: instance for instance in route_group_instances
     }
     local_context["route_group_by_plan_id"] = route_group_by_plan_id
-    local_context["local_delivery_by_plan_id"] = route_group_by_plan_id
 
     route_group_ids = [instance.id for instance in route_group_instances]
     if not route_group_ids:
@@ -84,7 +83,6 @@ def _load_local_delivery_context(
 
     route_solutions_by_route_group_id = dict(route_solutions_by_route_group_id)
     local_context["route_solutions_by_route_group_id"] = route_solutions_by_route_group_id
-    local_context["route_solutions_by_local_delivery_id"] = route_solutions_by_route_group_id
     local_context["route_solutions_by_id"] = route_solutions_by_id
 
     target_order_ids = sorted(

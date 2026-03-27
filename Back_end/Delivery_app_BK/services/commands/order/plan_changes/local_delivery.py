@@ -40,10 +40,7 @@ def apply_local_delivery_plan_change(
     starts_by_route_id: dict[int, int] = {}
 
     if old_plan and getattr(old_plan, "plan_type", None) == "local_delivery":
-        old_local_delivery = (
-            apply_context.route_group_by_route_plan_id.get(old_plan.id)
-            or apply_context.local_delivery_by_plan_id.get(old_plan.id)
-        )
+        old_local_delivery = apply_context.route_group_by_route_plan_id.get(old_plan.id)
         if not old_local_delivery:
             raise ValidationFailed("Local delivery plan not found for order change.")
 
@@ -64,16 +61,12 @@ def apply_local_delivery_plan_change(
             )
 
     if new_plan and getattr(new_plan, "plan_type", None) == "local_delivery":
-        new_local_delivery = (
-            apply_context.route_group_by_route_plan_id.get(new_plan.id)
-            or apply_context.local_delivery_by_plan_id.get(new_plan.id)
-        )
+        new_local_delivery = apply_context.route_group_by_route_plan_id.get(new_plan.id)
         if not new_local_delivery:
             raise ValidationFailed("Local delivery plan not found for order change.")
 
         route_solutions = list(
             apply_context.route_solutions_by_route_group_id.get(new_local_delivery.id)
-            or apply_context.route_solutions_by_local_delivery_id.get(new_local_delivery.id)
             or []
         )
         if not route_solutions:
@@ -155,10 +148,7 @@ def _build_route_solutions_by_id(
     apply_context: PlanChangeApplyContext,
 ) -> dict[int, RouteSolution]:
     route_solutions_by_id: dict[int, object] = {}
-    route_solutions_by_group = (
-        apply_context.route_solutions_by_route_group_id
-        or apply_context.route_solutions_by_local_delivery_id
-    )
+    route_solutions_by_group = apply_context.route_solutions_by_route_group_id
     for route_solutions in route_solutions_by_group.values():
         for route_solution in route_solutions:
             if getattr(route_solution, "id", None) is None:

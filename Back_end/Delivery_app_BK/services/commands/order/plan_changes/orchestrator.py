@@ -120,9 +120,6 @@ def _load_local_delivery_context(
         instance.delivery_plan_id: instance for instance in route_group_instances
     }
     apply_context.route_group_by_route_plan_id = route_group_by_route_plan_id
-    apply_context.local_delivery_by_plan_id = {
-        instance.delivery_plan_id: instance for instance in route_group_instances
-    }
 
     route_group_ids = [instance.id for instance in route_group_instances]
     route_solutions_by_route_group_id: defaultdict[int, list[RouteSolution]] = defaultdict(
@@ -141,9 +138,6 @@ def _load_local_delivery_context(
             ].append(route_solution)
 
     apply_context.route_solutions_by_route_group_id = dict(
-        route_solutions_by_route_group_id
-    )
-    apply_context.route_solutions_by_local_delivery_id = dict(
         route_solutions_by_route_group_id
     )
 

@@ -78,8 +78,8 @@ def test_plan_change_bundle_includes_synced_old_route_stops(monkeypatch):
     old_local_delivery = SimpleNamespace(id=700, delivery_plan_id=old_plan.id)
 
     apply_context = PlanChangeApplyContext(
-        local_delivery_by_plan_id={old_plan.id: old_local_delivery},
-        route_solutions_by_local_delivery_id={old_local_delivery.id: [route_solution]},
+        route_group_by_route_plan_id={old_plan.id: old_local_delivery},
+        route_solutions_by_route_group_id={old_local_delivery.id: [route_solution]},
     )
 
     monkeypatch.setattr(

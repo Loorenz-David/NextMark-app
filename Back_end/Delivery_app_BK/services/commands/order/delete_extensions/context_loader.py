@@ -52,11 +52,9 @@ def _load_local_delivery_context(
         instance.route_plan_id: instance for instance in route_group_instances
     }
     local_context["route_group_by_plan_id"] = route_group_by_plan_id
-    local_context["local_delivery_by_plan_id"] = route_group_by_plan_id
 
     route_group_ids = [instance.id for instance in route_group_instances]
     if not route_group_ids:
-        local_context["route_solutions_by_local_delivery_id"] = {}
         local_context["route_solutions_by_route_group_id"] = {}
         local_context["route_solutions_by_id"] = {}
         extension_context.by_plan_type["local_delivery"] = local_context
@@ -78,7 +76,6 @@ def _load_local_delivery_context(
 
     grouped = dict(grouped)
     local_context["route_solutions_by_route_group_id"] = grouped
-    local_context["route_solutions_by_local_delivery_id"] = grouped
     local_context["route_solutions_by_id"] = route_solutions_by_id
     extension_context.by_plan_type["local_delivery"] = local_context
 

@@ -27,7 +27,7 @@ def handle_local_delivery_order_delete_extension(
         return result
 
     local_context = extension_context.by_plan_type.get("local_delivery", {})
-    local_delivery_by_plan_id = local_context.get("local_delivery_by_plan_id", {})
+    route_group_by_plan_id = local_context.get("route_group_by_plan_id", {})
     route_solutions_by_id = local_context.get("route_solutions_by_id", {})
 
     grouped_order_ids_by_local_delivery_id: defaultdict[int, list[int]] = defaultdict(list)
@@ -35,7 +35,7 @@ def handle_local_delivery_order_delete_extension(
         delivery_plan = delta.delivery_plan
         if not delivery_plan:
             continue
-        local_delivery = local_delivery_by_plan_id.get(delivery_plan.id)
+        local_delivery = route_group_by_plan_id.get(delivery_plan.id)
         if not local_delivery:
             continue
         grouped_order_ids_by_local_delivery_id[local_delivery.id].append(delta.order_id)

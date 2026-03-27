@@ -270,7 +270,7 @@ def _prepare_old_local_delivery_batch_changes(
     starts_by_route_id: dict[int, int] = {}
 
     for old_plan_id, order_ids in order_ids_by_old_local_plan_id.items():
-        old_local_delivery = apply_context.local_delivery_by_plan_id.get(old_plan_id)
+        old_local_delivery = apply_context.route_group_by_route_plan_id.get(old_plan_id)
         if not old_local_delivery:
             raise ValidationFailed("Local delivery plan not found for order change.")
 
@@ -329,7 +329,7 @@ def _merge_start_positions(
 
 def _build_route_solutions_by_id_from_context(apply_context) -> dict[int, RouteSolution]:
     route_solutions_by_id: dict[int, RouteSolution] = {}
-    for route_solutions in apply_context.route_solutions_by_local_delivery_id.values():
+    for route_solutions in apply_context.route_solutions_by_route_group_id.values():
         for route_solution in route_solutions:
             route_id = getattr(route_solution, "id", None)
             if route_id is None:
