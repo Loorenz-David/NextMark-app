@@ -77,7 +77,7 @@ export type RouteSolution = {
   stops_service_time?: ServiceTime | null
   driver_id?: number | null
   vehicle_id?: number | null
-  local_delivery_plan_id?: number | null
+  route_group_id?: number | null
   has_route_warnings?: boolean
   route_warnings?: RouteSolutionWarning[] | null
   updated_at?: ISODateTime | null

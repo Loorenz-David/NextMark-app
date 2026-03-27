@@ -52,7 +52,7 @@ export type Order = {
   updated_at?: ISODateTime | null
   items_updated_at?: ISODateTime | null
   order_state_id?: number | null
-  delivery_plan_id?: number | null
+  route_plan_id?: number | null
   total_weight?: number | null
   total_items?: number | null
   total_volume?: number | null
