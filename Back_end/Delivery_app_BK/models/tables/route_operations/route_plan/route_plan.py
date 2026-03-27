@@ -48,11 +48,10 @@ class RoutePlan(db.Model, TeamScopedMixin):
         back_populates="route_plan",
     )
 
-    route_group = relationship(
+    route_groups = relationship(
         "RouteGroup",
         back_populates="route_plan",
         passive_deletes=True,
-        uselist=False,
     )
 
     events = relationship(

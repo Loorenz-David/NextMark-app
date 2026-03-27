@@ -9,7 +9,7 @@ from Delivery_app_BK.services.domain.order.order_events import OrderEvent as Ord
 
 from Delivery_app_BK.services.infra.messaging import MessageRenderContext
 from Delivery_app_BK.services.infra.messaging import resolve_email_template
-from Delivery_app_BK.services.infra.messaging.action_scheduling import resolve_current_delivery_plan_future_anchor
+from Delivery_app_BK.services.infra.messaging.action_scheduling import resolve_current_route_plan_future_anchor
 from Delivery_app_BK.services.infra.messaging.email_service import send_email_batch
 
 
@@ -53,7 +53,7 @@ def _create_order_events_with_actions(
         return
     actor_id = getattr(action.event, "actor_id", None) if action.event is not None else None
     payload = {
-        "source_delivery_plan_event_id": action.event_id,
+        "source_route_plan_event_id": action.event_id,
     }
 
     event_rows: list[OrderEvent] = []
@@ -121,14 +121,14 @@ def send_email(action_id: int) -> None:
             _mark_action_failed(action, "Delivery plan event context is missing")
             return
 
-        delivery_plan = getattr(action.event, "delivery_plan", None) or getattr(action.event, "plan", None)
-        if delivery_plan is None:
-            _mark_action_failed(action, "Delivery plan is missing on event context")
+        route_plan = getattr(action.event, "route_plan", None) or getattr(action.event, "plan", None)
+        if route_plan is None:
+            _mark_action_failed(action, "Route plan is missing on event context")
             return
 
         team_id = action.team_id if action.team_id is not None else getattr(action.event, "team_id", None)
         if team_id is None:
-            _mark_action_failed(action, "Missing team context for delivery plan email send")
+            _mark_action_failed(action, "Missing team context for route plan email send")
             return
 
         template = resolve_email_template(team_id=team_id, channel="email", event_name=action.event.event_name)
@@ -137,7 +137,7 @@ def send_email(action_id: int) -> None:
             return
 
         if action.schedule_anchor_type == SCHEDULE_ANCHOR_FUTURE_BUSINESS_TIME:
-            current_anchor_at = resolve_current_delivery_plan_future_anchor(action.event)
+            current_anchor_at = resolve_current_route_plan_future_anchor(action.event)
             if current_anchor_at is None:
                 _mark_action_skipped(action, "Future business anchor is no longer available at execution time")
                 return
@@ -145,7 +145,7 @@ def send_email(action_id: int) -> None:
                 _mark_action_skipped(action, "Future business anchor changed after the action was scheduled")
                 return
 
-        orders = list(getattr(delivery_plan, "orders", None) or [])
+        orders = list(getattr(route_plan, "orders", None) or [])
         recipients: list[tuple[int, str, MessageRenderContext]] = []
         order_errors: dict[int, str] = {}
         for order in orders:
@@ -158,7 +158,7 @@ def send_email(action_id: int) -> None:
                 continue
             render_context = MessageRenderContext(
                 order=order,
-                delivery_plan_event=action.event,
+                route_plan_event=action.event,
                 team_id=team_id,
             )
             recipients.append((order_id, recipient, render_context))

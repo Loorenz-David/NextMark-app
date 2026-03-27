@@ -65,11 +65,11 @@ def _resolve_orders_by_id(
         return orders_by_id
 
     resolved: Dict[int, Order] = {}
-    delivery_plan = None
-    if route_solution.local_delivery_plan:
-        delivery_plan = route_solution.local_delivery_plan.delivery_plan
+    route_plan = None
+    if route_solution.route_group:
+        route_plan = route_solution.route_group.route_plan
 
-    for order in (delivery_plan.orders if delivery_plan else []) or []:
+    for order in (route_plan.orders if route_plan else []) or []:
         if order.id is not None:
             resolved[order.id] = order
 

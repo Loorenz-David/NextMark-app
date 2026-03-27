@@ -64,4 +64,5 @@ from .tables.analytics.route_metrics_snapshot import RouteMetricsSnapshot as Ana
 from .tables.analytics.analytics_daily_fact import AnalyticsDailyFact
 from .tables.zones.zone_version import ZoneVersion
 from .tables.zones.zone import Zone
+from .tables.zones.zone_template import ZoneTemplate
 from .tables.zones.order_zone_assignment import OrderZoneAssignment

@@ -1,6 +1,6 @@
 # State Transitions Logic
 
-This document explains the current delivery plan and order state transition rules implemented in the backend.
+This document explains the current route plan and order state transition rules implemented in the backend.
 
 ## State IDs
 

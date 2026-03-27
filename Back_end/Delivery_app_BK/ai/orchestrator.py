@@ -462,7 +462,7 @@ def _normalize_insight_depth(value: str | None) -> str:
 def _has_retrieval_entities(tool_turns: list[dict]) -> bool:
     for turn in tool_turns:
         result = turn.get("result") or {}
-        rows = result.get("order") or result.get("orders") or result.get("delivery_plan") or result.get("delivery_plans") or []
+        rows = result.get("order") or result.get("orders") or result.get("route_plan") or result.get("route_plans") or []
         if isinstance(rows, list) and rows:
             return True
         if isinstance(rows, dict):

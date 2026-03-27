@@ -62,11 +62,6 @@ class OptimizationRequest:
     injected_routes: Optional[List[Dict[str, Any]]] = None
     interpret_injected_solutions_using_labels: bool = False
 
-    @property
-    def delivery_plan_id(self) -> int:
-        return self.route_plan_id
-
-
 @dataclass(frozen=True)
 class StopResult:
     shipment_label: str

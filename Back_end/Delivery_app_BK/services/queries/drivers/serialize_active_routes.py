@@ -2,8 +2,8 @@ from typing import List
 
 from Delivery_app_BK.models import RoutePlan, RouteSolution
 from Delivery_app_BK.services.context import ServiceContext
-from Delivery_app_BK.services.queries.route_plan.plan_types.serialize_local_delivery_plan import (
-    serialize_local_delivery_plan,
+from Delivery_app_BK.services.queries.route_plan.plan_types.serialize_route_group import (
+    serialize_route_group,
 )
 from Delivery_app_BK.services.queries.route_solutions import (
     serialize_route_solution,
@@ -32,11 +32,6 @@ def _serialize_route_plan_collapsed(instance: RoutePlan | None):
     }
 
 
-def _serialize_delivery_plan_collapsed(instance: RoutePlan | None):
-    # Backward-compatible alias while route_plan naming is rolled out.
-    return _serialize_route_plan_collapsed(instance)
-
-
 def serialize_active_route(instance: RouteSolution, ctx: ServiceContext):
     route_group = getattr(instance, "route_group", None)
     route_plan = getattr(route_group, "route_plan", None) if route_group else None
@@ -46,14 +41,8 @@ def serialize_active_route(instance: RouteSolution, ctx: ServiceContext):
     unpacked = {
         **serialize_route_solution(instance),
         "route_plan": serialized_route_plan,
-        "delivery_plan": serialized_route_plan,
         "route_group": (
-            serialize_local_delivery_plan(route_group, ctx)
-            if route_group is not None
-            else None
-        ),
-        "local_delivery_plan": (
-            serialize_local_delivery_plan(route_group, ctx)
+            serialize_route_group(route_group, ctx)
             if route_group is not None
             else None
         ),
@@ -79,7 +68,6 @@ def serialize_active_route_summary(instance: RouteSolution, ctx: ServiceContext)
         "created_at": created_at.isoformat() if created_at else None,
         "updated_at": updated_at.isoformat() if updated_at else None,
         "route_plan": _serialize_route_plan_collapsed(route_plan),
-        "delivery_plan": _serialize_route_plan_collapsed(route_plan),
     }
 
 

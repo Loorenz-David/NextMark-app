@@ -15,11 +15,11 @@ class _Outcome:
 
 def test_optimize_plan_tool_translates_route_plan_id_to_route_group_id(monkeypatch):
     ctx = ServiceContext(incoming_data={}, identity={})
-    route_plan = SimpleNamespace(id=55, route_group=SimpleNamespace(id=91))
+    route_plan = SimpleNamespace(id=55, route_groups=[SimpleNamespace(id=91)])
 
     monkeypatch.setattr("Delivery_app_BK.ai.tools.plan_tools.db.session.get", lambda model, plan_id: route_plan)
     monkeypatch.setattr(
-        "Delivery_app_BK.ai.tools.plan_tools.optimize_local_delivery_plan",
+        "Delivery_app_BK.ai.tools.plan_tools.optimize_route_plan",
         lambda context: _Outcome(data={"status": "optimized", "route_id": 7}),
     )
 
@@ -34,7 +34,7 @@ def test_optimize_plan_tool_translates_route_plan_id_to_route_group_id(monkeypat
 
 def test_optimize_plan_tool_rejects_plan_without_route_group(monkeypatch):
     ctx = ServiceContext(incoming_data={}, identity={})
-    route_plan = SimpleNamespace(id=55, route_group=None)
+    route_plan = SimpleNamespace(id=55, route_groups=[])
 
     monkeypatch.setattr("Delivery_app_BK.ai.tools.plan_tools.db.session.get", lambda model, plan_id: route_plan)
 

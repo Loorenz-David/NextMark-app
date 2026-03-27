@@ -1,6 +1,6 @@
 # State Transitions
 
-This page summarizes current delivery plan and order transition behavior.
+This page summarizes current route plan and order transition behavior.
 
 ## Sources of truth
 - Domain engines:

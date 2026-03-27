@@ -2,21 +2,21 @@ from __future__ import annotations
 
 from sqlalchemy.exc import InvalidRequestError
 
-from Delivery_app_BK.services.commands.order.update_order_delivery_plan import (
-    update_orders_delivery_plan,
+from Delivery_app_BK.services.commands.order.update_order_route_plan import (
+    update_orders_route_plan,
 )
 from Delivery_app_BK.services.context import ServiceContext
 from Delivery_app_BK.services.domain.order.order_batch_selection import (
     resolve_order_batch_selection,
 )
-from Delivery_app_BK.services.requests.order.update_orders_delivery_plan_batch import (
-    parse_update_orders_delivery_plan_batch_payload,
+from Delivery_app_BK.services.requests.order.update_orders_route_plan_batch import (
+    parse_update_orders_route_plan_batch_payload,
 )
 from Delivery_app_BK.models import db
 
 
 def resolve_orders_selection(ctx: ServiceContext) -> dict:
-    selection = parse_update_orders_delivery_plan_batch_payload(ctx.incoming_data)
+    selection = parse_update_orders_route_plan_batch_payload(ctx.incoming_data)
 
     resolved = _run_selection_resolution_transaction(
         lambda: resolve_order_batch_selection(
@@ -36,11 +36,11 @@ def resolve_orders_selection(ctx: ServiceContext) -> dict:
     return payload
 
 
-def update_orders_delivery_plan_batch(
+def update_orders_route_plan_batch(
     ctx: ServiceContext,
     plan_id: int,
 ) -> dict:
-    selection = parse_update_orders_delivery_plan_batch_payload(ctx.incoming_data)
+    selection = parse_update_orders_route_plan_batch_payload(ctx.incoming_data)
     resolved = _run_selection_resolution_transaction(
         lambda: resolve_order_batch_selection(
             ctx=ctx,
@@ -52,7 +52,7 @@ def update_orders_delivery_plan_batch(
 
     updated_bundles = []
     if resolved.order_ids:
-        updated_payload = update_orders_delivery_plan(ctx, resolved.order_ids, plan_id)
+        updated_payload = update_orders_route_plan(ctx, resolved.order_ids, plan_id)
         updated_bundles = updated_payload.get("updated") or []
 
     return {

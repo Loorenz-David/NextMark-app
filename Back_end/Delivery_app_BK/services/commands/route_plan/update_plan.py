@@ -33,18 +33,18 @@ def apply_route_plan_patch(
     validate_time_range(
         route_plan.start_date,
         route_plan.end_date,
-        label="delivery plan",
+        label="route plan",
     )
 
     return previous_start, previous_end, []
 
 
 def apply_delivery_plan_patch(
-    delivery_plan: RoutePlan,
+    route_plan: RoutePlan,
     patch: RoutePlanPatchRequest,
 ) -> tuple[datetime | None, datetime | None, list[dict]]:
     # Backward-compatible alias while route_plan naming is rolled out.
-    return apply_route_plan_patch(delivery_plan, patch)
+    return apply_route_plan_patch(route_plan, patch)
 
 
 def update_plan(ctx: ServiceContext):

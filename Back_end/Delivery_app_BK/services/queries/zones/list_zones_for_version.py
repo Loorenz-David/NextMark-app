@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from Delivery_app_BK.errors import NotFound
 from Delivery_app_BK.models.tables.zones.zone import Zone
+from Delivery_app_BK.models.tables.zones.zone_template import ZoneTemplate
 from Delivery_app_BK.models.tables.zones.zone_version import ZoneVersion
 from Delivery_app_BK.services.context import ServiceContext
 
@@ -16,6 +17,31 @@ def list_zones_for_version(ctx: ServiceContext) -> list[dict]:
         raise NotFound(f"Zone version {version_id} not found")
 
     zones = Zone.query.filter_by(zone_version_id=version_id).order_by(Zone.name).all()
+    zone_ids = [zone.id for zone in zones]
+
+    templates_by_zone_id: dict[int, dict] = {}
+    if zone_ids:
+        active_templates = (
+            ZoneTemplate.query.filter(
+                ZoneTemplate.team_id == ctx.team_id,
+                ZoneTemplate.zone_id.in_(zone_ids),
+                ZoneTemplate.is_active.is_(True),
+            )
+            .order_by(ZoneTemplate.version.desc())
+            .all()
+        )
+        for template in active_templates:
+            if template.zone_id in templates_by_zone_id:
+                continue
+            templates_by_zone_id[template.zone_id] = {
+                "id": template.id,
+                "zone_id": template.zone_id,
+                "name": template.name,
+                "config_json": template.config_json,
+                "version": template.version,
+                "is_active": template.is_active,
+            }
+
     return [
         {
             "id": z.id,
@@ -29,6 +55,7 @@ def list_zones_for_version(ctx: ServiceContext) -> list[dict]:
             "min_lng": z.min_lng,
             "max_lng": z.max_lng,
             "is_active": z.is_active,
+            "template": templates_by_zone_id.get(z.id),
             "created_at": z.created_at.isoformat() if z.created_at else None,
         }
         for z in zones

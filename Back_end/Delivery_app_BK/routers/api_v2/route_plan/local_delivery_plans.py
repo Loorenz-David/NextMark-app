@@ -7,7 +7,7 @@ from Delivery_app_BK.services.commands.route_plan.local_delivery.update_settings
     update_route_group_settings as update_route_group_settings_service,
 )
 from Delivery_app_BK.services.context import ServiceContext
-from Delivery_app_BK.services.queries.route_plan.plan_types.get_local_delivery_plan import (
+from Delivery_app_BK.services.queries.route_plan.plan_types.get_route_group import (
     get_route_group_plan_type as get_route_group_plan_type_service,
 )
 from Delivery_app_BK.services.run_service import run_service

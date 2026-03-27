@@ -41,7 +41,7 @@ from Delivery_app_BK.services.queries.route_solutions.get_route_solution import 
     get_route_solution as get_route_solution_service,
 )
 from Delivery_app_BK.route_optimization.orchestrator import (
-    optimize_local_delivery_plan,
+    optimize_route_plan,
 )
 
 
@@ -332,7 +332,7 @@ def create_route_optimization():
         identity=identity,
     )
 
-    outcome = optimize_local_delivery_plan(ctx)
+    outcome = optimize_route_plan(ctx)
     response = Response()
 
     if outcome.error:
@@ -361,7 +361,7 @@ def update_route_optimization():
     response = Response()
    
     
-    outcome = optimize_local_delivery_plan(ctx)
+    outcome = optimize_route_plan(ctx)
 
     if outcome.error:
         return response.build_unsuccessful_response(outcome.error)

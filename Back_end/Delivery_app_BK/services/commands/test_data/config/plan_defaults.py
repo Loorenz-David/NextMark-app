@@ -4,8 +4,8 @@ from datetime import datetime, timedelta, timezone
 DEFAULT_PLAN_TYPE = "local_delivery"
 
 DEFAULT_CARRIER_NAME = "Test Carrier"
-DEFAULT_EVENT_NAME = "test.delivery_plan.event"
-DEFAULT_EVENT_ACTION_NAME = "test.delivery_plan.action"
+DEFAULT_EVENT_NAME = "test.route_plan.event"
+DEFAULT_EVENT_ACTION_NAME = "test.route_plan.action"
 
 DEFAULT_EVENT_ACTION_STATUS = "PENDING"
 
@@ -39,7 +39,7 @@ def build_default_plan_payloads(
 
     return [
         {
-            "delivery_plan": {
+            "route_plan": {
                 "plan_type": "local_delivery",
                 "label": "City Pulse Same-Day Run",
                 "start_date": local_plan_1_day,
@@ -47,7 +47,7 @@ def build_default_plan_payloads(
             }
         },
         {
-            "delivery_plan": {
+            "route_plan": {
                 "plan_type": "local_delivery",
                 "label": "Neighborhood Loop Multi-Day Window",
                 "start_date": local_plan_2_start,
@@ -55,7 +55,7 @@ def build_default_plan_payloads(
             }
         },
         {
-            "delivery_plan": {
+            "route_plan": {
                 "plan_type": "local_delivery",
                 "label": "Post-Window Overflow Sweep",
                 "start_date": local_plan_3_day,
@@ -63,7 +63,7 @@ def build_default_plan_payloads(
             }
         },
         {
-            "delivery_plan": {
+            "route_plan": {
                 "plan_type": "store_pickup",
                 "label": "Tomorrow Counter Pickup Wave",
                 "start_date": tomorrow,
@@ -71,7 +71,7 @@ def build_default_plan_payloads(
             }
         },
         {
-            "delivery_plan": {
+            "route_plan": {
                 "plan_type": "international_shipping",
                 "label": "Tomorrow Global Dispatch Window",
                 "start_date": tomorrow,

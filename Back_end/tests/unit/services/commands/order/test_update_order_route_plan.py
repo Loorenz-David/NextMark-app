@@ -1,7 +1,7 @@
 import pytest
 
 from Delivery_app_BK.errors import ValidationFailed
-from Delivery_app_BK.services.commands.order.update_order_delivery_plan import (
+from Delivery_app_BK.services.commands.order.update_order_route_plan import (
     _normalize_order_ids,
 )
 

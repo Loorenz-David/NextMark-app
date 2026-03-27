@@ -26,6 +26,7 @@ def _serialize_zone(z: Zone) -> dict:
         "min_lng": z.min_lng,
         "max_lng": z.max_lng,
         "is_active": z.is_active,
+        "template": None,
         "created_at": z.created_at.isoformat() if z.created_at else None,
     }
 

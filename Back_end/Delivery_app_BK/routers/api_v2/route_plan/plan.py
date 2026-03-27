@@ -42,6 +42,9 @@ from Delivery_app_BK.services.queries.route_plan.plan_states.list_plan_states im
 from Delivery_app_BK.services.queries.route_plan.route_groups.list_route_groups import (
     list_route_groups as list_route_groups_service,
 )
+from Delivery_app_BK.services.commands.route_plan.materialize_route_groups import (
+    materialize_route_groups as materialize_route_groups_service,
+)
 
 
 route_plans_bp = Blueprint("api_v2_route_plans_bp", __name__)
@@ -188,11 +191,19 @@ def get_route_plan(route_plan_id: int):
 def list_route_plan_orders(route_plan_id: int):
 
     identity = get_jwt()
+    route_group_id = request.args.get("route_group_id", type=int)
     ctx = ServiceContext(
         query_params=request.args,
         identity=identity,
     )
-    outcome = run_service(lambda c: list_orders_service(c, route_plan_id=route_plan_id), ctx)
+    outcome = run_service(
+        lambda c: list_orders_service(
+            c,
+            route_plan_id=route_plan_id,
+            route_group_id=route_group_id,
+        ),
+        ctx,
+    )
     response = Response()
 
     if outcome.error:
@@ -214,6 +225,28 @@ def list_route_plan_route_groups(route_plan_id: int):
         identity=identity,
     )
     outcome = run_service(lambda c: list_route_groups_service(route_plan_id, c), ctx)
+    response = Response()
+
+    if outcome.error:
+        return response.build_unsuccessful_response(outcome.error)
+
+    return response.build_successful_response(
+        outcome.data,
+        warnings=ctx.warnings,
+    )
+
+
+@route_plans_bp.route("/<int:route_plan_id>/route_groups/materialize", methods=["POST"])
+@jwt_required()
+@role_required([ADMIN, ASSISTANT])
+def materialize_route_plan_route_groups(route_plan_id: int):
+    identity = get_jwt()
+    incoming_data = request.get_json(silent=True) or {}
+    ctx = ServiceContext(
+        incoming_data={**incoming_data, "route_plan_id": route_plan_id},
+        identity=identity,
+    )
+    outcome = run_service(lambda c: materialize_route_groups_service(c), ctx)
     response = Response()
 
     if outcome.error:

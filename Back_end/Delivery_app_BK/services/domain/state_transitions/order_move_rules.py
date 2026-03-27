@@ -9,7 +9,7 @@ The public API is:
   compute_destination_move_result(order, destination_plan, now)
     -> OrderMoveResult
 
-Callers (e.g. update_order_delivery_plan) are responsible for:
+Callers (e.g. update_order_route_plan) are responsible for:
   1. Calling this function for each moved order.
   2. Applying the returned state changes via update_orders_state / apply_plan_state.
   3. Optionally creating an OrderCase when result.should_create_case is True.

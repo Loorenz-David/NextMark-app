@@ -4,7 +4,7 @@ from datetime import datetime, timezone
 
 from Delivery_app_BK.models import db, RoutePlan, RouteSolution
 from Delivery_app_BK.errors import NotFound, ValidationFailed
-from Delivery_app_BK.route_optimization.orchestrator import optimize_local_delivery_plan
+from Delivery_app_BK.route_optimization.orchestrator import optimize_route_plan
 from Delivery_app_BK.services.context import ServiceContext
 from Delivery_app_BK.services.queries.route_plan.get_route_plan import (
     get_route_plan as get_plan_service,
@@ -30,13 +30,14 @@ def optimize_plan_tool(ctx: ServiceContext, route_plan_id: int) -> dict:
     if not route_plan:
         raise NotFound(f"Plan {route_plan_id} not found.")
 
-    route_group = getattr(route_plan, "route_group", None)
+    route_groups = list(route_plan.route_groups or [])
+    route_group = route_groups[0] if route_groups else None
     if route_group is None:
         raise ValidationFailed(f"Plan {route_plan_id} has no route group to optimize.")
 
     ctx.incoming_data["route_plan_id"] = route_plan_id
     ctx.incoming_data["route_group_id"] = route_group.id
-    outcome = optimize_local_delivery_plan(ctx)
+    outcome = optimize_route_plan(ctx)
     if outcome.error:
         raise outcome.error
     return outcome.data or {"status": "optimized"}
@@ -110,7 +111,7 @@ def create_plan_tool(
     bundles = result.get("created", []) if isinstance(result, dict) else result
     if isinstance(bundles, list) and bundles:
         bundle = bundles[0]
-        plan = bundle.get("route_plan") or bundle.get("delivery_plan") or {}
+        plan = bundle.get("route_plan") or {}
         return {
             "plan_id": plan.get("id"),
             "label": plan.get("label"),

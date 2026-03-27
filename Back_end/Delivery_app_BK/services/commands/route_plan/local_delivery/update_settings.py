@@ -17,7 +17,7 @@ from Delivery_app_BK.services.requests.route_plan.plan.local_delivery.update_set
     parse_update_local_delivery_settings_request,
 )
 
-from ..events import emit_pending_delivery_plan_events
+from ..events import emit_pending_route_plan_events
 from .loader import load_route_group_settings_entities
 from ..update_plan import apply_route_plan_patch
 from .response_builder import build_route_group_settings_response
@@ -87,8 +87,8 @@ def apply_route_group_settings_request(
     old_route_group_driver_id = getattr(route_group, "driver_id", None)
 
     previous_start, previous_end, pending_plan_events = apply_route_plan_patch(
-        delivery_plan=route_plan,
-        patch=request.delivery_plan,
+        route_plan=route_plan,
+        patch=request.route_plan,
     )
 
     route_updates = _build_route_solution_updates(request.route_solution)
@@ -142,7 +142,7 @@ def apply_route_group_settings_request(
         or stops_changed
         or reset_route_execution_timing
     )
-    route_plan_has_label = getattr(request.delivery_plan, "has_label", False)
+    route_plan_has_label = getattr(request.route_plan, "has_label", False)
     if plan_window_changed or route_plan_has_label or route_solution_changed:
         touch_route_freshness(route_plan)
 
@@ -162,7 +162,7 @@ def apply_route_group_settings_request(
         db.session.add_all(route_solution.stops or [])
     db.session.commit()
 
-    emit_pending_delivery_plan_events(ctx, pending_plan_events)
+    emit_pending_route_plan_events(ctx, pending_plan_events)
 
     # Emit real-time events after commit
     team_id = getattr(ctx, "team_id", None)
@@ -292,8 +292,6 @@ def _warn_if_driver_conflict(ctx: ServiceContext, raw: dict) -> None:
     if not isinstance(raw, dict):
         return
     local_payload = raw.get("route_group") if isinstance(raw.get("route_group"), dict) else {}
-    if not local_payload:
-        local_payload = raw.get("local_delivery_plan") if isinstance(raw.get("local_delivery_plan"), dict) else {}
     route_payload = raw.get("route_solution") if isinstance(raw.get("route_solution"), dict) else {}
     if "driver_id" not in local_payload or "driver_id" not in route_payload:
         return

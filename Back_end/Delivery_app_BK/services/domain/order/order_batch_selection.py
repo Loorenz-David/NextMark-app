@@ -11,7 +11,7 @@ from Delivery_app_BK.errors import ValidationFailed
 from Delivery_app_BK.models import Order, db
 from Delivery_app_BK.services.context import ServiceContext
 from Delivery_app_BK.services.queries.order.find_orders import find_orders
-from Delivery_app_BK.services.requests.order.update_orders_delivery_plan_batch import (
+from Delivery_app_BK.services.requests.order.update_orders_route_plan_batch import (
     OrderBatchSelectionRequest,
 )
 from Delivery_app_BK.services.utils import model_requires_team, require_team_id

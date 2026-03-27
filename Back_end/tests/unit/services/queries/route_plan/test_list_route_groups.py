@@ -15,10 +15,10 @@ def make_ctx(team_id: int = 1) -> ServiceContext:
     return ServiceContext(identity={"active_team_id": team_id})
 
 
-def _fake_route_plan(route_group=None) -> MagicMock:
+def _fake_route_plan(route_groups=None) -> MagicMock:
     plan = MagicMock()
     plan.id = 42
-    plan.route_group = route_group
+    plan.route_groups = route_groups or []
     return plan
 
 
@@ -26,11 +26,20 @@ def _fake_route_group(route_plan_id: int = 42) -> MagicMock:
     rg = MagicMock()
     rg.id = 10
     rg.client_id = "rg_10"
+    rg.name = "Zone North"
+    rg.zone_id = 7
+    rg.zone_geometry_snapshot = {"type": "Polygon", "coordinates": []}
+    rg.template_snapshot = {"max_stops": 20}
     rg.actual_start_time = None
     rg.actual_end_time = None
     rg.updated_at = None
     rg.driver_id = None
     rg.route_plan_id = route_plan_id
+    rg.total_orders = 3
+    rg.driver = None
+    rg.state = None
+    rg.zone = None
+    rg.route_solutions = []
     return rg
 
 
@@ -40,7 +49,7 @@ def _fake_route_group(route_plan_id: int = 42) -> MagicMock:
 
 def test_list_route_groups_returns_empty_list_when_no_route_group():
     ctx = make_ctx()
-    plan = _fake_route_plan(route_group=None)
+    plan = _fake_route_plan(route_groups=[])
 
     with patch(f"{MODULE}.get_instance", return_value=plan):
         result = list_route_groups(42, ctx)
@@ -56,16 +65,15 @@ def test_list_route_groups_returns_empty_list_when_no_route_group():
 def test_list_route_groups_returns_serialized_route_group():
     ctx = make_ctx()
     rg = _fake_route_group(route_plan_id=42)
-    plan = _fake_route_plan(route_group=rg)
-    serialized = [{"id": 10, "route_plan_id": 42}]
+    plan = _fake_route_plan(route_groups=[rg])
 
-    with patch(f"{MODULE}.get_instance", return_value=plan), \
-         patch(f"{MODULE}.serialize_local_delivery_plans", return_value=serialized):
+    with patch(f"{MODULE}.get_instance", return_value=plan):
         result = list_route_groups(42, ctx)
 
     assert result["route_plan_id"] == 42
     assert len(result["route_groups"]) == 1
     assert result["route_groups"][0]["id"] == 10
+    assert result["route_groups"][0]["zone_id"] == 7
 
 
 # ---------------------------------------------------------------------------

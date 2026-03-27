@@ -213,8 +213,8 @@ def load_route_solution_for_refresh(route_solution_id: int | None) -> RouteSolut
         .filter(RouteSolution.id == route_solution_id)
         .options(
             selectinload(RouteSolution.stops),
-            joinedload(RouteSolution.local_delivery_plan)
-            .joinedload(RouteGroup.delivery_plan)
+            joinedload(RouteSolution.route_group)
+            .joinedload(RouteGroup.route_plan)
             .selectinload(RoutePlan.orders),
         )
         .populate_existing()

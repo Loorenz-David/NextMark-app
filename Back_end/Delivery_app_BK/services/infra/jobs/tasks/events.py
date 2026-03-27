@@ -25,7 +25,7 @@ def process_order_event_job(event_row_id: int) -> None:
 
 
 @with_app_context
-def process_delivery_plan_event_job(event_row_id: int) -> None:
+def process_route_plan_event_job(event_row_id: int) -> None:
     event_row = db.session.get(RoutePlanEvent, event_row_id)
     if event_row is None:
         return

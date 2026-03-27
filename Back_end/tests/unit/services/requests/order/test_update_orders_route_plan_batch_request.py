@@ -1,14 +1,14 @@
 import pytest
 
 from Delivery_app_BK.errors import ValidationFailed
-from Delivery_app_BK.services.requests.order.update_orders_delivery_plan_batch import (
+from Delivery_app_BK.services.requests.order.update_orders_route_plan_batch import (
     MAX_MANUAL_IDS,
-    parse_update_orders_delivery_plan_batch_payload,
+    parse_update_orders_route_plan_batch_payload,
 )
 
 
 def test_parse_batch_selection_payload_accepts_valid_payload():
-    parsed = parse_update_orders_delivery_plan_batch_payload(
+    parsed = parse_update_orders_route_plan_batch_payload(
         {
             "selection": {
                 "manual_order_ids": [5, 2, 5, 1],
@@ -36,7 +36,7 @@ def test_parse_batch_selection_payload_accepts_valid_payload():
 
 def test_parse_batch_selection_payload_rejects_bool_ids():
     with pytest.raises(ValidationFailed):
-        parse_update_orders_delivery_plan_batch_payload(
+        parse_update_orders_route_plan_batch_payload(
             {
                 "selection": {
                     "manual_order_ids": [True],  # type: ignore[list-item]
@@ -49,7 +49,7 @@ def test_parse_batch_selection_payload_rejects_bool_ids():
 
 def test_parse_batch_selection_payload_rejects_too_many_manual_ids():
     with pytest.raises(ValidationFailed):
-        parse_update_orders_delivery_plan_batch_payload(
+        parse_update_orders_route_plan_batch_payload(
             {
                 "selection": {
                     "manual_order_ids": list(range(1, MAX_MANUAL_IDS + 2)),
@@ -62,7 +62,7 @@ def test_parse_batch_selection_payload_rejects_too_many_manual_ids():
 
 def test_parse_batch_selection_payload_rejects_unknown_query_filters():
     with pytest.raises(ValidationFailed):
-        parse_update_orders_delivery_plan_batch_payload(
+        parse_update_orders_route_plan_batch_payload(
             {
                 "selection": {
                     "manual_order_ids": [],
@@ -81,7 +81,7 @@ def test_parse_batch_selection_payload_rejects_unknown_query_filters():
 
 
 def test_parse_batch_selection_payload_dedupes_identical_snapshots():
-    parsed = parse_update_orders_delivery_plan_batch_payload(
+    parsed = parse_update_orders_route_plan_batch_payload(
         {
             "selection": {
                 "manual_order_ids": [],
@@ -98,7 +98,7 @@ def test_parse_batch_selection_payload_dedupes_identical_snapshots():
 
 
 def test_parse_batch_selection_payload_accepts_route_plan_id_alias():
-    parsed = parse_update_orders_delivery_plan_batch_payload(
+    parsed = parse_update_orders_route_plan_batch_payload(
         {
             "selection": {
                 "manual_order_ids": [],
@@ -119,7 +119,7 @@ def test_parse_batch_selection_payload_accepts_route_plan_id_alias():
 
 def test_parse_batch_selection_payload_rejects_mismatched_plan_aliases():
     with pytest.raises(ValidationFailed):
-        parse_update_orders_delivery_plan_batch_payload(
+        parse_update_orders_route_plan_batch_payload(
             {
                 "selection": {
                     "manual_order_ids": [],

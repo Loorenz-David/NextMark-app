@@ -15,11 +15,11 @@ class MessageRenderContext:
         order: "Order",
         order_event: "OrderEvent | None" = None,
         team_id: int | None = None,
-        delivery_plan_event: "RoutePlanEvent | None" = None,
+        route_plan_event: "RoutePlanEvent | None" = None,
     ) -> None:
         self.order = order
         self.order_event = order_event
-        self.delivery_plan_event = delivery_plan_event
+        self.route_plan_event = route_plan_event
         self.team_id = team_id
         self._selected_route_stop_loaded = False
         self._selected_route_stop: RouteSolutionStop | None = None
@@ -73,15 +73,15 @@ def _resolve_tracking_number(context: MessageRenderContext, channel: str) -> str
 
 
 def _resolve_plan_delivery_date_display(context: MessageRenderContext, channel: str) -> str:
-    delivery_plan_event = context.delivery_plan_event
-    if delivery_plan_event is None:
+    route_plan_event = context.route_plan_event
+    if route_plan_event is None:
         return ""
-    delivery_plan = delivery_plan_event.delivery_plan
-    if delivery_plan is None:
+    route_plan = route_plan_event.route_plan
+    if route_plan is None:
         return ""
 
-    start_date = getattr(delivery_plan, "start_date", None)
-    end_date = getattr(delivery_plan, "end_date", None)
+    start_date = getattr(route_plan, "start_date", None)
+    end_date = getattr(route_plan, "end_date", None)
     if not isinstance(start_date, datetime) or not isinstance(end_date, datetime):
         return ""
     

@@ -21,7 +21,7 @@ from Delivery_app_BK.services.commands.route_plan.local_delivery.route_solution.
     remove_orders_stops_for_local_delivery,
 )
 from Delivery_app_BK.services.infra.events.builders.order import (
-    build_delivery_plan_changed_event,
+    build_route_plan_changed_event,
 )
 from Delivery_app_BK.services.infra.events.emiters.order import emit_order_events
 from Delivery_app_BK.services.queries.route_solutions.serialize_route_solutions import (
@@ -45,7 +45,7 @@ from .plan_changes import (
 )
 
 
-def apply_orders_delivery_plan_change(
+def apply_orders_route_plan_change(
     ctx: ServiceContext,
     order_ids: int | list[int],
     plan_id: int,
@@ -86,7 +86,7 @@ def apply_orders_delivery_plan_change(
             "pending_events": [],
         }
 
-    old_plans_by_id = _load_delivery_plans_by_id(ctx, list(old_plan_ids))
+    old_plans_by_id = _load_route_plans_by_id(ctx, list(old_plan_ids))
     relevant_plan_ids = set(old_plan_ids)
     relevant_plan_ids.add(new_plan.id)
     relevant_plan_types = {new_plan.plan_type}
@@ -141,7 +141,7 @@ def apply_orders_delivery_plan_change(
         post_flush_actions.extend(change_result.post_flush_actions)
 
         pending_events.append(
-            build_delivery_plan_changed_event(order_instance, old_plan_id, new_plan)
+            build_route_plan_changed_event(order_instance, old_plan_id, new_plan)
         )
 
     if extra_instances:
@@ -161,8 +161,8 @@ def apply_orders_delivery_plan_change(
         for plan in [new_plan, *old_plans_by_id.values()]
         if getattr(plan, "plan_type", None) == "local_delivery"
     }
-    for delivery_plan in plans_to_touch.values():
-        touch_route_freshness(delivery_plan)
+    for route_plan in plans_to_touch.values():
+        touch_route_freshness(route_plan)
     if plans_to_touch:
         db.session.flush()
 
@@ -487,7 +487,7 @@ def _create_move_case(
         db.session.add(chat)
 
 
-def update_orders_delivery_plan(
+def update_orders_route_plan(
     ctx: ServiceContext,
     order_ids: int | list[int],
     plan_id: int | None,
@@ -495,16 +495,16 @@ def update_orders_delivery_plan(
     try:
         with db.session.begin():
             if plan_id is None:
-                outcome = apply_orders_delivery_plan_unassign(ctx, order_ids)
+                outcome = apply_orders_route_plan_unassign(ctx, order_ids)
             else:
-                outcome = apply_orders_delivery_plan_change(ctx, order_ids, plan_id)
+                outcome = apply_orders_route_plan_change(ctx, order_ids, plan_id)
     except InvalidRequestError as exc:
         if "already begun" not in str(exc).lower():
             raise
         if plan_id is None:
-            outcome = apply_orders_delivery_plan_unassign(ctx, order_ids)
+            outcome = apply_orders_route_plan_unassign(ctx, order_ids)
         else:
-            outcome = apply_orders_delivery_plan_change(ctx, order_ids, plan_id)
+            outcome = apply_orders_route_plan_change(ctx, order_ids, plan_id)
 
     pending_events = outcome.get("pending_events") or []
     if pending_events:
@@ -513,22 +513,22 @@ def update_orders_delivery_plan(
     return {"updated": outcome.get("updated") or []}
 
 
-def update_order_delivery_plan(
+def update_order_route_plan(
     ctx: ServiceContext,
     order_id: int,
     plan_id: int,
 ) -> dict:
-    return update_orders_delivery_plan(ctx, order_id, plan_id)
+    return update_orders_route_plan(ctx, order_id, plan_id)
 
 
-def unassign_order_delivery_plan(
+def unassign_order_route_plan(
     ctx: ServiceContext,
     order_id: int,
 ) -> dict:
-    return update_orders_delivery_plan(ctx, order_id, None)
+    return update_orders_route_plan(ctx, order_id, None)
 
 
-def apply_orders_delivery_plan_unassign(
+def apply_orders_route_plan_unassign(
     ctx: ServiceContext,
     order_ids: int | list[int],
 ) -> dict:
@@ -564,7 +564,7 @@ def apply_orders_delivery_plan_unassign(
             "pending_events": [],
         }
 
-    old_plans_by_id = _load_delivery_plans_by_id(ctx, list(old_plan_ids))
+    old_plans_by_id = _load_route_plans_by_id(ctx, list(old_plan_ids))
     relevant_plan_types = {
         plan.plan_type
         for plan in old_plans_by_id.values()
@@ -616,7 +616,7 @@ def apply_orders_delivery_plan_unassign(
         post_flush_actions.extend(change_result.post_flush_actions)
 
         pending_events.append(
-            build_delivery_plan_changed_event(order_instance, old_plan_id, None)
+            build_route_plan_changed_event(order_instance, old_plan_id, None)
         )
 
     if extra_instances:
@@ -636,8 +636,8 @@ def apply_orders_delivery_plan_unassign(
         for plan in old_plans_by_id.values()
         if getattr(plan, "plan_type", None) == "local_delivery"
     }
-    for delivery_plan in plans_to_touch.values():
-        touch_route_freshness(delivery_plan)
+    for route_plan in plans_to_touch.values():
+        touch_route_freshness(route_plan)
     if plans_to_touch:
         db.session.flush()
 
@@ -751,7 +751,7 @@ def _resolve_orders_for_update(
     return {order_id: orders_by_id[order_id] for order_id in deduped_order_ids}
 
 
-def _load_delivery_plans_by_id(
+def _load_route_plans_by_id(
     ctx: ServiceContext,
     plan_ids: list[int],
 ) -> dict[int, RoutePlan]:

@@ -26,8 +26,8 @@ def test_parse_update_local_delivery_settings_request_accepts_canonical_keys():
     parsed = parse_update_local_delivery_settings_request(_base_payload())
 
     assert parsed.route_group_id == 10
-    assert parsed.delivery_plan.label == "Morning routes"
-    assert parsed.local_delivery_plan.driver_id == 22
+    assert parsed.route_plan.label == "Morning routes"
+    assert parsed.route_group.driver_id == 22
     assert parsed.route_solution.route_solution_id == 900
 
 

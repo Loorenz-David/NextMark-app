@@ -73,8 +73,8 @@ class RouteSolutionPatchRequest:
 @dataclass
 class RouteGroupSettingsRequest:
     route_group_id: int | str
-    delivery_plan: RoutePlanPatchRequest
-    local_delivery_plan: RouteGroupPatchRequest
+    route_plan: RoutePlanPatchRequest
+    route_group: RouteGroupPatchRequest
     route_solution: RouteSolutionPatchRequest
     create_variant_on_save: bool
     time_zone: str | None
@@ -108,8 +108,8 @@ def parse_update_local_delivery_settings_request(raw: dict) -> RouteGroupSetting
         field="route_solution id",
     )
 
-    delivery_plan_patch = _parse_delivery_plan_patch(delivery_plan_raw)
-    local_delivery_patch = _parse_local_delivery_patch(local_delivery_raw)
+    route_plan_patch = _parse_route_plan_patch(delivery_plan_raw)
+    route_group_patch = _parse_route_group_patch(local_delivery_raw)
     route_solution_patch = _parse_route_solution_patch(
         route_solution_id=route_solution_id,
         route_solution_raw=route_solution_raw,
@@ -117,35 +117,35 @@ def parse_update_local_delivery_settings_request(raw: dict) -> RouteGroupSetting
 
     # Route solution driver is the source of truth for this flow.
     effective_driver_provided = (
-        route_solution_patch.has_driver_id or local_delivery_patch.has_driver_id
+        route_solution_patch.has_driver_id or route_group_patch.has_driver_id
     )
     if effective_driver_provided:
         effective_driver_id = (
             route_solution_patch.driver_id
             if route_solution_patch.has_driver_id
-            else local_delivery_patch.driver_id
+            else route_group_patch.driver_id
         )
-        local_delivery_patch.driver_id = effective_driver_id
-        local_delivery_patch.has_driver_id = True
+        route_group_patch.driver_id = effective_driver_id
+        route_group_patch.has_driver_id = True
         route_solution_patch.driver_id = effective_driver_id
         route_solution_patch.has_driver_id = True
 
     if (
-        delivery_plan_patch.has_start_date
-        and delivery_plan_patch.has_end_date
-        and delivery_plan_patch.start_date is not None
-        and delivery_plan_patch.end_date is not None
-        and delivery_plan_patch.end_date < delivery_plan_patch.start_date
+        route_plan_patch.has_start_date
+        and route_plan_patch.has_end_date
+        and route_plan_patch.start_date is not None
+        and route_plan_patch.end_date is not None
+        and route_plan_patch.end_date < route_plan_patch.start_date
     ):
-        raise ValidationFailed("delivery plan end date cannot be before start date.")
+        raise ValidationFailed("route plan end date cannot be before start date.")
 
     time_zone = _parse_time_zone(raw.get("time_zone"))
     create_variant_on_save = bool(raw.get("create_variant_on_save"))
 
     return RouteGroupSettingsRequest(
         route_group_id=route_group_id,
-        delivery_plan=delivery_plan_patch,
-        local_delivery_plan=local_delivery_patch,
+        route_plan=route_plan_patch,
+        route_group=route_group_patch,
         route_solution=route_solution_patch,
         create_variant_on_save=create_variant_on_save,
         time_zone=time_zone,
@@ -156,12 +156,12 @@ def parse_update_route_group_settings_request(raw: dict) -> RouteGroupSettingsRe
     return parse_update_local_delivery_settings_request(raw)
 
 
-def _parse_delivery_plan_patch(raw: dict) -> RoutePlanPatchRequest:
+def _parse_route_plan_patch(raw: dict) -> RoutePlanPatchRequest:
     patch = RoutePlanPatchRequest()
 
     if "label" in raw:
         patch.has_label = True
-        patch.label = validate_str(raw.get("label"), field="delivery_plan.label")
+        patch.label = validate_str(raw.get("label"), field="route_plan.label")
 
     if "start_date" in raw:
         patch.has_start_date = True
@@ -176,28 +176,28 @@ def _parse_delivery_plan_patch(raw: dict) -> RoutePlanPatchRequest:
     return patch
 
 
-def _parse_local_delivery_patch(raw: dict) -> RouteGroupPatchRequest:
+def _parse_route_group_patch(raw: dict) -> RouteGroupPatchRequest:
     patch = RouteGroupPatchRequest()
 
     if "driver_id" in raw:
         patch.has_driver_id = True
         patch.driver_id = _validate_nullable_int(
             raw.get("driver_id"),
-            field="local_delivery_plan.driver_id",
+            field="route_group.driver_id",
         )
 
     if "actual_start_time" in raw:
         patch.has_actual_start_time = True
         patch.actual_start_time = _validate_nullable_datetime(
             raw.get("actual_start_time"),
-            field="local_delivery_plan.actual_start_time",
+            field="route_group.actual_start_time",
         )
 
     if "actual_end_time" in raw:
         patch.has_actual_end_time = True
         patch.actual_end_time = _validate_nullable_datetime(
             raw.get("actual_end_time"),
-            field="local_delivery_plan.actual_end_time",
+            field="route_group.actual_end_time",
         )
 
     return patch

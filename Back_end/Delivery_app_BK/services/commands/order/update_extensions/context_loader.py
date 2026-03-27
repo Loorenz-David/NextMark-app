@@ -121,13 +121,13 @@ def _load_international_shipping_context(
     extension_context: OrderUpdateExtensionContext,
 ) -> None:
     query = db.session.query(InternationalShippingPlan).filter(
-        InternationalShippingPlan.delivery_plan_id.in_(plan_ids)
+        InternationalShippingPlan.route_plan_id.in_(plan_ids)
     )
     if ctx.team_id:
         query = query.filter(InternationalShippingPlan.team_id == ctx.team_id)
     extension_context.by_plan_type["international_shipping"] = {
         "international_shipping_by_plan_id": {
-            instance.delivery_plan_id: instance for instance in query.all()
+            instance.route_plan_id: instance for instance in query.all()
         }
     }
 
@@ -139,13 +139,13 @@ def _load_store_pickup_context(
     extension_context: OrderUpdateExtensionContext,
 ) -> None:
     query = db.session.query(StorePickupPlan).filter(
-        StorePickupPlan.delivery_plan_id.in_(plan_ids)
+        StorePickupPlan.route_plan_id.in_(plan_ids)
     )
     if ctx.team_id:
         query = query.filter(StorePickupPlan.team_id == ctx.team_id)
     extension_context.by_plan_type["store_pickup"] = {
         "store_pickup_by_plan_id": {
-            instance.delivery_plan_id: instance for instance in query.all()
+            instance.route_plan_id: instance for instance in query.all()
         }
     }
 

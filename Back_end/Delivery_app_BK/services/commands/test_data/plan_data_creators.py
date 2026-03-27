@@ -78,13 +78,13 @@ def create_plan_bundle(
     payload: dict[str, Any],
     sequence: int = 1,
 ) -> dict[str, Any]:
-    """Create a delivery plan and related type/event rows from a nested config object."""
+    """Create a route plan and related type/event rows from a nested config object."""
     if not isinstance(payload, dict):
         raise ValidationFailed("Plan bundle payload must be an object.")
 
-    plan = create_delivery_plan_row(
+    plan = create_route_plan_row(
         ctx,
-        _as_dict(payload.get("delivery_plan")),
+        _as_dict(payload.get("route_plan") or payload.get("delivery_plan")),
         sequence=sequence,
     )
 
@@ -92,9 +92,9 @@ def create_plan_bundle(
     route_solution_ids: list[int] = []
 
     if plan.plan_type == "local_delivery":
-        local_delivery_payload = _as_dict(payload.get("local_delivery_plan"))
-        local_delivery = create_local_delivery_plan_row(ctx, plan, local_delivery_payload)
-        plan_type_instance = local_delivery
+        route_group_payload = _as_dict(payload.get("route_group") or payload.get("local_delivery_plan"))
+        route_group = create_route_group_row(ctx, plan, route_group_payload)
+        plan_type_instance = route_group
 
         raw_route_solutions = payload.get("route_solutions")
         route_solution_payloads = _as_list_of_dicts(
@@ -105,7 +105,7 @@ def create_plan_bundle(
         for route_index, route_payload in enumerate(route_solution_payloads, start=1):
             route_solution = create_route_solution_row(
                 ctx,
-                local_delivery,
+                route_group,
                 route_payload,
                 route_index=route_index,
             )
@@ -135,12 +135,12 @@ def create_plan_bundle(
             field_name="events.actions",
             default=[],
         )
-        event = create_delivery_plan_event_row(ctx, plan, event_payload)
+        event = create_route_plan_event_row(ctx, plan, event_payload)
         db.session.flush()
         event_ids.append(event.id)
 
         for action_payload in action_payloads:
-            action = create_delivery_plan_event_action_row(ctx, event, action_payload)
+            action = create_route_plan_event_action_row(ctx, event, action_payload)
             db.session.flush()
             event_action_ids.append(action.id)
 
@@ -156,7 +156,7 @@ def create_plan_bundle(
     }
 
 
-def create_delivery_plan_row(
+def create_route_plan_row(
     ctx: ServiceContext,
     payload: dict[str, Any] | None = None,
     *,
@@ -168,10 +168,10 @@ def create_delivery_plan_row(
     start_date = _parse_datetime(payload.get("start_date")) or datetime.now(timezone.utc)
     end_date = _parse_datetime(payload.get("end_date")) or (start_date + timedelta(hours=8))
     if end_date < start_date:
-        raise ValidationFailed("delivery_plan.end_date cannot be before start_date.")
+        raise ValidationFailed("route_plan.end_date cannot be before start_date.")
 
     fields: dict[str, Any] = {
-        "client_id": _resolve_client_id(payload.get("client_id"), "delivery_plan"),
+        "client_id": _resolve_client_id(payload.get("client_id"), "route_plan"),
         "label": _resolve_label(payload.get("label"), sequence),
         "plan_type": plan_type,
         "start_date": start_date,
@@ -188,9 +188,9 @@ def create_delivery_plan_row(
     return plan
 
 
-def create_local_delivery_plan_row(
+def create_route_group_row(
     ctx: ServiceContext,
-    delivery_plan: RoutePlan,
+    route_plan: RoutePlan,
     payload: dict[str, Any] | None = None,
 ) -> RouteGroup:
     payload = payload or {}
@@ -202,14 +202,14 @@ def create_local_delivery_plan_row(
         "driver_id": _as_optional_positive_int(payload.get("driver_id")),
     }
     instance = create_instance(ctx, RouteGroup, _compact_none(fields))
-    instance.delivery_plan = delivery_plan
+    instance.route_plan = route_plan
     db.session.add(instance)
     return instance
 
 
 def create_route_solution_row(
     ctx: ServiceContext,
-    local_delivery_plan: RouteGroup,
+    route_group: RouteGroup,
     payload: dict[str, Any] | None = None,
     *,
     route_index: int = 1,
@@ -251,14 +251,14 @@ def create_route_solution_row(
     }
 
     instance = create_instance(ctx, RouteSolution, _compact_none(fields))
-    instance.local_delivery_plan = local_delivery_plan
+    instance.route_group = route_group
     db.session.add(instance)
     return instance
 
 
 def create_international_shipping_plan_row(
     ctx: ServiceContext,
-    delivery_plan: RoutePlan,
+    route_plan: RoutePlan,
     payload: dict[str, Any] | None = None,
 ) -> InternationalShippingPlan:
     payload = payload or {}
@@ -271,14 +271,14 @@ def create_international_shipping_plan_row(
         "carrier_name": payload.get("carrier_name") or DEFAULT_CARRIER_NAME,
     }
     instance = create_instance(ctx, InternationalShippingPlan, _compact_none(fields))
-    instance.delivery_plan = delivery_plan
+    instance.route_plan = route_plan
     db.session.add(instance)
     return instance
 
 
 def create_store_pickup_plan_row(
     ctx: ServiceContext,
-    delivery_plan: RoutePlan,
+    route_plan: RoutePlan,
     payload: dict[str, Any] | None = None,
 ) -> StorePickupPlan:
     payload = payload or {}
@@ -289,14 +289,14 @@ def create_store_pickup_plan_row(
         "assigned_user_id": _as_optional_positive_int(payload.get("assigned_user_id")),
     }
     instance = create_instance(ctx, StorePickupPlan, _compact_none(fields))
-    instance.delivery_plan = delivery_plan
+    instance.route_plan = route_plan
     db.session.add(instance)
     return instance
 
 
-def create_delivery_plan_event_row(
+def create_route_plan_event_row(
     ctx: ServiceContext,
-    delivery_plan: RoutePlan,
+    route_plan: RoutePlan,
     payload: dict[str, Any] | None = None,
 ) -> RoutePlanEvent:
     payload = payload or {}
@@ -311,12 +311,12 @@ def create_delivery_plan_event_row(
         "actor_id": _as_optional_positive_int(payload.get("actor_id")),
     }
     instance = create_instance(ctx, RoutePlanEvent, _compact_none(fields))
-    instance.delivery_plan = delivery_plan
+    instance.route_plan = route_plan
     db.session.add(instance)
     return instance
 
 
-def create_delivery_plan_event_action_row(
+def create_route_plan_event_action_row(
     ctx: ServiceContext,
     event: RoutePlanEvent,
     payload: dict[str, Any] | None = None,
@@ -396,7 +396,7 @@ def _normalize_plan_type(value: Any) -> str:
             if normalized in RoutePlan.PLAN_TYPES:
                 return normalized
             raise ValidationFailed(
-                f"Invalid delivery_plan.plan_type '{normalized}'. "
+                f"Invalid route_plan.plan_type '{normalized}'. "
                 f"Allowed values: {sorted(RoutePlan.PLAN_TYPES)}"
             )
     return DEFAULT_PLAN_TYPE
@@ -458,13 +458,13 @@ def _compact_none(fields: dict[str, Any]) -> dict[str, Any]:
 
 
 __all__ = [
-    "create_delivery_plan_row",
-    "create_local_delivery_plan_row",
+    "create_route_plan_row",
+    "create_route_group_row",
     "create_route_solution_row",
     "create_international_shipping_plan_row",
     "create_store_pickup_plan_row",
-    "create_delivery_plan_event_row",
-    "create_delivery_plan_event_action_row",
+    "create_route_plan_event_row",
+    "create_route_plan_event_action_row",
     "create_plan_bundle",
     "generate_plan_test_data",
 ]

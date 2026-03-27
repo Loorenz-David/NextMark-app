@@ -29,7 +29,7 @@ def _make_request(time_zone):
         route_group_id=1,
         create_variant_on_save=False,
         time_zone=time_zone,
-        delivery_plan=SimpleNamespace(),
+        route_plan=SimpleNamespace(),
         route_solution=_make_route_patch(),
     )
 
@@ -38,8 +38,8 @@ def test_update_local_delivery_settings_uses_identity_timezone_when_missing_in_p
     captured = {}
     now = datetime.now(timezone.utc)
     request = _make_request(time_zone=None)
-    delivery_plan = SimpleNamespace(id=2, start_date=now, end_date=now)
-    local_delivery_plan = SimpleNamespace(id=1)
+    route_plan = SimpleNamespace(id=2, start_date=now, end_date=now)
+    route_group = SimpleNamespace(id=1)
     route_solution = SimpleNamespace(id=10, stops=[])
 
     monkeypatch.setattr(
@@ -50,12 +50,12 @@ def test_update_local_delivery_settings_uses_identity_timezone_when_missing_in_p
     monkeypatch.setattr(
         module,
         "load_route_group_settings_entities",
-        lambda ctx, request: (local_delivery_plan, delivery_plan, route_solution),
+        lambda ctx, request: (route_group, route_plan, route_solution),
     )
     monkeypatch.setattr(
         module,
         "apply_route_plan_patch",
-        lambda delivery_plan, patch: (delivery_plan.start_date, delivery_plan.end_date, []),
+        lambda route_plan, patch: (route_plan.start_date, route_plan.end_date, []),
     )
 
     def _fake_update_route_solution_from_plan(**kwargs):
@@ -66,7 +66,7 @@ def test_update_local_delivery_settings_uses_identity_timezone_when_missing_in_p
     monkeypatch.setattr(module.db.session, "add", lambda *_args, **_kwargs: None)
     monkeypatch.setattr(module.db.session, "add_all", lambda *_args, **_kwargs: None)
     monkeypatch.setattr(module.db.session, "commit", lambda: None)
-    monkeypatch.setattr(module, "emit_pending_delivery_plan_events", lambda ctx, events: None)
+    monkeypatch.setattr(module, "emit_pending_route_plan_events", lambda ctx, events: None)
     monkeypatch.setattr(
         module,
         "build_route_group_settings_response",
@@ -88,8 +88,8 @@ def test_update_local_delivery_settings_uses_context_timezone_even_when_payload_
     captured = {}
     now = datetime.now(timezone.utc)
     request = _make_request(time_zone="Europe/Stockholm")
-    delivery_plan = SimpleNamespace(id=2, start_date=now, end_date=now)
-    local_delivery_plan = SimpleNamespace(id=1)
+    route_plan = SimpleNamespace(id=2, start_date=now, end_date=now)
+    route_group = SimpleNamespace(id=1)
     route_solution = SimpleNamespace(id=10, stops=[])
 
     monkeypatch.setattr(
@@ -100,12 +100,12 @@ def test_update_local_delivery_settings_uses_context_timezone_even_when_payload_
     monkeypatch.setattr(
         module,
         "load_route_group_settings_entities",
-        lambda ctx, request: (local_delivery_plan, delivery_plan, route_solution),
+        lambda ctx, request: (route_group, route_plan, route_solution),
     )
     monkeypatch.setattr(
         module,
         "apply_route_plan_patch",
-        lambda delivery_plan, patch: (delivery_plan.start_date, delivery_plan.end_date, []),
+        lambda route_plan, patch: (route_plan.start_date, route_plan.end_date, []),
     )
 
     def _fake_update_route_solution_from_plan(**kwargs):
@@ -116,7 +116,7 @@ def test_update_local_delivery_settings_uses_context_timezone_even_when_payload_
     monkeypatch.setattr(module.db.session, "add", lambda *_args, **_kwargs: None)
     monkeypatch.setattr(module.db.session, "add_all", lambda *_args, **_kwargs: None)
     monkeypatch.setattr(module.db.session, "commit", lambda: None)
-    monkeypatch.setattr(module, "emit_pending_delivery_plan_events", lambda ctx, events: None)
+    monkeypatch.setattr(module, "emit_pending_route_plan_events", lambda ctx, events: None)
     monkeypatch.setattr(
         module,
         "build_route_group_settings_response",

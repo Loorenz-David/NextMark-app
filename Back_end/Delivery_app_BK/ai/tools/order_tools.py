@@ -8,8 +8,8 @@ from Delivery_app_BK.services.commands.order.create_order import create_order as
 from Delivery_app_BK.services.commands.order.update_order import update_order as update_order_service
 from Delivery_app_BK.services.commands.order.update_order import MUTABLE_FIELDS as ORDER_MUTABLE_FIELDS
 from Delivery_app_BK.services.commands.order.order_states.update_orders_state import update_orders_state
-from Delivery_app_BK.services.commands.order.update_order_delivery_plan import (
-    update_orders_delivery_plan,
+from Delivery_app_BK.services.commands.order.update_order_route_plan import (
+    update_orders_route_plan,
 )
 from Delivery_app_BK.services.queries.order.list_orders import (
     list_orders as list_orders_service,
@@ -160,7 +160,7 @@ def assign_orders_to_plan_tool(
     if not order_ids:
         return {"status": "no_orders", "assigned": 0}
 
-    result = update_orders_delivery_plan(ctx, order_ids, plan_id)
+    result = update_orders_route_plan(ctx, order_ids, plan_id)
     updated = result.get("updated") or []
 
     logger.info(

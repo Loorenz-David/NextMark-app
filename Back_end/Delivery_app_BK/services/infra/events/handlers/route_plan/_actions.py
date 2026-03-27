@@ -1,8 +1,8 @@
 from datetime import datetime, timezone
 
 from Delivery_app_BK.models import db, RoutePlanEvent, RoutePlanEventAction
-from Delivery_app_BK.services.infra.events.action_dispatch import enqueue_delivery_plan_action
-from Delivery_app_BK.services.infra.messaging.action_scheduling import resolve_delivery_plan_action_schedule
+from Delivery_app_BK.services.infra.events.action_dispatch import enqueue_route_plan_action
+from Delivery_app_BK.services.infra.messaging.action_scheduling import resolve_route_plan_action_schedule
 
 
 def _upsert_action(
@@ -60,7 +60,7 @@ def _upsert_action(
 def run_action(plan_event:RoutePlanEvent, action_name: str, _runner) -> None:
   
     team_id = getattr(plan_event, "team_id", None)
-    resolved_schedule = resolve_delivery_plan_action_schedule(plan_event, action_name)
+    resolved_schedule = resolve_route_plan_action_schedule(plan_event, action_name)
     if resolved_schedule is None:
         return
 
@@ -75,7 +75,7 @@ def run_action(plan_event:RoutePlanEvent, action_name: str, _runner) -> None:
         return
 
     try:
-        enqueue_delivery_plan_action(action)
+        enqueue_route_plan_action(action)
     except Exception as exc:
         failed_action = db.session.get(RoutePlanEventAction, action.id)
         if failed_action is None:

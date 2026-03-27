@@ -24,7 +24,7 @@
 ## System Overview
 
 The real-time system enables **instant synchronization** of delivery operations across:
-- **Admin App** → See all orders, routes, delivery plans in real-time
+- **Admin App** → See all orders, routes, and route plans in real-time
 - **Driver App** → See assigned routes and order updates instantly
 - **Backend** → Emits events when business logic changes
 
@@ -291,8 +291,8 @@ class DispatchStateMixin:
 | Table | Models | Purpose | Created By |
 |-------|--------|---------|-----------|
 | `order_event` | OrderEvent | Order CRUD events | Order commands |
-| `delivery_plan_event` | DeliveryPlanEvent | Delivery plan reschedule | Plan commands |
-| `local_delivery_plan_event` | LocalDeliveryPlanEvent | Local plan updates | Local plan commands |
+| `route_plan_event` | RoutePlanEvent | Route plan reschedule | Plan commands |
+| `route_group_event` | RouteGroupEvent | Route group updates | Route group commands |
 | `route_solution_event` | RouteSolutionEvent | Route solutions (create/update/delete/select) | Route commands |
 | `route_solution_stop_event` | RouteSolutionStopEvent | Route stops (position/timing) | Route commands |
 | `app_event_outbox` | AppEventOutbox | App-level events (for orders) | App commands |
@@ -317,7 +317,7 @@ class DispatchStateMixin:
 ```json
 {
     "route_solution_id": 456,
-    "local_delivery_plan_id": 789,
+    "route_group_id": 789,
     "label": "Route A - Morning",
     "is_selected": true,
     "driver_id": 999,
@@ -347,10 +347,10 @@ class DispatchStateMixin:
 }
 ```
 
-### Local Delivery Plan Events
+### Route Group Events
 
 **When Emitted**:
-- `local_delivery_plan.updated` - Plan settings changed (driver assignment, dates)
+- `route_group.updated` - Route group settings changed (driver assignment, dates)
 
 **Broadcast Room**:
 - `team_orders:{team_id}` → Admin app
@@ -411,7 +411,7 @@ python event_cleanup_manager.py stats
 |-------|------|---------|
 | DEBUG | Normal operation (verbose) | "Event already relayed (idempotency): 123" |
 | INFO | Milestones | "Emitted route_solution.updated: solution_id=456, team_id=789" |
-| WARNING | Missing references (non-blocking) | "LocalDeliveryPlan not found for event 123" |
+| WARNING | Missing references (non-blocking) | "RouteGroup not found for event 123" |
 | ERROR | Failures (will retry) | "Failed to relay RouteSolutionEvent 456: network timeout" |
 | CRITICAL | System down (needs investigation) | "Dispatcher loop failed: Redis connection error" |
 

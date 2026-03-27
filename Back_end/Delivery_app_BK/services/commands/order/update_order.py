@@ -90,10 +90,10 @@ def update_order(ctx: ServiceContext):
     pending_events: list[dict[str, Any]] = []
     order_deltas: list[OrderUpdateDelta] = []
     extension_result = None
-    delivery_plans_to_touch: list[RoutePlan] = []
+    route_plans_to_touch: list[RoutePlan] = []
 
     def _apply() -> None:
-        nonlocal updated_orders, pending_events, order_deltas, extension_result, delivery_plans_to_touch
+        nonlocal updated_orders, pending_events, order_deltas, extension_result, route_plans_to_touch
         updated_orders, pending_events, order_deltas = apply_order_updates(ctx, targets)
         extension_context = build_order_update_extension_context(ctx, order_deltas)
         extension_result = apply_order_update_extensions(ctx, order_deltas, extension_context)
@@ -105,7 +105,7 @@ def update_order(ctx: ServiceContext):
         if extension_result.instances:
             db.session.add_all(extension_result.instances)
 
-        delivery_plans_to_touch = [
+        route_plans_to_touch = [
             delta.delivery_plan
             for delta in order_deltas
             if (
@@ -114,9 +114,9 @@ def update_order(ctx: ServiceContext):
                 and bool(delta.changed_sections)
             )
         ]
-        for delivery_plan in delivery_plans_to_touch:
-            touch_route_freshness(delivery_plan)
-        if delivery_plans_to_touch:
+        for route_plan in route_plans_to_touch:
+            touch_route_freshness(route_plan)
+        if route_plans_to_touch:
             db.session.flush()
 
     try:
@@ -225,7 +225,7 @@ def apply_order_updates(
                 new_values=new_values,
                 flags=flags,
                 changed_sections=changed_sections,
-                delivery_plan=_resolve_delivery_plan_for_order(existing),
+                delivery_plan=_resolve_route_plan_for_order(existing),
             )
         )
         updated_orders.append(existing)
@@ -306,7 +306,7 @@ def _resolve_changed_sections(
     return tuple(changed_sections)
 
 
-def _resolve_delivery_plan_for_order(order: Order) -> RoutePlan | None:
+def _resolve_route_plan_for_order(order: Order) -> RoutePlan | None:
     existing_route_plan = getattr(order, "route_plan", None)
     if existing_route_plan is not None:
         return existing_route_plan

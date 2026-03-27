@@ -100,26 +100,26 @@ def upsert_order_zone_assignment(
     # Priority 2: System-derived (from coordinates)
     if coordinates:
         lat, lng = coordinates
-        resolved_zone = resolve_point_to_zone(
+        resolution = resolve_point_to_zone(
             zone_version_id=zone_version.id,
             lat=lat,
             lng=lng,
             priority_types=["user", "system", "bootstrap"],
         )
-        
-        if resolved_zone:
+
+        if resolution.zone:
             assignment_type = "auto"
-            assignment_method = "centroid_fallback"  # or polygon_direct if implementing point-in-polygon
-            
-            if existing and existing.zone_id == resolved_zone.id and existing.assignment_type == assignment_type:
+            assignment_method = resolution.method
+
+            if existing and existing.zone_id == resolution.zone.id and existing.assignment_type == assignment_type:
                 return existing, "no_change"
-            
+
             assignment = _upsert_assignment(
                 order_id=order_id,
                 team_id=team_id,
                 city_key=city_key,
                 zone_version_id=zone_version.id,
-                zone_id=resolved_zone.id,
+                zone_id=resolution.zone.id,
                 assignment_type=assignment_type,
                 assignment_method=assignment_method,
                 is_unassigned=False,
@@ -127,13 +127,12 @@ def upsert_order_zone_assignment(
             )
             return assignment, "system_assigned"
         else:
-            # No zones in this version yet
             return _create_unassigned_assignment(
                 order_id,
                 team_id,
                 city_key,
                 zone_version.id,
-                "no_candidate_zone",
+                resolution.unassigned_reason or "no_candidate_zone",
             ), "unassigned"
     
     # No coordinates available

@@ -20,8 +20,8 @@ from Delivery_app_BK.services.domain.route_operations.local_delivery import (
 from Delivery_app_BK.services.infra.events.emiters.order import emit_order_events
 from Delivery_app_BK.sockets.emitters.route_solution_events import emit_route_solution_created
 from Delivery_app_BK.sockets.notifications import notify_delivery_planning_event
-from Delivery_app_BK.services.commands.order.update_order_delivery_plan import (
-    apply_orders_delivery_plan_change,
+from Delivery_app_BK.services.commands.order.update_order_route_plan import (
+    apply_orders_route_plan_change,
 )
 from Delivery_app_BK.services.requests.route_plan.plan.create_plan import (
     parse_create_plan_request,
@@ -96,7 +96,7 @@ def create_plan(ctx: ServiceContext):
         for entry in creation_context:
             linked_order_ids = entry["order_ids"]
             if linked_order_ids:
-                outcome = apply_orders_delivery_plan_change(
+                outcome = apply_orders_route_plan_change(
                     ctx,
                     linked_order_ids,
                     entry["route_plan"].id,

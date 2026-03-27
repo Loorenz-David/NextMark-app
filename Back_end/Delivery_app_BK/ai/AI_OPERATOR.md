@@ -153,9 +153,9 @@ Tools that perform state transitions (`update_order_state`) map the name → ID 
 | `update_order_state` | `order_tools.py` | `commands/order/order_states/update_orders_state.py` |
 | `update_order` | `order_tools.py` | `commands/order/update_order.py` (MUTABLE_FIELDS allowlist) |
 | `create_order` | `order_tools.py` | `commands/order/create_order.py` |
-| `list_plans` | `plan_tools.py` | `queries/route_plan/list_route_plans.py` → `delivery_plan/list_delivery_plans.py` |
-| `get_plan_summary` | `plan_tools.py` | `queries/route_plan/get_route_plan.py` → `delivery_plan/get_plan.py` |
-| `create_plan` | `plan_tools.py` | `commands/plan/create_plan.py` → `delivery_plan/create_plan.py` |
+| `list_plans` | `plan_tools.py` | `queries/route_plan/list_route_plans.py` |
+| `get_plan_summary` | `plan_tools.py` | `queries/route_plan/get_route_plan.py` |
+| `create_plan` | `plan_tools.py` | `commands/route_plan/create_plan.py` |
 | `optimize_plan` | `plan_tools.py` | `route_optimization/orchestrator.py` |
 | `get_plan_execution_status` | `plan_tools.py` | strategy registry → `plan_execution/` |
 | `list_routes` | `plan_tools.py` | direct `RouteSolution` query |
@@ -164,7 +164,7 @@ Tools that perform state transitions (`update_order_state`) map the name → ID 
 
 ### Order mutation safety rules
 - `update_order_state` — AI must always call `list_orders` first. NEVER changes state without confirming targets.
-- `update_order` — MUTABLE_FIELDS allowlist enforced in the tool. `order_state_id` and `route_plan_id` are forbidden (use dedicated tools; service still accepts legacy `delivery_plan_id` alias).
+- `update_order` — MUTABLE_FIELDS allowlist enforced in the tool. `order_state_id` and `route_plan_id` are forbidden (use dedicated tools).
 - `create_order` / `add_items_to_order` — `article_number` is auto-generated (`<item_type_slug>-<6hex>`) if not provided by the user.
 
 ---
@@ -199,7 +199,7 @@ HANDLERS = {
 }
 ```
 
-**To add a new plan type:** create `tools/plan_execution/<type>_handler.py` implementing `get_execution_status(ctx, plan) -> dict`, add one entry to the registry. The tool, the prompt, and the LLM surface are unchanged.
+**To add a new plan type:** create `tools/plan_execution/<type>_handler.py` implementing `get_execution_status(ctx, plan: RoutePlan) -> dict`, add one entry to the registry. The tool, the prompt, and the LLM surface are unchanged.
 
 ---
 
@@ -314,11 +314,10 @@ Tools inject filters into `ctx.query_params` before calling the service.
 
 ```
 Order.route_plan_id     → NULL = unscheduled, set = scheduled
-Order.delivery_plan_id  → legacy ORM synonym preserved during migration compatibility window
-DeliveryPlan.start_date / end_date → activity window
-DeliveryPlan.plan_type  → "local_delivery" | "international_shipping" | "store_pickup"
+RoutePlan.start_date / end_date → activity window
+RoutePlan.plan_type  → "local_delivery" | "international_shipping" | "store_pickup"
 OrderDeliveryWindow     → time windows (start_at, end_at, window_type) evaluated at optimization
-RouteSolution.is_selected = True → the active route for a local_delivery plan
+RouteSolution.is_selected = True → the active route for a route plan
 RouteSolutionStop       → one stop per order in the route, with ETA and actual times
 ```
 
@@ -361,7 +360,7 @@ provider = provider or OpenAIProvider()   # swap to AnthropicProvider() or Gemin
 - **Thread ownership enforced.** Every request checks `user_id + app_scope`.
 - **Actions are deterministic.** `response_formatter.py` generates actions from tool results only — never from LLM prose.
 - **State transitions go through services.** `update_order_state` calls `update_orders_state()` — events fire correctly.
-- **MUTABLE_FIELDS allowlist.** `update_order` rejects `order_state_id` and `route_plan_id` at the tool level (canonical API key; legacy `delivery_plan_id` is accepted by services during migration).
+- **MUTABLE_FIELDS allowlist.** `update_order` rejects `order_state_id` and `route_plan_id` at the tool level.
 
 ---
 
@@ -427,7 +426,7 @@ All routes require: `Authorization: Bearer <jwt>` with ADMIN or ASSISTANT role.
 
 ## Adding a New Plan Execution Handler (checklist)
 
-1. Create `tools/plan_execution/<type>_handler.py` implementing `get_execution_status(ctx: ServiceContext, plan: DeliveryPlan) -> dict`
+1. Create `tools/plan_execution/<type>_handler.py` implementing `get_execution_status(ctx: ServiceContext, plan: RoutePlan) -> dict`
 2. Add one entry to `HANDLERS` in `tools/plan_execution/__init__.py`
 3. Update this file
 

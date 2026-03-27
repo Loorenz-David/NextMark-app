@@ -18,12 +18,12 @@ from Delivery_app_BK.services.outcome import StatusOutcome
 logger = logging.getLogger(__name__)
 
 
-def optimize_local_delivery_plan(
+def optimize_route_plan(
     ctx: ServiceContext,
     provider: RouteOptimizationProvider | None = None,
 ) -> StatusOutcome:
     """
-    Root orchestration entrypoint for local delivery plan optimization.
+    Root orchestration entrypoint for route plan optimization.
     """
     try:
         context = load_optimization_context(ctx)
@@ -39,7 +39,7 @@ def optimize_local_delivery_plan(
         return StatusOutcome(error=e)
     except Exception as e:
         logger.exception(
-            "Unexpected exception in service optimize_local_delivery_plan | identity=%s | data=%s",
+            "Unexpected exception in service optimize_route_plan | identity=%s | data=%s",
             ctx.identity,
             ctx.incoming_data,
         )

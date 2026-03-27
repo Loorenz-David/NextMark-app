@@ -1,4 +1,4 @@
-from Delivery_app_BK.route_optimization.orchestrator import optimize_local_delivery_plan
+from Delivery_app_BK.route_optimization.orchestrator import optimize_route_plan
 from Delivery_app_BK.services.commands.route_plan.local_delivery.route_solution.mark_route_solution_actual_end_time import (
     mark_route_solution_actual_end_time,
 )
@@ -30,7 +30,7 @@ __all__ = [
     "mark_route_solution_actual_start_time",
     "mark_route_stop_actual_arrival_time",
     "mark_route_stop_actual_departure_time",
-    "optimize_local_delivery_plan",
+    "optimize_route_plan",
     "select_route_solution",
     "update_route_stop_group_position",
     "update_route_stop_position",

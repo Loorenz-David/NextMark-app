@@ -34,8 +34,6 @@ def get_active_route_freshness(route_id: int, ctx: ServiceContext):
         raise PermissionDenied("You are not authorized to access this route.")
 
     route_group = getattr(route, "route_group", None)
-    if route_group is None:
-        route_group = getattr(route, "local_delivery_plan", None)
     route_plan = getattr(route_group, "route_plan", None) if route_group is not None else None
 
     return {

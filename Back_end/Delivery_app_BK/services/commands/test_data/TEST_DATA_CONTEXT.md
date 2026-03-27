@@ -3,7 +3,7 @@
 ## Purpose
 This folder contains the test-data generation pipeline used to seed realistic data for:
 - Item property and item type catalogs (frontend fast-fill options)
-- Delivery plans
+- Route plans
 - Orders linked to those plans
 
 The system is designed to be configurable, repeatable, and safe for environments that already contain non-test data.
@@ -17,7 +17,7 @@ Main orchestrator entry point:
 Execution order:
 1. Generate item properties and item types
 2. Generate plans
-3. Update route solution settings for each local delivery plan
+3. Update route solution settings for each route group-backed plan
 4. Generate orders linked to those plans
 
 This order ensures orders can generate random items using available item types.
@@ -63,7 +63,7 @@ Source:
 - `config/plan_defaults.py`
 
 Defaults:
-- 3 local_delivery plans
+- 3 local_delivery route plans
 - 1 store_pickup plan
 - 1 international_shipping plan
 - Labels are pre-defined and used later for filtering
@@ -77,7 +77,7 @@ Source:
 - `config/order_defaults.py`
 
 Defaults:
-- Local-delivery defaults create 10-20 orders per local-delivery plan
+- Local-delivery defaults create 10-20 orders per local-delivery route plan
 - Store-pickup defaults use 5 order templates
 - International-shipping defaults use 5 order templates
 - Plan types: `local_delivery`, `store_pickup`, `international_shipping`
@@ -239,7 +239,7 @@ Cleanup behavior:
 - Deletes team orders matching either:
   - orders linked to known test plan labels
   - order references starting with configured prefix (`test-` by default)
-- Deletes matched delivery plans (cascades to local/store/international plan rows, route solutions, route stops, and plan events)
+- Deletes matched route plans (cascades to local/store/international plan rows, route solutions, route stops, and plan events)
 - Deletes team item types and item properties whose names start with configured prefix (`test-` by default)
 - Idempotent: calling the cleanup route multiple times is safe.
 

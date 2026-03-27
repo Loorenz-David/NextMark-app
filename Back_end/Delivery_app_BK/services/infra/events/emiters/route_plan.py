@@ -27,7 +27,7 @@ def emit_route_plan_events(
 
         row = RoutePlanEvent(
             event_id=event.get("event_id", str(uuid4())),
-            delivery_plan_id=route_plan_id,
+            route_plan_id=route_plan_id,
             event_name=event_name,
             payload=payload,
             actor_id=event.get("actor_id", actor_id),

@@ -95,3 +95,40 @@ def create_zone(version_id: int):
     if outcome.error:
         return response.build_unsuccessful_response(outcome.error)
     return response.build_successful_response(outcome.data, warnings=ctx.warnings)
+
+
+@zone_bp.route("/<int:version_id>/zones/<int:zone_id>/template", methods=["GET"])
+@jwt_required()
+@role_required([ADMIN, ASSISTANT])
+def get_zone_template(version_id: int, zone_id: int):
+    identity = get_jwt()
+    ctx = ServiceContext(
+        query_params={"version_id": version_id, "zone_id": zone_id},
+        identity=identity,
+    )
+    from Delivery_app_BK.services.queries.zones.get_zone_template import get_zone_template
+
+    outcome = run_service(lambda c: get_zone_template(c), ctx)
+    response = Response()
+    if outcome.error:
+        return response.build_unsuccessful_response(outcome.error)
+    return response.build_successful_response(outcome.data, warnings=ctx.warnings)
+
+
+@zone_bp.route("/<int:version_id>/zones/<int:zone_id>/template", methods=["PUT"])
+@jwt_required()
+@role_required([ADMIN])
+def upsert_zone_template(version_id: int, zone_id: int):
+    identity = get_jwt()
+    incoming_data = request.get_json(silent=True) or {}
+    ctx = ServiceContext(
+        incoming_data={**incoming_data, "version_id": version_id, "zone_id": zone_id},
+        identity=identity,
+    )
+    from Delivery_app_BK.services.commands.zones.create_zone_template import create_zone_template
+
+    outcome = run_service(lambda c: create_zone_template(c), ctx)
+    response = Response()
+    if outcome.error:
+        return response.build_unsuccessful_response(outcome.error)
+    return response.build_successful_response(outcome.data, warnings=ctx.warnings)

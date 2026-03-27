@@ -6,7 +6,7 @@ from Delivery_app_BK.services.context import ServiceContext
 
 get_plan_module = importlib.import_module("Delivery_app_BK.services.queries.route_plan.get_plan")
 plan_type_module = importlib.import_module(
-    "Delivery_app_BK.services.queries.route_plan.plan_types.get_local_delivery_plan"
+    "Delivery_app_BK.services.queries.route_plan.plan_types.get_route_group"
 )
 
 
@@ -24,10 +24,10 @@ def test_get_plan_returns_canonical_route_plan_key(monkeypatch):
 
 
 def test_get_route_group_plan_type_returns_canonical_route_group_type_key(monkeypatch):
-    found_plan = SimpleNamespace(route_group=SimpleNamespace(id=77))
+    found_plan = SimpleNamespace(route_groups=[SimpleNamespace(id=77)])
 
     monkeypatch.setattr(plan_type_module, "get_instance", lambda **_kwargs: found_plan)
-    monkeypatch.setattr(plan_type_module, "serialize_local_delivery_plan", lambda instance, ctx: {"id": 77})
+    monkeypatch.setattr(plan_type_module, "serialize_route_group", lambda instance, ctx: {"id": 77})
 
     result = plan_type_module.get_route_group_plan_type(
         123,

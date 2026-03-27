@@ -3,11 +3,11 @@
 **Version**: 1.0  
 **Date**: 2026-03-25  
 **Status**: Draft - Prepared but not yet implemented  
-**Scope**: Local Delivery Plans with Zone-Aware Route Selection
+**Scope**: Route plans with zone-aware route selection
 
 ## Overview
 
-This document outlines the extension points and architectural patterns that will enable zone-aware multi-route selection in local delivery plans. The refactored bounded context structure (Phase 1-5) created the foundation; this phase prepares the service layer for zone-scoped route decisions.
+This document outlines the extension points and architectural patterns that will enable zone-aware multi-route selection in route plans. The refactored bounded context structure (Phase 1-5) created the foundation; this phase prepares the service layer for zone-scoped route decisions.
 
 ---
 
@@ -128,7 +128,7 @@ def assign_order_to_plan_and_zone(
 ```python
 def generate_route_solutions_by_zone(
     ctx: ServiceContext,
-    delivery_plan_id: int,
+    route_plan_id: int,
     zone_ids: list[int] | None = None,
 ) -> dict[int, RouteSolution]:
     """Generate route solutions scoped by zone
@@ -162,7 +162,7 @@ class ZoneRoutingDecision:
 
 def route_orders_by_zone(
     ctx: ServiceContext,
-    delivery_plan_id: int,
+    route_plan_id: int,
     pending_orders: list[Order],
 ) -> dict[int, list[ZoneRoutingDecision]]:
     """Route pending orders to zones + routes
@@ -220,22 +220,22 @@ Complete Plan State Transition
 def apply_order_objective_with_zones(
     ctx: ServiceContext,
     order_instance,
-    delivery_plan,
+    route_plan,
     plan_objective: str,
 ) -> PlanObjectiveCreateResult:
     """Enhanced objective handler supporting zones"""
     
-    local_delivery = _get_local_delivery_plan(ctx, delivery_plan.id)
+    route_group = _get_route_group(ctx, route_plan.id)
     
     # NEW: Get zone assignments for all orders
-    zone_assignments = _get_zone_assignments(ctx, delivery_plan.id)
+    zone_assignments = _get_zone_assignments(ctx, route_plan.id)
     
     # NEW: Build routes per zone
     route_solutions_by_zone = {}
     for zone_id in zone_assignments.values():
         route_solutions_by_zone[zone_id] = (
             generate_route_solutions_by_zone(
-                ctx, delivery_plan.id, [zone_id]
+                ctx, route_plan.id, [zone_id]
             )
         )
     
@@ -260,7 +260,7 @@ ALTER TABLE orders ADD COLUMN zone_affinity VARCHAR(50);
 -- Determines how strictly zone must be respected
 ```
 
-### DeliveryPlan Table
+### RoutePlan Table
 ```sql
 ALTER TABLE delivery_plans ADD COLUMN zone_routing_mode VARCHAR(50);
 -- "none" (current), "soft", "hard", "optimized"
@@ -295,7 +295,7 @@ def test_zone_router_handles_affinity_preferences()
 
 ### Integration Tests
 ```python
-# tests/integration/zone_routing/test_multi_zone_delivery_plan.py
+# tests/integration/zone_routing/test_multi_zone_route_plan.py
 def test_create_plan_with_zones_and_assign_orders()
 def test_zone_aware_route_optimization()
 def test_driver_selects_routes_within_zones()

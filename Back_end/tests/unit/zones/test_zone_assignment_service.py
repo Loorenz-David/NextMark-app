@@ -8,6 +8,7 @@ from unittest.mock import Mock, MagicMock, patch
 from Delivery_app_BK.zones.services import (
     normalize_city_key,
     get_active_zone_version,
+    ZoneResolution,
     resolve_point_to_zone,
     upsert_order_zone_assignment,
 )
@@ -120,13 +121,17 @@ class TestResolvePointToZone:
         zone1 = Mock(
             id=1,
             zone_type="system",
-            centroid={"lat": 40.7128, "lng": -74.0060},  # NYC center (10km away)
+            centroid_lat=40.7128,
+            centroid_lng=-74.0060,
+            geometry=None,
             is_active=True,
         )
         zone2 = Mock(
             id=2,
             zone_type="system",
-            centroid={"lat": 40.6892, "lng": -74.0445},  # Brooklyn (closer)
+            centroid_lat=40.6892,
+            centroid_lng=-74.0445,
+            geometry=None,
             is_active=True,
         )
         
@@ -139,7 +144,8 @@ class TestResolvePointToZone:
             lng=-74.0445,
         )
         
-        assert result == zone2  # Should be Brooklyn zone
+        assert result.zone == zone2  # Should be Brooklyn zone
+        assert result.method == "centroid_fallback"
 
     @patch('Delivery_app_BK.zones.services.point_to_zone_resolver.Zone')
     def test_resolve_respects_zone_type_priority(self, mock_zone_class):
@@ -151,13 +157,17 @@ class TestResolvePointToZone:
         user_zone = Mock(
             id=1,
             zone_type="user",
-            centroid={"lat": 40.75, "lng": -74.0},  # Farther (20km)
+            centroid_lat=40.75,
+            centroid_lng=-74.0,
+            geometry=None,
             is_active=True,
         )
         system_zone = Mock(
             id=2,
             zone_type="system",
-            centroid={"lat": 40.7128, "lng": -74.0060},  # Closer (10km)
+            centroid_lat=40.7128,
+            centroid_lng=-74.0060,
+            geometry=None,
             is_active=True,
         )
         
@@ -171,7 +181,8 @@ class TestResolvePointToZone:
         )
         
         # Should return user zone even though system zone is closer
-        assert result == user_zone
+        assert result.zone == user_zone
+        assert result.method == "centroid_fallback"
 
     @patch('Delivery_app_BK.zones.services.point_to_zone_resolver.Zone')
     def test_resolve_returns_none_if_no_zones(self, mock_zone_class):
@@ -186,7 +197,8 @@ class TestResolvePointToZone:
             lng=-74.0060,
         )
         
-        assert result is None
+        assert result.zone is None
+        assert result.unassigned_reason == "no_candidate_zone"
 
     @patch('Delivery_app_BK.zones.services.point_to_zone_resolver.Zone')
     def test_resolve_ignores_inactive_zones(self, mock_zone_class):
@@ -197,7 +209,9 @@ class TestResolvePointToZone:
         active_zone = Mock(
             id=1,
             zone_type="system",
-            centroid={"lat": 40.7128, "lng": -74.0060},
+            centroid_lat=40.7128,
+            centroid_lng=-74.0060,
+            geometry=None,
             is_active=True,
         )
         
@@ -211,7 +225,7 @@ class TestResolvePointToZone:
         )
         
         # Should return the only active zone
-        assert result == active_zone
+        assert result.zone == active_zone
 
 
 # ============================================================================
@@ -234,7 +248,7 @@ class TestUpsertOrderZoneAssignment:
         mock_get_version.return_value = mock_zone_version
         
         mock_zone = Mock(id=10)
-        mock_resolve.return_value = mock_zone
+        mock_resolve.return_value = ZoneResolution(zone=mock_zone, method="polygon_direct")
         
         mock_assignment = Mock(id=1, order_id=1, zone_id=10, assignment_type="auto")
         mock_assignment_class.query.filter_by.return_value.one_or_none.return_value = None

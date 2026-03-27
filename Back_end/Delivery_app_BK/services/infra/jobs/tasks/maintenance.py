@@ -5,7 +5,7 @@ from sqlalchemy import or_
 
 from Delivery_app_BK.models import RoutePlanEventAction, OrderEventAction, db
 from Delivery_app_BK.services.infra.events.action_dispatch import (
-    enqueue_delivery_plan_action,
+    enqueue_route_plan_action,
     enqueue_order_action,
 )
 from Delivery_app_BK.services.infra.events.dispatcher import repair_stale_claims
@@ -60,7 +60,7 @@ def requeue_stale_message_actions_job() -> int:
         .all()
     )
     for action in plan_actions:
-        enqueue_delivery_plan_action(action)
+        enqueue_route_plan_action(action)
         requeued += 1
 
     return requeued

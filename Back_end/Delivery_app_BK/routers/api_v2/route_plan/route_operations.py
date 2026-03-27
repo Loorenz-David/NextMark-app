@@ -17,7 +17,7 @@ from Delivery_app_BK.services.commands.route_operations import (
     mark_route_stop_actual_departure_time as mark_route_stop_actual_departure_time_service,
 )
 from Delivery_app_BK.services.commands.route_operations import (
-    optimize_local_delivery_plan,
+    optimize_route_plan,
 )
 from Delivery_app_BK.services.commands.route_operations import (
     select_route_solution as select_route_solution_service,
@@ -320,7 +320,7 @@ def create_route_optimization():
         identity=identity,
     )
 
-    outcome = optimize_local_delivery_plan(ctx)
+    outcome = optimize_route_plan(ctx)
     response = Response()
 
     if outcome.error:
@@ -348,7 +348,7 @@ def update_route_optimization():
     )
     response = Response()
 
-    outcome = optimize_local_delivery_plan(ctx)
+    outcome = optimize_route_plan(ctx)
 
     if outcome.error:
         return response.build_unsuccessful_response(outcome.error)

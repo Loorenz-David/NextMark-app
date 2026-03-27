@@ -110,14 +110,14 @@ def _load_local_delivery_context(
 ) -> None:
     route_plan_ids = plan_ids
     route_group_query = db.session.query(RouteGroup).filter(
-        RouteGroup.delivery_plan_id.in_(route_plan_ids)
+        RouteGroup.route_plan_id.in_(route_plan_ids)
     )
     if ctx.team_id:
         route_group_query = route_group_query.filter(RouteGroup.team_id == ctx.team_id)
 
     route_group_instances = route_group_query.all()
     route_group_by_route_plan_id = {
-        instance.delivery_plan_id: instance for instance in route_group_instances
+        instance.route_plan_id: instance for instance in route_group_instances
     }
     apply_context.route_group_by_route_plan_id = route_group_by_route_plan_id
 
@@ -148,13 +148,13 @@ def _load_international_shipping_context(
     apply_context: PlanChangeApplyContext,
 ) -> None:
     query = db.session.query(InternationalShippingPlan).filter(
-        InternationalShippingPlan.delivery_plan_id.in_(plan_ids)
+        InternationalShippingPlan.route_plan_id.in_(plan_ids)
     )
     if ctx.team_id:
         query = query.filter(InternationalShippingPlan.team_id == ctx.team_id)
 
     apply_context.international_shipping_by_plan_id = {
-        instance.delivery_plan_id: instance for instance in query.all()
+        instance.route_plan_id: instance for instance in query.all()
     }
 
 
@@ -164,13 +164,13 @@ def _load_store_pickup_context(
     apply_context: PlanChangeApplyContext,
 ) -> None:
     query = db.session.query(StorePickupPlan).filter(
-        StorePickupPlan.delivery_plan_id.in_(plan_ids)
+        StorePickupPlan.route_plan_id.in_(plan_ids)
     )
     if ctx.team_id:
         query = query.filter(StorePickupPlan.team_id == ctx.team_id)
 
     apply_context.store_pickup_by_plan_id = {
-        instance.delivery_plan_id: instance for instance in query.all()
+        instance.route_plan_id: instance for instance in query.all()
     }
 
 

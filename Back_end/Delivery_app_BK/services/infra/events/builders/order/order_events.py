@@ -84,7 +84,7 @@ def build_delivery_window_rescheduled_by_user_event(
     }
 
 
-def build_delivery_plan_changed_event(
+def build_route_plan_changed_event(
     order_instance: Order,
     old_plan_id: int | None,
     new_plan: RoutePlan,
@@ -99,6 +99,14 @@ def build_delivery_plan_changed_event(
             "new_plan_type": new_plan.plan_type,
         },
     }
+
+
+def build_delivery_plan_changed_event(
+    order_instance: Order,
+    old_plan_id: int | None,
+    new_plan: RoutePlan,
+) -> dict:
+    return build_route_plan_changed_event(order_instance, old_plan_id, new_plan)
 
 
 def build_order_status_changed_event(

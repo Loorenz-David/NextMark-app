@@ -112,7 +112,7 @@ class OrderBatchSelectionRequest:
     signature: str
 
 
-def parse_update_orders_delivery_plan_batch_request(raw: Any) -> OrderBatchSelectionRequest:
+def parse_update_orders_route_plan_batch_request(raw: Any) -> OrderBatchSelectionRequest:
     if not isinstance(raw, dict):
         raise ValidationFailed("selection payload must be an object.")
 
@@ -165,12 +165,12 @@ def _parse_source(value: Any) -> str | None:
     return normalized
 
 
-def parse_update_orders_delivery_plan_batch_payload(raw: Any) -> OrderBatchSelectionRequest:
+def parse_update_orders_route_plan_batch_payload(raw: Any) -> OrderBatchSelectionRequest:
     if not isinstance(raw, dict):
         raise ValidationFailed("Request payload must be an object.")
     if "selection" not in raw:
         raise ValidationFailed("Missing key 'selection' in request payload.")
-    return parse_update_orders_delivery_plan_batch_request(raw.get("selection"))
+    return parse_update_orders_route_plan_batch_request(raw.get("selection"))
 
 
 def _parse_snapshots(value: Any) -> list[OrderSelectAllSnapshotRequest]:

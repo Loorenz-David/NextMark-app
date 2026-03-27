@@ -1,6 +1,6 @@
 """Local Delivery App - Order Objective Handler.
 
-Handles the creation of route solution stops when an order is assigned to a local delivery plan.
+Handles creation of route solution stops when an order is assigned to a route plan.
 """
 
 from __future__ import annotations
@@ -34,7 +34,7 @@ def apply_order_objective(
     route_plan,
     plan_objective: str,
 ) -> PlanObjectiveCreateResult:
-    """Create route solution stops for order assigned to local delivery plan.
+    """Create route solution stops for an order assigned to a route plan.
     
     Args:
         ctx: Service context
@@ -45,7 +45,7 @@ def apply_order_objective(
     Returns:
         PlanObjectiveCreateResult with created stops and side effects
     """
-    local_delivery = _get_local_delivery_plan(ctx, route_plan.id)
+    local_delivery = _get_route_group(ctx, route_plan.id)
     route_solutions = list(local_delivery.route_solutions or [])
     if not route_solutions:
         raise ValidationFailed("Route solution not found for local delivery plan.")
@@ -104,16 +104,16 @@ def apply_order_objective(
     )
 
 
-def _get_local_delivery_plan(ctx: ServiceContext, route_plan_id: int) -> RouteGroup:
-    """Query local delivery plan by route plan id."""
+def _get_route_group(ctx: ServiceContext, route_plan_id: int) -> RouteGroup:
+    """Query route group by route plan id."""
     query = db.session.query(RouteGroup).filter(
-        RouteGroup.delivery_plan_id == route_plan_id
+        RouteGroup.route_plan_id == route_plan_id
     )
     if ctx.team_id:
         query = query.filter(RouteGroup.team_id == ctx.team_id)
     local_delivery = query.one_or_none()
     if not local_delivery:
-        raise ValidationFailed("Local delivery plan not found for order objective.")
+        raise ValidationFailed("Route group not found for order objective.")
     return local_delivery
 
 

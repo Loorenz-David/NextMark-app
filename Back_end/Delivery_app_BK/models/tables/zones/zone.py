@@ -3,6 +3,7 @@ from datetime import datetime, timezone
 from sqlalchemy import Boolean, Column, Enum, Float, Index, Integer, String
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy import JSON
+from sqlalchemy.orm import relationship
 
 from Delivery_app_BK.models import db
 from Delivery_app_BK.models.utils import UTCDateTime
@@ -60,4 +61,10 @@ class Zone(db.Model):
         nullable=False,
         default=lambda: datetime.now(timezone.utc),
         onupdate=lambda: datetime.now(timezone.utc),
+    )
+
+    templates = relationship(
+        "ZoneTemplate",
+        back_populates="zone",
+        cascade="all, delete-orphan",
     )

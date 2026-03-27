@@ -1,7 +1,8 @@
 # Third-party dependecies
 from datetime import datetime, timezone
 
-from sqlalchemy import Column, Float, ForeignKey, Integer, String
+from sqlalchemy import JSON, Column, Float, ForeignKey, Integer, String
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import relationship
 
 # Local application import
@@ -37,9 +38,13 @@ class RouteGroup(db.Model, TeamScopedMixin):
     route_plan_id = Column(
         Integer,
         ForeignKey("route_plan.id", ondelete="CASCADE"),
-        unique=True,
+        index=True,
         nullable=False,
     )
+    zone_id = Column(Integer, ForeignKey("zone.id", ondelete="SET NULL"), nullable=True, index=True)
+    name = Column(String(255), nullable=True)
+    zone_geometry_snapshot = Column(JSONB().with_variant(JSON, "sqlite"), nullable=True)
+    template_snapshot = Column(JSONB().with_variant(JSON, "sqlite"), nullable=True)
 
     state_id = Column(Integer, ForeignKey("plan_state.id", ondelete="SET NULL"))
 
@@ -63,8 +68,10 @@ class RouteGroup(db.Model, TeamScopedMixin):
 
     route_plan = relationship(
         "RoutePlan",
-        back_populates="route_group",
+        back_populates="route_groups",
     )
+
+    zone = relationship("Zone", lazy="selectin")
 
     state = relationship(
         "RoutePlanState",

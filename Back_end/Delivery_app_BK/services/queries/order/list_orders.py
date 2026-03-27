@@ -1,4 +1,6 @@
-from Delivery_app_BK.models import db, Order
+from sqlalchemy import false
+
+from Delivery_app_BK.models import Order, OrderZoneAssignment, RouteGroup, db
 from sqlalchemy.orm import selectinload
 
 from ..utils import build_opaque_pagination
@@ -14,6 +16,7 @@ def list_orders(
     ctx: ServiceContext,
     plan_id: int | None = None,
     route_plan_id: int | None = None,
+    route_group_id: int | None = None,
 ):
     base_query = db.session.query(Order).options(
         selectinload(Order.delivery_windows),
@@ -26,6 +29,23 @@ def list_orders(
         base_query = base_query.filter(
             Order.route_plan_id == effective_route_plan_id
         )
+
+    if route_group_id is not None:
+        route_group = db.session.get(RouteGroup, route_group_id)
+        if (
+            route_group is None
+            or (effective_route_plan_id is not None and route_group.route_plan_id != effective_route_plan_id)
+            or route_group.zone_id is None
+        ):
+            base_query = base_query.filter(false())
+        else:
+            base_query = base_query.join(
+                OrderZoneAssignment,
+                OrderZoneAssignment.order_id == Order.id,
+            ).filter(
+                OrderZoneAssignment.zone_id == route_group.zone_id,
+                OrderZoneAssignment.is_unassigned.is_(False),
+            )
 
     query = find_orders(ctx.query_params, ctx, query=base_query)
     stats_query_params = {

@@ -644,7 +644,7 @@ def test_logistics_operation_contract_triggers_repair_with_exact_required_tool(m
         name="logistics",
         description="logistics",
         prompt_builders={stage: (lambda prompt=prompt, **_kw: prompt) for stage, prompt in prompts.items()},
-        tool_registries={EXECUTE_STAGE: {"list_plans": lambda ctx, **kw: {"delivery_plan": [{"id": 1, "label": "Plan A"}]}}},
+        tool_registries={EXECUTE_STAGE: {"list_plans": lambda ctx, **kw: {"route_plan": [{"id": 1, "label": "Plan A"}]}}},
     )
 
     monkeypatch.setattr("Delivery_app_BK.ai.orchestrator.get_capability_profile", lambda name: capability)
@@ -805,7 +805,7 @@ def test_has_retrieval_entities_returns_true_for_plan_list():
     from Delivery_app_BK.ai.orchestrator import _has_retrieval_entities
 
     turns = [
-        {"tool": "list_plans", "params": {}, "result": {"delivery_plan": [{"id": 5}]}}
+        {"tool": "list_plans", "params": {}, "result": {"route_plan": [{"id": 5}]}}
     ]
     assert _has_retrieval_entities(turns) is True
 

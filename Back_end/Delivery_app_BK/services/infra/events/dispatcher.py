@@ -14,7 +14,7 @@ from Delivery_app_BK.models import (
 from Delivery_app_BK.services.infra.jobs import DEFAULT_RETRY_POLICY, enqueue_job
 from Delivery_app_BK.services.infra.jobs.tasks.events import (
     process_app_event_outbox_job,
-    process_delivery_plan_event_job,
+    process_route_plan_event_job,
     process_order_event_job,
 )
 
@@ -30,7 +30,7 @@ class DispatchTarget:
 
 DISPATCH_TARGETS = (
     DispatchTarget(OrderEvent, process_order_event_job, "order"),
-    DispatchTarget(RoutePlanEvent, process_delivery_plan_event_job, "route_plan"),
+    DispatchTarget(RoutePlanEvent, process_route_plan_event_job, "route_plan"),
     DispatchTarget(AppEventOutbox, process_app_event_outbox_job, "app"),
 )
 

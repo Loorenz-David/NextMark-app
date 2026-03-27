@@ -39,7 +39,7 @@ def test_generate_plan_test_data_uses_expected_default_payload_mix(monkeypatch):
     assert result["count"] == 5
     assert [sequence for _payload, sequence in seen_payloads] == [1, 2, 3, 4, 5]
     assert [
-        payload.get("delivery_plan", {}).get("plan_type") for payload, _ in seen_payloads
+        payload.get("route_plan", {}).get("plan_type") for payload, _ in seen_payloads
     ] == [
         "local_delivery",
         "local_delivery",
@@ -49,11 +49,11 @@ def test_generate_plan_test_data_uses_expected_default_payload_mix(monkeypatch):
     ]
 
     today = datetime.now(timezone.utc).date()
-    first_local = seen_payloads[0][0]["delivery_plan"]
-    second_local = seen_payloads[1][0]["delivery_plan"]
-    third_local = seen_payloads[2][0]["delivery_plan"]
-    store_pickup = seen_payloads[3][0]["delivery_plan"]
-    international_shipping = seen_payloads[4][0]["delivery_plan"]
+    first_local = seen_payloads[0][0]["route_plan"]
+    second_local = seen_payloads[1][0]["route_plan"]
+    third_local = seen_payloads[2][0]["route_plan"]
+    store_pickup = seen_payloads[3][0]["route_plan"]
+    international_shipping = seen_payloads[4][0]["route_plan"]
 
     assert first_local["start_date"].date() == today
     assert first_local["end_date"].date() == today
@@ -94,10 +94,10 @@ def test_create_plan_bundle_local_delivery_creates_default_route_solution(monkey
     action = SimpleNamespace(id=400)
 
     monkeypatch.setattr(module.db.session, "flush", lambda: None)
-    monkeypatch.setattr(module, "create_delivery_plan_row", lambda *_args, **_kwargs: plan)
+    monkeypatch.setattr(module, "create_route_plan_row", lambda *_args, **_kwargs: plan)
     monkeypatch.setattr(
         module,
-        "create_local_delivery_plan_row",
+        "create_route_group_row",
         lambda *_args, **_kwargs: local_plan,
     )
 
@@ -106,10 +106,10 @@ def test_create_plan_bundle_local_delivery_creates_default_route_solution(monkey
         return SimpleNamespace(id=500 + len(route_calls))
 
     monkeypatch.setattr(module, "create_route_solution_row", _fake_create_route_solution_row)
-    monkeypatch.setattr(module, "create_delivery_plan_event_row", lambda *_args, **_kwargs: event)
+    monkeypatch.setattr(module, "create_route_plan_event_row", lambda *_args, **_kwargs: event)
     monkeypatch.setattr(
         module,
-        "create_delivery_plan_event_action_row",
+        "create_route_plan_event_action_row",
         lambda *_args, **_kwargs: action,
     )
 

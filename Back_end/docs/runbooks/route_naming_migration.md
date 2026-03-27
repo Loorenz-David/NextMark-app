@@ -1,44 +1,17 @@
-# Route Naming Migration Runbook
+# Route Naming Canonicalization Runbook
 
-## Objective
-Move application naming from legacy `delivery_plan` / `local_delivery_plan` to canonical `route_plan` / `route_group` while keeping runtime stable.
+## Status
+Completed on 2026-03-27.
 
-## Current State
-- Database tables are already canonical (`route_plan`, `route_group`).
-- Compatibility aliases and wrappers are still used in service, router, socket, payload, and test layers.
+## Canonical Model
+The backend uses canonical route naming across runtime code paths:
+- `route_plan`
+- `route_group`
+- `route_plan_id`
+- `route_group_id`
 
-## Removal Gates
-All gates must pass before removing backward-compatibility wrappers.
-
-1. Import Path Gate
-- Canonical imports adopted in application code.
-- Legacy module paths retained only as temporary shims.
-
-2. Test Gate
-- No tests monkeypatch legacy symbol names.
-- Unit + integration suites pass with canonical symbols.
-
-3. Contract Gate
-- Event payloads include canonical IDs (`route_plan_id`, `route_group_id`).
-- Legacy keys remain only if external consumers still require them.
-
-4. Event Naming Gate
-- Canonical event labels and entity types available and consumed.
-- Legacy event names are either removed or fully mapped.
-
-5. Legacy Scan Gate
-- Legacy naming scan reports no runtime-critical legacy references outside approved shims.
-
-## Legacy Scan Command
-Run from repo root:
-
-```bash
-PYTHONPATH="$PWD" .venv/bin/python scripts/report_route_naming_legacy_refs.py
-```
-
-## Canonical Optimize Contract
-Route optimization endpoints now require `route_group_id` explicitly in request JSON.
-
+## Contracts
+Route optimization endpoints require `route_group_id` in request JSON:
 - `POST /api_v2/route_solutions/optimize`
 - `PATCH /api_v2/route_solutions/optimize`
 - `POST /api_v2/route_operations/optimize`
@@ -48,45 +21,21 @@ Example payload:
 
 ```json
 {
-	"route_group_id": 123,
-	"route_end_strategy": "round_trip",
-	"consider_traffic": true
+  "route_group_id": 123,
+  "route_end_strategy": "round_trip",
+  "consider_traffic": true
 }
 ```
 
-Legacy key `local_delivery_plan_id` is no longer accepted for optimize requests.
-
-## Cleanup Order
-1. Services and requests imports
-2. Routers and handlers
-3. Sockets/event contracts and emitters
-4. Payload key aliases
-5. Model aliases and shim modules
-
-## Notes
-- Do not remove wrappers ad hoc.
-- Remove wrappers in bounded batches and run tests after each batch.
-
-## 2026-03-26 Status
-- Namespace migration wave is applied across router/service/event/socket surfaces.
-- Residual non-AI unit regressions were stabilized in a dedicated follow-up commit.
-- Non-AI completion gate now passes: `226 passed, 1 warning`.
-
-### Verified Commands
+## Validation Commands
 Run from repo root:
 
 ```bash
 .venv/bin/python -m pytest tests/unit --ignore=tests/unit/ai
+.venv/bin/python -m pytest tests/unit/ai
 PYTHONPATH="$PWD" .venv/bin/python scripts/report_route_naming_legacy_refs.py
 ```
 
-### Legacy Scan Snapshot (2026-03-26)
-- Files scanned: `981`
-- `delivery_plan` token: `232`
-- `local_delivery_plan` token: `94`
-- `delivery_plan_id` key: `32`
-- `local_delivery_plan_id` key: `0`
-
-### Open Work
-- AI-only unit failures remain outside this migration gate and should be triaged in a separate stream.
-- Runtime ORM alias retirement and payload key canonicalization are still in progress; keep wrappers until their dedicated gates pass.
+## Archive Reference
+Historical migration and handoff notes are archived under:
+- `docs/archive/handoffs/`

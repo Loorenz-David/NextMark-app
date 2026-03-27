@@ -26,14 +26,13 @@ from .types import PlanObjectiveCreateResult
 def apply_local_delivery_objective(
     ctx: ServiceContext,
     order_instance,
-    delivery_plan,
+    route_plan,
     plan_objective: str,
 ) -> PlanObjectiveCreateResult:
-    route_plan = delivery_plan
-    local_delivery = _get_local_delivery_plan(ctx, route_plan.id)
+    local_delivery = _get_route_group(ctx, route_plan.id)
     route_solutions = list(local_delivery.route_solutions or [])
     if not route_solutions:
-        raise ValidationFailed("Route solution not found for local delivery plan.")
+        raise ValidationFailed("Route solution not found for route group.")
     synced_stops: list[RouteSolutionStop] = []
     changed_route_solutions: list[object] = []
 
@@ -89,15 +88,15 @@ def apply_local_delivery_objective(
     )
 
 
-def _get_local_delivery_plan(ctx: ServiceContext, route_plan_id: int) -> RouteGroup:
+def _get_route_group(ctx: ServiceContext, route_plan_id: int) -> RouteGroup:
     query = db.session.query(RouteGroup).filter(
-        RouteGroup.delivery_plan_id == route_plan_id
+        RouteGroup.route_plan_id == route_plan_id
     )
     if ctx.team_id:
         query = query.filter(RouteGroup.team_id == ctx.team_id)
     local_delivery = query.one_or_none()
     if not local_delivery:
-        raise ValidationFailed("Local delivery plan not found for order objective.")
+        raise ValidationFailed("Route group not found for order objective.")
     return local_delivery
 
 
