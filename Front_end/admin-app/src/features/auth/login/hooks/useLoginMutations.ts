@@ -35,8 +35,26 @@ export function useLoginMutations() {
           accessToken: data.access_token,
           refreshToken: data.refresh_token,
           socketToken: data.socket_token,
-          user: data.user ?? null,
-          identity: null,
+          user: data.user
+            ? {
+                ...data.user,
+                default_country_code:
+                  data.default_country_code ?? data.user.default_country_code ?? null,
+                default_city_key:
+                  data.default_city_key ?? data.user.default_city_key ?? null,
+                country_code:
+                  data.country_code ?? data.user.country_code ?? null,
+                city: data.city ?? data.user.city ?? null,
+              }
+            : null,
+          identity: {
+            default_country_code:
+              data.default_country_code ?? data.user?.default_country_code ?? null,
+            default_city_key:
+              data.default_city_key ?? data.user?.default_city_key ?? null,
+            country_code: data.country_code ?? data.user?.country_code ?? null,
+            city: data.city ?? data.user?.city ?? null,
+          },
         })
 
         return data

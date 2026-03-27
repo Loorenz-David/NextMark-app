@@ -1,114 +1,127 @@
-import { useRef, useEffect, type CSSProperties } from 'react'
-import { BasicButton } from '@/shared/buttons/BasicButton'
-import { useSectionManager, useMapManager, usePopupManager } from '@/shared/resource-manager/useResourceManager'
+import { useRef, useEffect, type CSSProperties } from "react";
+import { BasicButton } from "@/shared/buttons/BasicButton";
+import {
+  useSectionManager,
+  useMapManager,
+  usePopupManager,
+} from "@/shared/resource-manager/useResourceManager";
 
-import { ChevronDownIcon } from '@/assets/icons'
+import { ChevronDownIcon } from "@/assets/icons";
 
-import { OrderPage } from '@/features/order/pages/order.page'
-import { OrderMapOverlay } from '@/features/order/components/OrderMapOverlay'
-import { RouteGroupMapOverlay } from '@/features/plan/routeGroup/components'
-import { RouteGroupWorkspaceRuntime } from '@/features/plan/routeGroup/providers/RouteGroupWorkspaceRuntime'
-import { useBaseControlls } from '@/shared/resource-manager/useResourceManager'
-import { useMapSelectionModeGuardFlow } from '@/features/home-route-operations/flows/mapSelectionModeGuard.flow'
-import { useHomeDesktopKeyboardFlow } from '@/features/home-route-operations/flows/homeDesktopKeyboard.flow'
-import { useHomeDesktopRailSettleFlow } from '@/features/home-route-operations/flows/homeDesktopRailSettle.flow'
-import { useHomeDesktopDerivedStateFlow } from '@/features/home-route-operations/flows/homeDesktopDerivedState.flow'
-import { RouteGroupsPage } from '@/features/plan/routeGroup/pages/RouteGroups.page'
+import { OrderPage } from "@/features/order/pages/order.page";
+import { OrderMapOverlay } from "@/features/order/components/OrderMapOverlay";
+import { RouteGroupMapOverlay } from "@/features/plan/routeGroup/components";
+import { ZoneMapOverlay } from "@/features/zone/components/ZoneMapOverlay";
+import { RouteGroupWorkspaceRuntime } from "@/features/plan/routeGroup/providers/RouteGroupWorkspaceRuntime";
+import { useBaseControlls } from "@/shared/resource-manager/useResourceManager";
+import { useMapSelectionModeGuardFlow } from "@/features/home-route-operations/flows/mapSelectionModeGuard.flow";
+import { useHomeDesktopKeyboardFlow } from "@/features/home-route-operations/flows/homeDesktopKeyboard.flow";
+import { useHomeDesktopRailSettleFlow } from "@/features/home-route-operations/flows/homeDesktopRailSettle.flow";
+import { useHomeDesktopDerivedStateFlow } from "@/features/home-route-operations/flows/homeDesktopDerivedState.flow";
+import { RouteGroupsPage } from "@/features/plan/routeGroup/pages/RouteGroups.page";
 
-import { HomeDesktopLayout } from '../layout/HomeDesktopLayout'
-import { useHomeDesktopLayout } from '../hooks/useHomeDesktopLayout'
-import { SectionManagerHost } from '../components/SectionManagerHost'
-import type { PayloadBase } from '../types/types'
+import { HomeDesktopLayout } from "../layout/HomeDesktopLayout";
+import { useHomeDesktopLayout } from "../hooks/useHomeDesktopLayout";
+import { SectionManagerHost } from "../components/SectionManagerHost";
+import type { PayloadBase } from "../types/types";
 
-import { SectionPanel } from '../../../shared/section-panel/SectionPanel'
-import { PlanDesktopShell } from '@/features/plan/views/PlanDesktopShell'
+import { SectionPanel } from "../../../shared/section-panel/SectionPanel";
+import { PlanDesktopShell } from "@/features/plan/views/PlanDesktopShell";
 
-const SAFE_GUTTER = 24
+const SAFE_GUTTER = 24;
 const DEFAULT_VIEWPORT_INSETS = {
   top: SAFE_GUTTER,
   right: SAFE_GUTTER,
   bottom: SAFE_GUTTER,
   left: SAFE_GUTTER,
-}
+};
 
 const MAP_CONTAINER_STYLE: CSSProperties = {
-  height: '100%',
-  width: '100%',
-  position: 'absolute',
+  height: "100%",
+  width: "100%",
+  position: "absolute",
   zIndex: 0,
-  top: '0',
-  left: '0',
-}
+  top: "0",
+  left: "0",
+};
 
 const PLAN_TOGGLE_BUTTON_STYLE: CSSProperties = {
-  padding: '29px 6px',
-  backgroundColor: 'rgba(15, 23, 25, 0.78)',
-  borderRadius: '10px 0 0 10px',
-  border: '1px solid rgba(255, 255, 255, 0.12)',
-  boxShadow: '0 14px 32px rgba(0, 0, 0, 0.18)',
-  backdropFilter: 'blur(18px) saturate(120%)',
-  WebkitBackdropFilter: 'blur(18px) saturate(120%)',
-}
+  padding: "29px 6px",
+  backgroundColor: "rgba(15, 23, 25, 0.78)",
+  borderRadius: "10px 0 0 10px",
+  border: "1px solid rgba(255, 255, 255, 0.12)",
+  boxShadow: "0 14px 32px rgba(0, 0, 0, 0.18)",
+  backdropFilter: "blur(18px) saturate(120%)",
+  WebkitBackdropFilter: "blur(18px) saturate(120%)",
+};
 const PLAN_TOGGLE_BUTTON_SPLIT_STYLE: CSSProperties = {
-  padding: '6px 29px ',
-  backgroundColor: 'rgba(15, 23, 25, 0.78)',
-  borderBottom:'2px solid rgba(15, 23, 25, 0.86)',
-  borderRadius: '15px 15px 0 0',
-  border: '1px solid rgba(255, 255, 255, 0.12)',
-  boxShadow: '0 14px 32px rgba(0, 0, 0, 0.18)',
-  backdropFilter: 'blur(18px) saturate(120%)',
-  WebkitBackdropFilter: 'blur(18px) saturate(120%)',
-}
+  padding: "6px 29px ",
+  backgroundColor: "rgba(15, 23, 25, 0.78)",
+  borderBottom: "2px solid rgba(15, 23, 25, 0.86)",
+  borderRadius: "15px 15px 0 0",
+  border: "1px solid rgba(255, 255, 255, 0.12)",
+  boxShadow: "0 14px 32px rgba(0, 0, 0, 0.18)",
+  backdropFilter: "blur(18px) saturate(120%)",
+  WebkitBackdropFilter: "blur(18px) saturate(120%)",
+};
 
 export function HomeDesktopView() {
-  const mapContainerRef = useRef<HTMLDivElement | null>(null)
+  const mapContainerRef = useRef<HTMLDivElement | null>(null);
 
-  const { initialize, resize, setViewportInsets, reframeToVisibleArea } = useMapManager()
-  const sectionManager = useSectionManager()
-  const popupManager = usePopupManager()
-  const baseControlls = useBaseControlls<PayloadBase>()
-  const isOrderOverlayOpen = baseControlls.isBaseOpen && typeof baseControlls.payload?.planId === 'number'
+  const { initialize, resize, setViewportInsets, reframeToVisibleArea } =
+    useMapManager();
+  const sectionManager = useSectionManager();
+  const popupManager = usePopupManager();
+  const baseControlls = useBaseControlls<PayloadBase>();
+  const isOrderOverlayOpen =
+    baseControlls.isBaseOpen &&
+    typeof baseControlls.payload?.planId === "number";
 
-  const derivedState = useHomeDesktopDerivedStateFlow({ sectionManager, baseControlls })
+  const derivedState = useHomeDesktopDerivedStateFlow({
+    sectionManager,
+    baseControlls,
+  });
   const layout = useHomeDesktopLayout({
     openSectionsCount: derivedState.openSectionsCount,
-  })
+  });
 
   useEffect(() => {
-    void initialize(mapContainerRef.current)
-  }, [initialize])
+    void initialize(mapContainerRef.current);
+  }, [initialize]);
 
-  useMapSelectionModeGuardFlow()
+  useMapSelectionModeGuardFlow();
 
   useEffect(() => {
-    setViewportInsets(DEFAULT_VIEWPORT_INSETS)
-  }, [setViewportInsets])
+    setViewportInsets(DEFAULT_VIEWPORT_INSETS);
+  }, [setViewportInsets]);
 
-  const { handleRailLayoutChange, handleRailTransitionEnd } = useHomeDesktopRailSettleFlow({
-    layoutDeps: {
-      viewMode: layout.viewMode,
-      planColumnWidth: layout.planColumnWidth,
-      mapRowHeight: layout.mapRowHeight,
-      planRowHeight: layout.planRowHeight,
-      hasOverlay: layout.hasOverlay,
-      isOrderOverlayOpen,
-      isPlanVisible: layout.isPlanVisible,
-    },
-    resize,
-    reframeToVisibleArea,
-  })
+  const { handleRailLayoutChange, handleRailTransitionEnd } =
+    useHomeDesktopRailSettleFlow({
+      layoutDeps: {
+        viewMode: layout.viewMode,
+        planColumnWidth: layout.planColumnWidth,
+        mapRowHeight: layout.mapRowHeight,
+        planRowHeight: layout.planRowHeight,
+        hasOverlay: layout.hasOverlay,
+        isOrderOverlayOpen,
+        isPlanVisible: layout.isPlanVisible,
+      },
+      resize,
+      reframeToVisibleArea,
+    });
 
   useHomeDesktopKeyboardFlow({
     isEnabled: true,
     isPopupOpen: popupManager.getOpenCount() > 0,
     onTogglePlan: layout.togglePlan,
     closeAllSections: () => sectionManager.closeAll(),
-  })
+  });
 
-  const splitMode = layout.viewMode === 'split'
-  const activeRoutePlanId = typeof baseControlls.payload?.planId === 'number'
-    ? baseControlls.payload.planId
-    : null
+  const splitMode = layout.viewMode === "split";
+  const activeRoutePlanId =
+    typeof baseControlls.payload?.planId === "number"
+      ? baseControlls.payload.planId
+      : null;
 
   return (
     <>
@@ -133,19 +146,43 @@ export function HomeDesktopView() {
         onRailTransitionEnd={handleRailTransitionEnd}
         map={<div ref={mapContainerRef} style={MAP_CONTAINER_STYLE} />}
         mapOverlay={
-          derivedState.isRouteOperationsOverlayActive ? <RouteGroupMapOverlay /> : <OrderMapOverlay />
+          derivedState.isRouteOperationsOverlayActive ? (
+            <RouteGroupMapOverlay />
+          ) : (
+            <>
+              <OrderMapOverlay />
+              <ZoneMapOverlay />
+            </>
+          )
         }
-        plan={<PlanDesktopShell onRequestClose={layout.closePlan} viewMode={layout.viewMode} />}
+        plan={
+          <PlanDesktopShell
+            onRequestClose={layout.closePlan}
+            viewMode={layout.viewMode}
+          />
+        }
         base={
-          <div style={{ width: layout.baseWidth, height: '100%', overflowX: 'hidden' }}>
-            <SectionPanel style={{ width: layout.planWidth }} parentParams={{ borderLeft: '#8a8a8a5b' }}>
+          <div
+            style={{
+              width: layout.baseWidth,
+              height: "100%",
+              overflowX: "hidden",
+            }}
+          >
+            <SectionPanel
+              style={{ width: layout.planWidth }}
+              parentParams={{ borderLeft: "#8a8a8a5b" }}
+            >
               <OrderPage />
             </SectionPanel>
           </div>
         }
         orderOverlay={
           baseControlls.isBaseOpen ? (
-            <SectionPanel onRequestClose={baseControlls.closeBase} style={{ width: layout.orderOverlayWidth }}>
+            <SectionPanel
+              onRequestClose={baseControlls.closeBase}
+              style={{ width: layout.orderOverlayWidth }}
+            >
               {baseControlls.payload ? (
                 <RouteGroupsPage
                   payload={{
@@ -170,20 +207,23 @@ export function HomeDesktopView() {
             <BasicButton
               params={{
                 onClick: layout.togglePlan,
-                variant: 'ghost',
-                ariaLabel: 'Toggle delivery plan',
-                style: splitMode ?  PLAN_TOGGLE_BUTTON_SPLIT_STYLE : PLAN_TOGGLE_BUTTON_STYLE,
+                variant: "ghost",
+                ariaLabel: "Toggle delivery plan",
+                style: splitMode
+                  ? PLAN_TOGGLE_BUTTON_SPLIT_STYLE
+                  : PLAN_TOGGLE_BUTTON_STYLE,
               }}
             >
-              <ChevronDownIcon 
+              <ChevronDownIcon
                 className={`w-5 h-5  text-[var(--color-muted)] transition-transform 
-                  ${splitMode 
-                    ? layout.isPlanVisible 
-                          ? ''
-                          : 'rotate-180'
-                    
-                    : 'rotate-90'}
-                  ` }
+                  ${
+                    splitMode
+                      ? layout.isPlanVisible
+                        ? ""
+                        : "rotate-180"
+                      : "rotate-90"
+                  }
+                  `}
               />
             </BasicButton>
           ) : null
@@ -191,5 +231,5 @@ export function HomeDesktopView() {
         isPlanVisible={layout.isPlanVisible}
       />
     </>
-  )
+  );
 }

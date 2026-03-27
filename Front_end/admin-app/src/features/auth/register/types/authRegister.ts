@@ -6,6 +6,8 @@ export type RegisterFields = {
   password: string
   phone_number: Phone
   time_zone: string
+  country_code: string
+  city: string
 }
 
 export type RegisterResponse = Record<string, never>

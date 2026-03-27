@@ -8,6 +8,7 @@ import type { EmailMessageTemplateMap } from '../messaging/emailMessage/types'
 import type { SmsMessageTemplateMap } from '../messaging/smsMessage/types'
 import type { DeliveryPlanStateMap } from '../plan/types/planState'
 import type { VehicleMap } from '../infrastructure/vehicle/types/vehicle'
+import type { ZonesContext } from '../zone/types'
 
 
 export type BootstrapResponse = {
@@ -19,6 +20,7 @@ export type BootstrapResponse = {
   message_templates_sms: SmsMessageTemplateMap
   route_plan_states: DeliveryPlanStateMap
   vehicles?: VehicleMap
+  zones_context?: ZonesContext
 }
 
 export const bootstrapApi = {

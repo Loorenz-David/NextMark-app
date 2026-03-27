@@ -12,6 +12,7 @@ import { insertPrintTemplates } from '../templates/printDocument/store'
 import { insertEmailMessages } from '../messaging/emailMessage/store'
 import { insertSmsMessages } from '../messaging/smsMessage/store'
 import { insertRoutePlanStates } from '../plan/store/routePlanState.store'
+import { insertZonesFromBootstrap } from '../zone/flows/insertZonesFromBootstrap.flow'
 
 
 
@@ -61,6 +62,10 @@ export function useBootstrap() {
 
         if (payload.vehicles) {
           insertVehicles(payload.vehicles)
+        }
+
+        if (payload.zones_context) {
+          insertZonesFromBootstrap(payload.zones_context)
         }
 
         return payload

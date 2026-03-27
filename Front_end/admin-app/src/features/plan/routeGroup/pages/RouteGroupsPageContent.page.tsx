@@ -8,6 +8,7 @@ import { useRouteGroupActionBarVisibility } from '../hooks/useRouteGroupActionBa
 
 type RouteGroupsPageContentProps = {
   showOptimizeRow: boolean
+  hasActiveRouteGroup: boolean
 }
 
 const ACTION_BAR_HEIGHT_WITH_OPTIMIZE = 138
@@ -16,6 +17,7 @@ const ACTION_BAR_COLLAPSED_HEIGHT = 12
 
 export const RouteGroupsPageContent = ({
   showOptimizeRow,
+  hasActiveRouteGroup,
 }: RouteGroupsPageContentProps) => {
   const { orderCount, routeGroup } = useRouteGroupPageContext()
 
@@ -36,12 +38,26 @@ export const RouteGroupsPageContent = ({
 
   return (
     <div className="relative flex h-full w-full flex-col bg-[var(--color-primary)]/5">
-      <RouteGroupsActionBar
-        useFloatingActionBar={isDesktopActionBarBehaviorEnabled}
-        isActionBarVisible={isActionBarVisible}
-        showOptimizeRow={showOptimizeRow}
-      />
-      {!isLoading 
+      {hasActiveRouteGroup ? (
+        <RouteGroupsActionBar
+          useFloatingActionBar={isDesktopActionBarBehaviorEnabled}
+          isActionBarVisible={isActionBarVisible}
+          showOptimizeRow={showOptimizeRow}
+        />
+      ) : null}
+      {!hasActiveRouteGroup ? (
+        <div className="flex flex-1 items-center justify-center px-6 py-10">
+          <div className="max-w-md rounded-xl border border-white/10 bg-white/5 p-6 text-center">
+            <h3 className="text-lg font-semibold text-white">
+              Select a Route Group
+            </h3>
+            <p className="mt-2 text-sm text-white/70">
+              Choose a zone from the rail to open its route, review the stop
+              order, and edit it from the action panel.
+            </p>
+          </div>
+        </div>
+      ) : !isLoading 
         ? (
           <RouteGroupOrderList
             onScrollContainer={handleScroll}

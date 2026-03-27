@@ -1,0 +1,132 @@
+import { useEffect, useState } from "react";
+
+import { CloseIcon } from "@/assets/icons";
+import { BasicButton } from "@/shared/buttons/BasicButton";
+import { MapDrawingSideControls } from "@/shared/map/components/MapDrawingSideControls";
+import {
+  DRAWING_SELECTION_MODE_EVENT,
+  type DrawingSelectionMode,
+} from "@/shared/map/domain/constants/drawingSelectionModes";
+
+import { useZoneMapLayerController } from "@/features/zone/controllers/useZoneMapLayerController";
+import { useZoneModeController } from "@/features/zone/controllers/useZoneModeController";
+
+import { ZonePolygonLayer } from "./ZonePolygonLayer";
+
+export const ZoneMapOverlay = () => {
+  useZoneMapLayerController();
+
+  const {
+    isZoneMode,
+    drawnGeometry,
+    activeVersion,
+    enterZoneMode,
+    exitZoneMode,
+    discardShape,
+    openCreateForm,
+  } = useZoneModeController();
+
+  const [activeShape, setActiveShape] =
+    useState<DrawingSelectionMode>("polygon");
+
+  useEffect(() => {
+    if (!isZoneMode) {
+      setActiveShape("polygon");
+    }
+  }, [isZoneMode]);
+
+  const handleShapeSelect = (mode: DrawingSelectionMode) => {
+    setActiveShape(mode);
+
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    window.dispatchEvent(
+      new CustomEvent(DRAWING_SELECTION_MODE_EVENT, { detail: { mode } }),
+    );
+  };
+
+  if (!isZoneMode) {
+    return (
+      <>
+        <div className="pointer-events-auto absolute right-4 top-4 z-0">
+          <BasicButton
+            params={{
+              variant: "secondaryInvers",
+              onClick: enterZoneMode,
+              ariaLabel: "Enter zone creation mode",
+            }}
+          >
+            Zones
+          </BasicButton>
+        </div>
+        <ZonePolygonLayer />
+      </>
+    );
+  }
+
+  const hasActiveVersion = typeof activeVersion?.id === "number";
+
+  return (
+    <>
+      <div className="pointer-events-auto absolute right-4 top-4 z-0">
+        <div className="relative w-52 rounded-xl border border-[var(--color-muted)]/30 bg-[var(--color-page)]/95 p-3 shadow-lg backdrop-blur-sm">
+          <button
+            aria-label="Exit zone mode"
+            className="absolute -left-2 -top-2 flex h-6 w-6 items-center justify-center rounded-full border border-[var(--color-muted)]/30 bg-[var(--color-page)] text-[var(--color-muted)] shadow-sm"
+            onClick={exitZoneMode}
+            type="button"
+          >
+            <CloseIcon className="h-3 w-3" />
+          </button>
+
+          <p className="mb-3 text-sm font-semibold text-[var(--color-muted)]">
+            Zone Mode
+          </p>
+
+          <MapDrawingSideControls
+            selectedShape={activeShape}
+            onShapeSelect={handleShapeSelect}
+            onClear={discardShape}
+            shapeOrder={["polygon", "rectangle", "circle"]}
+            disabled={!hasActiveVersion}
+            clearDisabled={drawnGeometry == null}
+            wrapperClassName="absolute -left-36 top-0 flex w-32 flex-col gap-2"
+          />
+
+          {!hasActiveVersion ? (
+            <p className="text-xs text-[var(--color-muted)]/60">
+              No zone version available.
+            </p>
+          ) : drawnGeometry == null ? (
+            <p className="text-xs text-[var(--color-muted)]/60">
+              Draw a zone boundary on the map.
+            </p>
+          ) : (
+            <div className="flex flex-col gap-2">
+              {/* <button
+                type="button"
+                onClick={discardShape}
+                className="text-left text-xs text-[var(--color-muted)]/70 underline underline-offset-2"
+              >
+                Discard shape
+              </button> */}
+
+              <BasicButton
+                params={{
+                  variant: "primary",
+                  onClick: openCreateForm,
+                  ariaLabel: "Create zone from drawn shape",
+                }}
+              >
+                Create Zone
+              </BasicButton>
+            </div>
+          )}
+        </div>
+      </div>
+      <ZonePolygonLayer />
+    </>
+  );
+};

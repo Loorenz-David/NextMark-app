@@ -1,3 +1,4 @@
+import { useMemo } from 'react'
 import { useShallow } from 'zustand/react/shallow'
 
 import { useOrdersByPlanId } from '@/features/order/store/orderHooks.store'
@@ -20,16 +21,32 @@ export const useActiveRouteGroupResourcesController = (planId: number | null) =>
   const routeGroups = useRouteGroupsByPlanId(planId)
   const activeRouteGroupId = useActiveRouteGroupId()
   const routeGroup = routeGroups.find((candidateRouteGroup) => candidateRouteGroup.id === activeRouteGroupId)
-    ?? routeGroups[0]
     ?? null
   const routeGroupId = routeGroup?.id ?? null
-  const orders = useOrdersByPlanId(planId)
+  const planOrders = useOrdersByPlanId(planId)
   const routeSolutions = useRouteSolutionsByRouteGroupId(routeGroupId)
   const storedSelectedRouteSolution = useSelectedRouteSolutionByRouteGroupId(routeGroupId)
   const selectedRouteSolution = storedSelectedRouteSolution ?? routeSolutions[0] ?? null
   const routeSolutionId = selectedRouteSolution?.id ?? null
   const routeSolutionStops = useRouteSolutionStopStore(
     useShallow(selectRouteSolutionStopsBySolutionId(routeSolutionId)),
+  )
+  const activeOrderIds = useMemo(() => {
+    const orderIds = new Set<number>()
+    routeSolutionStops.forEach((routeSolutionStop) => {
+      if (typeof routeSolutionStop.order_id === 'number') {
+        orderIds.add(routeSolutionStop.order_id)
+      }
+    })
+    return orderIds
+  }, [routeSolutionStops])
+  const orders = useMemo(
+    () =>
+      planOrders.filter(
+        (order) =>
+          typeof order.id === 'number' && activeOrderIds.has(order.id),
+      ),
+    [activeOrderIds, planOrders],
   )
   const planStartDate = plan?.start_date ?? null
 
@@ -58,7 +75,7 @@ export const useActiveRouteGroupResourcesController = (planId: number | null) =>
     routeGroup,
     routeGroupId,
     orders,
-    orderCount: orders.length,
+    orderCount: Math.max(0, routeGroup?.total_orders ?? orders.length),
     routeSolutions,
     routeSolutionsOrdered,
     storedSelectedRouteSolutionId: storedSelectedRouteSolution?.id ?? null,

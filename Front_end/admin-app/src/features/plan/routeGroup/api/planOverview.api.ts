@@ -16,9 +16,14 @@ export type RouteGroupOverviewResponse = {
 export const planOverviewApi = {
   getRouteGroupOverview: (
     planId: number | string,
+    routeGroupId?: number | null,
   ): Promise<ApiResult<RouteGroupOverviewResponse>> =>
     apiClient.request<RouteGroupOverviewResponse>({
       path: `/route_plan_overviews/${planId}/route_group/`,
       method: 'GET',
+      query:
+        typeof routeGroupId === "number"
+          ? { route_group_id: routeGroupId }
+          : undefined,
     }),
 }

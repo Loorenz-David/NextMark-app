@@ -2,9 +2,8 @@ import type { ReactNode  } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { formatMetric } from '@shared-utils'
 import { StateCard } from '@/shared/layout/StateCard'
-import { useBaseControlls } from '@/shared/resource-manager/useResourceManager'
 import type { DeliveryPlan } from '../../types/plan'
-import { DimensionsIcon, ItemIcon,  OrderIcon,  WeightIcon } from '@/assets/icons'
+import { DimensionsIcon, ItemIcon, LayersIcon, OrderIcon, WeightIcon } from '@/assets/icons'
 import { useRoutePlanStateByServerId } from '../../store/useRoutePlanState.selector'
 import { planIconTypeMap } from '../../utils/planIconTypeMap'
 import { PlusIcon } from '@/assets/icons/index'
@@ -32,6 +31,7 @@ export const PlanCard = ({ plan, isOver, dropFeedback }: PropsPlanCard) => {
     const itemCount = plan.total_items ?? 0
     const totalVolume = plan.total_volume ?? 0
     const totalWeight = plan.total_weight ?? 0
+    const routeGroupCount = plan.route_groups_count ?? 0
     const DeliveryPlanState = useRoutePlanStateByServerId( plan.state_id ?? 1 )
 
     
@@ -125,6 +125,10 @@ export const PlanCard = ({ plan, isOver, dropFeedback }: PropsPlanCard) => {
                         <DimensionsIcon className="h-3 w-3 app-icon" />
                         <span>{formatMetric(totalVolume, '㎥')}</span>
                     </div>
+                </div>
+                <div className="flex items-center gap-2">
+                    <LayersIcon className="h-3 w-3 app-icon" />
+                    <span>{routeGroupCount} {routeGroupCount === 1 ? 'zone' : 'zones'}</span>
                 </div>
             </div>
         </motion.div>

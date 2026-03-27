@@ -195,6 +195,7 @@ export const buildRouteOperationsCanonicalScenario = (): RouteOperationsFixtureS
     makeRouteGroup({
       id: 8101,
       client_id: 'fixture_route_group_8101',
+      state_id: 4,
       driver_id: 31,
       route_plan_id: routePlan.id,
       route_solutions_ids: [9101, 9102],
@@ -202,6 +203,7 @@ export const buildRouteOperationsCanonicalScenario = (): RouteOperationsFixtureS
     makeRouteGroup({
       id: 8102,
       client_id: 'fixture_route_group_8102',
+      state_id: 1,
       driver_id: 32,
       route_plan_id: routePlan.id,
       route_solutions_ids: [],
@@ -210,6 +212,7 @@ export const buildRouteOperationsCanonicalScenario = (): RouteOperationsFixtureS
     makeRouteGroup({
       id: 8103,
       client_id: 'fixture_route_group_8103',
+      state_id: 2,
       driver_id: 33,
       route_plan_id: routePlan.id,
       route_solutions_ids: [],
@@ -218,6 +221,7 @@ export const buildRouteOperationsCanonicalScenario = (): RouteOperationsFixtureS
     makeRouteGroup({
       id: 8104,
       client_id: 'fixture_route_group_8104',
+      state_id: 1,
       driver_id: 34,
       route_plan_id: routePlan.id,
       route_solutions_ids: [],

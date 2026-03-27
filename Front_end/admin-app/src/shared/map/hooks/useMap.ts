@@ -1,131 +1,175 @@
-import { useCallback, useEffect, useMemo, useRef } from 'react'
+import { useCallback, useEffect, useMemo, useRef } from "react";
 
-import type { MapBounds, MapBridge, MapConfig, MapViewportInsets, SetMarkerLayerOptions } from '../domain/types'
-import type { MapOrder } from '../domain/entities/MapOrder'
-import type { Route } from '../domain/entities/Route'
-import { MapController } from '../domain/services/MapController'
-import { GoogleMapAdapter } from '../infrastructure/GoogleMapAdapter'
+import type {
+  GeoJSONPolygonGeometry,
+  MapBounds,
+  MapBridge,
+  MapConfig,
+  MapViewportInsets,
+  SetMarkerLayerOptions,
+} from "../domain/types";
+import type { MapOrder } from "../domain/entities/MapOrder";
+import type { Route } from "../domain/entities/Route";
+import type { GeoJSONPolygon, ZoneDefinition } from "@/features/zone/types";
+import type { ZoneLayerOptions } from "../domain/types";
+import { MapController } from "../domain/services/MapController";
+import { GoogleMapAdapter } from "../infrastructure/GoogleMapAdapter";
 
 export const useMap = (options?: MapConfig): MapBridge => {
-  const controllerRef = useRef<MapController | null>(null)
+  const controllerRef = useRef<MapController | null>(null);
 
   const controller = useMemo(() => {
     if (!controllerRef.current) {
-      controllerRef.current = new MapController(new GoogleMapAdapter())
+      controllerRef.current = new MapController(new GoogleMapAdapter());
     }
-    return controllerRef.current
-  }, [])
+    return controllerRef.current;
+  }, []);
 
   const initialize = useCallback(
     async (container: HTMLElement | null, overrideOptions?: MapConfig) => {
-      if (!container) return
+      if (!container) return;
 
-      const baseOptions = overrideOptions ?? options 
+      const baseOptions = overrideOptions ?? options;
 
-      const userCoords = await getUserCoordinates()
+      const userCoords = await getUserCoordinates();
       const finalOptions: MapConfig = {
         ...baseOptions,
-        mapId: baseOptions?.mapId ?? import.meta.env.VITE_GOOGLE_MAPS_MAP_ID_LIGHT,
+        mapId:
+          baseOptions?.mapId ?? import.meta.env.VITE_GOOGLE_MAPS_MAP_ID_LIGHT,
         zoom: baseOptions?.zoom ?? 11,
-        center:
-          baseOptions?.center ??
-          userCoords ?? 
-          baseOptions?.center,
-      }
+        center: baseOptions?.center ?? userCoords ?? baseOptions?.center,
+      };
 
-      await controller.initialize(container, finalOptions)
+      await controller.initialize(container, finalOptions);
     },
     [controller, options],
-  )
+  );
 
   const selectOrder = useCallback(
-    (id: string | number)=>{
-      controller.selectMarker(id)
+    (id: string | number) => {
+      controller.selectMarker(id);
     },
-    [controller]
-  )
+    [controller],
+  );
 
   const setSelectedMarker = useCallback(
     (id: string | null) => {
-      controller.setSelectedMarker(id)
+      controller.setSelectedMarker(id);
     },
     [controller],
-  )
+  );
 
   const setHoveredMarker = useCallback(
     (id: string | null) => {
-      controller.setHoveredMarker(id)
+      controller.setHoveredMarker(id);
     },
     [controller],
-  )
+  );
 
   const showOrders = useCallback(
     (orders: MapOrder[]) => {
-      controller.showOrders(orders)
+      controller.showOrders(orders);
     },
     [controller],
-  )
+  );
 
   const setMarkerLayer = useCallback(
     (layerId: string, orders: MapOrder[], options?: SetMarkerLayerOptions) => {
-      controller.setMarkerLayer(layerId, orders, options)
+      controller.setMarkerLayer(layerId, orders, options);
     },
     [controller],
-  )
+  );
 
   const setMarkerLayerVisibility = useCallback(
     (layerId: string, visible: boolean) => {
-      controller.setMarkerLayerVisibility(layerId, visible)
+      controller.setMarkerLayerVisibility(layerId, visible);
     },
     [controller],
-  )
+  );
 
   const clearMarkerLayer = useCallback(
     (layerId: string) => {
-      controller.clearMarkerLayer(layerId)
+      controller.clearMarkerLayer(layerId);
     },
     [controller],
-  )
+  );
 
   const enableCircleSelection = useCallback(
     (params: { layerId: string; callback: (ids: string[]) => void }) => {
-      controller.enableCircleSelection(params)
+      controller.enableCircleSelection(params);
     },
     [controller],
-  )
+  );
 
   const disableCircleSelection = useCallback(() => {
-    controller.disableCircleSelection()
-  }, [controller])
+    controller.disableCircleSelection();
+  }, [controller]);
+
+  const enableZoneCapture = useCallback(
+    (callback: (geometry: GeoJSONPolygon) => void) => {
+      controller.enableZoneCapture(callback);
+    },
+    [controller],
+  );
+
+  const disableZoneCapture = useCallback(() => {
+    controller.disableZoneCapture();
+  }, [controller]);
 
   const showRoute = useCallback(
     (route: Route | null) => {
-      controller.showRoute(route)
+      controller.showRoute(route);
     },
     [controller],
-  )
+  );
 
   const setViewportInsets = useCallback(
     (insets: MapViewportInsets) => {
-      controller.setViewportInsets(insets)
+      controller.setViewportInsets(insets);
     },
     [controller],
-  )
+  );
 
   const reframeToVisibleArea = useCallback(() => {
-    controller.reframeToVisibleArea()
-  }, [controller])
+    controller.reframeToVisibleArea();
+  }, [controller]);
+
+  const setZonePolygonOverlay = useCallback(
+    (geometry: GeoJSONPolygonGeometry | null) => {
+      controller.setZonePolygonOverlay(geometry);
+    },
+    [controller],
+  );
+
+  const clearZonePolygonOverlay = useCallback(() => {
+    controller.clearZonePolygonOverlay();
+  }, [controller]);
+
+  const setZoneLayer = useCallback(
+    (zones: ZoneDefinition[], options: ZoneLayerOptions) => {
+      controller.setZoneLayer(zones, options);
+    },
+    [controller],
+  );
+
+  const clearZoneLayer = useCallback(() => {
+    controller.clearZoneLayer();
+  }, [controller]);
 
   const subscribeBoundsChanged = useCallback(
-    (callback: (bounds: MapBounds | null) => void) => controller.subscribeBoundsChanged(callback),
+    (callback: (bounds: MapBounds | null) => void) =>
+      controller.subscribeBoundsChanged(callback),
     [controller],
-  )
+  );
 
-  const getUserCoordinates = (): Promise<{ lat: number; lng: number } | null> => {
+  const getUserCoordinates = (): Promise<{
+    lat: number;
+    lng: number;
+  } | null> => {
     return new Promise((resolve) => {
       if (!navigator.geolocation) {
-        resolve(null)
-        return
+        resolve(null);
+        return;
       }
 
       navigator.geolocation.getCurrentPosition(
@@ -133,26 +177,26 @@ export const useMap = (options?: MapConfig): MapBridge => {
           resolve({
             lat: position.coords.latitude,
             lng: position.coords.longitude,
-          })
+          });
         },
         () => resolve(null),
         {
           enableHighAccuracy: true,
           timeout: 5000,
         },
-      )
-    })
-  }
+      );
+    });
+  };
 
   useEffect(() => {
     return () => {
-      controller.destroy()
-    }
-  }, [controller])
+      controller.destroy();
+    };
+  }, [controller]);
 
   const resize = useCallback(() => {
-    controller.resize()
-  }, [controller])
+    controller.resize();
+  }, [controller]);
 
   return useMemo(
     () => ({
@@ -163,15 +207,43 @@ export const useMap = (options?: MapConfig): MapBridge => {
       clearMarkerLayer,
       enableCircleSelection,
       disableCircleSelection,
+      enableZoneCapture,
+      disableZoneCapture,
       showRoute,
       selectOrder,
       setSelectedMarker,
       setHoveredMarker,
       setViewportInsets,
       reframeToVisibleArea,
+      setZonePolygonOverlay,
+      clearZonePolygonOverlay,
+      setZoneLayer,
+      clearZoneLayer,
       subscribeBoundsChanged,
-      resize
+      resize,
     }),
-    [clearMarkerLayer, disableCircleSelection, enableCircleSelection, initialize, reframeToVisibleArea, resize, selectOrder, setHoveredMarker, setMarkerLayer, setMarkerLayerVisibility, setSelectedMarker, setViewportInsets, showOrders, showRoute, subscribeBoundsChanged],
-  )
-}
+    [
+      clearMarkerLayer,
+      clearZoneLayer,
+      clearZonePolygonOverlay,
+      disableCircleSelection,
+      disableZoneCapture,
+      enableZoneCapture,
+      enableCircleSelection,
+      initialize,
+      reframeToVisibleArea,
+      resize,
+      selectOrder,
+      setHoveredMarker,
+      setMarkerLayer,
+      setMarkerLayerVisibility,
+      setSelectedMarker,
+      setZoneLayer,
+      setViewportInsets,
+      setZonePolygonOverlay,
+      showOrders,
+      showRoute,
+      subscribeBoundsChanged,
+    ],
+  );
+};

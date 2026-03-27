@@ -8,14 +8,13 @@ import { RouteOptimizationDropdownButton } from "../RouteOptimizationDropdownBut
 import { ThreeDotMenu } from "@/shared/buttons/ThreeDotMenu"
 import { OrderImportButton } from "@/features/order/components/OrderImportButton"
 import type { OrderImportControls } from "@/features/order/components/OrderImportButton"
+import type { RouteGroupHeaderSummary } from '../../domain/buildRouteGroupHeaderSummary'
 import { useRouteGroupPageCommands, useRouteGroupPageState } from '../../context/useRouteGroupPageContext'
 import { cn } from '@/lib/utils/cn'
 import { formatMetric } from '@shared-utils'
 
 type RouteGroupsPageHeaderProps = {
-    useFloatingActionBar?: boolean
-    isActionBarVisible?: boolean
-    showOptimizeRow?: boolean
+    summary: RouteGroupHeaderSummary
     onRequestClose?: () => void
 }
 
@@ -95,14 +94,10 @@ const RouteGroupHeaderActionBar = ({
 }
 
 export const RouteGroupsPageHeader = ({
+    summary,
     onRequestClose,
-}: RouteGroupsPageHeaderProps = {})=>{
-    const { plan } = useRouteGroupPageState()
-
+}: RouteGroupsPageHeaderProps)=>{
     const PlanTypeIcon = planIconTypeMap.local_delivery
-    const title = plan?.label ?? 'undefined plan'
-    const totalVolume = plan?.total_volume ?? 0
-    const totalWeight = plan?.total_weight ?? 0
     
     return (
         <header className="flex w-full flex-col shadow-[0_12px_30px_rgba(0,0,0,0.12)]">
@@ -113,10 +108,15 @@ export const RouteGroupsPageHeader = ({
                     </div>
                     <div className="text-lg font-semibold text-[var(--color-text)]">
                         <div className="flex flex-col">
-                            <span>{title}</span>
+                            <span>{summary.title}</span>
                             <p className="text-[11px] font-normal text-[var(--color-muted)]">
-                                {plan?.total_orders ?? 0 } orders • {plan?.total_items ?? 0 } items • {formatMetric(totalVolume, '㎥')} • {formatMetric(totalWeight, 'kg')}
+                                {summary.orderCount} orders • {summary.itemCount} items • {formatMetric(summary.totalVolume, '㎥')} • {formatMetric(summary.totalWeight, 'kg')}
                             </p>
+                            {summary.subtitle ? (
+                                <p className="text-[11px] font-normal text-[var(--color-muted)]/80">
+                                    {summary.subtitle}
+                                </p>
+                            ) : null}
                         </div>
                     </div>
                 </div>
@@ -140,7 +140,11 @@ export const RouteGroupsActionBar = ({
     useFloatingActionBar = false,
     isActionBarVisible = true,
     showOptimizeRow: showOptimizeRowProp,
-}: RouteGroupsPageHeaderProps = {}) => {
+}: {
+    useFloatingActionBar?: boolean
+    isActionBarVisible?: boolean
+    showOptimizeRow?: boolean
+} = {}) => {
     const { routeGroupPageActions } = useRouteGroupPageCommands()
     const { plan, routeGroup, orderCount, selectedRouteSolution } = useRouteGroupPageState()
     const [importControls, setImportControls] = useState<OrderImportControls>({

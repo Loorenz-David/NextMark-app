@@ -1,32 +1,40 @@
-import type { ChangeEvent, Dispatch, SetStateAction } from 'react'
-import type { DeliveryPlan } from '../../types/plan'
+import type { ChangeEvent, Dispatch, SetStateAction } from "react";
+import type { DeliveryPlan } from "../../types/plan";
 
-import type { RouteGroupInput } from '../../routeGroup/types/routeGroup'
-import { usePlanFormWarnings } from './PlanForm.warnings'
-import { usePlanFormActions } from './planForm.actions'
-import type { usePlanFormSetters } from './planForm.setters'
+import type { RouteGroupInput } from "../../routeGroup/types/routeGroup";
+import { usePlanFormWarnings } from "./PlanForm.warnings";
+import { usePlanFormActions } from "./planForm.actions";
+import type { usePlanFormSetters } from "./planForm.setters";
 
-export type PlanFormMode = 'create' | 'edit'
+export type PlanFormMode = "create" | "edit";
 
 export type PopupPayload = {
-    clientId?: string
-    serverId?: number
-    mode: PlanFormMode
-    selectedOrderServerIds?: number[]
-    source?: 'order_multi_select'
-}
+  clientId?: string;
+  serverId?: number;
+  mode: PlanFormMode;
+  selectedOrderServerIds?: number[];
+  source?: "order_multi_select";
+};
 
-export type PlanTypeState = RouteGroupInput
+export type PlanTypeState = RouteGroupInput;
+
+export type SelectableZone = {
+  id: number;
+  name: string;
+};
 
 export type PropsPlanFormContext = {
-    planForm: DeliveryPlan
-    mode: PlanFormMode
-    planSetters: ReturnType<typeof usePlanFormSetters>
-    planActions: ReturnType<typeof usePlanFormActions>
-    planFormWarnings: PlanWarningsControllers
-    hasUnsavedChanges: boolean
-}
+  planForm: DeliveryPlan;
+  selectedZoneIds: number[];
+  availableZones: SelectableZone[];
+  isZonesLoading: boolean;
+  mode: PlanFormMode;
+  planSetters: ReturnType<typeof usePlanFormSetters>;
+  planActions: ReturnType<typeof usePlanFormActions>;
+  planFormWarnings: PlanWarningsControllers;
+  hasUnsavedChanges: boolean;
+};
 
-export type PlanWarningsControllers = ReturnType<typeof usePlanFormWarnings>
+export type PlanWarningsControllers = ReturnType<typeof usePlanFormWarnings>;
 
-export type PlanFormActions = ReturnType<typeof usePlanFormActions>
+export type PlanFormActions = ReturnType<typeof usePlanFormActions>;

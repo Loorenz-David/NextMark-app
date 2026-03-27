@@ -1,7 +1,9 @@
 import { useDriverLiveVisibilityStore } from '@/realtime/driverLive/driverLiveVisibility.store'
+import { useZoneVisibilityStore } from '@/features/zone/store/zoneVisibility.store'
 import { createLocateControlButton } from '../../presentation/mapLocateControlButton.factory'
 import { createLocateControlContainer } from '../../presentation/mapLocateControlContainer.factory'
 import { createDriverVisibilityControlButton } from '../../presentation/mapDriverVisibilityControlButton.factory'
+import { createZoneVisibilityControlButton } from '../../presentation/mapZoneVisibilityControlButton.factory'
 import type { MapInstanceManager } from '../core/MapInstanceManager'
 import type { UserLocationManager } from '../location/UserLocationManager'
 
@@ -9,7 +11,9 @@ export class LocateControlManager {
   private locateControlContainer: HTMLElement | null = null
   private locateControlButton: HTMLButtonElement | null = null
   private driverVisibilityButton: HTMLButtonElement | null = null
-  private releaseVisibilitySubscription: (() => void) | null = null
+  private zoneVisibilityButton: HTMLButtonElement | null = null
+  private releaseDriverVisibilitySubscription: (() => void) | null = null
+  private releaseZoneVisibilitySubscription: (() => void) | null = null
   private mapInstanceManager: MapInstanceManager
   private userLocationManager: UserLocationManager
 
@@ -45,13 +49,28 @@ export class LocateControlManager {
       },
     })
 
-    const container = createLocateControlContainer([visibilityControl.button, button])
+    const zoneVisibilityControl = createZoneVisibilityControlButton({
+      isVisible: useZoneVisibilityStore.getState().isVisible,
+      onClick: () => {
+        useZoneVisibilityStore.getState().toggleVisible()
+      },
+    })
+
+    const container = createLocateControlContainer([
+      visibilityControl.button,
+      zoneVisibilityControl.button,
+      button,
+    ])
     map.controls[google.maps.ControlPosition.RIGHT_BOTTOM].push(container)
     this.locateControlContainer = container
     this.locateControlButton = button
     this.driverVisibilityButton = visibilityControl.button
-    this.releaseVisibilitySubscription = useDriverLiveVisibilityStore.subscribe((state) => {
+    this.zoneVisibilityButton = zoneVisibilityControl.button
+    this.releaseDriverVisibilitySubscription = useDriverLiveVisibilityStore.subscribe((state) => {
       visibilityControl.syncState(state.isVisible)
+    })
+    this.releaseZoneVisibilitySubscription = useZoneVisibilityStore.subscribe((state) => {
+      zoneVisibilityControl.syncState(state.isVisible)
     })
   }
 
@@ -62,9 +81,14 @@ export class LocateControlManager {
       this.locateControlContainer = null
       this.locateControlButton = null
       this.driverVisibilityButton = null
-      if (this.releaseVisibilitySubscription) {
-        this.releaseVisibilitySubscription()
-        this.releaseVisibilitySubscription = null
+      this.zoneVisibilityButton = null
+      if (this.releaseDriverVisibilitySubscription) {
+        this.releaseDriverVisibilitySubscription()
+        this.releaseDriverVisibilitySubscription = null
+      }
+      if (this.releaseZoneVisibilitySubscription) {
+        this.releaseZoneVisibilitySubscription()
+        this.releaseZoneVisibilitySubscription = null
       }
       return
     }
@@ -75,9 +99,16 @@ export class LocateControlManager {
     if (this.driverVisibilityButton) {
       this.driverVisibilityButton.onclick = null
     }
-    if (this.releaseVisibilitySubscription) {
-      this.releaseVisibilitySubscription()
-      this.releaseVisibilitySubscription = null
+    if (this.zoneVisibilityButton) {
+      this.zoneVisibilityButton.onclick = null
+    }
+    if (this.releaseDriverVisibilitySubscription) {
+      this.releaseDriverVisibilitySubscription()
+      this.releaseDriverVisibilitySubscription = null
+    }
+    if (this.releaseZoneVisibilitySubscription) {
+      this.releaseZoneVisibilitySubscription()
+      this.releaseZoneVisibilitySubscription = null
     }
 
     const controlArray = map.controls[google.maps.ControlPosition.RIGHT_BOTTOM]
@@ -91,5 +122,6 @@ export class LocateControlManager {
     this.locateControlContainer = null
     this.locateControlButton = null
     this.driverVisibilityButton = null
+    this.zoneVisibilityButton = null
   }
 }

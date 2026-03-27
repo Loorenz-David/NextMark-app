@@ -1,85 +1,126 @@
-import type { MapAdapter, MapBounds, MapConfig, MapViewportInsets, SetMarkerLayerOptions } from '../types'
-import type { MapOrder } from '../entities/MapOrder'
-import type { Route } from '../entities/Route'
-import { MAP_MARKER_LAYERS } from '../constants/markerLayers'
+import type {
+  ZoneLayerOptions,
+  GeoJSONPolygonGeometry,
+  MapAdapter,
+  MapBounds,
+  MapConfig,
+  MapViewportInsets,
+  SetMarkerLayerOptions,
+} from "../types";
+import type { MapOrder } from "../entities/MapOrder";
+import type { Route } from "../entities/Route";
+import type { GeoJSONPolygon, ZoneDefinition } from "@/features/zone/types";
+import { MAP_MARKER_LAYERS } from "../constants/markerLayers";
 
 export class MapController {
-  private adapter: MapAdapter
+  private adapter: MapAdapter;
 
   constructor(adapter: MapAdapter) {
-    this.adapter = adapter
+    this.adapter = adapter;
   }
 
   async initialize(container: HTMLElement, options?: MapConfig) {
-    await this.adapter.initialize(container, options)
+    await this.adapter.initialize(container, options);
   }
 
-  selectMarker(id: string | number  ){
-
-    this.adapter.selectMarker(String(id))
+  selectMarker(id: string | number) {
+    this.adapter.selectMarker(String(id));
   }
 
   setSelectedMarker(id: string | null) {
-    this.adapter.setSelectedMarker(id)
+    this.adapter.setSelectedMarker(id);
   }
 
   setHoveredMarker(id: string | null) {
-    this.adapter.setHoveredMarker(id)
+    this.adapter.setHoveredMarker(id);
   }
   showOrders(orders: MapOrder[]) {
-    this.adapter.setLayerMarkers(MAP_MARKER_LAYERS.default, orders, { fitBounds: true })
+    this.adapter.setLayerMarkers(MAP_MARKER_LAYERS.default, orders, {
+      fitBounds: true,
+    });
   }
 
-  setMarkerLayer(layerId: string, orders: MapOrder[], options?: SetMarkerLayerOptions) {
-    this.adapter.setLayerMarkers(layerId, orders, options)
+  setMarkerLayer(
+    layerId: string,
+    orders: MapOrder[],
+    options?: SetMarkerLayerOptions,
+  ) {
+    this.adapter.setLayerMarkers(layerId, orders, options);
   }
 
   setMarkerLayerVisibility(layerId: string, visible: boolean) {
-    this.adapter.setLayerVisibility(layerId, visible)
+    this.adapter.setLayerVisibility(layerId, visible);
   }
 
   clearMarkerLayer(layerId: string) {
-    this.adapter.clearLayer(layerId)
+    this.adapter.clearLayer(layerId);
   }
 
-  enableCircleSelection(params: { layerId: string; callback: (ids: string[]) => void }) {
-    this.adapter.enableCircleSelection(params)
+  enableCircleSelection(params: {
+    layerId: string;
+    callback: (ids: string[]) => void;
+  }) {
+    this.adapter.enableCircleSelection(params);
   }
 
   disableCircleSelection() {
-    this.adapter.disableCircleSelection()
+    this.adapter.disableCircleSelection();
+  }
+
+  enableZoneCapture(callback: (geometry: GeoJSONPolygon) => void) {
+    this.adapter.enableZoneCapture(callback);
+  }
+
+  disableZoneCapture() {
+    this.adapter.disableZoneCapture();
   }
 
   showRoute(route: Route | null) {
-    this.adapter.drawRoute(route)
+    this.adapter.drawRoute(route);
   }
 
-  fitTo(points?: MapOrder['coordinates'][]) {
-    this.adapter.fitBounds(points)
+  fitTo(points?: MapOrder["coordinates"][]) {
+    this.adapter.fitBounds(points);
   }
 
   setViewportInsets(insets: MapViewportInsets) {
-    this.adapter.setViewportInsets(insets)
+    this.adapter.setViewportInsets(insets);
   }
 
   reframeToVisibleArea() {
-    this.adapter.reframeToVisibleArea()
+    this.adapter.reframeToVisibleArea();
+  }
+
+  setZonePolygonOverlay(geometry: GeoJSONPolygonGeometry | null) {
+    this.adapter.setZonePolygonOverlay(geometry);
+  }
+
+  clearZonePolygonOverlay() {
+    this.adapter.clearZonePolygonOverlay();
+  }
+
+  setZoneLayer(zones: ZoneDefinition[], options: ZoneLayerOptions) {
+    this.adapter.setZoneLayer(zones, options);
+  }
+
+  clearZoneLayer() {
+    this.adapter.clearZoneLayer();
   }
 
   subscribeBoundsChanged(callback: (bounds: MapBounds | null) => void) {
-    return this.adapter.subscribeBoundsChanged(callback)
+    return this.adapter.subscribeBoundsChanged(callback);
   }
 
-  resize(){
-    this.adapter.resize()
+  resize() {
+    this.adapter.resize();
   }
 
   clear() {
-    this.adapter.clearMarkers()
-    this.adapter.drawRoute(null)
+    this.adapter.clearMarkers();
+    this.adapter.drawRoute(null);
   }
 
   destroy() {
-    this.adapter.destroy()
+    this.adapter.destroy();
   }
 }

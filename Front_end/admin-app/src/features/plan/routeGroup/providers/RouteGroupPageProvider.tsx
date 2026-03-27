@@ -20,11 +20,17 @@ import type { PayloadBase } from '@/features/home-route-operations/types/types'
 
 type RouteGroupPageProviderProps = {
   planId: number | null
+  preferredRouteGroupId?: number | null
   freshAfter?: string | null
   children: ReactNode
 }
 
-export function RouteGroupPageProvider({ planId, freshAfter, children }: RouteGroupPageProviderProps) {
+export function RouteGroupPageProvider({
+  planId,
+  preferredRouteGroupId,
+  freshAfter,
+  children,
+}: RouteGroupPageProviderProps) {
   const { isMobile } = useMobile()
   const sectionManager = useSectionManager()
   const popupManager = usePopupManager()
@@ -58,7 +64,6 @@ export function RouteGroupPageProvider({ planId, freshAfter, children }: RouteGr
     planId,
     routeGroups,
     activeRouteGroupId,
-    fallbackRouteGroupId: routeGroupId,
   })
   useSyncActiveRouteSolutionSelectionFlow({
     routeGroupId: routeGroupId,
@@ -77,7 +82,11 @@ export function RouteGroupPageProvider({ planId, freshAfter, children }: RouteGr
     loadingController,
   })
 
-  useRouteGroupPageInitializationFlow(planId, freshAfter ?? baseControls.payload?.freshAfter ?? null)
+  useRouteGroupPageInitializationFlow(
+    planId,
+    freshAfter ?? baseControls.payload?.freshAfter ?? null,
+    preferredRouteGroupId ?? baseControls.payload?.routeGroupId ?? null,
+  )
   useRouteGroupPageEscapeFlow({
     isMobile,
     baseControls,
@@ -90,6 +99,7 @@ export function RouteGroupPageProvider({ planId, freshAfter, children }: RouteGr
       planId,
       plan: plan ?? null,
       planState,
+      routeGroups,
       routeGroup: routeGroup ?? null,
       routeGroupId,
       planStartDate,
@@ -110,6 +120,7 @@ export function RouteGroupPageProvider({ planId, freshAfter, children }: RouteGr
       planId,
       plan,
       planState,
+      routeGroups,
       routeGroup,
       routeGroupId,
       planStartDate,

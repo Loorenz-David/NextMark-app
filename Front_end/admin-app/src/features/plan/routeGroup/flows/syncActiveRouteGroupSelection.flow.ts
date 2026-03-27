@@ -1,20 +1,18 @@
 import { useEffect } from 'react'
 
 import type { RouteGroup } from '../types/routeGroup'
-import { clearActiveRouteGroupSelection, setActiveRouteGroupId } from '../store/activeRouteGroup.store'
+import { clearActiveRouteGroupSelection } from '../store/activeRouteGroup.store'
 
 type SyncActiveRouteGroupSelectionParams = {
   planId: number | null
   routeGroups: RouteGroup[]
   activeRouteGroupId: number | null
-  fallbackRouteGroupId: number | null
 }
 
 export const useSyncActiveRouteGroupSelectionFlow = ({
   planId,
   routeGroups,
   activeRouteGroupId,
-  fallbackRouteGroupId,
 }: SyncActiveRouteGroupSelectionParams) => {
   useEffect(() => {
     if (planId == null) {
@@ -34,6 +32,6 @@ export const useSyncActiveRouteGroupSelectionFlow = ({
       return
     }
 
-    setActiveRouteGroupId(fallbackRouteGroupId)
-  }, [activeRouteGroupId, fallbackRouteGroupId, planId, routeGroups])
+    clearActiveRouteGroupSelection()
+  }, [activeRouteGroupId, planId, routeGroups])
 }
