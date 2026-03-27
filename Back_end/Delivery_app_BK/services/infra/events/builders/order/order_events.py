@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from Delivery_app_BK.models import DeliveryPlan, Order
+from Delivery_app_BK.models import RoutePlan, Order
 from Delivery_app_BK.services.domain.order.order_events import OrderEvent
 from Delivery_app_BK.services.domain.order.order_states import (
     OrderState as OrderStateDomain,
@@ -87,7 +87,7 @@ def build_delivery_window_rescheduled_by_user_event(
 def build_delivery_plan_changed_event(
     order_instance: Order,
     old_plan_id: int | None,
-    new_plan: DeliveryPlan,
+    new_plan: RoutePlan,
 ) -> dict:
     return {
         "order_id": order_instance.id,

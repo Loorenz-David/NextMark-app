@@ -11,10 +11,9 @@ from ..order.find_orders import find_orders
 from ..utils import apply_opaque_pagination_by_date
 
 """
- for adding a filter use:
+For adding a filter use:
     if "" in params:
-        query = query.filter( DeliveryPlan.  params[""])
-
+        query = query.filter(RoutePlan.<field> == params[""])
 """
 
 def find_plans( params:Dict, ctx:ServiceContext ):

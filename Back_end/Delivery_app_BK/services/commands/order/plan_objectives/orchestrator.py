@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from collections.abc import Callable
 
-from Delivery_app_BK.models import DeliveryPlan, Order
+from Delivery_app_BK.models import RoutePlan, Order
 from Delivery_app_BK.services.queries.get_instance import get_instance
 
 from ....context import ServiceContext
@@ -13,7 +13,7 @@ from .types import PlanObjectiveCreateResult
 
 
 PlanObjectiveHandler = Callable[
-    [ServiceContext, Order, DeliveryPlan, str],
+    [ServiceContext, Order, RoutePlan, str],
     PlanObjectiveCreateResult,
 ]
 
@@ -30,7 +30,7 @@ def apply_order_plan_objective(
     order_instance: Order,
     route_plan_id: int | None = None,
     plan_objective: str | None = None,
-    route_plan: DeliveryPlan | None = None,
+    route_plan: RoutePlan | None = None,
 ) -> PlanObjectiveCreateResult:
     if not route_plan and not route_plan_id:
         return PlanObjectiveCreateResult()
@@ -38,7 +38,7 @@ def apply_order_plan_objective(
     if route_plan is None:
         route_plan = get_instance(
             ctx=ctx,
-            model=DeliveryPlan,
+            model=RoutePlan,
             value=route_plan_id,
         )
 

@@ -1,4 +1,4 @@
-"""Socket emitters for DeliveryPlan-level events."""
+"""Socket emitters for RoutePlan-level events."""
 from __future__ import annotations
 from typing import TYPE_CHECKING
 
@@ -7,10 +7,10 @@ from Delivery_app_BK.sockets.emitters.common import build_business_event_envelop
 from Delivery_app_BK.sockets.rooms.names import build_team_admin_room
 
 if TYPE_CHECKING:
-    from Delivery_app_BK.models import DeliveryPlan
+    from Delivery_app_BK.models import RoutePlan
 
 
-def emit_delivery_plan_totals_updated(plan: "DeliveryPlan") -> None:
+def emit_delivery_plan_totals_updated(plan: "RoutePlan") -> None:
     """Broadcast updated plan totals to every admin in the team room."""
     if plan is None or plan.id is None or plan.team_id is None:
         return

@@ -15,9 +15,9 @@ from .order import (
     parse_update_orders_delivery_plan_batch_request,
 )
 from .route_plan.plan.local_delivery import (
-    DeliveryPlanPatchRequest,
-    LocalDeliveryPlanPatchRequest,
-    LocalDeliverySettingsRequest,
+    RouteGroupPatchRequest,
+    RouteGroupSettingsRequest,
+    RoutePlanPatchRequest,
     RouteSolutionPatchRequest,
     parse_update_local_delivery_settings_request,
 )
@@ -42,9 +42,9 @@ __all__ = [
     "parse_create_order_request",
     "parse_update_orders_delivery_plan_batch_payload",
     "parse_update_orders_delivery_plan_batch_request",
-    "DeliveryPlanPatchRequest",
-    "LocalDeliveryPlanPatchRequest",
-    "LocalDeliverySettingsRequest",
+    "RoutePlanPatchRequest",
+    "RouteGroupPatchRequest",
+    "RouteGroupSettingsRequest",
     "RouteSolutionPatchRequest",
     "parse_update_local_delivery_settings_request",
     "LoginRequest",

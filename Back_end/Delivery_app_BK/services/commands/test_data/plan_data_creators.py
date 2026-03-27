@@ -7,11 +7,11 @@ from sqlalchemy.exc import InvalidRequestError
 
 from Delivery_app_BK.errors import ValidationFailed
 from Delivery_app_BK.models import (
-    DeliveryPlan,
-    DeliveryPlanEvent,
-    DeliveryPlanEventAction,
+    RoutePlan,
+    RoutePlanEvent,
+    RoutePlanEventAction,
     InternationalShippingPlan,
-    LocalDeliveryPlan,
+    RouteGroup,
     RouteSolution,
     StorePickupPlan,
     db,
@@ -161,7 +161,7 @@ def create_delivery_plan_row(
     payload: dict[str, Any] | None = None,
     *,
     sequence: int = 1,
-) -> DeliveryPlan:
+) -> RoutePlan:
     payload = payload or {}
     plan_type = _normalize_plan_type(payload.get("plan_type"))
 
@@ -183,16 +183,16 @@ def create_delivery_plan_row(
         "total_orders": payload.get("total_orders"),
     }
 
-    plan = create_instance(ctx, DeliveryPlan, _compact_none(fields))
+    plan = create_instance(ctx, RoutePlan, _compact_none(fields))
     db.session.add(plan)
     return plan
 
 
 def create_local_delivery_plan_row(
     ctx: ServiceContext,
-    delivery_plan: DeliveryPlan,
+    delivery_plan: RoutePlan,
     payload: dict[str, Any] | None = None,
-) -> LocalDeliveryPlan:
+) -> RouteGroup:
     payload = payload or {}
 
     fields = {
@@ -201,7 +201,7 @@ def create_local_delivery_plan_row(
         "actual_end_time": _parse_datetime(payload.get("actual_end_time")),
         "driver_id": _as_optional_positive_int(payload.get("driver_id")),
     }
-    instance = create_instance(ctx, LocalDeliveryPlan, _compact_none(fields))
+    instance = create_instance(ctx, RouteGroup, _compact_none(fields))
     instance.delivery_plan = delivery_plan
     db.session.add(instance)
     return instance
@@ -209,7 +209,7 @@ def create_local_delivery_plan_row(
 
 def create_route_solution_row(
     ctx: ServiceContext,
-    local_delivery_plan: LocalDeliveryPlan,
+    local_delivery_plan: RouteGroup,
     payload: dict[str, Any] | None = None,
     *,
     route_index: int = 1,
@@ -258,7 +258,7 @@ def create_route_solution_row(
 
 def create_international_shipping_plan_row(
     ctx: ServiceContext,
-    delivery_plan: DeliveryPlan,
+    delivery_plan: RoutePlan,
     payload: dict[str, Any] | None = None,
 ) -> InternationalShippingPlan:
     payload = payload or {}
@@ -278,7 +278,7 @@ def create_international_shipping_plan_row(
 
 def create_store_pickup_plan_row(
     ctx: ServiceContext,
-    delivery_plan: DeliveryPlan,
+    delivery_plan: RoutePlan,
     payload: dict[str, Any] | None = None,
 ) -> StorePickupPlan:
     payload = payload or {}
@@ -296,9 +296,9 @@ def create_store_pickup_plan_row(
 
 def create_delivery_plan_event_row(
     ctx: ServiceContext,
-    delivery_plan: DeliveryPlan,
+    delivery_plan: RoutePlan,
     payload: dict[str, Any] | None = None,
-) -> DeliveryPlanEvent:
+) -> RoutePlanEvent:
     payload = payload or {}
     raw_payload = payload.get("payload")
     event_payload = raw_payload if isinstance(raw_payload, dict) else {}
@@ -310,7 +310,7 @@ def create_delivery_plan_event_row(
         or datetime.now(timezone.utc),
         "actor_id": _as_optional_positive_int(payload.get("actor_id")),
     }
-    instance = create_instance(ctx, DeliveryPlanEvent, _compact_none(fields))
+    instance = create_instance(ctx, RoutePlanEvent, _compact_none(fields))
     instance.delivery_plan = delivery_plan
     db.session.add(instance)
     return instance
@@ -318,9 +318,9 @@ def create_delivery_plan_event_row(
 
 def create_delivery_plan_event_action_row(
     ctx: ServiceContext,
-    event: DeliveryPlanEvent,
+    event: RoutePlanEvent,
     payload: dict[str, Any] | None = None,
-) -> DeliveryPlanEventAction:
+) -> RoutePlanEventAction:
     payload = payload or {}
 
     fields = {
@@ -334,7 +334,7 @@ def create_delivery_plan_event_action_row(
         "schedule_anchor_type": payload.get("schedule_anchor_type"),
         "schedule_anchor_at": _parse_datetime(payload.get("schedule_anchor_at")),
     }
-    instance = create_instance(ctx, DeliveryPlanEventAction, _compact_none(fields))
+    instance = create_instance(ctx, RoutePlanEventAction, _compact_none(fields))
     instance.event = event
     db.session.add(instance)
     return instance
@@ -393,11 +393,11 @@ def _normalize_plan_type(value: Any) -> str:
     if isinstance(value, str):
         normalized = value.strip()
         if normalized:
-            if normalized in DeliveryPlan.PLAN_TYPES:
+            if normalized in RoutePlan.PLAN_TYPES:
                 return normalized
             raise ValidationFailed(
                 f"Invalid delivery_plan.plan_type '{normalized}'. "
-                f"Allowed values: {sorted(DeliveryPlan.PLAN_TYPES)}"
+                f"Allowed values: {sorted(RoutePlan.PLAN_TYPES)}"
             )
     return DEFAULT_PLAN_TYPE
 

@@ -65,12 +65,3 @@ from .tables.analytics.analytics_daily_fact import AnalyticsDailyFact
 from .tables.zones.zone_version import ZoneVersion
 from .tables.zones.zone import Zone
 from .tables.zones.order_zone_assignment import OrderZoneAssignment
-
-# Transitional aliases while service/event layers complete RoutePlan renaming.
-# Keep until route naming migration gates are complete across service, router,
-# event payload, and test monkeypatch layers.
-DeliveryPlan = RoutePlan
-DeliveryPlanState = RoutePlanState
-LocalDeliveryPlan = RouteGroup
-DeliveryPlanEvent = RoutePlanEvent
-DeliveryPlanEventAction = RoutePlanEventAction

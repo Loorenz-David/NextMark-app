@@ -8,7 +8,7 @@ from sqlalchemy.orm import joinedload, selectinload
 
 from Delivery_app_BK.directions import refresh_route_solution_incremental
 from Delivery_app_BK.errors import ValidationFailed
-from Delivery_app_BK.models import DeliveryPlan, LocalDeliveryPlan, RouteSolution, RouteSolutionStop, db
+from Delivery_app_BK.models import RoutePlan, RouteGroup, RouteSolution, RouteSolutionStop, db
 
 logger = logging.getLogger(__name__)
 
@@ -214,8 +214,8 @@ def load_route_solution_for_refresh(route_solution_id: int | None) -> RouteSolut
         .options(
             selectinload(RouteSolution.stops),
             joinedload(RouteSolution.local_delivery_plan)
-            .joinedload(LocalDeliveryPlan.delivery_plan)
-            .selectinload(DeliveryPlan.orders),
+            .joinedload(RouteGroup.delivery_plan)
+            .selectinload(RoutePlan.orders),
         )
         .populate_existing()
         .one_or_none()

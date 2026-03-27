@@ -5,7 +5,7 @@ from collections.abc import Callable
 
 from Delivery_app_BK.models import (
     InternationalShippingPlan,
-    LocalDeliveryPlan,
+    RouteGroup,
     RouteSolution,
     StorePickupPlan,
 )
@@ -13,7 +13,7 @@ from Delivery_app_BK.models import (
 
 @dataclass
 class PlanChangeApplyContext:
-    route_group_by_route_plan_id: dict[int, LocalDeliveryPlan] = field(default_factory=dict)
+    route_group_by_route_plan_id: dict[int, RouteGroup] = field(default_factory=dict)
     route_solutions_by_route_group_id: dict[int, list[RouteSolution]] = field(
         default_factory=dict
     )

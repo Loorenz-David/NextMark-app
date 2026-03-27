@@ -23,7 +23,7 @@ from Delivery_app_BK.services.domain.order.order_states import OrderState as Ord
 from Delivery_app_BK.services.domain.route_operations.plan.plan_states import PlanStateId
 
 if TYPE_CHECKING:
-    from Delivery_app_BK.models import DeliveryPlan
+    from Delivery_app_BK.models import RoutePlan
     from Delivery_app_BK.models import RouteSolution
 
 logger = logging.getLogger(__name__)
@@ -56,7 +56,7 @@ def derive_auto_complete_state(route_solution: "RouteSolution | None") -> int | 
     return None
 
 
-def get_selected_route_solution(plan: "DeliveryPlan") -> "RouteSolution | None":
+def get_selected_route_solution(plan: "RoutePlan") -> "RouteSolution | None":
     """Return the selected RouteSolution for a local_delivery plan, or None."""
     local = getattr(plan, "local_delivery", None)
     if local is None:
@@ -74,7 +74,7 @@ def should_reset_plan_to_open(current_state_id: int | None) -> bool:
     return current_state_id != PlanStateId.OPEN
 
 
-def apply_plan_state(plan: "DeliveryPlan", state_id: int) -> bool:
+def apply_plan_state(plan: "RoutePlan", state_id: int) -> bool:
     """
     Set plan.state_id to state_id if it differs.  Returns True when changed.
     Does NOT flush or commit.
@@ -93,7 +93,7 @@ def apply_plan_state(plan: "DeliveryPlan", state_id: int) -> bool:
     return True
 
 
-def maybe_auto_complete_plan(plan: "DeliveryPlan") -> bool:
+def maybe_auto_complete_plan(plan: "RoutePlan") -> bool:
     """
     Check if the plan should auto-transition to COMPLETED and apply it.
     Must be called *after* `recompute_plan_order_counts`.

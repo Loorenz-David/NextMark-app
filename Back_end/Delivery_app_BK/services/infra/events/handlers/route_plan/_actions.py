@@ -1,6 +1,6 @@
 from datetime import datetime, timezone
 
-from Delivery_app_BK.models import db, DeliveryPlanEvent, DeliveryPlanEventAction
+from Delivery_app_BK.models import db, RoutePlanEvent, RoutePlanEventAction
 from Delivery_app_BK.services.infra.events.action_dispatch import enqueue_delivery_plan_action
 from Delivery_app_BK.services.infra.messaging.action_scheduling import resolve_delivery_plan_action_schedule
 
@@ -11,25 +11,25 @@ def _upsert_action(
     team_id: int | None,
     *,
     resolved_schedule,
-) -> DeliveryPlanEventAction:
+) -> RoutePlanEventAction:
     action = (
-        db.session.query(DeliveryPlanEventAction)
+        db.session.query(RoutePlanEventAction)
         .filter(
-            DeliveryPlanEventAction.event_id == plan_event_id,
-            DeliveryPlanEventAction.action_name == action_name,
+            RoutePlanEventAction.event_id == plan_event_id,
+            RoutePlanEventAction.action_name == action_name,
         )
         .first()
     )
 
     if action is None:
-        action = DeliveryPlanEventAction(
+        action = RoutePlanEventAction(
             event_id=plan_event_id,
             action_name=action_name,
             team_id=team_id,
             status=(
-                DeliveryPlanEventAction.STATUS_SKIPPED
+                RoutePlanEventAction.STATUS_SKIPPED
                 if resolved_schedule.skip_reason
-                else DeliveryPlanEventAction.STATUS_PENDING
+                else RoutePlanEventAction.STATUS_PENDING
             ),
             attempts=0,
             last_error=resolved_schedule.skip_reason,
@@ -43,9 +43,9 @@ def _upsert_action(
         return action
 
     action.status = (
-        DeliveryPlanEventAction.STATUS_SKIPPED
+        RoutePlanEventAction.STATUS_SKIPPED
         if resolved_schedule.skip_reason
-        else DeliveryPlanEventAction.STATUS_PENDING
+        else RoutePlanEventAction.STATUS_PENDING
     )
     action.last_error = resolved_schedule.skip_reason
     action.scheduled_for = resolved_schedule.scheduled_for
@@ -57,7 +57,7 @@ def _upsert_action(
     return action
 
 
-def run_action(plan_event:DeliveryPlanEvent, action_name: str, _runner) -> None:
+def run_action(plan_event:RoutePlanEvent, action_name: str, _runner) -> None:
   
     team_id = getattr(plan_event, "team_id", None)
     resolved_schedule = resolve_delivery_plan_action_schedule(plan_event, action_name)
@@ -71,16 +71,16 @@ def run_action(plan_event:DeliveryPlanEvent, action_name: str, _runner) -> None:
         resolved_schedule=resolved_schedule,
     )
     db.session.commit()
-    if action.status == DeliveryPlanEventAction.STATUS_SKIPPED:
+    if action.status == RoutePlanEventAction.STATUS_SKIPPED:
         return
 
     try:
         enqueue_delivery_plan_action(action)
     except Exception as exc:
-        failed_action = db.session.get(DeliveryPlanEventAction, action.id)
+        failed_action = db.session.get(RoutePlanEventAction, action.id)
         if failed_action is None:
             return
         failed_action.attempts = (failed_action.attempts or 0) + 1
-        failed_action.status = DeliveryPlanEventAction.STATUS_FAILED
+        failed_action.status = RoutePlanEventAction.STATUS_FAILED
         failed_action.last_error = str(exc)
         db.session.commit()

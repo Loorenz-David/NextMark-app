@@ -1,7 +1,4 @@
 from .update_settings import (
-    DeliveryPlanPatchRequest,
-    LocalDeliveryPlanPatchRequest,
-    LocalDeliverySettingsRequest,
     RouteGroupPatchRequest,
     RouteGroupSettingsRequest,
     RoutePlanPatchRequest,
@@ -23,9 +20,6 @@ from .mark_actual_time import (
 )
 
 __all__ = [
-    "DeliveryPlanPatchRequest",
-    "LocalDeliveryPlanPatchRequest",
-    "LocalDeliverySettingsRequest",
     "RoutePlanPatchRequest",
     "RouteGroupPatchRequest",
     "RouteGroupSettingsRequest",

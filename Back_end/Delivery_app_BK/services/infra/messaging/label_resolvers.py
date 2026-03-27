@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, Callable
 from Delivery_app_BK.models import RouteSolution, RouteSolutionStop, db
 
 if TYPE_CHECKING:
-    from Delivery_app_BK.models import DeliveryPlanEvent, Order, OrderEvent
+    from Delivery_app_BK.models import RoutePlanEvent, Order, OrderEvent
 
 
 class MessageRenderContext:
@@ -15,7 +15,7 @@ class MessageRenderContext:
         order: "Order",
         order_event: "OrderEvent | None" = None,
         team_id: int | None = None,
-        delivery_plan_event: "DeliveryPlanEvent | None" = None,
+        delivery_plan_event: "RoutePlanEvent | None" = None,
     ) -> None:
         self.order = order
         self.order_event = order_event

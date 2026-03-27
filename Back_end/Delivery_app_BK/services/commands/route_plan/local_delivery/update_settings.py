@@ -11,7 +11,6 @@ from Delivery_app_BK.services.commands.route_plan.local_delivery.route_solution.
 from Delivery_app_BK.services.domain.route_operations.plan.route_freshness import touch_route_freshness
 from Delivery_app_BK.services.context import ServiceContext
 from Delivery_app_BK.services.requests.route_plan.plan.local_delivery.update_settings import (
-    LocalDeliverySettingsRequest,
     RouteGroupSettingsRequest,
     RouteSolutionPatchRequest,
     parse_update_route_group_settings_request,
@@ -57,7 +56,7 @@ logger = logging.getLogger(__name__)
 def update_local_delivery_settings(ctx: ServiceContext) -> dict:
     incoming_data = ctx.incoming_data or {}
     _warn_if_driver_conflict(ctx, incoming_data)
-    request: LocalDeliverySettingsRequest = parse_update_local_delivery_settings_request(
+    request: RouteGroupSettingsRequest = parse_update_local_delivery_settings_request(
         incoming_data
     )
     return apply_route_group_settings_request(ctx, request)
@@ -253,7 +252,7 @@ def apply_route_group_settings_request(
 
 def apply_local_delivery_settings_request(
     ctx: ServiceContext,
-    request: LocalDeliverySettingsRequest,
+    request: RouteGroupSettingsRequest,
     *,
     reset_route_execution_timing: bool = False,
 ) -> dict:

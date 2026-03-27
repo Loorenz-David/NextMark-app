@@ -1,11 +1,11 @@
 from Delivery_app_BK.models import (
     db,
     Item,
-    Order,
-    ItemState,
     ItemPosition,
+    ItemState,
+    Order,
+    RoutePlan,
     Team,
-    DeliveryPlan,
 )
 from ....context import ServiceContext
 from ...base.create_instance import create_instance
@@ -84,7 +84,7 @@ def _recompute_affected_plans(orders: list[Order]) -> None:
         if plan_id is None or plan_id in seen_plan_ids:
             continue
         seen_plan_ids.add(plan_id)
-        plan = getattr(order, "route_plan", None) or db.session.get(DeliveryPlan, plan_id)
+        plan = getattr(order, "route_plan", None) or db.session.get(RoutePlan, plan_id)
         recompute_plan_totals(plan)
 
 
@@ -95,7 +95,7 @@ def _emit_plan_totals_events(orders: list[Order]) -> None:
         if plan_id is None or plan_id in seen_plan_ids:
             continue
         seen_plan_ids.add(plan_id)
-        plan = getattr(order, "route_plan", None) or db.session.get(DeliveryPlan, plan_id)
+        plan = getattr(order, "route_plan", None) or db.session.get(RoutePlan, plan_id)
         emit_delivery_plan_totals_updated(plan)
 
 

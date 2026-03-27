@@ -3,7 +3,7 @@ from __future__ import annotations
 from collections.abc import Callable
 
 from Delivery_app_BK.errors import ValidationFailed
-from Delivery_app_BK.models import LocalDeliveryPlan, RouteSolutionStop, db
+from Delivery_app_BK.models import RouteGroup, RouteSolutionStop, db
 from Delivery_app_BK.route_optimization.constants.skip_reasons import (
     ORDER_CREATED_AFTER_OPTIMIZATION,
 )
@@ -89,12 +89,12 @@ def apply_local_delivery_objective(
     )
 
 
-def _get_local_delivery_plan(ctx: ServiceContext, route_plan_id: int) -> LocalDeliveryPlan:
-    query = db.session.query(LocalDeliveryPlan).filter(
-        LocalDeliveryPlan.delivery_plan_id == route_plan_id
+def _get_local_delivery_plan(ctx: ServiceContext, route_plan_id: int) -> RouteGroup:
+    query = db.session.query(RouteGroup).filter(
+        RouteGroup.delivery_plan_id == route_plan_id
     )
     if ctx.team_id:
-        query = query.filter(LocalDeliveryPlan.team_id == ctx.team_id)
+        query = query.filter(RouteGroup.team_id == ctx.team_id)
     local_delivery = query.one_or_none()
     if not local_delivery:
         raise ValidationFailed("Local delivery plan not found for order objective.")

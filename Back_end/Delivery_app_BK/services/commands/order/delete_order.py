@@ -5,7 +5,7 @@ from sqlalchemy.orm import joinedload
 from sqlalchemy.orm.exc import NoResultFound
 
 from Delivery_app_BK.errors import NotFound
-from Delivery_app_BK.models import Order, DeliveryPlan, db
+from Delivery_app_BK.models import Order, RoutePlan, db
 from Delivery_app_BK.services.utils import model_requires_team, require_team_id
 from Delivery_app_BK.services.domain.route_operations.plan.recompute_plan_totals import recompute_plan_totals
 from Delivery_app_BK.services.domain.state_transitions.order_count_engine import recompute_plan_order_counts
@@ -49,7 +49,7 @@ def delete_order(ctx: ServiceContext):
 
     def _apply() -> None:
         # Capture affected plans before deletion so we can recompute totals after flush.
-        affected_plans_by_id: dict[int, DeliveryPlan] = {}
+        affected_plans_by_id: dict[int, RoutePlan] = {}
         for order in ordered_orders:
             plan = getattr(order, "route_plan", None)
             if plan is not None and plan.id is not None:

@@ -4,7 +4,7 @@ from typing import Any
 from datetime import datetime, timezone
 from uuid import uuid4
 
-from Delivery_app_BK.models import DeliveryPlanEventAction, OrderEvent, OrderEventAction, db
+from Delivery_app_BK.models import RoutePlanEventAction, OrderEvent, OrderEventAction, db
 from Delivery_app_BK.services.domain.messaging import SCHEDULE_ANCHOR_FUTURE_BUSINESS_TIME
 from Delivery_app_BK.services.domain.order.order_events import OrderEvent as OrderDomainEvent
 
@@ -23,21 +23,21 @@ def _truncate_error(error_message: str) -> str:
     return error_message[:3000]
 
 
-def _mark_action_failed(action: DeliveryPlanEventAction, error_message: str) -> None:
-    action.status = DeliveryPlanEventAction.STATUS_FAILED
+def _mark_action_failed(action: RoutePlanEventAction, error_message: str) -> None:
+    action.status = RoutePlanEventAction.STATUS_FAILED
     action.last_error = _truncate_error(error_message)
     db.session.commit()
 
 
-def _mark_action_success(action: DeliveryPlanEventAction) -> None:
-    action.status = DeliveryPlanEventAction.STATUS_SUCCESS
+def _mark_action_success(action: RoutePlanEventAction) -> None:
+    action.status = RoutePlanEventAction.STATUS_SUCCESS
     action.last_error = None
     action.processed_at = datetime.now(timezone.utc)
     db.session.commit()
 
 
-def _mark_action_skipped(action: DeliveryPlanEventAction, reason: str) -> None:
-    action.status = DeliveryPlanEventAction.STATUS_SKIPPED
+def _mark_action_skipped(action: RoutePlanEventAction, reason: str) -> None:
+    action.status = RoutePlanEventAction.STATUS_SKIPPED
     action.last_error = _truncate_error(reason)
     action.processed_at = datetime.now(timezone.utc)
     db.session.commit()
@@ -114,7 +114,7 @@ def _resolve_recipient_phone(order) -> str | None:
 
 def _create_order_events_with_actions(
     *,
-    action: DeliveryPlanEventAction,
+    action: RoutePlanEventAction,
     orders: list,
     team_id: int,
     order_errors: dict[int, str],
@@ -176,10 +176,10 @@ def _create_order_events_with_actions(
 
 
 def send_sms(action_id: int) -> None:
-    action = db.session.get(DeliveryPlanEventAction, action_id)
+    action = db.session.get(RoutePlanEventAction, action_id)
     if action is None:
         return
-    if action.status in {DeliveryPlanEventAction.STATUS_SUCCESS, DeliveryPlanEventAction.STATUS_SKIPPED}:
+    if action.status in {RoutePlanEventAction.STATUS_SUCCESS, RoutePlanEventAction.STATUS_SKIPPED}:
         return
     if action.scheduled_for is not None and action.scheduled_for > datetime.now(timezone.utc):
         return

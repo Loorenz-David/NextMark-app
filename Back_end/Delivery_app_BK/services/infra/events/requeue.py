@@ -4,10 +4,10 @@ from datetime import datetime, timezone
 
 from Delivery_app_BK.models import (
     AppEventOutbox,
-    DeliveryPlanEvent,
-    DeliveryPlanEventAction,
     OrderEvent,
     OrderEventAction,
+    RoutePlanEvent,
+    RoutePlanEventAction,
     db,
 )
 from Delivery_app_BK.services.infra.events.action_dispatch import (
@@ -21,7 +21,7 @@ def replay_order_event(event_row_id: int) -> bool:
 
 
 def replay_delivery_plan_event(event_row_id: int) -> bool:
-    return _requeue_event(db.session.get(DeliveryPlanEvent, event_row_id))
+    return _requeue_event(db.session.get(RoutePlanEvent, event_row_id))
 
 
 def replay_app_event(event_row_id: int) -> bool:
@@ -42,10 +42,10 @@ def requeue_order_action(action_id: int) -> bool:
 
 
 def requeue_delivery_plan_action(action_id: int) -> bool:
-    action = db.session.get(DeliveryPlanEventAction, action_id)
+    action = db.session.get(RoutePlanEventAction, action_id)
     if action is None:
         return False
-    action.status = DeliveryPlanEventAction.STATUS_PENDING
+    action.status = RoutePlanEventAction.STATUS_PENDING
     action.last_error = None
     action.processed_at = None
     action.enqueued_at = None

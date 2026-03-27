@@ -2,14 +2,14 @@ from __future__ import annotations
 
 from sqlalchemy.orm import selectinload
 
-from Delivery_app_BK.models import db, DeliveryPlan, RouteSolution
+from Delivery_app_BK.models import db, RoutePlan, RouteSolution
 from Delivery_app_BK.services.context import ServiceContext
 from Delivery_app_BK.services.queries.route_solutions.serialize_route_solution_stops import (
     serialize_route_solution_stops,
 )
 
 
-def get_execution_status(ctx: ServiceContext, plan: DeliveryPlan) -> dict:
+def get_execution_status(ctx: ServiceContext, plan: RoutePlan) -> dict:
     """
     Return the active route and driver info for a local_delivery plan.
     Queries the is_selected=True RouteSolution for the given plan,

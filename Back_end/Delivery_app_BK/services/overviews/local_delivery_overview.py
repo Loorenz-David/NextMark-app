@@ -1,5 +1,5 @@
 from Delivery_app_BK.errors import ValidationFailed
-from Delivery_app_BK.models import DeliveryPlan
+from Delivery_app_BK.models import RoutePlan
 
 from Delivery_app_BK.services.context import ServiceContext
 from Delivery_app_BK.services.queries.get_instance import get_instance
@@ -14,7 +14,7 @@ from Delivery_app_BK.services.queries.route_solutions import (
 
 
 def local_delivery_overview(ctx: ServiceContext, plan_id: int):
-    plan:DeliveryPlan = get_instance(ctx=ctx, model=DeliveryPlan, value=plan_id)
+    plan:RoutePlan = get_instance(ctx=ctx, model=RoutePlan, value=plan_id)
     if plan.plan_type != "local_delivery":
         raise ValidationFailed("Plan is not a local delivery plan.")
 

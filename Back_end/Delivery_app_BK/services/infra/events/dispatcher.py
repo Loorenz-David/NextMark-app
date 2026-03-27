@@ -7,8 +7,8 @@ from sqlalchemy.orm import Query
 
 from Delivery_app_BK.models import (
     AppEventOutbox,
-    DeliveryPlanEvent,
     OrderEvent,
+    RoutePlanEvent,
     db,
 )
 from Delivery_app_BK.services.infra.jobs import DEFAULT_RETRY_POLICY, enqueue_job
@@ -30,7 +30,7 @@ class DispatchTarget:
 
 DISPATCH_TARGETS = (
     DispatchTarget(OrderEvent, process_order_event_job, "order"),
-    DispatchTarget(DeliveryPlanEvent, process_delivery_plan_event_job, "delivery_plan"),
+    DispatchTarget(RoutePlanEvent, process_delivery_plan_event_job, "route_plan"),
     DispatchTarget(AppEventOutbox, process_app_event_outbox_job, "app"),
 )
 

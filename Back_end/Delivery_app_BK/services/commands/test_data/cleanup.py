@@ -6,7 +6,7 @@ from sqlalchemy import or_
 from sqlalchemy.exc import InvalidRequestError
 
 from Delivery_app_BK.errors import ValidationFailed
-from Delivery_app_BK.models import DeliveryPlan, ItemProperty, ItemType, Order, db
+from Delivery_app_BK.models import RoutePlan, ItemProperty, ItemType, Order, db
 from Delivery_app_BK.services.context import ServiceContext
 
 from .config import TEST_PLAN_LABELS
@@ -83,9 +83,9 @@ def _load_test_plan_ids(*, team_id: int, plan_labels: set[str]) -> list[int]:
     if not plan_labels:
         return []
     rows = (
-        db.session.query(DeliveryPlan.id)
-        .filter(DeliveryPlan.team_id == team_id)
-        .filter(DeliveryPlan.label.in_(sorted(plan_labels)))
+        db.session.query(RoutePlan.id)
+        .filter(RoutePlan.team_id == team_id)
+        .filter(RoutePlan.label.in_(sorted(plan_labels)))
         .all()
     )
     return [row[0] for row in rows]
@@ -126,9 +126,9 @@ def _delete_delivery_plans(team_id: int, plan_ids: list[int]) -> int:
     if not plan_ids:
         return 0
     return (
-        db.session.query(DeliveryPlan)
-        .filter(DeliveryPlan.team_id == team_id)
-        .filter(DeliveryPlan.id.in_(plan_ids))
+        db.session.query(RoutePlan)
+        .filter(RoutePlan.team_id == team_id)
+        .filter(RoutePlan.id.in_(plan_ids))
         .delete(synchronize_session=False)
     )
 

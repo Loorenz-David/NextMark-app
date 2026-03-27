@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 
-from Delivery_app_BK.models import DeliveryPlanEventAction, OrderEventAction, db
+from Delivery_app_BK.models import RoutePlanEventAction, OrderEventAction, db
 from Delivery_app_BK.services.infra.jobs import MESSAGING_RETRY_POLICY, enqueue_job, schedule_job
 from Delivery_app_BK.services.infra.tasks.route_plan.send_email import send_email as send_delivery_plan_email
 from Delivery_app_BK.services.infra.tasks.route_plan.send_sms import send_sms as send_delivery_plan_sms
@@ -22,8 +22,8 @@ def enqueue_order_action(action: OrderEventAction) -> None:
     )
 
 
-def enqueue_delivery_plan_action(action: DeliveryPlanEventAction) -> None:
-    if action.status != DeliveryPlanEventAction.STATUS_PENDING:
+def enqueue_delivery_plan_action(action: RoutePlanEventAction) -> None:
+    if action.status != RoutePlanEventAction.STATUS_PENDING:
         return
     task = _resolve_delivery_plan_action_task(action.action_name)
     _dispatch_action(

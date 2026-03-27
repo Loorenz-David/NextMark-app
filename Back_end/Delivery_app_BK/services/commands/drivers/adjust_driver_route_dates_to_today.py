@@ -10,9 +10,9 @@ from Delivery_app_BK.services.commands.route_plan.local_delivery.update_settings
 from Delivery_app_BK.services.context import ServiceContext
 from Delivery_app_BK.services.requests.common.types import parse_optional_time_zone
 from Delivery_app_BK.services.requests.route_plan.plan.local_delivery.update_settings import (
-    DeliveryPlanPatchRequest,
-    LocalDeliveryPlanPatchRequest,
-    LocalDeliverySettingsRequest,
+    RouteGroupPatchRequest,
+    RouteGroupSettingsRequest,
+    RoutePlanPatchRequest,
     RouteSolutionPatchRequest,
 )
 
@@ -50,15 +50,15 @@ def adjust_driver_route_dates_to_today(ctx: ServiceContext, route_id: int):
     new_start = _resolve_today_start_in_utc(effective_zone)
     new_end = new_start + duration
 
-    request = LocalDeliverySettingsRequest(
+    request = RouteGroupSettingsRequest(
         route_group_id=route_group.id,
-        delivery_plan=DeliveryPlanPatchRequest(
+        delivery_plan=RoutePlanPatchRequest(
             start_date=new_start,
             end_date=new_end,
             has_start_date=True,
             has_end_date=True,
         ),
-        local_delivery_plan=LocalDeliveryPlanPatchRequest(),
+        local_delivery_plan=RouteGroupPatchRequest(),
         route_solution=RouteSolutionPatchRequest(route_solution_id=route_solution.id),
         create_variant_on_save=False,
         time_zone=effective_zone_name,

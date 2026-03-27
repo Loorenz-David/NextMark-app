@@ -1,10 +1,10 @@
 from __future__ import annotations
 
-from Delivery_app_BK.models import DeliveryPlan
+from Delivery_app_BK.models import RoutePlan
 from Delivery_app_BK.services.context import ServiceContext
 
 
-def get_execution_status(ctx: ServiceContext, plan: DeliveryPlan) -> dict:
+def get_execution_status(ctx: ServiceContext, plan: RoutePlan) -> dict:
     """
     Execution status for store_pickup plans.
     Future: return pickup slot info, customer queue, readiness status, etc.

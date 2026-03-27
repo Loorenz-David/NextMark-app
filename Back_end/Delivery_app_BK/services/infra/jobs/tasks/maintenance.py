@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import datetime, timedelta, timezone
 from sqlalchemy import or_
 
-from Delivery_app_BK.models import DeliveryPlanEventAction, OrderEventAction, db
+from Delivery_app_BK.models import RoutePlanEventAction, OrderEventAction, db
 from Delivery_app_BK.services.infra.events.action_dispatch import (
     enqueue_delivery_plan_action,
     enqueue_order_action,
@@ -47,15 +47,15 @@ def requeue_stale_message_actions_job() -> int:
         requeued += 1
 
     plan_actions = (
-        db.session.query(DeliveryPlanEventAction)
+        db.session.query(RoutePlanEventAction)
         .filter(
-            DeliveryPlanEventAction.status == DeliveryPlanEventAction.STATUS_PENDING,
-            DeliveryPlanEventAction.enqueued_at.isnot(None),
+            RoutePlanEventAction.status == RoutePlanEventAction.STATUS_PENDING,
+            RoutePlanEventAction.enqueued_at.isnot(None),
             or_(
-                DeliveryPlanEventAction.scheduled_for.is_(None),
-                DeliveryPlanEventAction.scheduled_for <= datetime.now(timezone.utc),
+                RoutePlanEventAction.scheduled_for.is_(None),
+                RoutePlanEventAction.scheduled_for <= datetime.now(timezone.utc),
             ),
-            DeliveryPlanEventAction.updated_at < threshold,
+            RoutePlanEventAction.updated_at < threshold,
         )
         .all()
     )

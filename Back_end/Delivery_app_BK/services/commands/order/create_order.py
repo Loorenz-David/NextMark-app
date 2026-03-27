@@ -10,13 +10,13 @@ from Delivery_app_BK.services.infra.events.builders.order import (
 )
 from Delivery_app_BK.models import (
     db,
-    DeliveryPlan,
     Item,
     ItemPosition,
     ItemState,
     Order,
     OrderDeliveryWindow,
     OrderState,
+    RoutePlan,
     Team,
 )
 
@@ -52,7 +52,7 @@ def create_order(ctx: ServiceContext):
         {
             "team_id": Team,
             "order_state_id": OrderState,
-            "route_plan_id": DeliveryPlan,
+            "route_plan_id": RoutePlan,
             "item_state_id": ItemState,
             "item_position_id": ItemPosition,
         }
@@ -64,7 +64,7 @@ def create_order(ctx: ServiceContext):
 
     pending_events: list[dict] = []
     created_bundles: list[dict] = []
-    touched_route_plans: dict[int, DeliveryPlan] = {}
+    touched_route_plans: dict[int, RoutePlan] = {}
 
     def _apply() -> None:
         team_timezone = resolve_order_delivery_windows_timezone(ctx)
@@ -266,14 +266,14 @@ def create_order(ctx: ServiceContext):
 def _load_delivery_plans_by_id(
     ctx: ServiceContext,
     plan_ids: list[int],
-) -> dict[int, DeliveryPlan]:
+) -> dict[int, RoutePlan]:
     deduped_plan_ids = list(dict.fromkeys(plan_ids))
     if not deduped_plan_ids:
         return {}
 
-    query = db.session.query(DeliveryPlan).filter(DeliveryPlan.id.in_(deduped_plan_ids))
+    query = db.session.query(RoutePlan).filter(RoutePlan.id.in_(deduped_plan_ids))
     if ctx.team_id:
-        query = query.filter(DeliveryPlan.team_id == ctx.team_id)
+        query = query.filter(RoutePlan.team_id == ctx.team_id)
     plans = query.all()
 
     plans_by_id = {plan.id: plan for plan in plans}

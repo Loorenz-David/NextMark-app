@@ -1,4 +1,4 @@
-"""Recompute denormalized totals on a DeliveryPlan from its orders. Does NOT commit."""
+"""Recompute denormalized totals on a RoutePlan from its orders. Does NOT commit."""
 from __future__ import annotations
 
 import logging
@@ -6,12 +6,12 @@ from typing import TYPE_CHECKING
 
 from sqlalchemy import func
 
-from Delivery_app_BK.models import db, DeliveryPlan, Order
+from Delivery_app_BK.models import db, RoutePlan, Order
 
 logger = logging.getLogger(__name__)
 
 
-def recompute_plan_totals(plan: "DeliveryPlan") -> None:
+def recompute_plan_totals(plan: "RoutePlan") -> None:
     """Aggregate Order denormalized totals into plan columns. No commit issued."""
     if plan is None or plan.id is None:
         return

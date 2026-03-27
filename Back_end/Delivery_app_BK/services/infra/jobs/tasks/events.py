@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from Delivery_app_BK.models import (
     AppEventOutbox,
-    DeliveryPlanEvent,
     OrderEvent,
+    RoutePlanEvent,
     db,
 )
 from Delivery_app_BK.services.infra.events import get_event_bus
@@ -26,7 +26,7 @@ def process_order_event_job(event_row_id: int) -> None:
 
 @with_app_context
 def process_delivery_plan_event_job(event_row_id: int) -> None:
-    event_row = db.session.get(DeliveryPlanEvent, event_row_id)
+    event_row = db.session.get(RoutePlanEvent, event_row_id)
     if event_row is None:
         return
 

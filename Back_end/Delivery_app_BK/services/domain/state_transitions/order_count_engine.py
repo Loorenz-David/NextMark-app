@@ -16,7 +16,7 @@ from typing import TYPE_CHECKING, Callable
 
 from sqlalchemy.orm import joinedload
 
-from Delivery_app_BK.models import DeliveryPlan, RouteSolution, RouteSolutionStop, Order, OrderState, db
+from Delivery_app_BK.models import RoutePlan, RouteSolution, RouteSolutionStop, Order, OrderState, db
 
 logger = logging.getLogger(__name__)
 
@@ -70,9 +70,9 @@ def recompute_route_solution_order_counts(route_solution: "RouteSolution") -> No
 # Plan-type dispatcher
 # ---------------------------------------------------------------------------
 
-PlanCountHandler = Callable[["DeliveryPlan"], None]
+PlanCountHandler = Callable[["RoutePlan"], None]
 
-def _recompute_local_delivery_counts(plan: "DeliveryPlan") -> None:
+def _recompute_local_delivery_counts(plan: "RoutePlan") -> None:
     """Find the *selected* route solution for this local delivery plan and recompute."""
     local = getattr(plan, "local_delivery", None)
     if local is None:
@@ -94,7 +94,7 @@ _PLAN_COUNT_HANDLERS: dict[str, PlanCountHandler] = {
 }
 
 
-def recompute_plan_order_counts(plan: "DeliveryPlan") -> None:
+def recompute_plan_order_counts(plan: "RoutePlan") -> None:
     """
     Dispatch to the correct plan-type handler to recompute order counts.
     No-ops gracefully if the plan type has no registered handler yet.

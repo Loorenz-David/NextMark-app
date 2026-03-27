@@ -6,8 +6,8 @@ from flask import current_app
 
 from Delivery_app_BK.models import (
     AppEventOutbox,
-    DeliveryPlanEvent,
     OrderEvent,
+    RoutePlanEvent,
     db,
 )
 
@@ -34,7 +34,7 @@ def cleanup_old_events(retention_days: int = DEFAULT_EVENT_RETENTION_DAYS) -> di
     
     event_models = [
         (OrderEvent, "order_events"),
-        (DeliveryPlanEvent, "delivery_plan_events"),
+        (RoutePlanEvent, "route_plan_events"),
         (AppEventOutbox, "app_event_outbox"),
     ]
     
@@ -83,7 +83,7 @@ def get_event_table_stats() -> dict:
     stats = {}
     event_models = [
         (OrderEvent, "order_events"),
-        (DeliveryPlanEvent, "delivery_plan_events"),
+        (RoutePlanEvent, "route_plan_events"),
         (AppEventOutbox, "app_event_outbox"),
     ]
     

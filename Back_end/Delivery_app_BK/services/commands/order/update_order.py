@@ -9,9 +9,9 @@ from sqlalchemy.orm.exc import NoResultFound
 
 from Delivery_app_BK.errors import ValidationFailed
 from Delivery_app_BK.models import (
-    DeliveryPlan,
     Order,
     OrderDeliveryWindow,
+    RoutePlan,
     db,
 )
 from Delivery_app_BK.services.commands.order.create_serializers import (
@@ -90,7 +90,7 @@ def update_order(ctx: ServiceContext):
     pending_events: list[dict[str, Any]] = []
     order_deltas: list[OrderUpdateDelta] = []
     extension_result = None
-    delivery_plans_to_touch: list[DeliveryPlan] = []
+    delivery_plans_to_touch: list[RoutePlan] = []
 
     def _apply() -> None:
         nonlocal updated_orders, pending_events, order_deltas, extension_result, delivery_plans_to_touch
@@ -306,7 +306,7 @@ def _resolve_changed_sections(
     return tuple(changed_sections)
 
 
-def _resolve_delivery_plan_for_order(order: Order) -> DeliveryPlan | None:
+def _resolve_delivery_plan_for_order(order: Order) -> RoutePlan | None:
     existing_route_plan = getattr(order, "route_plan", None)
     if existing_route_plan is not None:
         return existing_route_plan
@@ -315,7 +315,7 @@ def _resolve_delivery_plan_for_order(order: Order) -> DeliveryPlan | None:
     if not route_plan_id:
         return None
 
-    return db.session.get(DeliveryPlan, route_plan_id)
+    return db.session.get(RoutePlan, route_plan_id)
 
 
 def _validate_targets_update_fields(targets: list[dict[str, Any]]) -> None:

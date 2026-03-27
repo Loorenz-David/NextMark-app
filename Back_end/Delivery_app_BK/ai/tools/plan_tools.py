@@ -2,7 +2,7 @@ from __future__ import annotations
 import logging
 from datetime import datetime, timezone
 
-from Delivery_app_BK.models import db, DeliveryPlan, RouteSolution
+from Delivery_app_BK.models import db, RoutePlan, RouteSolution
 from Delivery_app_BK.errors import NotFound, ValidationFailed
 from Delivery_app_BK.route_optimization.orchestrator import optimize_local_delivery_plan
 from Delivery_app_BK.services.context import ServiceContext
@@ -26,7 +26,7 @@ logger = logging.getLogger(__name__)
 
 def optimize_plan_tool(ctx: ServiceContext, route_plan_id: int) -> dict:
     """Run route optimization for a route plan."""
-    route_plan = db.session.get(DeliveryPlan, route_plan_id)
+    route_plan = db.session.get(RoutePlan, route_plan_id)
     if not route_plan:
         raise NotFound(f"Plan {route_plan_id} not found.")
 
@@ -131,7 +131,7 @@ def get_plan_execution_status_tool(ctx: ServiceContext, plan_id: int) -> dict:
     Delegates to a plan-type-specific handler via the strategy registry.
     Adding support for a new plan type = add one handler file + one registry entry.
     """
-    plan = db.session.query(DeliveryPlan).filter(DeliveryPlan.id == plan_id).first()
+    plan = db.session.query(RoutePlan).filter(RoutePlan.id == plan_id).first()
     if not plan:
         raise NotFound(f"Plan {plan_id} not found.")
 

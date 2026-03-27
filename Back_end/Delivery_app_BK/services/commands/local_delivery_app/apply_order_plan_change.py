@@ -8,7 +8,7 @@ from __future__ import annotations
 from collections.abc import Callable
 
 from Delivery_app_BK.errors import ValidationFailed
-from Delivery_app_BK.models import DeliveryPlan, RouteSolution, RouteSolutionStop
+from Delivery_app_BK.models import RoutePlan, RouteSolution, RouteSolutionStop
 from Delivery_app_BK.route_optimization.constants.skip_reasons import (
     ORDER_CHANGE_DELIVERY_PLAN_AFTER_OPTIMIZATION,
 )
@@ -32,8 +32,8 @@ from ..order.plan_changes.types import PlanChangeApplyContext, PlanChangeResult
 def apply_order_plan_change(
     ctx: ServiceContext,
     order_instance,
-    old_plan: DeliveryPlan | None,
-    new_plan: DeliveryPlan | None,
+    old_plan: RoutePlan | None,
+    new_plan: RoutePlan | None,
     apply_context: PlanChangeApplyContext,
 ) -> PlanChangeResult:
     """Apply route stop changes when order is reassigned between local delivery plans.

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from Delivery_app_BK.errors import ValidationFailed
 from Delivery_app_BK.services.domain.order.order_events import OrderEvent
-from Delivery_app_BK.services.domain.route_operations.plan.plan_events import DeliveryPlanEvent
+from Delivery_app_BK.services.domain.route_operations.plan.plan_events import RoutePlanEvent
 
 SCHEDULE_ANCHOR_OCCURRED_AT = "event_occurred_at"
 SCHEDULE_ANCHOR_FUTURE_BUSINESS_TIME = "future_business_time"
@@ -27,7 +27,7 @@ FUTURE_ANCHOR_EVENTS = {
     OrderEvent.DELIVERY_WINDOW_RESCHEDULED_BY_USER.value,
     OrderEvent.DELIVERY_PLAN_CHANGED.value,
     OrderEvent.DELIVERY_RESCHEDULED.value,
-    DeliveryPlanEvent.DELIVERY_PLAN_RESCHEDULED.value,
+    RoutePlanEvent.DELIVERY_PLAN_RESCHEDULED.value,
 }
 
 

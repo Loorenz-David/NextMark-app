@@ -5,7 +5,7 @@ from datetime import date, datetime, timedelta, timezone
 from typing import Any
 
 from Delivery_app_BK.errors import ValidationFailed
-from Delivery_app_BK.models import DeliveryPlan, db
+from Delivery_app_BK.models import RoutePlan, db
 from Delivery_app_BK.services.commands.order.create_order import create_order
 from Delivery_app_BK.services.context import ServiceContext
 
@@ -110,14 +110,14 @@ def _build_fields_for_plan_type(
     *,
     plan_type: str,
     templates: list[dict],
-    plans: list[DeliveryPlan],
+    plans: list[RoutePlan],
     now_utc: datetime,
     ctx: ServiceContext,
     item_gen_config: dict[str, Any],
     window_gen_config: dict[str, Any],
 ) -> list[dict]:
     generated: list[dict] = []
-    plan_by_id: dict[int, DeliveryPlan] = {}
+    plan_by_id: dict[int, RoutePlan] = {}
     for index, template in enumerate(templates):
         plan = plans[index % len(plans)]
         fields = deepcopy(template)
@@ -153,14 +153,14 @@ def _build_fields_for_plan_type(
 def _build_fields_for_local_delivery_plan_type(
     *,
     templates: list[dict],
-    plans: list[DeliveryPlan],
+    plans: list[RoutePlan],
     now_utc: datetime,
     ctx: ServiceContext,
     item_gen_config: dict[str, Any],
     window_gen_config: dict[str, Any],
 ) -> list[dict]:
     generated: list[dict] = []
-    plan_by_id: dict[int, DeliveryPlan] = {}
+    plan_by_id: dict[int, RoutePlan] = {}
 
     template_cursor = 0
     for plan_index, plan in enumerate(plans):
@@ -321,7 +321,7 @@ def _parse_delivery_window_generation_config(value: Any) -> dict[str, Any]:
 def _assign_delivery_windows_to_plan_rows(
     *,
     generated_rows: list[dict],
-    plan_by_id: dict[int, DeliveryPlan],
+    plan_by_id: dict[int, RoutePlan],
     now_utc: datetime,
     config: dict[str, Any],
 ) -> None:
@@ -357,7 +357,7 @@ def _assign_delivery_windows_to_plan_rows(
 
 def _build_windows_for_plan(
     *,
-    plan: DeliveryPlan,
+    plan: RoutePlan,
     now_utc: datetime,
     config: dict[str, Any],
     seed_index: int,
@@ -456,24 +456,24 @@ def _ensure_future_start(start_at: datetime, now_utc: datetime) -> datetime:
     return candidate
 
 
-def _load_plans_by_type(ctx: ServiceContext) -> dict[str, list[DeliveryPlan]]:
+def _load_plans_by_type(ctx: ServiceContext) -> dict[str, list[RoutePlan]]:
     """Load test plans filtered by plan type and test plan labels."""
-    query = db.session.query(DeliveryPlan)
+    query = db.session.query(RoutePlan)
     if isinstance(ctx.team_id, int):
-        query = query.filter(DeliveryPlan.team_id == ctx.team_id)
+        query = query.filter(RoutePlan.team_id == ctx.team_id)
 
     # Filter by test plan labels only - ensures we link to test data, not production plans
     test_labels_flat = []
     for plan_type in DEFAULT_ORDER_PLAN_TYPES:
         test_labels_flat.extend(TEST_PLAN_LABELS.get(plan_type, []))
-    query = query.filter(DeliveryPlan.label.in_(test_labels_flat))
+    query = query.filter(RoutePlan.label.in_(test_labels_flat))
 
     plans = query.order_by(
-        DeliveryPlan.start_date.asc(),
-        DeliveryPlan.id.asc(),
+        RoutePlan.start_date.asc(),
+        RoutePlan.id.asc(),
     ).all()
 
-    grouped: dict[str, list[DeliveryPlan]] = {plan_type: [] for plan_type in DEFAULT_ORDER_PLAN_TYPES}
+    grouped: dict[str, list[RoutePlan]] = {plan_type: [] for plan_type in DEFAULT_ORDER_PLAN_TYPES}
     plan_type_by_label = {
         label: plan_type
         for plan_type, labels in TEST_PLAN_LABELS.items()

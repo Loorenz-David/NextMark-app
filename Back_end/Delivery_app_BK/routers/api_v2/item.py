@@ -10,7 +10,7 @@ from Delivery_app_BK.routers.utils.role_decorator import (
 from Delivery_app_BK.routers.http.response import Response
 from Delivery_app_BK.services.context import ServiceContext
 from Delivery_app_BK.services.run_service import run_service
-from Delivery_app_BK.models import DeliveryPlan
+from Delivery_app_BK.models import RoutePlan
 from Delivery_app_BK.models import db
 from Delivery_app_BK.services.queries.item.list_items import list_items as list_items_service
 from Delivery_app_BK.services.commands.item.create.create_item import (
@@ -54,7 +54,7 @@ def _serialize_plan_totals(orders):
         if plan_id is None or plan_id in seen_plan_ids:
             continue
         seen_plan_ids.add(plan_id)
-        plan = getattr(o, "route_plan", None) or db.session.get(DeliveryPlan, plan_id)
+        plan = getattr(o, "route_plan", None) or db.session.get(RoutePlan, plan_id)
         if plan is None or plan.id is None:
             continue
         result.append({

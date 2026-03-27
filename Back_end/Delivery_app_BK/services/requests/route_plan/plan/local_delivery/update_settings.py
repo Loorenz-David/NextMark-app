@@ -28,7 +28,7 @@ ALLOWED_TOP_LEVEL_FIELDS = {
 
 
 @dataclass
-class DeliveryPlanPatchRequest:
+class RoutePlanPatchRequest:
     label: str | None = None
     start_date: datetime | None = None
     end_date: datetime | None = None
@@ -38,7 +38,7 @@ class DeliveryPlanPatchRequest:
 
 
 @dataclass
-class LocalDeliveryPlanPatchRequest:
+class RouteGroupPatchRequest:
     driver_id: int | None = None
     actual_start_time: datetime | None = None
     actual_end_time: datetime | None = None
@@ -71,22 +71,16 @@ class RouteSolutionPatchRequest:
 
 
 @dataclass
-class LocalDeliverySettingsRequest:
+class RouteGroupSettingsRequest:
     route_group_id: int | str
-    delivery_plan: DeliveryPlanPatchRequest
-    local_delivery_plan: LocalDeliveryPlanPatchRequest
+    delivery_plan: RoutePlanPatchRequest
+    local_delivery_plan: RouteGroupPatchRequest
     route_solution: RouteSolutionPatchRequest
     create_variant_on_save: bool
     time_zone: str | None
 
 
-# Canonical aliases for relabeling route APIs while keeping backward compatibility.
-RoutePlanPatchRequest = DeliveryPlanPatchRequest
-RouteGroupPatchRequest = LocalDeliveryPlanPatchRequest
-RouteGroupSettingsRequest = LocalDeliverySettingsRequest
-
-
-def parse_update_local_delivery_settings_request(raw: dict) -> LocalDeliverySettingsRequest:
+def parse_update_local_delivery_settings_request(raw: dict) -> RouteGroupSettingsRequest:
     if not isinstance(raw, dict):
         raise ValidationFailed("Payload must be an object.")
 
@@ -148,7 +142,7 @@ def parse_update_local_delivery_settings_request(raw: dict) -> LocalDeliverySett
     time_zone = _parse_time_zone(raw.get("time_zone"))
     create_variant_on_save = bool(raw.get("create_variant_on_save"))
 
-    return LocalDeliverySettingsRequest(
+    return RouteGroupSettingsRequest(
         route_group_id=route_group_id,
         delivery_plan=delivery_plan_patch,
         local_delivery_plan=local_delivery_patch,
@@ -162,8 +156,8 @@ def parse_update_route_group_settings_request(raw: dict) -> RouteGroupSettingsRe
     return parse_update_local_delivery_settings_request(raw)
 
 
-def _parse_delivery_plan_patch(raw: dict) -> DeliveryPlanPatchRequest:
-    patch = DeliveryPlanPatchRequest()
+def _parse_delivery_plan_patch(raw: dict) -> RoutePlanPatchRequest:
+    patch = RoutePlanPatchRequest()
 
     if "label" in raw:
         patch.has_label = True
@@ -182,8 +176,8 @@ def _parse_delivery_plan_patch(raw: dict) -> DeliveryPlanPatchRequest:
     return patch
 
 
-def _parse_local_delivery_patch(raw: dict) -> LocalDeliveryPlanPatchRequest:
-    patch = LocalDeliveryPlanPatchRequest()
+def _parse_local_delivery_patch(raw: dict) -> RouteGroupPatchRequest:
+    patch = RouteGroupPatchRequest()
 
     if "driver_id" in raw:
         patch.has_driver_id = True

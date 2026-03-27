@@ -1,7 +1,7 @@
 from enum import Enum
 
 
-class DeliveryPlanEvent(str, Enum):
+class RoutePlanEvent(str, Enum):
     DELIVERY_PLAN_RESCHEDULED = "delivery_plan_rescheduled"
 
 

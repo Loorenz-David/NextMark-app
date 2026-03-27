@@ -24,7 +24,7 @@ from Delivery_app_BK.services.domain.order.order_states import OrderStateId
 from Delivery_app_BK.services.domain.route_operations.plan.plan_states import PlanStateId
 
 if TYPE_CHECKING:
-    from Delivery_app_BK.models import DeliveryPlan
+    from Delivery_app_BK.models import RoutePlan
     from Delivery_app_BK.models.tables.order.order import Order
 
 
@@ -54,7 +54,7 @@ class OrderMoveResult:
 
 def compute_destination_move_result(
     order: "Order",
-    destination_plan: "DeliveryPlan",
+    destination_plan: "RoutePlan",
     now: datetime | None = None,
 ) -> OrderMoveResult:
     """
@@ -146,7 +146,7 @@ def _is_in_past(dt: datetime | None, now: datetime) -> bool:
 
 def _build_processing_order_moved_to_ready_plan_text(
     order: "Order",
-    plan: "DeliveryPlan",
+    plan: "RoutePlan",
 ) -> str:
     order_ref = getattr(order, "reference_number", None) or f"#{order.id}"
     plan_label = getattr(plan, "label", None) or f"Plan #{plan.id}"

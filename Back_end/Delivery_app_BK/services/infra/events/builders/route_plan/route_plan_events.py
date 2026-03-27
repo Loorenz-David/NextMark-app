@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from Delivery_app_BK.services.domain.route_operations.plan.plan_events import DeliveryPlanEvent
+from Delivery_app_BK.services.domain.route_operations.plan.plan_events import RoutePlanEvent
 
 
 def build_route_plan_rescheduled_event(
@@ -12,7 +12,7 @@ def build_route_plan_rescheduled_event(
 ) -> dict:
     return {
         "route_plan_id": route_plan_id,
-        "event_name": DeliveryPlanEvent.DELIVERY_PLAN_RESCHEDULED.value,
+        "event_name": RoutePlanEvent.DELIVERY_PLAN_RESCHEDULED.value,
         "payload": {
             "route_plan_id": route_plan_id,
             "old_start_date": old_start_date.isoformat() if old_start_date else None,

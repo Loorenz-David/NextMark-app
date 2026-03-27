@@ -4,9 +4,9 @@ from collections import defaultdict
 from collections.abc import Callable
 
 from Delivery_app_BK.models import (
-    DeliveryPlan,
     InternationalShippingPlan,
-    LocalDeliveryPlan,
+    RouteGroup,
+    RoutePlan,
     RouteSolution,
     StorePickupPlan,
     db,
@@ -20,7 +20,7 @@ from .types import PlanChangeApplyContext, PlanChangeResult
 
 
 PlanChangeHandler = Callable[
-    [ServiceContext, object, DeliveryPlan | None, DeliveryPlan | None, PlanChangeApplyContext],
+    [ServiceContext, object, RoutePlan | None, RoutePlan | None, PlanChangeApplyContext],
     PlanChangeResult,
 ]
 
@@ -40,8 +40,8 @@ PLAN_CHANGE_HANDLERS: dict[str, PlanChangeHandler] = {
 def apply_order_plan_change(
     ctx: ServiceContext,
     order_instance,
-    old_plan: DeliveryPlan | None,
-    new_plan: DeliveryPlan | None,
+    old_plan: RoutePlan | None,
+    new_plan: RoutePlan | None,
     apply_context: PlanChangeApplyContext,
 ) -> PlanChangeResult:
     old_plan_type = getattr(old_plan, "plan_type", None)
@@ -109,11 +109,11 @@ def _load_local_delivery_context(
     apply_context: PlanChangeApplyContext,
 ) -> None:
     route_plan_ids = plan_ids
-    route_group_query = db.session.query(LocalDeliveryPlan).filter(
-        LocalDeliveryPlan.delivery_plan_id.in_(route_plan_ids)
+    route_group_query = db.session.query(RouteGroup).filter(
+        RouteGroup.delivery_plan_id.in_(route_plan_ids)
     )
     if ctx.team_id:
-        route_group_query = route_group_query.filter(LocalDeliveryPlan.team_id == ctx.team_id)
+        route_group_query = route_group_query.filter(RouteGroup.team_id == ctx.team_id)
 
     route_group_instances = route_group_query.all()
     route_group_by_route_plan_id = {

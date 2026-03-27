@@ -13,7 +13,7 @@ from Delivery_app_BK.services.domain.messaging import (
     validate_schedule_configuration,
 )
 from Delivery_app_BK.services.domain.order.order_events import OrderEvent
-from Delivery_app_BK.services.domain.route_operations.plan.plan_events import DeliveryPlanEvent
+from Delivery_app_BK.services.domain.route_operations.plan.plan_events import RoutePlanEvent
 
 class MessageTemplate(db.Model, TeamScopedMixin):
     __tablename__ = "message_template"
@@ -60,7 +60,7 @@ class MessageTemplate(db.Model, TeamScopedMixin):
 
     @validates("event")
     def validate_event(self, key, value):
-        if (value not in OrderEvent._value2member_map_ and value not in DeliveryPlanEvent._value2member_map_):
+        if (value not in OrderEvent._value2member_map_ and value not in RoutePlanEvent._value2member_map_):
             raise ValidationFailed(
                 f"Invalid event '{value}'. "
                 f"Allowed events: {[e.value for e in OrderEvent]}"
