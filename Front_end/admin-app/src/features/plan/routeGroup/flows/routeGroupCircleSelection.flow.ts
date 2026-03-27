@@ -92,7 +92,7 @@ export const useRouteGroupCircleSelectionFlow = (isActive: boolean) => {
     }
 
     mapManager.enableCircleSelection({
-      layerId: MAP_MARKER_LAYERS.localDelivery,
+      layerId: MAP_MARKER_LAYERS.routeGroup,
       callback: (markerIds) => {
         const byClientId = useOrderStore.getState().byClientId
         const markerLookup = useRouteGroupMapInteractionStore.getState().markerLookup

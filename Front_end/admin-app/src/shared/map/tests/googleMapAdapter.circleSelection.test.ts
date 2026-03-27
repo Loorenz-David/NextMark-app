@@ -39,7 +39,7 @@ export const runGoogleMapAdapterCircleSelectionTests = () => {
   const adapter = new GoogleMapAdapter() as any
   const orderNearEl = createMarkerElement()
   const orderFarEl = createMarkerElement()
-  const localDeliveryEl = createMarkerElement()
+  const routeGroupEl = createMarkerElement()
 
   adapter.layers = new Map([
     [
@@ -67,7 +67,7 @@ export const runGoogleMapAdapterCircleSelectionTests = () => {
       },
     ],
     [
-      MAP_MARKER_LAYERS.localDelivery,
+      MAP_MARKER_LAYERS.routeGroup,
       {
         visible: true,
         markers: new Map([
@@ -75,8 +75,8 @@ export const runGoogleMapAdapterCircleSelectionTests = () => {
             'local-delivery-1',
             {
               marker: { map: {}, position: { lat: 0, lng: 0 } },
-              el: localDeliveryEl,
-              order: { id: 'local-delivery-1' },
+              el: routeGroupEl,
+              order: { id: 'route-group-1' },
             },
           ],
         ]),
@@ -102,11 +102,11 @@ export const runGoogleMapAdapterCircleSelectionTests = () => {
     'far order should not get multi selected class',
   )
   assert(
-    !localDeliveryEl.classList.contains('map-marker--multi-selected'),
+    !routeGroupEl.classList.contains('map-marker--multi-selected'),
     'non-orders layer markers should not get multi selected class',
   )
 
-  adapter.circleSelectionLayerId = MAP_MARKER_LAYERS.localDelivery
+  adapter.circleSelectionLayerId = MAP_MARKER_LAYERS.routeGroup
   callbackIds = []
 
   adapter.computeCircleSelection({
@@ -115,17 +115,17 @@ export const runGoogleMapAdapterCircleSelectionTests = () => {
   })
 
   assert(
-    callbackIds.length === 1 && callbackIds[0] === 'local-delivery-1',
-    'should select local delivery marker ids when localDelivery layer is active',
+    callbackIds.length === 1 && callbackIds[0] === 'route-group-1',
+    'should select route-group marker ids when routeGroup layer is active',
   )
   assert(
-    localDeliveryEl.classList.contains('map-marker--multi-selected'),
-    'local delivery marker should get multi selected class',
+    routeGroupEl.classList.contains('map-marker--multi-selected'),
+    'route-group marker should get multi selected class',
   )
 
   adapter.disableCircleSelection()
   assert(
-    !localDeliveryEl.classList.contains('map-marker--multi-selected'),
+    !routeGroupEl.classList.contains('map-marker--multi-selected'),
     'disableCircleSelection should clear active layer multi selected class',
   )
 }

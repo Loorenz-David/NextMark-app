@@ -173,8 +173,8 @@ export function useRouteGroupSettingsMutations() {
         }
         return {}
       } catch (error) {
-        const resolved = resolveError(error, 'Unable to update local delivery settings.')
-        console.error('Failed to update local delivery settings', error)
+        const resolved = resolveError(error, 'Unable to update route group settings.')
+        console.error('Failed to update route group settings', error)
 
         if (snapshots.plan?.client_id) {
           updateRoutePlan(snapshots.plan.client_id, () => snapshots.plan as DeliveryPlan)

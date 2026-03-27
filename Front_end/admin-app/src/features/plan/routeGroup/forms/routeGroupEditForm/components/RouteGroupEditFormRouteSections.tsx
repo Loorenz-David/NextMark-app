@@ -36,7 +36,7 @@ export const RouteGroupEditFormRouteSections = () => {
             containerClassName={' px-4 py-2  gap-2 border border-[var(--color-border-accent)] rounded-lg'}
             inputClassName={'text-sm w-full '}
             placeholder="search for start address..."
-            intentKey={'local-delivery-start-address'}
+            intentKey={'route-group-start-address'}
             enableSavedLocations
             enableCurrentLocation
           />
@@ -106,7 +106,7 @@ export const RouteGroupEditFormRouteSections = () => {
                   containerClassName={' px-4 py-2  gap-2 border border-[var(--color-border-accent)] rounded-lg'}
                   inputClassName={'text-sm w-full '}
                   placeholder="search for end address..."
-                  intentKey={'local-delivery-end-address'}
+                  intentKey={'route-group-end-address'}
                   enableSavedLocations
                   enableCurrentLocation
                 />

@@ -2,7 +2,7 @@ import { Switch } from '@/shared/inputs/Switch'
 import { InfoHover } from '@/shared/layout/InfoHover'
 
 import { useRouteGroupEditForm } from '../RouteGroupEditForm.context'
-import { LOCAL_DELIVERY_CREATE_VARIANT_INFO } from '../info/createVariant.info'
+import { ROUTE_GROUP_CREATE_VARIANT_INFO } from '../info/createVariant.info'
 
 export const RouteGroupEditFormCreateVariantToggle = () => {
   const { formState, formSetters } = useRouteGroupEditForm()
@@ -12,7 +12,7 @@ export const RouteGroupEditFormCreateVariantToggle = () => {
       <div className="min-w-0 pr-4">
         <div className="flex items-center gap-2">
           <p className="text-sm font-medium text-[var(--color-text)]">Create variant on save</p>
-          <InfoHover content={LOCAL_DELIVERY_CREATE_VARIANT_INFO} />
+          <InfoHover content={ROUTE_GROUP_CREATE_VARIANT_INFO} />
         </div>
         <p className="mt-1 text-xs text-[var(--color-muted)]/90">
           Save changes as a new variant instead of overwriting the current one.

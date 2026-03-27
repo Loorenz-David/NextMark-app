@@ -1,7 +1,7 @@
 import { useDndContext } from '@dnd-kit/core'
 
 import type { Order } from '@/features/order/types/order'
-import { LocalDeliveryOrderCard } from '@/features/plan/routeGroup/components'
+import { RouteGroupOrderCard } from '@/features/plan/routeGroup/components'
 import type { RouteSolutionStop } from '@/features/plan/routeGroup/types/routeSolutionStop'
 
 type RouteStopDragOverlayProps = {
@@ -28,7 +28,7 @@ export const RouteStopDragOverlay = ({ routeStopClientId, order, stop, planStart
   }
 
   return (
-    <LocalDeliveryOrderCard
+    <RouteGroupOrderCard
       order={order}
       stop={stop ?? null}
       displayStopOrder={displayStopOrder}

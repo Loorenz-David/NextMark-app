@@ -6,7 +6,7 @@ import {
 } from '@/features/order/domain/orderAddressGroup.key'
 import type { RouteSolutionStop } from '../types/routeSolutionStop'
 
-type LocalDeliveryStopEntry = {
+type RouteGroupStopEntry = {
   stop: RouteSolutionStop
   order: Order
 }
@@ -15,7 +15,7 @@ export type RouteGroupAddressGroup = {
   key: string
   addressKey: string
   label: string
-  entries: LocalDeliveryStopEntry[]
+  entries: RouteGroupStopEntry[]
   orderIds: number[]
   routeStopIds: number[]
   routeStopClientIds: string[]
@@ -39,7 +39,7 @@ const toEtaMs = (value: string | null | undefined): number => {
   return Number.isFinite(parsed) ? parsed : Number.NaN
 }
 
-const resolveEtaRange = (entries: LocalDeliveryStopEntry[]): { minEta: string | null; maxEta: string | null } => {
+const resolveEtaRange = (entries: RouteGroupStopEntry[]): { minEta: string | null; maxEta: string | null } => {
   let minMs = Number.POSITIVE_INFINITY
   let maxMs = Number.NEGATIVE_INFINITY
   let minEta: string | null = null
@@ -68,7 +68,7 @@ const resolveEtaRange = (entries: LocalDeliveryStopEntry[]): { minEta: string | 
   }
 }
 
-const resolveMostCommonGroupLabel = (entries: LocalDeliveryStopEntry[]): string => {
+const resolveMostCommonGroupLabel = (entries: RouteGroupStopEntry[]): string => {
   const buckets = new Map<string, { count: number; bestLabel: string }>()
 
   entries.forEach((entry) => {
@@ -108,16 +108,16 @@ const hasStopWarnings = (stop: RouteSolutionStop): boolean => (
   || (Array.isArray(stop.constraint_warnings) && stop.constraint_warnings.length > 0)
 )
 
-const stopOrderValue = (entry: LocalDeliveryStopEntry): number => (
+const stopOrderValue = (entry: RouteGroupStopEntry): number => (
   typeof entry.stop.stop_order === 'number' ? entry.stop.stop_order : Number.POSITIVE_INFINITY
 )
 
 export const buildRouteGroupStopAddressGroups = (
-  sortedEntries: LocalDeliveryStopEntry[],
+  sortedEntries: RouteGroupStopEntry[],
 ): RouteGroupAddressGroup[] => {
   if (!sortedEntries.length) return []
 
-  const groups: Array<{ addressKey: string; entries: LocalDeliveryStopEntry[] }> = []
+  const groups: Array<{ addressKey: string; entries: RouteGroupStopEntry[] }> = []
 
   sortedEntries.forEach((entry) => {
     const addressKey = buildOrderAddressKey(entry.order)

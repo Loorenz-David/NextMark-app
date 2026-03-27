@@ -16,7 +16,7 @@ export type RouteGroupEditFormPreferences = {
   stops_service_time: ServiceTime | null
 }
 
-const STORAGE_NAMESPACE = 'plan.localDelivery.editForm.preferences.v1'
+const STORAGE_NAMESPACE = 'plan.routeGroup.editForm.preferences.v1'
 const GLOBAL_SCOPE = 'global'
 
 const DEFAULT_PREFERENCES: RouteGroupEditFormPreferences = {

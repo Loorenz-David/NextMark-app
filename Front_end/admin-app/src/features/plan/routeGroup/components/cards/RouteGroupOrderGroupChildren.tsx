@@ -1,24 +1,24 @@
 import type { Order } from '@/features/order/types/order'
 import type { RouteSolutionStop } from '@/features/plan/routeGroup/types/routeSolutionStop'
 
-import { LocalDeliveryOrderCard } from './LocalDeliveryOrderCard'
+import { RouteGroupOrderCard } from './RouteGroupOrderCard'
 
-type LocalDeliveryStopEntry = {
+type RouteGroupStopEntry = {
   stop: RouteSolutionStop
   order: Order
 }
 
-type LocalDeliveryOrderGroupChildrenProps = {
-  entries: LocalDeliveryStopEntry[]
+type RouteGroupOrderGroupChildrenProps = {
+  entries: RouteGroupStopEntry[]
   planStartDate?: string | null
   projectedStopOrderByClientId?: Map<string, number> | null
 }
 
-export const LocalDeliveryOrderGroupChildren = ({
+export const RouteGroupOrderGroupChildren = ({
   entries,
   planStartDate,
   projectedStopOrderByClientId,
-}: LocalDeliveryOrderGroupChildrenProps) => (
+}: RouteGroupOrderGroupChildrenProps) => (
   <div className="relative ml-6 pl-6 mt-4 mb-4 ">
     {entries.length > 1 ? (
       <div className="pointer-events-none absolute bottom-2 -left-[2px] -top-6 w-px bg-[var(--color-muted)]/40" />
@@ -30,7 +30,7 @@ export const LocalDeliveryOrderGroupChildren = ({
           {entries.length > 1 ? (
             <div className="pointer-events-none absolute -left-[19px] top-8 h-px w-4 bg-[var(--color-primary)]/40" />
           ) : null}
-          <LocalDeliveryOrderCard
+          <RouteGroupOrderCard
             order={entry.order}
             stop={entry.stop}
             displayStopOrder={projectedStopOrderByClientId?.get(entry.stop.client_id) ?? entry.stop.stop_order ?? null}

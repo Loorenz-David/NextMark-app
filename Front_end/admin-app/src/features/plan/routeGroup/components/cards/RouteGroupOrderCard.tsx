@@ -12,14 +12,14 @@ import { LottieSpinner } from '@/shared/spiners'
 import { StopOrderAvatar } from './StopOrderAvatar'
 import { OrderOperationTypeBadges } from '@/features/order/components/cards/OrderOperationTypeBadges'
 
-type LocalDeliveryOrderCardProps = {
+type RouteGroupOrderCardProps = {
     order: Order;
     stop?: RouteSolutionStop | null;
     displayStopOrder?: number | null;
     planStartDate?: string | null;
 }
 
-export const LocalDeliveryOrderCard = ({ order, stop, displayStopOrder, planStartDate }: LocalDeliveryOrderCardProps) => {
+export const RouteGroupOrderCard = ({ order, stop, displayStopOrder, planStartDate }: RouteGroupOrderCardProps) => {
     const {openOrderDetail} = useOrderActions()
     const mapManager = useMapManager()
     const orderLabel = order.order_scalar_id != null ? `#${order.order_scalar_id}` : '#—'

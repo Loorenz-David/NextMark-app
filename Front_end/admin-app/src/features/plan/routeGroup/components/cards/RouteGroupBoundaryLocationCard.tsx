@@ -5,7 +5,7 @@ import { RouteSolutionWarnings } from '@/features/plan/routeGroup/components/war
 import type { RouteSolutionWarningRegistry } from '@/features/plan/routeGroup/domain/routeSolutionWarningRegistry'
 import type { useRouteGroupPageActions } from '@/features/plan/routeGroup/actions/useRouteGroupPageActions'
 
-type LocalDeliveryBoundaryLocationCardProps = {
+type RouteGroupBoundaryLocationCardProps = {
   label: string
   address: address
   time:string | null
@@ -16,7 +16,7 @@ type LocalDeliveryBoundaryLocationCardProps = {
   containerClassName?:string
 }
 
-export const LocalDeliveryBoundaryLocationCard = ({
+export const RouteGroupBoundaryLocationCard = ({
   label,
   address,
   time,
@@ -25,7 +25,7 @@ export const LocalDeliveryBoundaryLocationCard = ({
   warningRegistry,
   routeGroupActions,
   containerClassName
-}: LocalDeliveryBoundaryLocationCardProps) => {
+}: RouteGroupBoundaryLocationCardProps) => {
   const streetAddress = address?.street_address ?? '—'
   
   return (

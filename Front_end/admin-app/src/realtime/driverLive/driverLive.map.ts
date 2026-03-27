@@ -7,7 +7,7 @@ import type { MapOrder } from '@/shared/map'
 export const DRIVER_LIVE_ACTIVE_MAX_AGE_MS = 5 * 60 * 1000
 
 export type DriverLocationMarkerActivity = 'active' | 'passive'
-export type DriverLocationMarkerScope = 'local-delivery' | 'orders'
+export type DriverLocationMarkerScope = 'route-group' | 'orders'
 
 const parseTimestamp = (value?: string | null): number | null => {
   if (!value) return null
@@ -62,7 +62,7 @@ export const buildDriverLocationMarker = ({
   }
 }
 
-export const buildLocalDeliveryDriverLocationMarkers = ({
+export const buildRouteGroupDriverLocationMarkers = ({
   positions,
   selectedDriverId,
   onClick,
@@ -83,7 +83,7 @@ export const buildLocalDeliveryDriverLocationMarkers = ({
     .filter((position) => position.driver_id === selectedDriverId)
     .map((position) =>
       buildDriverLocationMarker({
-        scope: 'local-delivery',
+        scope: 'route-group',
         position,
         onClick,
         onMouseEnter,
@@ -124,7 +124,7 @@ export const buildOrderDriverLocationMarkers = ({
     }),
   )
 
-export const resolveActiveLocalDeliveryPlanIdByDriverId = ({
+export const resolveActiveRoutePlanIdByDriverId = ({
   driverId,
   routeSolutions,
   routeGroups,

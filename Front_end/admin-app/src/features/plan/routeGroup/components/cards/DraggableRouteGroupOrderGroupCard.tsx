@@ -2,9 +2,9 @@ import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 
 import type { RouteGroupAddressGroup } from '@/features/plan/routeGroup/domain/routeGroupAddressGroup.flow'
-import { LocalDeliveryOrderGroupCard } from './LocalDeliveryOrderGroupCard'
+import { RouteGroupOrderGroupCard } from './RouteGroupOrderGroupCard'
 
-type DraggableLocalDeliveryOrderGroupCardProps = {
+type DraggableRouteGroupOrderGroupCardProps = {
   group: RouteGroupAddressGroup
   expanded: boolean
   onToggleExpanded: () => void
@@ -13,14 +13,14 @@ type DraggableLocalDeliveryOrderGroupCardProps = {
   allOrderedStopClientIds: string[]
 }
 
-export const DraggableLocalDeliveryOrderGroupCard = ({
+export const DraggableRouteGroupOrderGroupCard = ({
   group,
   expanded,
   onToggleExpanded,
   planStartDate,
   projectedStopOrderByClientId,
   allOrderedStopClientIds,
-}: DraggableLocalDeliveryOrderGroupCardProps) => {
+}: DraggableRouteGroupOrderGroupCardProps) => {
   const rowId = `route_stop_group:${group.key}`
 
   const {
@@ -68,7 +68,7 @@ export const DraggableLocalDeliveryOrderGroupCard = ({
 
   return (
     <div ref={setNodeRef} style={style}>
-      <LocalDeliveryOrderGroupCard
+      <RouteGroupOrderGroupCard
         group={group}
         expanded={expanded}
         onToggleExpanded={onToggleExpanded}

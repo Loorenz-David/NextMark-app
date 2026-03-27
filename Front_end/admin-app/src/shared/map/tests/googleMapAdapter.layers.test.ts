@@ -67,21 +67,21 @@ export const runGoogleMapAdapterLayerTests = () => {
   {
     const adapter = createAdapter()
     adapter.setLayerMarkers(MAP_MARKER_LAYERS.orders, [createOrder('order-1')])
-    adapter.setLayerMarkers(MAP_MARKER_LAYERS.localDelivery, [createOrder('plan-1')])
+    adapter.setLayerMarkers(MAP_MARKER_LAYERS.routeGroup, [createOrder('plan-1')])
 
     const layers = (adapter as any).layers as Map<string, { markers: Map<string, unknown> }>
 
     assert(layers.get(MAP_MARKER_LAYERS.orders)?.markers.size === 1, 'orders layer should hold its own marker')
     assert(
-      layers.get(MAP_MARKER_LAYERS.localDelivery)?.markers.size === 1,
-      'localDelivery layer should hold its own marker',
+      layers.get(MAP_MARKER_LAYERS.routeGroup)?.markers.size === 1,
+      'routeGroup layer should hold its own marker',
     )
   }
 
   {
     const adapter = createAdapter()
     adapter.setLayerMarkers(MAP_MARKER_LAYERS.orders, [createOrder('order-1')])
-    adapter.setLayerMarkers(MAP_MARKER_LAYERS.localDelivery, [createOrder('plan-1')])
+    adapter.setLayerMarkers(MAP_MARKER_LAYERS.routeGroup, [createOrder('plan-1')])
     adapter.setLayerVisibility(MAP_MARKER_LAYERS.orders, false)
 
     const layers = (adapter as any).layers as Map<
@@ -89,7 +89,7 @@ export const runGoogleMapAdapterLayerTests = () => {
       { markers: Map<string, { marker: { map: unknown } }> }
     >
     const orderMarker = layers.get(MAP_MARKER_LAYERS.orders)?.markers.get('order-1')
-    const planMarker = layers.get(MAP_MARKER_LAYERS.localDelivery)?.markers.get('plan-1')
+    const planMarker = layers.get(MAP_MARKER_LAYERS.routeGroup)?.markers.get('plan-1')
 
     assert(orderMarker?.marker.map === null, 'hidden layer marker should detach from map')
     assert(planMarker?.marker.map !== null, 'other layer marker should remain visible')
@@ -113,12 +113,12 @@ export const runGoogleMapAdapterLayerTests = () => {
   {
     const adapter = createAdapter()
     adapter.setLayerMarkers(MAP_MARKER_LAYERS.orders, [createOrder('order-1')])
-    adapter.setLayerMarkers(MAP_MARKER_LAYERS.localDelivery, [createOrder('plan-1')])
-    adapter.clearLayer(MAP_MARKER_LAYERS.localDelivery)
+    adapter.setLayerMarkers(MAP_MARKER_LAYERS.routeGroup, [createOrder('plan-1')])
+    adapter.clearLayer(MAP_MARKER_LAYERS.routeGroup)
 
     const layers = (adapter as any).layers as Map<string, { markers: Map<string, unknown> }>
 
-    assert(!layers.has(MAP_MARKER_LAYERS.localDelivery), 'clearing one layer should remove only that layer')
+    assert(!layers.has(MAP_MARKER_LAYERS.routeGroup), 'clearing one layer should remove only that layer')
     assert(layers.has(MAP_MARKER_LAYERS.orders), 'clearing one layer should keep other layers')
   }
 

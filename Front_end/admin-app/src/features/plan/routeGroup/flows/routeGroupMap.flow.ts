@@ -16,7 +16,7 @@ import {
 } from '@/features/plan/routeGroup/store/routeGroupMapInteractionHooks.store'
 import type { RouteGroupMarkerGroupLookup } from '@/features/plan/routeGroup/store/routeGroupMapInteraction.store'
 import {
-  buildLocalDeliveryDriverLocationMarkers,
+  buildRouteGroupDriverLocationMarkers,
   selectDriverLivePositions,
   selectDriverLiveVisibility,
   useDriverLiveMarkerOverlayStore,
@@ -231,8 +231,8 @@ export const useRouteGroupMapFlow = ({
       setMarkerLookup(lookup)
     }
 
-    mapManager.setMarkerLayer(MAP_MARKER_LAYERS.localDelivery, mapOrders)
-    mapManager.setMarkerLayerVisibility(MAP_MARKER_LAYERS.localDelivery, isActive)
+    mapManager.setMarkerLayer(MAP_MARKER_LAYERS.routeGroup, mapOrders)
+    mapManager.setMarkerLayerVisibility(MAP_MARKER_LAYERS.routeGroup, isActive)
 
     const routeSegments = buildRouteSegments(orders, stopByOrderId, selectedRouteSolution)
     if (isActive && routeSegments.length) {
@@ -255,20 +255,20 @@ export const useRouteGroupMapFlow = ({
 
   useEffect(() => {
     if (!isActive) {
-      mapManager.clearMarkerLayer(MAP_MARKER_LAYERS.driverLiveLocalDelivery)
+      mapManager.clearMarkerLayer(MAP_MARKER_LAYERS.driverLiveRouteGroup)
       useDriverLiveMarkerOverlayStore.getState().closeOverlay()
       return
     }
 
     const selectedDriverId = selectedRouteSolution?.driver_id ?? null
     if (selectedDriverId == null) {
-      mapManager.clearMarkerLayer(MAP_MARKER_LAYERS.driverLiveLocalDelivery)
+      mapManager.clearMarkerLayer(MAP_MARKER_LAYERS.driverLiveRouteGroup)
       useDriverLiveMarkerOverlayStore.getState().closeOverlay()
       return
     }
 
     const { openOverlay, closeOverlay } = useDriverLiveMarkerOverlayStore.getState()
-    const driverMarkers = buildLocalDeliveryDriverLocationMarkers({
+    const driverMarkers = buildRouteGroupDriverLocationMarkers({
       positions: liveDriverPositions,
       selectedDriverId,
       onClick: () => undefined,
@@ -277,7 +277,7 @@ export const useRouteGroupMapFlow = ({
         if (!markerAnchorEl) return
 
         openOverlay({
-          markerId: `driver-live:local-delivery:${position.driver_id}`,
+          markerId: `driver-live:route-group:${position.driver_id}`,
           markerAnchorEl,
           position,
         })
@@ -287,9 +287,9 @@ export const useRouteGroupMapFlow = ({
       },
     })
 
-    mapManager.setMarkerLayer(MAP_MARKER_LAYERS.driverLiveLocalDelivery, driverMarkers)
+    mapManager.setMarkerLayer(MAP_MARKER_LAYERS.driverLiveRouteGroup, driverMarkers)
     mapManager.setMarkerLayerVisibility(
-      MAP_MARKER_LAYERS.driverLiveLocalDelivery,
+      MAP_MARKER_LAYERS.driverLiveRouteGroup,
       isActive && isDriverLiveVisible,
     )
     if (!isDriverLiveVisible) {
@@ -308,8 +308,8 @@ export const useRouteGroupMapFlow = ({
     previousIsActiveRef.current = isActive
 
     if (isActive) return
-    mapManager.clearMarkerLayer(MAP_MARKER_LAYERS.localDelivery)
-    mapManager.clearMarkerLayer(MAP_MARKER_LAYERS.driverLiveLocalDelivery)
+    mapManager.clearMarkerLayer(MAP_MARKER_LAYERS.routeGroup)
+    mapManager.clearMarkerLayer(MAP_MARKER_LAYERS.driverLiveRouteGroup)
     mapManager.showRoute(null)
     if (wasActive) {
       mapManager.reframeToVisibleArea()
@@ -322,8 +322,8 @@ export const useRouteGroupMapFlow = ({
 
   useEffect(() => {
     return () => {
-      mapManager.clearMarkerLayer(MAP_MARKER_LAYERS.localDelivery)
-      mapManager.clearMarkerLayer(MAP_MARKER_LAYERS.driverLiveLocalDelivery)
+      mapManager.clearMarkerLayer(MAP_MARKER_LAYERS.routeGroup)
+      mapManager.clearMarkerLayer(MAP_MARKER_LAYERS.driverLiveRouteGroup)
       mapManager.showRoute(null)
       closeGroupOverlay()
       useDriverLiveMarkerOverlayStore.getState().closeOverlay()

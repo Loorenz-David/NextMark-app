@@ -5,7 +5,7 @@ import {
   buildOrderDriverLocationMarkers,
   selectDriverLivePositions,
   selectDriverLiveVisibility,
-  resolveActiveLocalDeliveryPlanIdByDriverId,
+  resolveActiveRoutePlanIdByDriverId,
   useDriverLiveMarkerOverlayStore,
   useDriverLiveStore,
   useDriverLiveVisibilityStore,
@@ -32,7 +32,7 @@ export const useOrderDriverLiveMapFlow = () => {
     const markers = buildOrderDriverLocationMarkers({
       positions: liveDriverPositions,
       resolvePlanIdByDriverId: (driverId) =>
-        resolveActiveLocalDeliveryPlanIdByDriverId({
+        resolveActiveRoutePlanIdByDriverId({
           driverId,
           routeSolutions,
           routeGroups,

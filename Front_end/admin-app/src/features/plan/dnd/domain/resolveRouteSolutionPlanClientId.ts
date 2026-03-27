@@ -14,11 +14,11 @@ export const resolveRouteSolutionPlanClientId = (routeSolutionId: number | null 
   const routeSolution = selectRouteSolutionByServerId(routeSolutionId)(useRouteSolutionStore.getState())
   if (!routeSolution?.route_group_id) return null
 
-  const localDeliveryPlan = selectRouteGroupByServerId(routeSolution.route_group_id)(
+  const routeGroup = selectRouteGroupByServerId(routeSolution.route_group_id)(
     useRouteGroupStore.getState(),
   )
-  if (!localDeliveryPlan?.route_plan_id) return null
+  if (!routeGroup?.route_plan_id) return null
 
-  const plan = selectRoutePlanByServerId(localDeliveryPlan.route_plan_id)(useRoutePlanStore.getState())
+  const plan = selectRoutePlanByServerId(routeGroup.route_plan_id)(useRoutePlanStore.getState())
   return plan?.client_id ?? null
 }

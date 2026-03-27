@@ -4,9 +4,9 @@ import { CSS } from '@dnd-kit/utilities'
 import type { Order } from '@/features/order/types/order'
 import type { RouteSolutionStop } from '@/features/plan/routeGroup/types/routeSolutionStop'
 
-import { LocalDeliveryOrderCard } from './LocalDeliveryOrderCard'
+import { RouteGroupOrderCard } from './RouteGroupOrderCard'
 
-type DraggableLocalDeliveryOrderCardProps = {
+type DraggableRouteGroupOrderCardProps = {
   order: Order
   stop: RouteSolutionStop
   displayStopOrder?: number | null
@@ -15,13 +15,13 @@ type DraggableLocalDeliveryOrderCardProps = {
 }
 
 
-export const DraggableLocalDeliveryOrderCard = ({
+export const DraggableRouteGroupOrderCard = ({
   order,
   stop,
   displayStopOrder,
   planStartDate,
   allOrderedStopClientIds,
-}: DraggableLocalDeliveryOrderCardProps) => {
+}: DraggableRouteGroupOrderCardProps) => {
   const {
     attributes,
     listeners,
@@ -53,7 +53,7 @@ export const DraggableLocalDeliveryOrderCard = ({
 
   return (
     <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
-      <LocalDeliveryOrderCard
+      <RouteGroupOrderCard
         order={order}
         stop={stop}
         displayStopOrder={displayStopOrder}

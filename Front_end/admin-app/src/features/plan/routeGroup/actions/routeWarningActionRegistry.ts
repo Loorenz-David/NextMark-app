@@ -8,7 +8,7 @@ import type { RouteGroupEditFormState } from '@/features/plan/routeGroup/forms/r
 import { buildFormState } from '@/features/plan/routeGroup/forms/routeGroupEditForm/routeGroupEditForm.bootstrap'
 import { ROUTE_SOLUTION_WARNING_TYPES } from '@/features/plan/routeGroup/domain/routeSolutionWarningRegistry'
 
-type UpdateLocalDeliverySettings = (
+type UpdateRouteGroupSettings = (
   formState: RouteGroupEditFormState,
 ) => Promise<object | null>
 
@@ -16,7 +16,7 @@ export type ResolveContext = {
   routeGroupId?: number | null
   plan?: DeliveryPlan | null
   selectedRouteSolution?: RouteSolution | null
-  updateRouteGroupSettings: UpdateLocalDeliverySettings
+  updateRouteGroupSettings: UpdateRouteGroupSettings
 }
 
 export type RouteWarningActionHandler = (

@@ -1,9 +1,9 @@
 import { useMemo, type UIEvent } from 'react'
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
 
-import { LocalDeliveryOrderCard } from './cards/LocalDeliveryOrderCard'
-import { DraggableLocalDeliveryOrderCard } from './cards/DraggableLocalDeliveryOrderCard'
-import { LocalDeliveryBoundaryLocationCard } from './cards/LocalDeliveryBoundaryLocationCard'
+import { RouteGroupOrderCard } from './cards/RouteGroupOrderCard'
+import { DraggableRouteGroupOrderCard } from './cards/DraggableRouteGroupOrderCard'
+import { RouteGroupBoundaryLocationCard } from './cards/RouteGroupBoundaryLocationCard'
 import { useRouteGroupPageContext } from '../context/useRouteGroupPageContext'
 import { useRouteGroupStopOrdering } from '../hooks/useRouteGroupStopOrdering'
 import { useRouteGroupDndProjectionFlow } from '../flows/routeGroupDndProjection.flow'
@@ -11,7 +11,7 @@ import { formatRouteTime } from '@/features/plan/routeGroup/utils/formatRouteTim
 import { BasicButton } from '@/shared/buttons'
 import { DeliveryReadyIcon } from '@/assets/icons'
 import { buildRouteGroupStopAddressGroups } from '../domain/routeGroupAddressGroup.flow'
-import { DraggableLocalDeliveryOrderGroupCard } from './cards/DraggableLocalDeliveryOrderGroupCard'
+import { DraggableRouteGroupOrderGroupCard } from './cards/DraggableRouteGroupOrderGroupCard'
 import { useOrderGroupUIActions, useOrderGroupUIStore } from '@/features/order/store/orderGroupUI.store'
 import { useResourceManager } from '@/shared/resource-manager/useResourceManager'
 import type { RouteReorderPreview } from '@/features/plan/dnd/controller/resolveDropIntent'
@@ -98,7 +98,7 @@ export const RouteGroupOrderList = ({
                     }}
                 >
                     { boundaryLocations.start.location &&
-                        <LocalDeliveryBoundaryLocationCard
+                        <RouteGroupBoundaryLocationCard
                             label={startLocationLabel}
                             address={boundaryLocations.start.location}
                             time={formatRouteTime(boundaryLocations.start.time, 'today') }
@@ -115,7 +115,7 @@ export const RouteGroupOrderList = ({
                                 const entry = group.entries[0]
                                 if (!entry) return null
                                 return (
-                                    <DraggableLocalDeliveryOrderCard
+                                    <DraggableRouteGroupOrderCard
                                         key={entry.stop.client_id}
                                         order={entry.order}
                                         stop={entry.stop}
@@ -130,7 +130,7 @@ export const RouteGroupOrderList = ({
                             const expanded = expandedGroupsByKey[uiKey] ?? false
 
                             return (
-                                <DraggableLocalDeliveryOrderGroupCard
+                                <DraggableRouteGroupOrderGroupCard
                                     key={group.key}
                                     group={group}
                                     expanded={expanded}
@@ -143,7 +143,7 @@ export const RouteGroupOrderList = ({
                         })}
                     </SortableContext>
                     {missingOrders.map((order) => (
-                        <LocalDeliveryOrderCard
+                        <RouteGroupOrderCard
                             key={order.client_id}
                             order={order}
                             stop={null}
@@ -152,7 +152,7 @@ export const RouteGroupOrderList = ({
                     ))}
                     {  boundaryLocations.end.location && groupedStops.length > 0 && 
                         <div className="pb-10">
-                            <LocalDeliveryBoundaryLocationCard 
+                            <RouteGroupBoundaryLocationCard 
                                 label={endLocationLabel}
                                 address={boundaryLocations.end.location} 
                                 time={ formatRouteTime(boundaryLocations.end.time, 'today') }

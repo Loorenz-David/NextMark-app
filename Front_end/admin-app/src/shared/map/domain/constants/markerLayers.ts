@@ -1,7 +1,7 @@
 export const MAP_MARKER_LAYERS = {
   default: 'default',
   orders: 'orders',
-  localDelivery: 'localDelivery',
-  driverLiveLocalDelivery: 'driverLiveLocalDelivery',
+  routeGroup: 'routeGroup',
+  driverLiveRouteGroup: 'driverLiveRouteGroup',
   driverLiveOrders: 'driverLiveOrders',
 } as const

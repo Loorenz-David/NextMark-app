@@ -105,8 +105,8 @@ export const runMarkerLayerManagerDotContentTests = () => {
   {
     const manager = createManager()
     manager.setLayerMarkers(MAP_MARKER_LAYERS.orders, [buildOrder('order-1')])
-    manager.setLayerMarkers(MAP_MARKER_LAYERS.localDelivery, [buildOrder('local-1', { label: '1' })])
-    manager.clearLayer(MAP_MARKER_LAYERS.localDelivery)
+    manager.setLayerMarkers(MAP_MARKER_LAYERS.routeGroup, [buildOrder('route-group-1', { label: '1' })])
+    manager.clearLayer(MAP_MARKER_LAYERS.routeGroup)
     manager.setLayerMarkers(MAP_MARKER_LAYERS.orders, [buildOrder('order-1', { markerColor: '#00a3ff' })])
 
     const orderElement = getMarkerElement(manager, MAP_MARKER_LAYERS.orders, 'order-1')

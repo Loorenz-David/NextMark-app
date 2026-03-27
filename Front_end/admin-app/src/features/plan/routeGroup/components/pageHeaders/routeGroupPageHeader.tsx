@@ -57,7 +57,7 @@ const RouteGroupHeaderActionBar = ({
                         params={{
                             variant: 'secondary',
                             onClick: onEditPlan,
-                            ariaLabel: 'Edit local delivery plan',
+                            ariaLabel: 'Edit route group',
                         }}
                     >
                         <EditIcon className="mr-2 h-4 w-4 stroke-[var(--color-secondary)]" />
@@ -162,7 +162,7 @@ export const RouteGroupsActionBar = ({
         <>
             {!isLoading ? (
                 <motion.div
-                    key="header-local-delivery-button"
+                    key="header-route-group-button"
                     initial={false}
                     animate={{
                         opacity: useFloatingActionBar ? (isActionBarVisible ? 1 : 0) : 1,

@@ -17,7 +17,7 @@ export const RouteGroupEditFormMobileLayout = ({
         <button
           type="button"
           onClick={onClose}
-          aria-label="Close local delivery edit form"
+          aria-label="Close route group edit form"
           className="rounded-md px-2 py-1 text-xs text-[var(--color-muted)] transition-colors hover:bg-[var(--color-muted)]/10"
         >
           Close

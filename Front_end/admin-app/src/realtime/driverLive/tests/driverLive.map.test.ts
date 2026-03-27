@@ -1,10 +1,10 @@
 import type { DriverLocationUpdatedPayload } from '@shared-realtime'
 
 import {
-  buildLocalDeliveryDriverLocationMarkers,
+  buildRouteGroupDriverLocationMarkers,
   buildOrderDriverLocationMarkers,
   DRIVER_LIVE_ACTIVE_MAX_AGE_MS,
-  resolveActiveLocalDeliveryPlanIdByDriverId,
+  resolveActiveRoutePlanIdByDriverId,
   resolveDriverLocationActivity,
 } from '../driverLive.map'
 
@@ -46,7 +46,7 @@ export const runDriverLiveMapTests = () => {
   }
 
   {
-    const markers = buildLocalDeliveryDriverLocationMarkers({
+    const markers = buildRouteGroupDriverLocationMarkers({
       positions: [
         buildPosition({ driver_id: 10 }),
         buildPosition({ driver_id: 11 }),
@@ -56,8 +56,8 @@ export const runDriverLiveMapTests = () => {
       now,
     })
 
-    assert(markers.length === 1, 'local delivery driver markers should only include the selected driver')
-    assert(markers[0].id === 'driver-live:local-delivery:11', 'local delivery marker id should be scope aware')
+    assert(markers.length === 1, 'route-group driver markers should only include the selected driver')
+    assert(markers[0].id === 'driver-live:route-group:11', 'route-group marker id should be scope aware')
   }
 
   {
@@ -77,7 +77,7 @@ export const runDriverLiveMapTests = () => {
   }
 
   {
-    const planId = resolveActiveLocalDeliveryPlanIdByDriverId({
+    const planId = resolveActiveRoutePlanIdByDriverId({
       driverId: 7,
       routeSolutions: [
         {
@@ -107,7 +107,7 @@ export const runDriverLiveMapTests = () => {
   }
 
   {
-    const planId = resolveActiveLocalDeliveryPlanIdByDriverId({
+    const planId = resolveActiveRoutePlanIdByDriverId({
       driverId: 8,
       routeSolutions: [
         {

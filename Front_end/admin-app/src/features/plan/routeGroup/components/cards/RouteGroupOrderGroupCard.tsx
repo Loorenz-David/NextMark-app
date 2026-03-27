@@ -5,10 +5,10 @@ import { BoldArrowIcon, TriangleWarningIcon } from '@/assets/icons'
 import { FloatingPopover } from '@/shared/popups/FloatingPopover/FloatingPopover'
 import { formatRouteTime } from '@/features/plan/routeGroup/utils/formatRouteTime'
 import type { RouteGroupAddressGroup } from '@/features/plan/routeGroup/domain/routeGroupAddressGroup.flow'
-import { LocalDeliveryOrderGroupChildren } from './LocalDeliveryOrderGroupChildren'
+import { RouteGroupOrderGroupChildren } from './RouteGroupOrderGroupChildren'
 import { StopOrderAvatar } from './StopOrderAvatar'
 
-type LocalDeliveryOrderGroupCardProps = {
+type RouteGroupOrderGroupCardProps = {
   group: RouteGroupAddressGroup
   expanded: boolean
   onToggleExpanded: () => void
@@ -29,7 +29,7 @@ const formatRange = (
   return `${left} - ${right}`
 }
 
-export const LocalDeliveryOrderGroupCard = ({
+export const RouteGroupOrderGroupCard = ({
   group,
   expanded,
   onToggleExpanded,
@@ -37,7 +37,7 @@ export const LocalDeliveryOrderGroupCard = ({
   projectedStopOrderByClientId,
   dragAttributes,
   dragListeners,
-}: LocalDeliveryOrderGroupCardProps) => {
+}: RouteGroupOrderGroupCardProps) => {
   const [warningOpen, setWarningOpen] = useState(false)
 
   return (
@@ -105,7 +105,7 @@ export const LocalDeliveryOrderGroupCard = ({
         
       </div>
       {expanded ? (
-          <LocalDeliveryOrderGroupChildren
+          <RouteGroupOrderGroupChildren
             entries={group.entries}
             planStartDate={planStartDate}
             projectedStopOrderByClientId={projectedStopOrderByClientId}
