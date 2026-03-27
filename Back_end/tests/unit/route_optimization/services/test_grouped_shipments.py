@@ -90,12 +90,12 @@ def _make_context(*, with_existing_stops: bool) -> SimpleNamespace:
             _make_route_stop(203, 103, 3),
         ]
 
-    delivery_plan = SimpleNamespace(
+    route_plan = SimpleNamespace(
         id=10,
         start_date=datetime(2026, 3, 8, 8, 0, tzinfo=timezone.utc),
         end_date=datetime(2026, 3, 8, 18, 0, tzinfo=timezone.utc),
     )
-    local_delivery_plan = SimpleNamespace(id=20, team_id=3, delivery_plan=delivery_plan)
+    route_group = SimpleNamespace(id=20, team_id=3, route_plan=route_plan)
     route_solution = SimpleNamespace(
         id=30,
         client_id="route_solution_30",
@@ -125,12 +125,12 @@ def _make_context(*, with_existing_stops: bool) -> SimpleNamespace:
         stop_count=0,
         driver_id=None,
         route_group_id=20,
-        local_delivery_plan=local_delivery_plan,
+        route_group=route_group,
         start_location_id=None,
     )
     return SimpleNamespace(
-        delivery_plan=delivery_plan,
-        local_delivery_plan=local_delivery_plan,
+        route_plan=route_plan,
+        route_group=route_group,
         route_solution=route_solution,
         orders=[order_1, order_2, order_3],
         identity={},
@@ -352,12 +352,12 @@ def test_persist_solution_applies_pre_skipped_optimization_window_warning(monkey
 def test_persist_solution_temporarily_displaces_existing_stop_orders_before_swap(monkeypatch):
     order_1 = _make_order(order_id=101, lat=57.7, lng=11.97)
     order_2 = _make_order(order_id=102, lat=57.71, lng=11.98)
-    delivery_plan = SimpleNamespace(
+    route_plan = SimpleNamespace(
         id=10,
         start_date=datetime(2026, 3, 8, 8, 0, tzinfo=timezone.utc),
         end_date=datetime(2026, 3, 8, 18, 0, tzinfo=timezone.utc),
     )
-    local_delivery_plan = SimpleNamespace(id=20, team_id=3, delivery_plan=delivery_plan)
+    route_group = SimpleNamespace(id=20, team_id=3, route_plan=route_plan)
     route_solution = SimpleNamespace(
         id=30,
         client_id="route_solution_30",
@@ -387,13 +387,13 @@ def test_persist_solution_temporarily_displaces_existing_stop_orders_before_swap
         stop_count=0,
         driver_id=None,
         route_group_id=20,
-        local_delivery_plan=local_delivery_plan,
+        route_group=route_group,
         start_location_id=None,
         vehicle_id=None,
     )
     context = SimpleNamespace(
-        delivery_plan=delivery_plan,
-        local_delivery_plan=local_delivery_plan,
+        route_plan=route_plan,
+        route_group=route_group,
         route_solution=route_solution,
         orders=[order_1, order_2],
         identity={},

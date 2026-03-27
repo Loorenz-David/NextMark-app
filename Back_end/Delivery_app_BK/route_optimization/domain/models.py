@@ -94,22 +94,14 @@ class OptimizationResult:
 
 @dataclass(frozen=True)
 class OptimizationContext:
-    local_delivery_plan: "RouteGroup"
-    delivery_plan: "RoutePlan"
+    route_group: "RouteGroup"
+    route_plan: "RoutePlan"
     route_solution: "RouteSolution"
     orders: List["Order"]
-    identity: Dict[str, Any]
-    incoming_data: Dict[str, Any]
+    identity: Dict[str, Any] = field(default_factory=dict)
+    incoming_data: Dict[str, Any] = field(default_factory=dict)
     interpret_injected_solutions_using_labels: bool = True
     return_shape: str = "map_ids_object"
-    route_end_strategy: str =  ROUND_TRIP or CUSTOM_END_ADDRESS
+    route_end_strategy: str = ROUND_TRIP
     ctx: "ServiceContext | None" = None
     vehicle: "Vehicle | None" = None
-
-    @property
-    def route_group(self):
-        return self.local_delivery_plan
-
-    @property
-    def route_plan(self):
-        return self.delivery_plan

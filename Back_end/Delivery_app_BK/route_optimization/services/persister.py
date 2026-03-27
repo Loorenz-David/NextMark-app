@@ -87,7 +87,7 @@ def persist_solution(
                 stop_lookup=stop_lookup,
                 route_solution=route_solution,
                 order_id=order_id,
-                team_id=context.local_delivery_plan.team_id,
+                team_id=context.route_group.team_id,
             )
             stop_instance.stop_order = next_stop_order
             service_seconds = int(member.service_duration_seconds or 0)
@@ -136,7 +136,7 @@ def persist_solution(
                 stop_lookup=stop_lookup,
                 route_solution=route_solution,
                 order_id=member.order_id,
-                team_id=context.local_delivery_plan.team_id,
+                team_id=context.route_group.team_id,
             )
             stop_instance.in_range = False
             clear_expected_stop_schedule(stop_instance)

@@ -52,8 +52,8 @@ def load_optimization_context(ctx:ServiceContext) -> OptimizationContext:
         vehicle = db.session.get(Vehicle, route_solution.vehicle_id)
 
     return OptimizationContext(
-        local_delivery_plan=route_group,
-        delivery_plan=route_plan,
+        route_group=route_group,
+        route_plan=route_plan,
         route_solution=route_solution,
         orders=orders,
         identity=ctx.identity,

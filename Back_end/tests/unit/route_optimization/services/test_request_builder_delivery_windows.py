@@ -13,7 +13,7 @@ def _build_context():
             "global_start_time": "2026-03-05T00:00:00+00:00",
             "global_end_time": "2026-03-06T23:59:59+00:00",
         },
-        delivery_plan=SimpleNamespace(
+        route_plan=SimpleNamespace(
             start_date=datetime(2026, 3, 5, 0, 0, tzinfo=timezone.utc),
             end_date=datetime(2026, 3, 6, 23, 59, tzinfo=timezone.utc),
         ),
