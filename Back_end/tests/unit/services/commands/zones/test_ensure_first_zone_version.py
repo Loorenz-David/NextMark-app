@@ -3,7 +3,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from Delivery_app_BK.errors import ValidationFailed
+from Delivery_app_BK.errors import NotFound, ValidationFailed
 from Delivery_app_BK.services.commands.zones.ensure_first_zone_version import (
     ensure_first_zone_version,
 )
@@ -46,6 +46,10 @@ def test_ensure_first_zone_version_returns_latest_if_exists(monkeypatch, ctx):
         "Delivery_app_BK.services.commands.zones.ensure_first_zone_version.db.session.query",
         lambda *_args, **_kwargs: _QueryResult(existing),
     )
+    monkeypatch.setattr(
+        "Delivery_app_BK.services.commands.zones.ensure_first_zone_version.db.session.get",
+        lambda *_args, **_kwargs: SimpleNamespace(id=1),
+    )
 
     committed = {"value": False}
     monkeypatch.setattr(
@@ -64,6 +68,10 @@ def test_ensure_first_zone_version_creates_v1_when_missing(monkeypatch, ctx):
     monkeypatch.setattr(
         "Delivery_app_BK.services.commands.zones.ensure_first_zone_version.db.session.query",
         lambda *_args, **_kwargs: _QueryResult(None),
+    )
+    monkeypatch.setattr(
+        "Delivery_app_BK.services.commands.zones.ensure_first_zone_version.db.session.get",
+        lambda *_args, **_kwargs: SimpleNamespace(id=1),
     )
 
     added = {"version": None}
@@ -95,3 +103,13 @@ def test_ensure_first_zone_version_requires_city_key():
         ensure_first_zone_version(
             ServiceContext(incoming_data={}, identity={"active_team_id": 1})
         )
+
+
+def test_ensure_first_zone_version_raises_when_team_missing(monkeypatch, ctx):
+    monkeypatch.setattr(
+        "Delivery_app_BK.services.commands.zones.ensure_first_zone_version.db.session.get",
+        lambda *_args, **_kwargs: None,
+    )
+
+    with pytest.raises(NotFound, match="Team 1 not found"):
+        ensure_first_zone_version(ctx)

@@ -2,7 +2,7 @@ import random
 import string
 
 from Delivery_app_BK.errors import ValidationFailed
-from Delivery_app_BK.models import db, Team, User, UserRole
+from Delivery_app_BK.models import ZoneVersion, db, Team, User, UserRole
 
 from ...context import ServiceContext
 from ..base.create_instance import create_instance
@@ -92,6 +92,27 @@ def register_user(ctx: ServiceContext):
     db.session.add(team_instance)
     db.session.add(user_instance)
     db.session.flush()
+
+    if default_city_key and team_instance.id is not None:
+        existing_initial_version = (
+            db.session.query(ZoneVersion.id)
+            .filter_by(
+                team_id=team_instance.id,
+                city_key=default_city_key,
+                version_number=1,
+            )
+            .first()
+        )
+        if existing_initial_version is None:
+            db.session.add(
+                ZoneVersion(
+                    team_id=team_instance.id,
+                    city_key=default_city_key,
+                    version_number=1,
+                    is_active=False,
+                )
+            )
+
     user_instance.primals_team_id = team_instance.id
     user_instance.primals_role_id = user_instance.user_role_id
     user_instance.admin_app_current_workspace = "personal"

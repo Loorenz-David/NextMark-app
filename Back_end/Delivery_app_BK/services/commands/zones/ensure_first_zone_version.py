@@ -5,8 +5,10 @@ Otherwise creates version 1 and returns it.
 """
 from __future__ import annotations
 
-from Delivery_app_BK.errors import ValidationFailed
-from Delivery_app_BK.models import db
+from sqlalchemy.exc import IntegrityError
+
+from Delivery_app_BK.errors import NotFound, ValidationFailed
+from Delivery_app_BK.models import Team, db
 from Delivery_app_BK.models.tables.zones.zone_version import ZoneVersion
 from Delivery_app_BK.services.context import ServiceContext
 from Delivery_app_BK.zones.services.city_key_normalizer import normalize_city_key
@@ -30,6 +32,12 @@ def ensure_first_zone_version(ctx: ServiceContext) -> dict:
 
     city_key = normalize_city_key(raw_city)
     team_id = ctx.team_id
+    if not team_id:
+        raise ValidationFailed("team_id is required")
+
+    team = db.session.get(Team, team_id)
+    if team is None:
+        raise NotFound(f"Team {team_id} not found")
 
     latest = (
         db.session.query(ZoneVersion)
@@ -47,5 +55,11 @@ def ensure_first_zone_version(ctx: ServiceContext) -> dict:
         is_active=False,
     )
     db.session.add(version)
-    db.session.commit()
+    try:
+        db.session.commit()
+    except IntegrityError:
+        db.session.rollback()
+        raise ValidationFailed(
+            "Unable to create first zone version for this team."
+        )
     return _serialize_version(version)

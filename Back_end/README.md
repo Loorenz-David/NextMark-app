@@ -75,6 +75,8 @@ Back_end/
    .venv/bin/flask --app 'Delivery_app_BK:create_app("development")' db upgrade -d migrations
    ```
    The backend now uses Alembic migrations. Local development should be upgraded to head before starting the app or the async workers.
+   
+    Note: install and enable PostGIS on your PostgreSQL server for the best zone-geometry performance (simplification, centroid, and bbox derivation in DB). The latest geometry migration also expects `CREATE EXTENSION postgis` to succeed.
 
 6. **Run the web application**
    ```bash
