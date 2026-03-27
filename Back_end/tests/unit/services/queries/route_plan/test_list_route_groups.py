@@ -76,6 +76,26 @@ def test_list_route_groups_returns_serialized_route_group():
     assert result["route_groups"][0]["zone_id"] == 7
 
 
+def test_list_route_groups_returns_deterministic_name_ordering():
+    ctx = make_ctx()
+
+    rg_b = _fake_route_group(route_plan_id=42)
+    rg_b.id = 11
+    rg_b.name = "Zone South"
+
+    rg_a = _fake_route_group(route_plan_id=42)
+    rg_a.id = 12
+    rg_a.name = "Zone North"
+
+    # Intentionally pass unsorted order from relationship to ensure query serializer sorts.
+    plan = _fake_route_plan(route_groups=[rg_b, rg_a])
+
+    with patch(f"{MODULE}.get_instance", return_value=plan):
+        result = list_route_groups(42, ctx)
+
+    assert [group["name"] for group in result["route_groups"]] == ["Zone North", "Zone South"]
+
+
 # ---------------------------------------------------------------------------
 # Plan not found: get_instance raises NoResultFound
 # ---------------------------------------------------------------------------

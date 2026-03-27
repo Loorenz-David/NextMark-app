@@ -45,6 +45,9 @@ from Delivery_app_BK.services.queries.route_plan.route_groups.list_route_groups 
 from Delivery_app_BK.services.commands.route_plan.materialize_route_groups import (
     materialize_route_groups as materialize_route_groups_service,
 )
+from Delivery_app_BK.services.commands.route_plan.delete_route_group import (
+    delete_route_group as delete_route_group_service,
+)
 
 
 route_plans_bp = Blueprint("api_v2_route_plans_bp", __name__)
@@ -215,7 +218,7 @@ def list_route_plan_orders(route_plan_id: int):
     )
 
 
-@route_plans_bp.route("/<int:route_plan_id>/route_groups/", methods=["GET"])
+@route_plans_bp.route("/<int:route_plan_id>/route-groups/", methods=["GET"])
 @jwt_required()
 @role_required([ADMIN, ASSISTANT])
 def list_route_plan_route_groups(route_plan_id: int):
@@ -236,7 +239,7 @@ def list_route_plan_route_groups(route_plan_id: int):
     )
 
 
-@route_plans_bp.route("/<int:route_plan_id>/route_groups/materialize", methods=["POST"])
+@route_plans_bp.route("/<int:route_plan_id>/route-groups/materialize", methods=["POST"])
 @jwt_required()
 @role_required([ADMIN, ASSISTANT])
 def materialize_route_plan_route_groups(route_plan_id: int):
@@ -247,6 +250,30 @@ def materialize_route_plan_route_groups(route_plan_id: int):
         identity=identity,
     )
     outcome = run_service(lambda c: materialize_route_groups_service(c), ctx)
+    response = Response()
+
+    if outcome.error:
+        return response.build_unsuccessful_response(outcome.error)
+
+    return response.build_successful_response(
+        outcome.data,
+        warnings=ctx.warnings,
+    )
+
+
+@route_plans_bp.route("/<int:route_plan_id>/route-groups/<int:route_group_id>", methods=["DELETE"])
+@jwt_required()
+@role_required([ADMIN, ASSISTANT])
+def delete_route_plan_route_group(route_plan_id: int, route_group_id: int):
+    identity = get_jwt()
+    ctx = ServiceContext(
+        incoming_data={
+            "route_plan_id": route_plan_id,
+            "route_group_id": route_group_id,
+        },
+        identity=identity,
+    )
+    outcome = run_service(lambda c: delete_route_group_service(c), ctx)
     response = Response()
 
     if outcome.error:

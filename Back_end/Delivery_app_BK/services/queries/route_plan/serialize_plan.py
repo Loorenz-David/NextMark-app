@@ -1,4 +1,4 @@
-from typing import Type,List
+from typing import Type, List
 from flask_sqlalchemy.model import Model
 from Delivery_app_BK.models import RoutePlan
 
@@ -6,7 +6,30 @@ from ...context import ServiceContext
 from ..utils import map_return_values, calculate_plan_metrics
 
 
-def serialize_plans( instances: List[ Type[ RoutePlan ] ], ctx:ServiceContext  ):
+def _serialize_route_group_summary(route_group) -> dict:
+    state = getattr(route_group, "state", None)
+    return {
+        "id": route_group.id,
+        "name": getattr(route_group, "name", None),
+        "zone_id": getattr(route_group, "zone_id", None),
+        "total_orders": getattr(route_group, "total_orders", None),
+        "state": (
+            {
+                "id": state.id,
+                "name": getattr(state, "name", None),
+            }
+            if state is not None
+            else None
+        ),
+    }
+
+
+def serialize_plans(
+    instances: List[Type[RoutePlan]],
+    ctx: ServiceContext,
+    *,
+    include_route_groups_summary: bool = False,
+):
     
     unpacked_instances = []
 
@@ -14,6 +37,13 @@ def serialize_plans( instances: List[ Type[ RoutePlan ] ], ctx:ServiceContext  )
         start_date = instance.start_date
         end_date = instance.end_date
         created_at = instance.created_at
+        route_groups = sorted(
+            list(getattr(instance, "route_groups", None) or []),
+            key=lambda route_group: (
+                getattr(route_group, "name", "") or "",
+                getattr(route_group, "id", 0) or 0,
+            ),
+        )
         unpacked = {
             "id": instance.id,
             "client_id": instance.client_id,
@@ -23,7 +53,8 @@ def serialize_plans( instances: List[ Type[ RoutePlan ] ], ctx:ServiceContext  )
             "end_date": end_date.isoformat() if end_date else None,
             "created_at": created_at.isoformat() if created_at else None,
             "updated_at": instance.updated_at.isoformat() if instance.updated_at else None,
-            "state_id": instance.state_id
+            "state_id": instance.state_id,
+            "route_groups_count": len(route_groups),
         }
         unpacked.update(calculate_plan_metrics(instance))
         if instance.total_orders is not None:
@@ -33,6 +64,11 @@ def serialize_plans( instances: List[ Type[ RoutePlan ] ], ctx:ServiceContext  )
                 "total_items": instance.total_item_count,
                 "total_orders": instance.total_orders,
             })
+        if include_route_groups_summary:
+            unpacked["route_groups"] = [
+                _serialize_route_group_summary(route_group)
+                for route_group in route_groups
+            ]
 
         unpacked_instances.append( unpacked )
 

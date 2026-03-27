@@ -27,6 +27,7 @@ ALLOWED_CREATE_FIELDS = {
     "start_date",
     "end_date",
     "order_ids",
+    "zone_ids",
     "route_group_defaults",
 }
 
@@ -51,6 +52,7 @@ class PlanCreateRequest:
     start_date: datetime
     end_date: datetime
     order_ids: list[int]
+    zone_ids: list[int]
     route_group_defaults: dict
 
 
@@ -60,6 +62,14 @@ def _normalize_route_group_defaults(raw_defaults: object) -> dict:
     if not isinstance(raw_defaults, dict):
         raise ValidationFailed("route_group_defaults must be an object.")
     return raw_defaults
+
+
+def _normalize_zone_ids(raw_zone_ids: object) -> list[int]:
+    zone_ids = validate_int_list(raw_zone_ids, field="zone_ids")
+    for index, zone_id in enumerate(zone_ids):
+        if zone_id <= 0:
+            raise ValidationFailed(f"zone_ids[{index}] must be greater than 0")
+    return zone_ids
 
 
 def parse_create_plan_request(raw_fields: dict) -> PlanCreateRequest:
@@ -103,6 +113,7 @@ def parse_create_plan_request(raw_fields: dict) -> PlanCreateRequest:
         raise ValidationFailed("end_date cannot be before start_date.")
 
     order_ids = validate_int_list(raw_fields.get("order_ids"), field="order_ids")
+    zone_ids = _normalize_zone_ids(raw_fields.get("zone_ids"))
     route_group_defaults = _normalize_route_group_defaults(
         raw_fields.get("route_group_defaults")
     )
@@ -114,5 +125,6 @@ def parse_create_plan_request(raw_fields: dict) -> PlanCreateRequest:
         start_date=start_date,
         end_date=end_date,
         order_ids=order_ids,
+        zone_ids=zone_ids,
         route_group_defaults=route_group_defaults,
     )

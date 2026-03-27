@@ -50,6 +50,7 @@ def list_zones_for_version(ctx: ServiceContext) -> list[dict]:
             "centroid_lat": z.centroid_lat,
             "centroid_lng": z.centroid_lng,
             "geometry": z.geometry,
+            "geometry_simplified": z.geometry_simplified,
             "min_lat": z.min_lat,
             "max_lat": z.max_lat,
             "min_lng": z.min_lng,

@@ -34,6 +34,7 @@ def _build_auth_claims(
         "session_scope_id": session_scope_id,
         "time_zone": effective_time_zone,
         "default_country_code": workspace_context["default_country_code"],
+        "default_city_key": workspace_context["default_city_key"],
     }
 
     user_object = {
@@ -51,6 +52,7 @@ def _build_auth_claims(
         "active_team_id": workspace_context["active_team_id"],
         "team_name": workspace_context["team_name"],
         "default_country_code": workspace_context["default_country_code"],
+        "default_city_key": workspace_context["default_city_key"],
         "app_scope": app_scope,
         "session_scope_id": session_scope_id,
     }

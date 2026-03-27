@@ -1,4 +1,7 @@
 from Delivery_app_BK.models import RoutePlan
+from sqlalchemy.orm import selectinload
+
+from Delivery_app_BK.models import RoutePlan
 from Delivery_app_BK.services.requests.route_plan.plan.list_route_plans import (
     parse_list_route_plans_query,
 )
@@ -16,7 +19,7 @@ def list_route_plans(ctx: ServiceContext):
         incoming_data=ctx.incoming_data,
     )
 
-    query = find_plans(params, ctx)
+    query = find_plans(params, ctx).options(selectinload(RoutePlan.route_groups))
     stats_query_params = {
         key: value
         for key, value in dict(params).items()

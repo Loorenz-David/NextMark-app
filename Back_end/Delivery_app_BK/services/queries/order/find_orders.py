@@ -89,10 +89,7 @@ def find_orders (
             "column": RoutePlan.label,
             "join": Order.route_plan,
         },
-        "plan_type": {
-            "column": RoutePlan.plan_type,
-            "join": Order.route_plan,
-        },
+        
     }
 
     trimmed_query = str(params.get("q") or "").strip()

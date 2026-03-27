@@ -39,6 +39,7 @@ greenlet==3.3.0
 grpcio==1.76.0
 grpcio-status==1.76.0
 gunicorn==23.0.0
+geoalchemy2==0.18.4
 h11==0.16.0
 idna==3.11
 iniconfig==2.1.0

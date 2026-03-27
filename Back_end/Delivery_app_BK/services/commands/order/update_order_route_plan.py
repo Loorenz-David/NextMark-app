@@ -29,6 +29,9 @@ from Delivery_app_BK.services.queries.route_solutions.serialize_route_solutions 
 )
 from Delivery_app_BK.services.domain.route_operations.plan.route_freshness import touch_route_freshness
 from Delivery_app_BK.services.domain.route_operations.plan.recompute_plan_totals import recompute_plan_totals
+from Delivery_app_BK.services.domain.route_operations.plan.recompute_route_group_totals import (
+    recompute_route_group_totals,
+)
 from Delivery_app_BK.services.domain.state_transitions.order_count_engine import recompute_plan_order_counts
 from Delivery_app_BK.services.domain.state_transitions.plan_state_engine import apply_plan_state, maybe_auto_complete_plan
 from Delivery_app_BK.services.domain.state_transitions.order_move_rules import compute_destination_move_result, OrderMoveResult
@@ -171,6 +174,7 @@ def apply_orders_route_plan_change(
     _plans_to_recompute.update(old_plans_by_id)
     for plan in _plans_to_recompute.values():
         recompute_plan_totals(plan)
+        recompute_route_group_totals(plan)
     if _plans_to_recompute:
         db.session.flush()
 
@@ -643,6 +647,7 @@ def apply_orders_route_plan_unassign(
 
     for plan in old_plans_by_id.values():
         recompute_plan_totals(plan)
+        recompute_route_group_totals(plan)
         recompute_plan_order_counts(plan)
         maybe_auto_complete_plan(plan)
     if old_plans_by_id:

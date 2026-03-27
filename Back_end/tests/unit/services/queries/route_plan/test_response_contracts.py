@@ -13,8 +13,22 @@ plan_type_module = importlib.import_module(
 def test_get_plan_returns_canonical_route_plan_key(monkeypatch):
     found_plan = SimpleNamespace(id=123)
 
-    monkeypatch.setattr(get_plan_module, "get_instance", lambda **_kwargs: found_plan)
-    monkeypatch.setattr(get_plan_module, "serialize_plans", lambda instances, ctx: [{"id": 123, "label": "A"}])
+    class _Query:
+        def options(self, *args, **kwargs):
+            return self
+
+        def filter(self, *args, **kwargs):
+            return self
+
+        def one_or_none(self):
+            return found_plan
+
+    monkeypatch.setattr(get_plan_module.db.session, "query", lambda *_args, **_kwargs: _Query())
+    monkeypatch.setattr(
+        get_plan_module,
+        "serialize_plans",
+        lambda instances, ctx, include_route_groups_summary=False: [{"id": 123, "label": "A"}],
+    )
 
     result = get_plan_module.get_plan(123, ServiceContext(incoming_data={}, identity={}))
 

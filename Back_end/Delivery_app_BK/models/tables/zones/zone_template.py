@@ -1,6 +1,6 @@
 from datetime import datetime, timezone
 
-from sqlalchemy import JSON, Boolean, Column, ForeignKey, Integer, String
+from sqlalchemy import JSON, Boolean, Column, ForeignKey, Index, Integer, String, text
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import relationship
 
@@ -29,3 +29,13 @@ class ZoneTemplate(db.Model):
     )
 
     zone = relationship("Zone", back_populates="templates")
+
+    __table_args__ = (
+        Index(
+            "uq_zone_template_active_per_zone",
+            "team_id",
+            "zone_id",
+            unique=True,
+            postgresql_where=text("is_active = true"),
+        ),
+    )

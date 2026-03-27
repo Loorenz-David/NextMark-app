@@ -423,3 +423,28 @@ The following table defines the exact handoff between backend and frontend at ea
 - Zone performance analytics dashboard — V2 feature
 
 These are tracked in `ZONES_CURRENT_STATE_AND_VISION.md` section 10 (Extensions Planned).
+
+---
+
+## Addendum — Corrections Completion (2026-03-27)
+
+Status: Completed
+Completed at: 2026-03-27 13:00:13 CET
+
+This archived phase plan was later supplemented by a corrections wave documented in:
+- `docs/implemented/ZONES_CORRECTIONS_PLAN_2026-03-26.md`
+
+All corrections listed in that plan were implemented in backend code, including:
+- Route-plan route-group URL casing alignment to kebab-case (`route-groups`).
+- Zone update operation (`PATCH /api_v2/zones/<version_id>/zones/<zone_id>`).
+- Zone delete operation (`DELETE /api_v2/zones/<version_id>/zones/<zone_id>`).
+- Route-group delete operation (`DELETE /api_v2/route_plans/<route_plan_id>/route-groups/<route_group_id>`).
+- Create-zone response shape consistency (`template: null` field).
+
+Validation evidence:
+- Focused correction/polish tests passed.
+- Non-AI backend unit suite passed:
+     - `pytest tests/unit --ignore=tests/unit/ai`
+     - Result at completion: 247 passed, 1 warning.
+
+This file remains archived for historical traceability only.

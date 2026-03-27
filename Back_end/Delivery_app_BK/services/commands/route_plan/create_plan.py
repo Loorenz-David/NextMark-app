@@ -1,21 +1,28 @@
 from datetime import datetime, timezone
 from uuid import uuid4
 
-from Delivery_app_BK.models import db, RoutePlan, RouteGroup, RouteSolution, RoutePlanState, Team, Order
+from Delivery_app_BK.errors import ValidationFailed
+from Delivery_app_BK.models import (
+    db,
+    Order,
+    RouteGroup,
+    RoutePlan,
+    RoutePlanState,
+    RouteSolution,
+    Team,
+    Zone,
+    ZoneTemplate,
+)
 from Delivery_app_BK.route_optimization.constants.is_optimized import (
     IS_OPTIMIZED_NOT_OPTIMIZED,
 )
-from Delivery_app_BK.route_optimization.constants.route_end_strategy import (
-    CUSTOM_END_ADDRESS,
-    LAST_STOP,
-    ROUND_TRIP,
-)
 from Delivery_app_BK.services.commands.utils import generate_client_id
-from Delivery_app_BK.services.domain.route_operations.plan.plan_states import PlanStateId
 from Delivery_app_BK.services.domain.route_operations.local_delivery import (
-    combine_plan_date_and_local_hhmm_to_utc,
-    normalize_service_time_payload,
-    resolve_request_timezone,
+    normalize_local_delivery_route_solution_defaults,
+)
+from Delivery_app_BK.services.domain.route_operations.plan.plan_states import PlanStateId
+from Delivery_app_BK.services.domain.route_operations.plan.recompute_route_group_totals import (
+    recompute_route_group_totals,
 )
 from Delivery_app_BK.services.infra.events.emiters.order import emit_order_events
 from Delivery_app_BK.sockets.emitters.route_solution_events import emit_route_solution_created
@@ -69,22 +76,35 @@ def create_plan(ctx: ServiceContext):
                 RoutePlan,
                 route_plan_fields,
             )
-            route_group_instance, extra_instances = _build_route_group_instances(
-                ctx=ctx,
-                route_plan_instance=route_plan_instance,
-                route_group_defaults=item.route_group_defaults,
-            )
+            route_group_instances: list[RouteGroup] = []
+            extra_instances: list[object] = []
+            if item.zone_ids:
+                route_group_instances, route_solution_instances = (
+                    _build_zone_route_group_instances(
+                        ctx=ctx,
+                        route_plan_instance=route_plan_instance,
+                        zone_ids=item.zone_ids,
+                        route_group_defaults=item.route_group_defaults,
+                    )
+                )
+                extra_instances.extend(route_solution_instances)
             creation_context.append(
                 {
                     "route_plan": route_plan_instance,
-                    "route_group": route_group_instance,
+                    "route_groups": route_group_instances,
                     "extra_instances": extra_instances,
                     "order_ids": item.order_ids,
                 }
             )
 
         db.session.add_all([entry["route_plan"] for entry in creation_context])
-        db.session.add_all([entry["route_group"] for entry in creation_context])
+        route_group_instances = [
+            instance
+            for entry in creation_context
+            for instance in entry["route_groups"]
+        ]
+        if route_group_instances:
+            db.session.add_all(route_group_instances)
         extra_instances = [instance 
                            for entry in creation_context 
                            for instance in entry["extra_instances"]
@@ -104,18 +124,30 @@ def create_plan(ctx: ServiceContext):
                 pending_order_events.extend(outcome["pending_events"])
 
         for entry in creation_context:
+            if not entry["route_groups"]:
+                continue
+            recompute_route_group_totals(entry["route_plan"])
+
+        if any(entry["route_groups"] for entry in creation_context):
+            db.session.flush()
+
+        for entry in creation_context:
             route_plan_instance: RoutePlan = entry["route_plan"]
-            route_group_instance = entry["route_group"]
             bundle = {
                 "delivery_plan": serialize_created_route_plan(route_plan_instance),
-                "route_group": serialize_created_route_group(route_group_instance),
             }
-            local_route_solution = _find_created_route_solution(entry["extra_instances"])
-            if local_route_solution:
-                bundle["route_solution"] = serialize_created_route_solution(
-                    local_route_solution
-                )
-                created_route_solutions.append(local_route_solution)
+            if entry["route_groups"]:
+                bundle["route_groups"] = [
+                    serialize_created_route_group(route_group_instance)
+                    for route_group_instance in entry["route_groups"]
+                ]
+            local_route_solutions = _find_created_route_solutions(entry["extra_instances"])
+            if local_route_solutions:
+                bundle["route_solutions"] = [
+                    serialize_created_route_solution(route_solution)
+                    for route_solution in local_route_solutions
+                ]
+                created_route_solutions.extend(local_route_solutions)
             created_bundles.append(bundle)
 
     with db.session.begin():
@@ -151,68 +183,94 @@ def create_plan(ctx: ServiceContext):
     return {"created": created_bundles}
 
 
-def _find_created_route_solution(extra_instances: list[object]) -> RouteSolution | None:
-    for instance in extra_instances:
-        if isinstance(instance, RouteSolution):
-            return instance
-    return None
+def _find_created_route_solutions(extra_instances: list[object]) -> list[RouteSolution]:
+    return [
+        instance for instance in extra_instances if isinstance(instance, RouteSolution)
+    ]
 
 
-def _build_route_group_instances(
+def _build_zone_route_group_instances(
     ctx: ServiceContext,
     route_plan_instance: RoutePlan,
+    zone_ids: list[int],
     route_group_defaults: dict,
-) -> tuple[RouteGroup, list[object]]:
+) -> tuple[list[RouteGroup], list[RouteSolution]]:
     defaults = route_group_defaults if isinstance(route_group_defaults, dict) else {}
-    route_group = create_instance(
+    zones = _load_active_zones(ctx, zone_ids)
+
+    route_groups: list[RouteGroup] = []
+    route_solutions: list[RouteSolution] = []
+    for zone in zones:
+        active_template = ZoneTemplate.query.filter_by(
+            team_id=ctx.team_id,
+            zone_id=zone.id,
+            is_active=True,
+        ).first()
+        template_config = (
+            active_template.config_json if active_template and isinstance(active_template.config_json, dict) else {}
+        )
+        route_group = create_instance(
+            ctx,
+            RouteGroup,
+            {
+                "client_id": defaults.get("client_id") or generate_client_id("route_group"),
+                "route_plan_id": route_plan_instance.id,
+                "zone_id": zone.id,
+                "name": zone.name,
+                "zone_geometry_snapshot": zone.geometry,
+                "template_snapshot": template_config,
+                "total_orders": 0,
+            },
+        )
+        route_solution = _build_route_solution_instance(
+            ctx=ctx,
+            route_plan_instance=route_plan_instance,
+            route_group=route_group,
+            template_config=template_config,
+            route_group_defaults=defaults,
+        )
+        route_groups.append(route_group)
+        route_solutions.append(route_solution)
+
+    return route_groups, route_solutions
+
+
+def _load_active_zones(ctx: ServiceContext, zone_ids: list[int]) -> list[Zone]:
+    zones = (
+        Zone.query.filter(
+            Zone.id.in_(zone_ids),
+            Zone.team_id == ctx.team_id,
+            Zone.is_active.is_(True),
+        )
+        .order_by(Zone.name.asc())
+        .all()
+    )
+    found_zone_ids = {zone.id for zone in zones}
+    missing_zone_ids = [zone_id for zone_id in zone_ids if zone_id not in found_zone_ids]
+    if missing_zone_ids:
+        raise ValidationFailed(f"Invalid zone_ids for this team: {missing_zone_ids}")
+
+    zone_by_id = {zone.id: zone for zone in zones}
+    return [zone_by_id[zone_id] for zone_id in zone_ids]
+
+
+def _build_route_solution_instance(
+    ctx: ServiceContext,
+    route_plan_instance: RoutePlan,
+    route_group: RouteGroup,
+    template_config: dict,
+    route_group_defaults: dict,
+) -> RouteSolution:
+    normalized_defaults = normalize_local_delivery_route_solution_defaults(
         ctx,
-        RouteGroup,
+        route_plan_instance,
         {
-            "client_id": defaults.get("client_id") or generate_client_id("route_group"),
-            "route_plan_id": route_plan_instance.id,
+            "route_solution": {
+                **template_config,
+                **_extract_route_solution_defaults(route_group_defaults),
+            }
         },
     )
-
-    route_solution_defaults = defaults.get("route_solution")
-    if not isinstance(route_solution_defaults, dict):
-        route_solution_defaults = {}
-
-    raw_strategy = route_solution_defaults.get("route_end_strategy")
-    allowed_strategies = {ROUND_TRIP, CUSTOM_END_ADDRESS, LAST_STOP}
-    route_end_strategy = (
-        raw_strategy if isinstance(raw_strategy, str) and raw_strategy in allowed_strategies else ROUND_TRIP
-    )
-
-    start_location = route_solution_defaults.get("start_location")
-    if not isinstance(start_location, dict):
-        start_location = None
-
-    end_location = route_solution_defaults.get("end_location")
-    if not isinstance(end_location, dict):
-        end_location = None
-
-    set_start_time = route_solution_defaults.get("set_start_time")
-    if not isinstance(set_start_time, str):
-        set_start_time = None
-
-    set_end_time = route_solution_defaults.get("set_end_time")
-    if not isinstance(set_end_time, str):
-        set_end_time = None
-
-    request_timezone = resolve_request_timezone(ctx, route_plan_instance)
-    expected_start_time = combine_plan_date_and_local_hhmm_to_utc(
-        plan_date=route_plan_instance.start_date,
-        hhmm=set_start_time,
-        tz=request_timezone,
-    )
-
-    driver_id = route_solution_defaults.get("driver_id")
-    if not isinstance(driver_id, int) or isinstance(driver_id, bool):
-        driver_id = None
-
-    eta_tolerance_seconds = route_solution_defaults.get("eta_tolerance_seconds")
-    if not isinstance(eta_tolerance_seconds, int) or isinstance(eta_tolerance_seconds, bool):
-        eta_tolerance_seconds = 0
 
     route_solution = RouteSolution(
         client_id=generate_client_id("route_solution"),
@@ -221,17 +279,22 @@ def _build_route_group_instances(
         is_optimized=IS_OPTIMIZED_NOT_OPTIMIZED,
         stop_count=0,
         team_id=ctx.team_id,
-        start_location=start_location,
-        end_location=end_location,
-        set_start_time=set_start_time,
-        expected_start_time=expected_start_time,
-        set_end_time=set_end_time,
-        eta_tolerance_seconds=max(0, min(7200, eta_tolerance_seconds)),
-        stops_service_time=normalize_service_time_payload(
-            route_solution_defaults.get("stops_service_time")
-        ),
-        route_end_strategy=route_end_strategy,
-        driver_id=driver_id,
+        start_location=normalized_defaults["start_location"],
+        end_location=normalized_defaults["end_location"],
+        set_start_time=normalized_defaults["set_start_time"],
+        expected_start_time=normalized_defaults["expected_start_time"],
+        set_end_time=normalized_defaults["set_end_time"],
+        eta_tolerance_seconds=normalized_defaults["eta_tolerance_seconds"],
+        stops_service_time=normalized_defaults["stops_service_time"],
+        route_end_strategy=normalized_defaults["route_end_strategy"],
+        driver_id=normalized_defaults["driver_id"],
     )
     route_group.route_solutions.append(route_solution)
-    return route_group, [route_solution]
+    return route_solution
+
+
+def _extract_route_solution_defaults(route_group_defaults: dict) -> dict:
+    route_solution_defaults = route_group_defaults.get("route_solution")
+    if not isinstance(route_solution_defaults, dict):
+        return {}
+    return route_solution_defaults

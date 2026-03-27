@@ -1,4 +1,4 @@
-from flask import Blueprint
+from flask import Blueprint, request
 from flask_jwt_extended import jwt_required, get_jwt
 
 from Delivery_app_BK.routers.utils.role_decorator import (
@@ -23,7 +23,7 @@ route_plan_overviews_bp = Blueprint("api_v2_route_plan_overviews_bp", __name__)
 @role_required([ADMIN, ASSISTANT])
 def get_route_group_overview(route_plan_id: int):
     identity = get_jwt()
-    ctx = ServiceContext(identity=identity)
+    ctx = ServiceContext(identity=identity, query_params=dict(request.args))
     outcome = run_service(
         lambda c: local_delivery_overview_service(c, route_plan_id),
         ctx,

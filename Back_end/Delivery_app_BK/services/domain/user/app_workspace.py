@@ -144,6 +144,7 @@ def resolve_app_workspace_context(user: User, app_scope: AppScope) -> dict:
         "team_name": active_team.name if active_team else None,
         "team_time_zone": active_team.time_zone if active_team else None,
         "default_country_code": active_team.default_country_code if active_team else None,
+        "default_city_key": active_team.default_city_key if active_team else None,
     }
 
 

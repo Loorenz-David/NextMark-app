@@ -25,6 +25,7 @@ def test_build_auth_claims_includes_default_country_code(monkeypatch):
             "team_name": "North Team",
             "team_time_zone": "Europe/Stockholm",
             "default_country_code": "SE",
+            "default_city_key": "stockholm",
         },
     )
 
@@ -36,8 +37,10 @@ def test_build_auth_claims_includes_default_country_code(monkeypatch):
     )
 
     assert claims["default_country_code"] == "SE"
+    assert claims["default_city_key"] == "stockholm"
     assert claims["time_zone"] == "Europe/Stockholm"
     assert user_object["default_country_code"] == "SE"
+    assert user_object["default_city_key"] == "stockholm"
 
 
 def test_build_auth_claims_allows_missing_default_country_code(monkeypatch):
@@ -62,6 +65,7 @@ def test_build_auth_claims_allows_missing_default_country_code(monkeypatch):
             "team_name": "North Team",
             "team_time_zone": "UTC",
             "default_country_code": None,
+            "default_city_key": None,
         },
     )
 
@@ -73,4 +77,6 @@ def test_build_auth_claims_allows_missing_default_country_code(monkeypatch):
     )
 
     assert claims["default_country_code"] is None
+    assert claims["default_city_key"] is None
     assert user_object["default_country_code"] is None
+    assert user_object["default_city_key"] is None

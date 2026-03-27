@@ -1,7 +1,7 @@
 # Third-party dependecies
 from datetime import datetime, timezone
 
-from sqlalchemy import JSON, Column, Float, ForeignKey, Integer, String
+from sqlalchemy import JSON, Column, Float, ForeignKey, Integer, String, UniqueConstraint
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import relationship
 
@@ -83,4 +83,13 @@ class RouteGroup(db.Model, TeamScopedMixin):
         "Team",
         backref="route_groups",
         lazy=True,
+    )
+
+    __table_args__ = (
+        UniqueConstraint(
+            "team_id",
+            "route_plan_id",
+            "zone_id",
+            name="uq_route_group_team_plan_zone",
+        ),
     )

@@ -1,9 +1,14 @@
 from datetime import datetime, timezone
+import json
 
 from sqlalchemy import Boolean, Column, Enum, Float, Index, Integer, String
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy import JSON
 from sqlalchemy.orm import relationship
+from geoalchemy2 import Geometry
+from geoalchemy2.elements import WKBElement
+from geoalchemy2.shape import from_shape, to_shape
+from shapely.geometry import MultiPolygon, mapping, shape
 
 from Delivery_app_BK.models import db
 from Delivery_app_BK.models.utils import UTCDateTime
@@ -45,7 +50,14 @@ class Zone(db.Model):
     )
     centroid_lat = Column(Float, nullable=True)
     centroid_lng = Column(Float, nullable=True)
-    geometry = Column(JSONB().with_variant(JSON, "sqlite"), nullable=True)
+    geom_high_res = Column(
+        Geometry("MULTIPOLYGON", srid=4326, spatial_index=False).with_variant(JSON(), "sqlite"),
+        nullable=True,
+    )
+    geom_simplified = Column(
+        Geometry("MULTIPOLYGON", srid=4326, spatial_index=False).with_variant(JSON(), "sqlite"),
+        nullable=True,
+    )
     min_lat = Column(Float, nullable=True)
     max_lat = Column(Float, nullable=True)
     min_lng = Column(Float, nullable=True)
@@ -68,3 +80,60 @@ class Zone(db.Model):
         back_populates="zone",
         cascade="all, delete-orphan",
     )
+
+    @staticmethod
+    def _is_sqlite_backend() -> bool:
+        try:
+            bind = db.session.get_bind()
+        except Exception:
+            return False
+        if bind is None:
+            return False
+        return bind.dialect.name == "sqlite"
+
+    @staticmethod
+    def _normalize_geojson(value):
+        if value is None:
+            return None
+        if isinstance(value, str):
+            return json.loads(value)
+        return value
+
+    @classmethod
+    def _encode_geometry(cls, value):
+        geojson = cls._normalize_geojson(value)
+        if geojson is None:
+            return None
+        if cls._is_sqlite_backend():
+            return geojson
+
+        geom = shape(geojson)
+        if geom.geom_type == "Polygon":
+            geom = MultiPolygon([geom])
+        return from_shape(geom, srid=4326)
+
+    @classmethod
+    def _decode_geometry(cls, value):
+        if value is None:
+            return None
+        if cls._is_sqlite_backend():
+            return cls._normalize_geojson(value)
+        if isinstance(value, WKBElement):
+            return mapping(to_shape(value))
+        return cls._normalize_geojson(value)
+
+    @property
+    def geometry(self):
+        return self._decode_geometry(self.geom_high_res)
+
+    @geometry.setter
+    def geometry(self, value):
+        self.geom_high_res = self._encode_geometry(value)
+
+    @property
+    def geometry_simplified(self):
+        return self._decode_geometry(self.geom_simplified)
+
+    @geometry_simplified.setter
+    def geometry_simplified(self, value):
+        self.geom_simplified = self._encode_geometry(value)

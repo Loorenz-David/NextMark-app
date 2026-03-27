@@ -78,7 +78,10 @@ def list_route_groups(route_plan_id: int, ctx: ServiceContext) -> dict:
     except NoResultFound:
         raise NotFound(f"Route plan {route_plan_id} not found.")
 
-    route_groups = list(route_plan.route_groups or [])
+    route_groups = sorted(
+        list(route_plan.route_groups or []),
+        key=lambda group: (((group.name or "").lower()), (group.id or 0)),
+    )
     serialized = [_serialize_route_group(route_group) for route_group in route_groups]
 
     return {

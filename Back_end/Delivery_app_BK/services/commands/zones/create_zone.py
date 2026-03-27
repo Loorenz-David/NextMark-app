@@ -6,6 +6,7 @@ from Delivery_app_BK.models import db
 from Delivery_app_BK.models.tables.zones.zone import Zone
 from Delivery_app_BK.models.tables.zones.zone_version import ZoneVersion
 from Delivery_app_BK.services.context import ServiceContext
+from Delivery_app_BK.zones.services.postgis_geometry import refresh_zone_geometry_derivatives
 
 _VALID_ZONE_TYPES = frozenset({"bootstrap", "system", "user"})
 
@@ -64,5 +65,7 @@ def create_zone(ctx: ServiceContext) -> dict:
         is_active=True,
     )
     db.session.add(zone)
+    db.session.flush()
+    refresh_zone_geometry_derivatives(zone.id)
     db.session.commit()
     return _serialize_zone(zone)

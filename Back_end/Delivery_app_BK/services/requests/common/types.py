@@ -2,6 +2,7 @@ from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from Delivery_app_BK.services.commands.utils import generate_client_id
 from Delivery_app_BK.errors import ValidationFailed
+from Delivery_app_BK.zones.services.city_key_normalizer import normalize_city_key
 
 
 def validate_str(
@@ -113,6 +114,18 @@ def parse_optional_country_code(value, *, field: str = "country_code") -> str | 
     normalized = parsed.upper()
     if len(normalized) != 2 or not normalized.isalpha():
         raise ValidationFailed(f"{field} must be a valid ISO 3166-1 alpha-2 country code.")
+
+    return normalized
+
+
+def parse_optional_city_key(value, *, field: str = "city_key") -> str | None:
+    parsed = parse_optional_string(value, field=field)
+    if parsed is None:
+        return None
+
+    normalized = normalize_city_key(parsed)
+    if normalized == "unknown_city":
+        raise ValidationFailed(f"{field} must contain letters or numbers.")
 
     return normalized
 

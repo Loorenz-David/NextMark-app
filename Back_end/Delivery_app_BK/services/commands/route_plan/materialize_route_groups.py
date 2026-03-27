@@ -1,11 +1,14 @@
 """Materialize route groups from selected zones for a route plan."""
 from __future__ import annotations
 
-from sqlalchemy import func
+from sqlalchemy.exc import IntegrityError
 
 from Delivery_app_BK.errors import NotFound, ValidationFailed
-from Delivery_app_BK.models import Order, OrderZoneAssignment, RouteGroup, RoutePlan, Zone, ZoneTemplate, db
+from Delivery_app_BK.models import RouteGroup, RoutePlan, Zone, ZoneTemplate, db
 from Delivery_app_BK.services.context import ServiceContext
+from Delivery_app_BK.services.domain.route_operations.plan.recompute_route_group_totals import (
+    recompute_route_group_totals,
+)
 from Delivery_app_BK.services.queries.route_plan.plan_types.serialize_route_group import (
     serialize_route_group,
 )
@@ -84,28 +87,23 @@ def materialize_route_groups(ctx: ServiceContext) -> list[dict]:
             zone_geometry_snapshot=zone.geometry,
             template_snapshot=(active_template.config_json if active_template else {}),
         )
-        db.session.add(route_group)
+        try:
+            with db.session.begin_nested():
+                db.session.add(route_group)
+                db.session.flush()
+        except IntegrityError:
+            existing = RouteGroup.query.filter_by(
+                route_plan_id=route_plan_id,
+                zone_id=zone.id,
+                team_id=ctx.team_id,
+            ).first()
+            if existing is None:
+                raise
+            created_or_existing.append(existing)
+            continue
         created_or_existing.append(route_group)
 
-    orders_per_zone = {
-        zone_id: count
-        for zone_id, count in (
-            db.session.query(OrderZoneAssignment.zone_id, func.count(OrderZoneAssignment.id))
-            .join(Order, Order.id == OrderZoneAssignment.order_id)
-            .filter(
-                Order.team_id == ctx.team_id,
-                Order.route_plan_id == route_plan_id,
-                OrderZoneAssignment.team_id == ctx.team_id,
-                OrderZoneAssignment.is_unassigned.is_(False),
-                OrderZoneAssignment.zone_id.in_(zone_ids),
-            )
-            .group_by(OrderZoneAssignment.zone_id)
-            .all()
-        )
-    }
-
-    for route_group in created_or_existing:
-        route_group.total_orders = int(orders_per_zone.get(route_group.zone_id, 0))
+    recompute_route_group_totals(route_plan)
 
     db.session.commit()
     return [serialize_route_group(route_group, ctx) for route_group in created_or_existing]

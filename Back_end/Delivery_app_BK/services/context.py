@@ -87,3 +87,7 @@ class ServiceContext():
     @property
     def default_country_code(self):
         return self.identity.get("default_country_code")
+
+    @property
+    def default_city_key(self):
+        return self.identity.get("default_city_key")
