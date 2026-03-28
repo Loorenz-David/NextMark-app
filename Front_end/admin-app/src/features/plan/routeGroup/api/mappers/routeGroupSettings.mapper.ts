@@ -6,13 +6,13 @@ export const normalizeRouteGroupEditFormToSettingsPayload = (
   formState: RouteGroupEditFormState,
 ): RouteGroupSettingsPayload => ({
   route_group_id: formState.route_group_id ?? 0,
-  delivery_plan: {
+  route_plan: {
     id: formState.delivery_plan.id,
     label: formState.delivery_plan.label,
     start_date: formState.delivery_plan.start_date,
     end_date: formState.delivery_plan.end_date,
   },
-  local_delivery_plan: {
+  route_group: {
     driver_id: formState.route_solution.driver_id,
   },
   route_solution: {

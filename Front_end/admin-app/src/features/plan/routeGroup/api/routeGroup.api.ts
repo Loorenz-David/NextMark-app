@@ -1,6 +1,9 @@
 import { apiClient } from "@/lib/api/ApiClient";
 import type { ApiResult } from "@/lib/api/types";
-import type { PlanTotalsEntry } from "@shared-domain";
+import type {
+  OrderBatchSelectionPayload,
+  PlanTotalsEntry,
+} from "@shared-domain";
 
 import type { Order } from "@/features/order/types/order";
 import type { RouteGroup } from "../types/routeGroup";
@@ -12,10 +15,7 @@ export type MaterializeRouteGroupsPayload = {
 };
 
 export type MoveOrderToRouteGroupPayload = {
-  orders: {
-    selection: "by_ids";
-    order_ids: number[];
-  };
+  selection: OrderBatchSelectionPayload;
   route_group_id: number;
   prevent_event_bus: false;
 };
@@ -49,7 +49,7 @@ export const routeGroupApi = {
     payload: MoveOrderToRouteGroupPayload,
   ): Promise<ApiResult<MoveOrderToRouteGroupResponse>> =>
     apiClient.request<MoveOrderToRouteGroupResponse>({
-      path: `/plans/${planId}/batch`,
+      path: `/order_assignments/plans/${planId}/batch`,
       method: "PATCH",
       data: payload,
     }),

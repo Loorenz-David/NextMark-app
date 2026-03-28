@@ -113,13 +113,13 @@ export function useRouteGroupSettingsMutations() {
         route: null,
       }
 
-      if (payload.delivery_plan?.id) {
-        const plan = selectRoutePlanByServerId(payload.delivery_plan.id)(useRoutePlanStore.getState())
+      if (payload.route_plan?.id) {
+        const plan = selectRoutePlanByServerId(payload.route_plan.id)(useRoutePlanStore.getState())
         if (plan) {
           snapshots.plan = { ...plan }
           updateRoutePlan(plan.client_id, (prev: DeliveryPlan) => ({
             ...prev,
-            ...payload.delivery_plan,
+            ...payload.route_plan,
           }))
         }
       }
@@ -128,11 +128,11 @@ export function useRouteGroupSettingsMutations() {
         const localPlan = selectRouteGroupByServerId(payload.route_group_id)(
           useRouteGroupStore.getState(),
         )
-        if (localPlan && payload.local_delivery_plan) {
+        if (localPlan && payload.route_group) {
           snapshots.local = { ...localPlan }
           updateRouteGroup(localPlan.client_id, (prev) => ({
             ...prev,
-            ...payload.local_delivery_plan,
+            ...payload.route_group,
           }))
         }
       }

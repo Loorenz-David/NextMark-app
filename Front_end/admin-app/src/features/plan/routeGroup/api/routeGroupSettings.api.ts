@@ -8,13 +8,13 @@ import type { RouteSolutionStop, RouteSolutionStopMap } from '@/features/plan/ro
 
 export type RouteGroupSettingsPayload = {
   route_group_id: number
-  delivery_plan?: {
+  route_plan?: {
     id?: number 
     label?: string
     start_date?: string | null
     end_date?: string | null
   }
-  local_delivery_plan?: {
+  route_group?: {
     driver_id?: number | null
     actual_start_time?: string | null
     actual_end_time?: string | null

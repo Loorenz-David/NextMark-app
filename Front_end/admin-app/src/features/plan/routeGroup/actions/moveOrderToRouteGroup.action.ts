@@ -172,7 +172,12 @@ export const moveOrderToRouteGroupAction = async (params: {
       ),
     request: () =>
       routeGroupApi.moveOrderToRouteGroup(params.planId, {
-        orders: { selection: "by_ids", order_ids: params.orderIds },
+        selection: {
+          manual_order_ids: params.orderIds,
+          select_all_snapshots: [],
+          excluded_order_ids: [],
+          source: "group",
+        },
         route_group_id: params.targetRouteGroupId,
         prevent_event_bus: false,
       }),
