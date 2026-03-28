@@ -86,6 +86,7 @@ def list_route_groups(route_plan_id: int, ctx: ServiceContext) -> dict:
     route_groups = sorted(
         list(route_plan.route_groups or []),
         key=lambda group: (
+            0 if getattr(group, "zone_id", None) is None else 1,
             (route_group_snapshot_name(getattr(group, "zone_geometry_snapshot", None)) or "").lower(),
             (group.id or 0),
         ),

@@ -109,6 +109,7 @@ def test_list_route_groups_returns_deterministic_name_ordering():
 
     rg_b = _fake_route_group(route_plan_id=42)
     rg_b.id = 11
+    rg_b.zone_id = 2
     rg_b.zone_geometry_snapshot = {
         "name": "Zone South",
         "geometry": {"type": "Polygon", "coordinates": []},
@@ -116,6 +117,7 @@ def test_list_route_groups_returns_deterministic_name_ordering():
 
     rg_a = _fake_route_group(route_plan_id=42)
     rg_a.id = 12
+    rg_a.zone_id = 1
     rg_a.zone_geometry_snapshot = {
         "name": "Zone North",
         "geometry": {"type": "Polygon", "coordinates": []},
@@ -140,6 +142,34 @@ def test_list_route_groups_raises_not_found_when_plan_missing():
     with patch(f"{MODULE}.get_instance", side_effect=NoResultFound):
         with pytest.raises(NotFound):
             list_route_groups(999, ctx)
+
+
+# ---------------------------------------------------------------------------
+# No-Zone group always appears first regardless of id/name ordering
+# ---------------------------------------------------------------------------
+
+def test_list_route_groups_no_zone_group_is_always_first():
+    ctx = make_ctx()
+
+    rg_zone = _fake_route_group(route_plan_id=42)
+    rg_zone.id = 5
+    rg_zone.zone_id = 10
+    rg_zone.zone_geometry_snapshot = {"name": "Alpha Zone", "geometry": None}
+
+    rg_no_zone = _fake_route_group(route_plan_id=42)
+    rg_no_zone.id = 99          # higher id than zone group
+    rg_no_zone.zone_id = None   # No-Zone bucket
+    rg_no_zone.zone_geometry_snapshot = {"name": "No Zone", "geometry": None}
+
+    # Pass unsorted (zone group first) to confirm the sort overrides it.
+    plan = _fake_route_plan(route_groups=[rg_zone, rg_no_zone])
+
+    with patch(f"{MODULE}.get_instance", return_value=plan):
+        result = list_route_groups(42, ctx)
+
+    ids = [g["id"] for g in result["route_groups"]]
+    assert ids[0] == 99, "No-Zone group must be first"
+    assert ids[1] == 5
 
 
 # ---------------------------------------------------------------------------

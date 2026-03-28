@@ -3,7 +3,7 @@ from __future__ import annotations
 from collections.abc import Callable
 
 from Delivery_app_BK.errors import ValidationFailed
-from Delivery_app_BK.models import RouteGroup, RouteSolutionStop, db
+from Delivery_app_BK.models import OrderZoneAssignment, RouteGroup, RouteSolutionStop, db
 from Delivery_app_BK.route_optimization.constants.skip_reasons import (
     ORDER_CREATED_AFTER_OPTIMIZATION,
 )
@@ -33,6 +33,7 @@ def apply_local_delivery_objective(
         ctx,
         route_plan.id,
         getattr(order_instance, "route_group_id", None),
+        order_instance=order_instance,
     )
     route_solutions = list(local_delivery.route_solutions or [])
     if not route_solutions:
@@ -96,27 +97,71 @@ def _get_route_group(
     ctx: ServiceContext,
     route_plan_id: int,
     route_group_id: int | None,
+    order_instance=None,
 ) -> RouteGroup:
+    """Resolve the destination RouteGroup for an order.
+
+    Resolution priority:
+    1. Explicit ``route_group_id`` — always wins when provided.
+    2. Zone inference — match the order's active zone assignment against a
+       zone-specific RouteGroup on the plan.
+    3. No-Zone fallback — use the plan's default No-Zone bucket when inference
+       finds no match or the order is flagged as unassigned.
+    4. Single-group shortcut — kept for plans that only have one group so
+       existing single-zone flows continue to work without changes.
+    """
     query = db.session.query(RouteGroup).filter(
         RouteGroup.route_plan_id == route_plan_id
     )
     if ctx.team_id:
         query = query.filter(RouteGroup.team_id == ctx.team_id)
 
+    # Priority 1 – explicit group supplied by caller.
     if route_group_id is not None:
         local_delivery = query.filter(RouteGroup.id == route_group_id).one_or_none()
         if not local_delivery:
             raise ValidationFailed("Route group not found for order objective.")
         return local_delivery
 
-    route_groups = query.order_by(RouteGroup.id.asc()).all()
-    if not route_groups:
+    all_groups = query.order_by(RouteGroup.id.asc()).all()
+    if not all_groups:
         raise ValidationFailed("Route group not found for order objective.")
-    if len(route_groups) > 1:
-        raise ValidationFailed(
-            "route_group_id is required when route plan has multiple route groups."
+
+    # Priority 4 – single-group shortcut (no inference needed).
+    if len(all_groups) == 1:
+        return all_groups[0]
+
+    # Priority 2 – zone inference.
+    order_id = getattr(order_instance, "id", None) if order_instance is not None else None
+    if order_id is not None:
+        zone_assignment = (
+            db.session.query(OrderZoneAssignment)
+            .filter(
+                OrderZoneAssignment.order_id == order_id,
+                OrderZoneAssignment.team_id == ctx.team_id,
+            )
+            .first()
         )
-    return route_groups[0]
+        if (
+            zone_assignment is not None
+            and not zone_assignment.is_unassigned
+            and zone_assignment.zone_id is not None
+        ):
+            zone_group = next(
+                (g for g in all_groups if g.zone_id == zone_assignment.zone_id),
+                None,
+            )
+            if zone_group is not None:
+                return zone_group
+
+    # Priority 3 – No-Zone fallback bucket.
+    no_zone_group = next((g for g in all_groups if g.zone_id is None), None)
+    if no_zone_group is not None:
+        return no_zone_group
+
+    raise ValidationFailed(
+        "Cannot determine destination route group: provide route_group_id or ensure the plan has a No-Zone bucket."
+    )
 
 
 def _skip_reason_value(reason) -> str | None:

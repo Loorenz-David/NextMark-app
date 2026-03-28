@@ -92,7 +92,7 @@ def test_bundle_includes_created_and_synced_stops(monkeypatch):
         "serialize_route_solution",
         lambda route_solution: {"id": route_solution.id, "client_id": "route_10"},
     )
-    monkeypatch.setattr(module, "_get_route_group", lambda *_: local_delivery_plan)
+    monkeypatch.setattr(module, "_get_route_group", lambda *_, **__: local_delivery_plan)
 
     def _build_stops(*args, **kwargs):
         return [created], [(created, order_instance)], [route_solution]
@@ -136,7 +136,7 @@ def test_bundle_includes_stale_changed_stops_on_soft_fail(monkeypatch):
         "serialize_route_solution",
         lambda route_solution: {"id": route_solution.id, "client_id": "route_10"},
     )
-    monkeypatch.setattr(module, "_get_route_group", lambda *_: local_delivery_plan)
+    monkeypatch.setattr(module, "_get_route_group", lambda *_, **__: local_delivery_plan)
     monkeypatch.setattr(
         module,
         "build_route_solution_stops",
@@ -179,7 +179,7 @@ def test_bundle_dedupes_stops_when_created_is_also_synced(monkeypatch):
         "serialize_route_solution",
         lambda route_solution: {"id": route_solution.id, "client_id": "route_10"},
     )
-    monkeypatch.setattr(module, "_get_route_group", lambda *_: local_delivery_plan)
+    monkeypatch.setattr(module, "_get_route_group", lambda *_, **__: local_delivery_plan)
     monkeypatch.setattr(
         module,
         "build_route_solution_stops",
@@ -217,7 +217,7 @@ def test_non_optimized_routes_are_incrementally_refreshed(monkeypatch):
         "serialize_route_solution",
         lambda route_solution: {"id": route_solution.id, "client_id": "route_10"},
     )
-    monkeypatch.setattr(module, "_get_route_group", lambda *_: local_delivery_plan)
+    monkeypatch.setattr(module, "_get_route_group", lambda *_, **__: local_delivery_plan)
     monkeypatch.setattr(
         module,
         "build_route_solution_stops",

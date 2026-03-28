@@ -22,6 +22,7 @@ from Delivery_app_BK.services.domain.route_operations.local_delivery import (
 )
 from Delivery_app_BK.services.domain.route_operations.plan.plan_states import PlanStateId
 from Delivery_app_BK.services.domain.route_operations.plan.route_group_zone_snapshot import (
+    build_no_zone_route_group_snapshot,
     build_route_group_zone_snapshot,
 )
 from Delivery_app_BK.services.domain.route_operations.plan.recompute_route_group_totals import (
@@ -106,41 +107,58 @@ def create_plan(ctx: ServiceContext):
                 RoutePlan,
                 route_plan_fields,
             )
-            route_group_instances: list[RouteGroup] = []
-            extra_instances: list[object] = []
-            if item.zone_ids:
-                route_group_instances, route_solution_instances = (
-                    _build_zone_route_group_instances(
-                        ctx=ctx,
-                        route_plan_instance=route_plan_instance,
-                        zone_ids=item.zone_ids,
-                        route_group_defaults=item.route_group_defaults,
-                    )
-                )
-                extra_instances.extend(route_solution_instances)
             creation_context.append(
                 {
                     "route_plan": route_plan_instance,
-                    "route_groups": route_group_instances,
-                    "extra_instances": extra_instances,
+                    "item": item,
+                    "route_groups": [],
+                    "extra_instances": [],
                     "order_ids": item.order_ids,
                 }
             )
 
+        # Flush plans first so their DB-assigned ids are available before
+        # route groups are built (route_group.route_plan_id must be non-null).
         db.session.add_all([entry["route_plan"] for entry in creation_context])
-        route_group_instances = [
+        if creation_context:
+            db.session.flush()
+
+        # Build route groups now that route_plan_instance.id is populated.
+        for entry in creation_context:
+            item = entry["item"]
+            route_plan_instance = entry["route_plan"]
+
+            no_zone_group, no_zone_solution = _build_no_zone_route_group_instance(
+                ctx=ctx,
+                route_plan_instance=route_plan_instance,
+            )
+            entry["route_groups"].append(no_zone_group)
+            entry["extra_instances"].append(no_zone_solution)
+
+            if item.zone_ids:
+                zone_groups, zone_solutions = _build_zone_route_group_instances(
+                    ctx=ctx,
+                    route_plan_instance=route_plan_instance,
+                    zone_ids=item.zone_ids,
+                    route_group_defaults=item.route_group_defaults,
+                )
+                entry["route_groups"].extend(zone_groups)
+                entry["extra_instances"].extend(zone_solutions)
+
+        all_route_groups = [
             instance
             for entry in creation_context
             for instance in entry["route_groups"]
         ]
-        if route_group_instances:
-            db.session.add_all(route_group_instances)
-        extra_instances = [instance 
-                           for entry in creation_context 
-                           for instance in entry["extra_instances"]
+        if all_route_groups:
+            db.session.add_all(all_route_groups)
+        all_extra_instances = [
+            instance
+            for entry in creation_context
+            for instance in entry["extra_instances"]
         ]
-        if extra_instances:
-            db.session.add_all(extra_instances)
+        if all_extra_instances:
+            db.session.add_all(all_extra_instances)
         db.session.flush()
 
         for entry in creation_context:
@@ -330,3 +348,35 @@ def _extract_route_solution_defaults(route_group_defaults: dict) -> dict:
     if not isinstance(route_solution_defaults, dict):
         return {}
     return route_solution_defaults
+
+
+def _build_no_zone_route_group_instance(
+    ctx: ServiceContext,
+    route_plan_instance: RoutePlan,
+) -> tuple[RouteGroup, RouteSolution]:
+    """Create the default No-Zone RouteGroup and its selected RouteSolution.
+
+    This is called once per new plan.  The idempotency guard in the caller
+    (`_apply`) already prevents duplicate plans via client_id, so we do not
+    need an extra DB query here.
+    """
+    route_group = create_instance(
+        ctx,
+        RouteGroup,
+        {
+            "client_id": generate_client_id("route_group"),
+            "route_plan_id": route_plan_instance.id,
+            "zone_id": None,
+            "zone_geometry_snapshot": build_no_zone_route_group_snapshot(),
+            "template_snapshot": {},
+            "total_orders": 0,
+        },
+    )
+    route_solution = _build_route_solution_instance(
+        ctx=ctx,
+        route_plan_instance=route_plan_instance,
+        route_group=route_group,
+        template_config={},
+        route_group_defaults={},
+    )
+    return route_group, route_solution

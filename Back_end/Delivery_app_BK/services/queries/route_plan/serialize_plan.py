@@ -46,6 +46,7 @@ def serialize_plans(
         route_groups = sorted(
             list(getattr(instance, "route_groups", None) or []),
             key=lambda route_group: (
+                0 if getattr(route_group, "zone_id", None) is None else 1,
                 route_group_snapshot_name(getattr(route_group, "zone_geometry_snapshot", None)) or "",
                 getattr(route_group, "id", 0) or 0,
             ),
