@@ -16,6 +16,7 @@ from Delivery_app_BK.models import (
     Order,
     OrderDeliveryWindow,
     OrderState,
+    RouteGroup,
     RoutePlan,
     Team,
 )
@@ -56,6 +57,7 @@ def create_order(ctx: ServiceContext):
             "team_id": Team,
             "order_state_id": OrderState,
             "route_plan_id": RoutePlan,
+            "route_group_id": RouteGroup,
             "item_state_id": ItemState,
             "item_position_id": ItemPosition,
         }
@@ -116,6 +118,14 @@ def create_order(ctx: ServiceContext):
                 if request.route_plan_id is not None
             ],
         )
+        route_groups_by_id = _load_route_groups_by_id(
+            ctx,
+            [
+                request.route_group_id
+                for request in order_requests
+                if request.route_group_id is not None
+            ],
+        )
         order_instances: list[Order] = []
         item_instances: list[Item] = []
         extra_instances: list[object] = []
@@ -145,12 +155,29 @@ def create_order(ctx: ServiceContext):
                 if order_request.route_plan_id is not None
                 else None
             )
+            route_group = (
+                route_groups_by_id.get(order_request.route_group_id)
+                if order_request.route_group_id is not None
+                else None
+            )
             resolved_route_plan_id = None
+            resolved_route_group_id = None
             if route_plan:
                 resolved_route_plan_id = route_plan.id
+                route_plan_type = getattr(route_plan, "plan_type", "local_delivery")
                 if not order_fields.get("order_plan_objective"):
-                    order_fields["order_plan_objective"] = route_plan.plan_type
+                    order_fields["order_plan_objective"] = route_plan_type
+                if route_group is None:
+                    raise ValidationFailed(
+                        "route_group_id is required for orders assigned to a route plan."
+                    )
+                if route_group.route_plan_id != route_plan.id:
+                    raise ValidationFailed(
+                        "route_group_id must belong to the selected route_plan_id."
+                    )
+                resolved_route_group_id = route_group.id
             order_fields.pop("route_plan_id", None)
+            order_fields.pop("route_group_id", None)
 
             order_instance: Order = create_instance(ctx, Order, order_fields)
             order_instance.costumer_id = resolved_costumer.id
@@ -159,6 +186,8 @@ def create_order(ctx: ServiceContext):
             if resolved_route_plan_id is not None:
                 order_instance.route_plan_id = resolved_route_plan_id
                 order_instance.route_plan = route_plan
+                order_instance.route_group_id = resolved_route_group_id
+                order_instance.route_group = route_group
                 if route_plan is not None:
                     touched_route_plans[route_plan.id] = route_plan
             order_instances.append(order_instance)
@@ -198,7 +227,7 @@ def create_order(ctx: ServiceContext):
                     order_instance=order_instance,
                     route_plan_id=route_plan.id,
                     route_plan=route_plan,
-                    plan_objective=route_plan.plan_type,
+                    plan_objective=route_plan_type,
                 )
                 extra_instances.extend(objective_result.instances)
                 post_flush_actions.extend(objective_result.post_flush_actions)
@@ -286,3 +315,28 @@ def _load_delivery_plans_by_id(
         raise NotFound(f"Delivery plans not found: {missing_ids}")
 
     return plans_by_id
+
+
+def _load_route_groups_by_id(
+    ctx: ServiceContext,
+    route_group_ids: list[int],
+) -> dict[int, RouteGroup]:
+    deduped_route_group_ids = list(dict.fromkeys(route_group_ids))
+    if not deduped_route_group_ids:
+        return {}
+
+    query = db.session.query(RouteGroup).filter(RouteGroup.id.in_(deduped_route_group_ids))
+    if ctx.team_id:
+        query = query.filter(RouteGroup.team_id == ctx.team_id)
+    route_groups = query.all()
+
+    route_groups_by_id = {route_group.id: route_group for route_group in route_groups}
+    missing_ids = [
+        route_group_id
+        for route_group_id in deduped_route_group_ids
+        if route_group_id not in route_groups_by_id
+    ]
+    if missing_ids:
+        raise NotFound(f"Route groups not found: {missing_ids}")
+
+    return route_groups_by_id

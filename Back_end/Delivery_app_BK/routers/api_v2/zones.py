@@ -8,6 +8,8 @@ POST /api_v2/zones/ensure-first-version      ensure version 1 for city or return
 PATCH /api_v2/zones/<version_id>/activate    activate a zone version
 GET  /api_v2/zones/<version_id>/zones        list zones in a version
 PUT  /api_v2/zones/<version_id>/zones        add a zone to a version
+PATCH /api_v2/zones/<version_id>/zones/<zone_id>           update zone name (active or inactive)
+PATCH /api_v2/zones/<version_id>/zones/<zone_id>/geometry  update zone geometry (inactive only)
 """
 from flask import Blueprint, request
 from flask_jwt_extended import get_jwt, jwt_required
@@ -119,16 +121,39 @@ def create_zone(version_id: int):
 @zone_bp.route("/<int:version_id>/zones/<int:zone_id>", methods=["PATCH"])
 @jwt_required()
 @role_required([ADMIN])
-def update_zone(version_id: int, zone_id: int):
+def update_zone_name(version_id: int, zone_id: int):
     identity = get_jwt()
     incoming_data = request.get_json(silent=True) or {}
     ctx = ServiceContext(
         incoming_data={**incoming_data, "version_id": version_id, "zone_id": zone_id},
         identity=identity,
     )
-    from Delivery_app_BK.services.commands.zones.update_zone import update_zone as _update_zone
+    from Delivery_app_BK.services.commands.zones.update_zone_name import (
+        update_zone_name as _update_zone_name,
+    )
 
-    outcome = run_service(lambda c: _update_zone(c), ctx)
+    outcome = run_service(lambda c: _update_zone_name(c), ctx)
+    response = Response()
+    if outcome.error:
+        return response.build_unsuccessful_response(outcome.error)
+    return response.build_successful_response(outcome.data, warnings=ctx.warnings)
+
+
+@zone_bp.route("/<int:version_id>/zones/<int:zone_id>/geometry", methods=["PATCH"])
+@jwt_required()
+@role_required([ADMIN])
+def update_zone_geometry(version_id: int, zone_id: int):
+    identity = get_jwt()
+    incoming_data = request.get_json(silent=True) or {}
+    ctx = ServiceContext(
+        incoming_data={**incoming_data, "version_id": version_id, "zone_id": zone_id},
+        identity=identity,
+    )
+    from Delivery_app_BK.services.commands.zones.update_zone_geometry import (
+        update_zone_geometry as _update_zone_geometry,
+    )
+
+    outcome = run_service(lambda c: _update_zone_geometry(c), ctx)
     response = Response()
     if outcome.error:
         return response.build_unsuccessful_response(outcome.error)

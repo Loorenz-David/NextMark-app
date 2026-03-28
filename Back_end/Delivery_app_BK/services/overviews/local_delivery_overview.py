@@ -2,6 +2,9 @@ from Delivery_app_BK.errors import ValidationFailed
 from Delivery_app_BK.models import RoutePlan
 
 from Delivery_app_BK.services.context import ServiceContext
+from Delivery_app_BK.services.domain.route_operations.plan.route_group_zone_snapshot import (
+    route_group_snapshot_name,
+)
 from Delivery_app_BK.services.queries.get_instance import get_instance
 from Delivery_app_BK.services.queries.order.serialize_order import serialize_orders
 from Delivery_app_BK.services.queries.route_plan.plan_types.serialize_route_group import (
@@ -15,13 +18,10 @@ from Delivery_app_BK.services.queries.route_solutions import (
 
 def local_delivery_overview(ctx: ServiceContext, plan_id: int):
     plan: RoutePlan = get_instance(ctx=ctx, model=RoutePlan, value=plan_id)
-    if plan.plan_type != "local_delivery":
-        raise ValidationFailed("Plan is not a local delivery route plan.")
-
     route_groups = sorted(
         list(getattr(plan, "route_groups", None) or []),
         key=lambda group: (
-            getattr(group, "name", "") or "",
+            route_group_snapshot_name(getattr(group, "zone_geometry_snapshot", None)) or "",
             getattr(group, "id", 10**9),
         ),
     )

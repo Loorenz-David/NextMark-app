@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from types import SimpleNamespace
 
-from Delivery_app_BK.services.commands.order.plan_changes import local_delivery as module
+from Delivery_app_BK.services.commands.order.plan_changes import route_plan_change as module
 from Delivery_app_BK.services.commands.order.plan_changes.types import PlanChangeApplyContext
 from Delivery_app_BK.services.commands.route_plan.local_delivery.route_solution.plan_sync import (
     incremental_sync as sync_module,
@@ -51,7 +51,7 @@ def test_plan_change_bundle_includes_synced_old_route_stops(monkeypatch):
     order = SimpleNamespace(id=500)
 
     old_plan = SimpleNamespace(id=10, plan_type="local_delivery")
-    new_plan = SimpleNamespace(id=99, plan_type="international_shipping")
+    new_plan = None
 
     predecessor = _make_stop(
         stop_id=11,
@@ -78,8 +78,9 @@ def test_plan_change_bundle_includes_synced_old_route_stops(monkeypatch):
     old_local_delivery = SimpleNamespace(id=700, delivery_plan_id=old_plan.id)
 
     apply_context = PlanChangeApplyContext(
-        route_group_by_route_plan_id={old_plan.id: old_local_delivery},
+        route_groups_by_route_plan_id={old_plan.id: [old_local_delivery]},
         route_solutions_by_route_group_id={old_local_delivery.id: [route_solution]},
+        source_route_group_id_by_order_id={500: old_local_delivery.id},
     )
 
     monkeypatch.setattr(
@@ -104,7 +105,7 @@ def test_plan_change_bundle_includes_synced_old_route_stops(monkeypatch):
         },
     )
 
-    result = module.apply_local_delivery_plan_change(
+    result = module.apply_route_plan_change(
         ctx=ctx,
         order_instance=order,
         old_plan=old_plan,
@@ -130,7 +131,7 @@ def test_plan_change_bundle_uses_canonical_route_group_context(monkeypatch):
     order = SimpleNamespace(id=500)
 
     old_plan = SimpleNamespace(id=10, plan_type="local_delivery")
-    new_plan = SimpleNamespace(id=99, plan_type="international_shipping")
+    new_plan = None
 
     predecessor = _make_stop(
         stop_id=21,
@@ -157,8 +158,9 @@ def test_plan_change_bundle_uses_canonical_route_group_context(monkeypatch):
     route_group = SimpleNamespace(id=701, delivery_plan_id=old_plan.id)
 
     apply_context = PlanChangeApplyContext(
-        route_group_by_route_plan_id={old_plan.id: route_group},
+        route_groups_by_route_plan_id={old_plan.id: [route_group]},
         route_solutions_by_route_group_id={route_group.id: [route_solution]},
+        source_route_group_id_by_order_id={500: route_group.id},
     )
 
     monkeypatch.setattr(
@@ -178,7 +180,7 @@ def test_plan_change_bundle_uses_canonical_route_group_context(monkeypatch):
         },
     )
 
-    result = module.apply_local_delivery_plan_change(
+    result = module.apply_route_plan_change(
         ctx=ctx,
         order_instance=order,
         old_plan=old_plan,

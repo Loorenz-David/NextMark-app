@@ -8,5 +8,11 @@ def assign_order_to_plan(
     ctx: ServiceContext,
     order_id: int,
     plan_id: int,
+    destination_route_group_id: int | None = None,
 ) -> dict:
-    return update_order_route_plan(ctx, order_id, plan_id)
+    return update_order_route_plan(
+        ctx,
+        order_id,
+        plan_id,
+        destination_route_group_id=destination_route_group_id,
+    )

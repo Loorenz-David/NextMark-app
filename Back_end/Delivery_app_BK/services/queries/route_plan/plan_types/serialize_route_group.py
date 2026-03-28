@@ -1,16 +1,20 @@
 from Delivery_app_BK.models import RouteGroup
 from Delivery_app_BK.services.context import ServiceContext
+from Delivery_app_BK.services.domain.route_operations.plan.route_group_zone_snapshot import (
+    normalize_route_group_zone_snapshot,
+)
 from Delivery_app_BK.services.queries.utils import map_return_values
 
 
 def _serialize_route_group_item(instance: RouteGroup) -> dict:
     state = getattr(instance, "state", None)
+    raw_snapshot = getattr(instance, "zone_geometry_snapshot", None)
+    zone_snapshot = normalize_route_group_zone_snapshot(raw_snapshot)
     return {
         "id": instance.id,
         "client_id": instance.client_id,
-        "name": getattr(instance, "name", None),
         "zone_id": getattr(instance, "zone_id", None),
-        "zone_geometry_snapshot": getattr(instance, "zone_geometry_snapshot", None),
+        "zone_snapshot": zone_snapshot,
         "template_snapshot": getattr(instance, "template_snapshot", None),
         "actual_start_time": instance.actual_start_time,
         "actual_end_time": instance.actual_end_time,

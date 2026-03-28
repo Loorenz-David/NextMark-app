@@ -43,14 +43,17 @@ def test_parse_create_order_preserves_existing_fields_behavior():
     parsed = parse_create_order_request(
         {
             "route_plan_id": 3,
+            "route_group_id": 11,
             "reference_number": "REF-1",
             "order_state_id": 2,
         }
     )
 
     assert parsed.route_plan_id == 3
+    assert parsed.route_group_id == 11
     assert parsed.costumer is None
     assert parsed.fields["route_plan_id"] == 3
+    assert parsed.fields["route_group_id"] == 11
     assert parsed.fields["reference_number"] == "REF-1"
     assert parsed.fields["order_state_id"] == 2
 
@@ -59,12 +62,35 @@ def test_parse_create_order_accepts_route_plan_id_alias():
     parsed = parse_create_order_request(
         {
             "route_plan_id": 7,
+            "route_group_id": 71,
             "reference_number": "REF-2",
         }
     )
 
     assert parsed.route_plan_id == 7
+    assert parsed.route_group_id == 71
     assert parsed.fields["route_plan_id"] == 7
+    assert parsed.fields["route_group_id"] == 71
+
+
+def test_parse_create_order_requires_route_group_when_route_plan_is_present():
+    with pytest.raises(ValidationFailed):
+        parse_create_order_request(
+            {
+                "route_plan_id": 3,
+                "reference_number": "REF-1",
+            }
+        )
+
+
+def test_parse_create_order_requires_route_plan_when_route_group_is_present():
+    with pytest.raises(ValidationFailed):
+        parse_create_order_request(
+            {
+                "route_group_id": 11,
+                "reference_number": "REF-1",
+            }
+        )
 
 
 def test_parse_create_order_rejects_mismatched_plan_id_aliases():

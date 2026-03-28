@@ -42,16 +42,18 @@ def apply_order_plan_objective(
             value=route_plan_id,
         )
 
+    route_plan_type = getattr(route_plan, "plan_type", "local_delivery")
+
     effective_objective = (
         order_instance.order_plan_objective
         or plan_objective
-        or route_plan.plan_type
+        or route_plan_type
     )
     if not order_instance.order_plan_objective:
         order_instance.order_plan_objective = effective_objective
 
     handler: PlanObjectiveHandler | None = PLAN_OBJECTIVE_HANDLERS.get(
-        route_plan.plan_type
+        route_plan_type
     )
     if not handler:
         return PlanObjectiveCreateResult()

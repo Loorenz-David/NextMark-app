@@ -1,7 +1,7 @@
 # Third-party dependecies
 from datetime import date, datetime, time, timezone
 
-from sqlalchemy import Column, Float, ForeignKey, Index, Integer, String
+from sqlalchemy import Column, Float, ForeignKey, Index, Integer, String, text
 from sqlalchemy.orm import relationship, validates
 
 # Local application imports
@@ -127,4 +127,11 @@ class RoutePlan(db.Model, TeamScopedMixin):
 
     __table_args__ = (
         Index("ix_route_plan_created_at_id_desc", created_at.desc(), id.desc()),
+        Index(
+            "uq_route_plan_team_client_id",
+            "team_id",
+            "client_id",
+            unique=True,
+            postgresql_where=text("client_id IS NOT NULL"),
+        ),
     )

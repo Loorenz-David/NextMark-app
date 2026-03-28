@@ -25,7 +25,10 @@ def _plan(route_groups):
 
 
 def test_serialize_plans_includes_route_groups_count_for_list_shape():
-    route_groups = [SimpleNamespace(id=2, name="Zone B"), SimpleNamespace(id=1, name="Zone A")]
+    route_groups = [
+        SimpleNamespace(id=2, zone_geometry_snapshot={"name": "Zone B", "geometry": None}),
+        SimpleNamespace(id=1, zone_geometry_snapshot={"name": "Zone A", "geometry": None}),
+    ]
     serialized = serialize_plans(
         [_plan(route_groups)],
         ServiceContext(incoming_data={}, identity={}, on_query_return="list"),
@@ -39,14 +42,14 @@ def test_serialize_plans_includes_detail_route_groups_summary_when_requested():
     route_groups = [
         SimpleNamespace(
             id=9,
-            name="Zone South",
+            zone_geometry_snapshot={"name": "Zone South", "geometry": None},
             zone_id=7,
             total_orders=5,
             state=SimpleNamespace(id=2, name="OPEN"),
         ),
         SimpleNamespace(
             id=4,
-            name="Zone North",
+            zone_geometry_snapshot={"name": "Zone North", "geometry": None},
             zone_id=3,
             total_orders=1,
             state=None,

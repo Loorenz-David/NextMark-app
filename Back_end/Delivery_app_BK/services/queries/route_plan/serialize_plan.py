@@ -1,6 +1,9 @@
 from typing import Type, List
 from flask_sqlalchemy.model import Model
 from Delivery_app_BK.models import RoutePlan
+from Delivery_app_BK.services.domain.route_operations.plan.route_group_zone_snapshot import (
+    route_group_snapshot_name,
+)
 
 from ...context import ServiceContext
 from ..utils import map_return_values, calculate_plan_metrics
@@ -8,9 +11,12 @@ from ..utils import map_return_values, calculate_plan_metrics
 
 def _serialize_route_group_summary(route_group) -> dict:
     state = getattr(route_group, "state", None)
+    snapshot_name = route_group_snapshot_name(
+        getattr(route_group, "zone_geometry_snapshot", None)
+    )
     return {
         "id": route_group.id,
-        "name": getattr(route_group, "name", None),
+        "name": snapshot_name,
         "zone_id": getattr(route_group, "zone_id", None),
         "total_orders": getattr(route_group, "total_orders", None),
         "state": (
@@ -40,7 +46,7 @@ def serialize_plans(
         route_groups = sorted(
             list(getattr(instance, "route_groups", None) or []),
             key=lambda route_group: (
-                getattr(route_group, "name", "") or "",
+                route_group_snapshot_name(getattr(route_group, "zone_geometry_snapshot", None)) or "",
                 getattr(route_group, "id", 0) or 0,
             ),
         )

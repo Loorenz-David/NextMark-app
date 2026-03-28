@@ -26,9 +26,11 @@ def _fake_route_group(route_plan_id: int = 42) -> MagicMock:
     rg = MagicMock()
     rg.id = 10
     rg.client_id = "rg_10"
-    rg.name = "Zone North"
     rg.zone_id = 7
-    rg.zone_geometry_snapshot = {"type": "Polygon", "coordinates": []}
+    rg.zone_geometry_snapshot = {
+        "name": "Zone North",
+        "geometry": {"type": "Polygon", "coordinates": []},
+    }
     rg.template_snapshot = {"max_stops": 20}
     rg.actual_start_time = None
     rg.actual_end_time = None
@@ -74,6 +76,32 @@ def test_list_route_groups_returns_serialized_route_group():
     assert len(result["route_groups"]) == 1
     assert result["route_groups"][0]["id"] == 10
     assert result["route_groups"][0]["zone_id"] == 7
+    assert "name" not in result["route_groups"][0]
+    assert "zone_geometry_snapshot" not in result["route_groups"][0]
+    assert result["route_groups"][0]["zone_snapshot"] == {
+        "name": "Zone North",
+        "geometry": {"type": "Polygon", "coordinates": []},
+    }
+
+
+def test_list_route_groups_serializes_snapshot_shape():
+    ctx = make_ctx()
+    rg = _fake_route_group(route_plan_id=42)
+    rg.zone_geometry_snapshot = {
+        "name": "Snapshot Name",
+        "geometry": {"type": "Polygon", "coordinates": [[[0, 0], [1, 1], [0, 0]]]},
+    }
+    plan = _fake_route_plan(route_groups=[rg])
+
+    with patch(f"{MODULE}.get_instance", return_value=plan):
+        result = list_route_groups(42, ctx)
+
+    assert "name" not in result["route_groups"][0]
+    assert "zone_geometry_snapshot" not in result["route_groups"][0]
+    assert result["route_groups"][0]["zone_snapshot"] == {
+        "name": "Snapshot Name",
+        "geometry": {"type": "Polygon", "coordinates": [[[0, 0], [1, 1], [0, 0]]]},
+    }
 
 
 def test_list_route_groups_returns_deterministic_name_ordering():
@@ -81,11 +109,17 @@ def test_list_route_groups_returns_deterministic_name_ordering():
 
     rg_b = _fake_route_group(route_plan_id=42)
     rg_b.id = 11
-    rg_b.name = "Zone South"
+    rg_b.zone_geometry_snapshot = {
+        "name": "Zone South",
+        "geometry": {"type": "Polygon", "coordinates": []},
+    }
 
     rg_a = _fake_route_group(route_plan_id=42)
     rg_a.id = 12
-    rg_a.name = "Zone North"
+    rg_a.zone_geometry_snapshot = {
+        "name": "Zone North",
+        "geometry": {"type": "Polygon", "coordinates": []},
+    }
 
     # Intentionally pass unsorted order from relationship to ensure query serializer sorts.
     plan = _fake_route_plan(route_groups=[rg_b, rg_a])
@@ -93,7 +127,7 @@ def test_list_route_groups_returns_deterministic_name_ordering():
     with patch(f"{MODULE}.get_instance", return_value=plan):
         result = list_route_groups(42, ctx)
 
-    assert [group["name"] for group in result["route_groups"]] == ["Zone North", "Zone South"]
+    assert [group["id"] for group in result["route_groups"]] == [12, 11]
 
 
 # ---------------------------------------------------------------------------

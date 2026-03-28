@@ -16,6 +16,7 @@ from Delivery_app_BK.services.commands.order_assignment import (
     unassign_order_from_plan as unassign_order_from_plan_service,
 )
 from Delivery_app_BK.services.context import ServiceContext
+from Delivery_app_BK.services.requests.common.types import parse_optional_int
 from Delivery_app_BK.services.run_service import run_service
 
 
@@ -29,12 +30,24 @@ def assign_order_to_plan(order_id: int, plan_id: int):
     identity = get_jwt()
     incoming_data = request.get_json(silent=True) or {}
     prevent_event_bus = incoming_data.pop("prevent_event_bus", False)
+    destination_route_group_id = parse_optional_int(
+        incoming_data.get("route_group_id"),
+        field="route_group_id",
+    )
     ctx = ServiceContext(
         identity=identity,
         prevent_event_bus=prevent_event_bus,
     )
 
-    outcome = run_service(lambda c: assign_order_to_plan_service(c, order_id, plan_id), ctx)
+    outcome = run_service(
+        lambda c: assign_order_to_plan_service(
+            c,
+            order_id,
+            plan_id,
+            destination_route_group_id=destination_route_group_id,
+        ),
+        ctx,
+    )
     response = Response()
 
     if outcome.error:
@@ -100,13 +113,24 @@ def assign_orders_to_plan_batch(plan_id: int):
     identity = get_jwt()
     incoming_data = request.get_json(silent=True) or {}
     prevent_event_bus = incoming_data.pop("prevent_event_bus", False)
+    destination_route_group_id = parse_optional_int(
+        incoming_data.get("route_group_id"),
+        field="route_group_id",
+    )
     ctx = ServiceContext(
         incoming_data=incoming_data,
         identity=identity,
         prevent_event_bus=prevent_event_bus,
     )
 
-    outcome = run_service(lambda c: assign_orders_to_plan_batch_service(c, plan_id), ctx)
+    outcome = run_service(
+        lambda c: assign_orders_to_plan_batch_service(
+            c,
+            plan_id,
+            destination_route_group_id=destination_route_group_id,
+        ),
+        ctx,
+    )
     response = Response()
 
     if outcome.error:

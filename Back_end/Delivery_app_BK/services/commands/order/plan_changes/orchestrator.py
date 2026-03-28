@@ -1,41 +1,17 @@
 from __future__ import annotations
 
 from collections import defaultdict
-from collections.abc import Callable
 
 from Delivery_app_BK.models import (
-    InternationalShippingPlan,
     RouteGroup,
     RoutePlan,
     RouteSolution,
-    StorePickupPlan,
     db,
 )
 
 from ....context import ServiceContext
-from ...local_delivery_app import apply_order_plan_change as apply_local_delivery_plan_change
-from ...store_pickup_app import apply_order_plan_change as apply_store_pickup_plan_change
-from ...international_shipping_app import apply_order_plan_change as apply_international_shipping_plan_change
+from .route_plan_change import apply_route_plan_change
 from .types import PlanChangeApplyContext, PlanChangeResult
-
-
-PlanChangeHandler = Callable[
-    [ServiceContext, object, RoutePlan | None, RoutePlan | None, PlanChangeApplyContext],
-    PlanChangeResult,
-]
-
-PlanChangeContextLoader = Callable[
-    [ServiceContext, list[int], PlanChangeApplyContext],
-    None,
-]
-
-
-PLAN_CHANGE_HANDLERS: dict[str, PlanChangeHandler] = {
-    "local_delivery": apply_local_delivery_plan_change,
-    "store_pickup": apply_store_pickup_plan_change,
-    "international_shipping": apply_international_shipping_plan_change,
-}
-
 
 def apply_order_plan_change(
     ctx: ServiceContext,
@@ -44,61 +20,28 @@ def apply_order_plan_change(
     new_plan: RoutePlan | None,
     apply_context: PlanChangeApplyContext,
 ) -> PlanChangeResult:
-    old_plan_type = getattr(old_plan, "plan_type", None)
-    new_plan_type = getattr(new_plan, "plan_type", None)
-
-    if not old_plan_type and not new_plan_type:
+    if old_plan is None and new_plan is None:
         return PlanChangeResult()
 
-    handler_types = [
-        plan_type
-        for plan_type in (old_plan_type, new_plan_type)
-        if plan_type in PLAN_CHANGE_HANDLERS
-    ]
-    if not handler_types:
-        return PlanChangeResult()
-    unique_handler_types = list(dict.fromkeys(handler_types))
-
-    partial_results: list[PlanChangeResult] = []
-    instances: list[object] = []
-    post_flush_actions: list[Callable[[], None]] = []
-
-    for plan_type in unique_handler_types:
-        handler = PLAN_CHANGE_HANDLERS[plan_type]
-        partial = handler(ctx, order_instance, old_plan, new_plan, apply_context)
-        partial_results.append(partial)
-        instances.extend(partial.instances)
-        post_flush_actions.extend(partial.post_flush_actions)
-
-    return PlanChangeResult(
-        instances=instances,
-        post_flush_actions=post_flush_actions,
-        bundle_serializer=lambda results=partial_results: _serialize_bundle_results(results),
+    return apply_route_plan_change(
+        ctx=ctx,
+        order_instance=order_instance,
+        old_plan=old_plan,
+        new_plan=new_plan,
+        apply_context=apply_context,
     )
 
 
 def build_plan_change_apply_context(
     ctx: ServiceContext,
     plan_ids: list[int],
-    relevant_plan_types: set[str] | None = None,
 ) -> PlanChangeApplyContext:
     deduped_plan_ids = list(dict.fromkeys(plan_ids))
     apply_context = PlanChangeApplyContext()
     if not deduped_plan_ids:
         return apply_context
 
-    if relevant_plan_types is None:
-        loader_keys = set(PLAN_CHANGE_CONTEXT_LOADERS.keys())
-    else:
-        loader_keys = {
-            plan_type
-            for plan_type in relevant_plan_types
-            if plan_type in PLAN_CHANGE_CONTEXT_LOADERS
-        }
-
-    for plan_type in loader_keys:
-        loader = PLAN_CHANGE_CONTEXT_LOADERS[plan_type]
-        loader(ctx, deduped_plan_ids, apply_context)
+    _load_local_delivery_context(ctx, deduped_plan_ids, apply_context)
 
     return apply_context
 
@@ -116,10 +59,13 @@ def _load_local_delivery_context(
         route_group_query = route_group_query.filter(RouteGroup.team_id == ctx.team_id)
 
     route_group_instances = route_group_query.all()
-    route_group_by_route_plan_id = {
-        instance.route_plan_id: instance for instance in route_group_instances
+    route_groups_by_route_plan_id: defaultdict[int, list[RouteGroup]] = defaultdict(list)
+    for route_group in route_group_instances:
+        route_groups_by_route_plan_id[route_group.route_plan_id].append(route_group)
+    apply_context.route_groups_by_route_plan_id = {
+        route_plan_id: sorted(groups, key=lambda group: group.id)
+        for route_plan_id, groups in route_groups_by_route_plan_id.items()
     }
-    apply_context.route_group_by_route_plan_id = route_group_by_route_plan_id
 
     route_group_ids = [instance.id for instance in route_group_instances]
     route_solutions_by_route_group_id: defaultdict[int, list[RouteSolution]] = defaultdict(
@@ -137,52 +83,4 @@ def _load_local_delivery_context(
                 route_solution.route_group_id
             ].append(route_solution)
 
-    apply_context.route_solutions_by_route_group_id = dict(
-        route_solutions_by_route_group_id
-    )
-
-
-def _load_international_shipping_context(
-    ctx: ServiceContext,
-    plan_ids: list[int],
-    apply_context: PlanChangeApplyContext,
-) -> None:
-    query = db.session.query(InternationalShippingPlan).filter(
-        InternationalShippingPlan.route_plan_id.in_(plan_ids)
-    )
-    if ctx.team_id:
-        query = query.filter(InternationalShippingPlan.team_id == ctx.team_id)
-
-    apply_context.international_shipping_by_plan_id = {
-        instance.route_plan_id: instance for instance in query.all()
-    }
-
-
-def _load_store_pickup_context(
-    ctx: ServiceContext,
-    plan_ids: list[int],
-    apply_context: PlanChangeApplyContext,
-) -> None:
-    query = db.session.query(StorePickupPlan).filter(
-        StorePickupPlan.route_plan_id.in_(plan_ids)
-    )
-    if ctx.team_id:
-        query = query.filter(StorePickupPlan.team_id == ctx.team_id)
-
-    apply_context.store_pickup_by_plan_id = {
-        instance.route_plan_id: instance for instance in query.all()
-    }
-
-
-PLAN_CHANGE_CONTEXT_LOADERS: dict[str, PlanChangeContextLoader] = {
-    "local_delivery": _load_local_delivery_context,
-    "international_shipping": _load_international_shipping_context,
-    "store_pickup": _load_store_pickup_context,
-}
-
-
-def _serialize_bundle_results(results: list[PlanChangeResult]) -> dict:
-    bundle: dict = {}
-    for result in results:
-        bundle.update(result.serialize_bundle())
-    return bundle
+    apply_context.route_solutions_by_route_group_id = dict(route_solutions_by_route_group_id)

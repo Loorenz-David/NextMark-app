@@ -29,7 +29,11 @@ def apply_local_delivery_objective(
     route_plan,
     plan_objective: str,
 ) -> PlanObjectiveCreateResult:
-    local_delivery = _get_route_group(ctx, route_plan.id)
+    local_delivery = _get_route_group(
+        ctx,
+        route_plan.id,
+        getattr(order_instance, "route_group_id", None),
+    )
     route_solutions = list(local_delivery.route_solutions or [])
     if not route_solutions:
         raise ValidationFailed("Route solution not found for route group.")
@@ -88,16 +92,31 @@ def apply_local_delivery_objective(
     )
 
 
-def _get_route_group(ctx: ServiceContext, route_plan_id: int) -> RouteGroup:
+def _get_route_group(
+    ctx: ServiceContext,
+    route_plan_id: int,
+    route_group_id: int | None,
+) -> RouteGroup:
     query = db.session.query(RouteGroup).filter(
         RouteGroup.route_plan_id == route_plan_id
     )
     if ctx.team_id:
         query = query.filter(RouteGroup.team_id == ctx.team_id)
-    local_delivery = query.one_or_none()
-    if not local_delivery:
+
+    if route_group_id is not None:
+        local_delivery = query.filter(RouteGroup.id == route_group_id).one_or_none()
+        if not local_delivery:
+            raise ValidationFailed("Route group not found for order objective.")
+        return local_delivery
+
+    route_groups = query.order_by(RouteGroup.id.asc()).all()
+    if not route_groups:
         raise ValidationFailed("Route group not found for order objective.")
-    return local_delivery
+    if len(route_groups) > 1:
+        raise ValidationFailed(
+            "route_group_id is required when route plan has multiple route groups."
+        )
+    return route_groups[0]
 
 
 def _skip_reason_value(reason) -> str | None:

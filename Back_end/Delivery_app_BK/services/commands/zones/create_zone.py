@@ -6,30 +6,10 @@ from Delivery_app_BK.models import db
 from Delivery_app_BK.models.tables.zones.zone import Zone
 from Delivery_app_BK.models.tables.zones.zone_version import ZoneVersion
 from Delivery_app_BK.services.context import ServiceContext
+from Delivery_app_BK.services.queries.zones.serialize_zone import serialize_zone
 from Delivery_app_BK.zones.services.postgis_geometry import refresh_zone_geometry_derivatives
 
 _VALID_ZONE_TYPES = frozenset({"bootstrap", "system", "user"})
-
-
-def _serialize_zone(z: Zone) -> dict:
-    return {
-        "id": z.id,
-        "team_id": z.team_id,
-        "zone_version_id": z.zone_version_id,
-        "city_key": z.city_key,
-        "name": z.name,
-        "zone_type": z.zone_type,
-        "centroid_lat": z.centroid_lat,
-        "centroid_lng": z.centroid_lng,
-        "geometry": z.geometry,
-        "min_lat": z.min_lat,
-        "max_lat": z.max_lat,
-        "min_lng": z.min_lng,
-        "max_lng": z.max_lng,
-        "is_active": z.is_active,
-        "template": None,
-        "created_at": z.created_at.isoformat() if z.created_at else None,
-    }
 
 
 def create_zone(ctx: ServiceContext) -> dict:
@@ -68,4 +48,4 @@ def create_zone(ctx: ServiceContext) -> dict:
     db.session.flush()
     refresh_zone_geometry_derivatives(zone.id)
     db.session.commit()
-    return _serialize_zone(zone)
+    return serialize_zone(zone)

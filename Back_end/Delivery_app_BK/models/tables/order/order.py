@@ -92,6 +92,12 @@ class Order(
         Integer, 
         ForeignKey("route_plan.id", ondelete="SET NULL"), 
     )
+    route_group_id = Column(
+        Integer,
+        ForeignKey("route_group.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
     costumer_id = Column(
         Integer,
         ForeignKey("costumer.id", ondelete="SET NULL"),
@@ -151,6 +157,12 @@ class Order(
     route_plan = relationship(
         "RoutePlan",
         back_populates="orders"
+    )
+
+    route_group = relationship(
+        "RouteGroup",
+        back_populates="orders",
+        lazy="selectin",
     )
 
     costumer = relationship(

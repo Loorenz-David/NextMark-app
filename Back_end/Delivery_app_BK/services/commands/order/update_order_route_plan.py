@@ -9,6 +9,8 @@ from Delivery_app_BK.models import (
     CaseChat,
     Order,
     OrderCase,
+    OrderZoneAssignment,
+    RouteGroup,
     RoutePlan,
     RouteSolution,
     RouteSolutionStop,
@@ -52,6 +54,7 @@ def apply_orders_route_plan_change(
     ctx: ServiceContext,
     order_ids: int | list[int],
     plan_id: int,
+    destination_route_group_id: int | None = None,
 ) -> dict:
     normalized_order_ids = _normalize_order_ids(order_ids)
     if not normalized_order_ids:
@@ -66,21 +69,25 @@ def apply_orders_route_plan_change(
     old_plan_ids: set[int] = set()
     changed_orders: list[Order] = []
     old_plan_id_by_order_id: dict[int, int | None] = {}
+    old_route_group_id_by_order_id: dict[int, int | None] = {}
 
     for target_id in normalized_order_ids:
         order_instance = orders_by_target_id[target_id]
         old_plan_id = _get_order_route_plan_id(order_instance)
+        old_route_group_id = _get_order_route_group_id(order_instance)
 
         if old_plan_id == new_plan.id:
-            ctx.set_warning(
-                f"Order: {target_id}. Is already in the plan that was provided on update"
-            )
-            continue
+            if destination_route_group_id is None or old_route_group_id == destination_route_group_id:
+                ctx.set_warning(
+                    f"Order: {target_id}. Is already in the destination selection provided on update"
+                )
+                continue
 
         if old_plan_id is not None:
             old_plan_ids.add(old_plan_id)
 
         old_plan_id_by_order_id[order_instance.id] = old_plan_id
+        old_route_group_id_by_order_id[order_instance.id] = old_route_group_id
         changed_orders.append(order_instance)
 
     if not changed_orders:
@@ -90,24 +97,34 @@ def apply_orders_route_plan_change(
         }
 
     old_plans_by_id = _load_route_plans_by_id(ctx, list(old_plan_ids))
+    route_groups_for_new_plan = _load_route_groups_for_plan(ctx, new_plan.id)
+    destination_route_group_id_by_order_id = _resolve_destination_route_group_ids(
+        ctx=ctx,
+        changed_orders=changed_orders,
+        old_plan_id_by_order_id=old_plan_id_by_order_id,
+        route_groups_for_new_plan=route_groups_for_new_plan,
+        destination_route_group_id=destination_route_group_id,
+        new_plan_id=new_plan.id,
+    )
+
     relevant_plan_ids = set(old_plan_ids)
     relevant_plan_ids.add(new_plan.id)
-    relevant_plan_types = {new_plan.plan_type}
-    relevant_plan_types.update(
-        plan.plan_type
-        for plan in old_plans_by_id.values()
-        if getattr(plan, "plan_type", None)
-    )
     apply_context = build_plan_change_apply_context(
         ctx=ctx,
         plan_ids=list(relevant_plan_ids),
-        relevant_plan_types=relevant_plan_types,
     )
+    apply_context.source_route_group_id_by_order_id = {
+        order_id: route_group_id
+        for order_id, route_group_id in old_route_group_id_by_order_id.items()
+        if route_group_id is not None
+    }
+    apply_context.destination_route_group_id_by_order_id = destination_route_group_id_by_order_id
     old_local_delivery_batch = _prepare_old_local_delivery_batch_changes(
         ctx=ctx,
         apply_context=apply_context,
         old_plans_by_id=old_plans_by_id,
         old_plan_id_by_order_id=old_plan_id_by_order_id,
+        old_route_group_id_by_order_id=old_route_group_id_by_order_id,
     )
     batched_old_local_delivery_order_ids: set[int] = old_local_delivery_batch["order_ids"]
 
@@ -130,7 +147,11 @@ def apply_orders_route_plan_change(
         )
 
         _set_order_route_plan_id(order_instance, new_plan.id)
-        order_instance.order_plan_objective = new_plan.plan_type
+        _set_order_route_group_id(
+            order_instance,
+            destination_route_group_id_by_order_id.get(order_instance.id),
+        )
+        order_instance.order_plan_objective = "local_delivery"
 
         change_result = apply_order_plan_change(
             ctx=ctx,
@@ -159,11 +180,7 @@ def apply_orders_route_plan_change(
     if post_flush_actions:
         db.session.flush()
 
-    plans_to_touch = {
-        plan.id: plan
-        for plan in [new_plan, *old_plans_by_id.values()]
-        if getattr(plan, "plan_type", None) == "local_delivery"
-    }
+    plans_to_touch = {plan.id: plan for plan in [new_plan, *old_plans_by_id.values()]}
     for route_plan in plans_to_touch.values():
         touch_route_freshness(route_plan)
     if plans_to_touch:
@@ -243,20 +260,21 @@ def _prepare_old_local_delivery_batch_changes(
     apply_context,
     old_plans_by_id: dict[int, RoutePlan],
     old_plan_id_by_order_id: dict[int, int | None],
+    old_route_group_id_by_order_id: dict[int, int | None],
 ) -> dict:
-    order_ids_by_old_local_plan_id: dict[int, list[int]] = {}
+    order_ids_by_old_route_group_id: dict[int, list[int]] = {}
     batched_order_ids: set[int] = set()
 
     for order_id, old_plan_id in old_plan_id_by_order_id.items():
-        if old_plan_id is None:
+        old_route_group_id = old_route_group_id_by_order_id.get(order_id)
+        if old_plan_id is None or old_route_group_id is None:
             continue
-        old_plan = old_plans_by_id.get(old_plan_id)
-        if not old_plan or getattr(old_plan, "plan_type", None) != "local_delivery":
+        if old_plan_id not in old_plans_by_id:
             continue
-        order_ids_by_old_local_plan_id.setdefault(old_plan_id, []).append(order_id)
+        order_ids_by_old_route_group_id.setdefault(old_route_group_id, []).append(order_id)
         batched_order_ids.add(order_id)
 
-    if not order_ids_by_old_local_plan_id:
+    if not order_ids_by_old_route_group_id:
         return {
             "instances": [],
             "post_flush_actions": [],
@@ -273,16 +291,12 @@ def _prepare_old_local_delivery_batch_changes(
     synced_route_solutions: list[RouteSolution] = []
     starts_by_route_id: dict[int, int] = {}
 
-    for old_plan_id, order_ids in order_ids_by_old_local_plan_id.items():
-        old_local_delivery = apply_context.route_group_by_route_plan_id.get(old_plan_id)
-        if not old_local_delivery:
-            raise ValidationFailed("Local delivery plan not found for order change.")
-
+    for old_route_group_id, order_ids in order_ids_by_old_route_group_id.items():
         (
             removed_updated_stops,
             removed_updated_route_solutions,
             removed_starts_by_route_id,
-        ) = remove_orders_stops_for_local_delivery(order_ids, old_local_delivery.id)
+        ) = remove_orders_stops_for_local_delivery(order_ids, old_route_group_id)
 
         updated_stops.extend(removed_updated_stops)
         updated_route_solutions.extend(removed_updated_route_solutions)
@@ -495,20 +509,31 @@ def update_orders_route_plan(
     ctx: ServiceContext,
     order_ids: int | list[int],
     plan_id: int | None,
+    destination_route_group_id: int | None = None,
 ) -> dict:
     try:
         with db.session.begin():
             if plan_id is None:
                 outcome = apply_orders_route_plan_unassign(ctx, order_ids)
             else:
-                outcome = apply_orders_route_plan_change(ctx, order_ids, plan_id)
+                outcome = apply_orders_route_plan_change(
+                    ctx,
+                    order_ids,
+                    plan_id,
+                    destination_route_group_id=destination_route_group_id,
+                )
     except InvalidRequestError as exc:
         if "already begun" not in str(exc).lower():
             raise
         if plan_id is None:
             outcome = apply_orders_route_plan_unassign(ctx, order_ids)
         else:
-            outcome = apply_orders_route_plan_change(ctx, order_ids, plan_id)
+            outcome = apply_orders_route_plan_change(
+                ctx,
+                order_ids,
+                plan_id,
+                destination_route_group_id=destination_route_group_id,
+            )
 
     pending_events = outcome.get("pending_events") or []
     if pending_events:
@@ -521,8 +546,14 @@ def update_order_route_plan(
     ctx: ServiceContext,
     order_id: int,
     plan_id: int,
+    destination_route_group_id: int | None = None,
 ) -> dict:
-    return update_orders_route_plan(ctx, order_id, plan_id)
+    return update_orders_route_plan(
+        ctx,
+        order_id,
+        plan_id,
+        destination_route_group_id=destination_route_group_id,
+    )
 
 
 def unassign_order_route_plan(
@@ -548,6 +579,7 @@ def apply_orders_route_plan_unassign(
     old_plan_ids: set[int] = set()
     changed_orders: list[Order] = []
     old_plan_id_by_order_id: dict[int, int | None] = {}
+    old_route_group_id_by_order_id: dict[int, int | None] = {}
 
     for target_id in normalized_order_ids:
         order_instance = orders_by_target_id[target_id]
@@ -560,6 +592,9 @@ def apply_orders_route_plan_unassign(
 
         old_plan_ids.add(old_plan_id)
         old_plan_id_by_order_id[order_instance.id] = old_plan_id
+        old_route_group_id_by_order_id[order_instance.id] = _get_order_route_group_id(
+            order_instance
+        )
         changed_orders.append(order_instance)
 
     if not changed_orders:
@@ -569,21 +604,21 @@ def apply_orders_route_plan_unassign(
         }
 
     old_plans_by_id = _load_route_plans_by_id(ctx, list(old_plan_ids))
-    relevant_plan_types = {
-        plan.plan_type
-        for plan in old_plans_by_id.values()
-        if getattr(plan, "plan_type", None)
-    }
     apply_context = build_plan_change_apply_context(
         ctx=ctx,
         plan_ids=list(old_plan_ids),
-        relevant_plan_types=relevant_plan_types,
     )
+    apply_context.source_route_group_id_by_order_id = {
+        order_id: route_group_id
+        for order_id, route_group_id in old_route_group_id_by_order_id.items()
+        if route_group_id is not None
+    }
     old_local_delivery_batch = _prepare_old_local_delivery_batch_changes(
         ctx=ctx,
         apply_context=apply_context,
         old_plans_by_id=old_plans_by_id,
         old_plan_id_by_order_id=old_plan_id_by_order_id,
+        old_route_group_id_by_order_id=old_route_group_id_by_order_id,
     )
     batched_old_local_delivery_order_ids: set[int] = old_local_delivery_batch["order_ids"]
 
@@ -606,6 +641,7 @@ def apply_orders_route_plan_unassign(
         )
 
         _set_order_route_plan_id(order_instance, None)
+        _set_order_route_group_id(order_instance, None)
         order_instance.order_plan_objective = None
 
         change_result = apply_order_plan_change(
@@ -635,11 +671,7 @@ def apply_orders_route_plan_unassign(
     if post_flush_actions:
         db.session.flush()
 
-    plans_to_touch = {
-        plan.id: plan
-        for plan in old_plans_by_id.values()
-        if getattr(plan, "plan_type", None) == "local_delivery"
-    }
+    plans_to_touch = {plan.id: plan for plan in old_plans_by_id.values()}
     for route_plan in plans_to_touch.values():
         touch_route_freshness(route_plan)
     if plans_to_touch:
@@ -720,6 +752,83 @@ def _normalize_order_ids(order_ids: int | list[int]) -> list[int]:
     return deduped_order_ids
 
 
+def _load_route_groups_for_plan(
+    ctx: ServiceContext,
+    route_plan_id: int,
+) -> list[RouteGroup]:
+    query = db.session.query(RouteGroup).filter(RouteGroup.route_plan_id == route_plan_id)
+    if ctx.team_id:
+        query = query.filter(RouteGroup.team_id == ctx.team_id)
+    route_groups = query.order_by(RouteGroup.id.asc()).all()
+    if not route_groups:
+        raise ValidationFailed("Route group not found for destination route plan.")
+    return route_groups
+
+
+def _load_zone_assignments_by_order_id(
+    order_ids: list[int],
+) -> dict[int, OrderZoneAssignment]:
+    if not order_ids:
+        return {}
+
+    rows = (
+        db.session.query(OrderZoneAssignment)
+        .filter(OrderZoneAssignment.order_id.in_(order_ids))
+        .all()
+    )
+    return {row.order_id: row for row in rows}
+
+
+def _resolve_destination_route_group_ids(
+    *,
+    ctx: ServiceContext,
+    changed_orders: list[Order],
+    old_plan_id_by_order_id: dict[int, int | None],
+    route_groups_for_new_plan: list[RouteGroup],
+    destination_route_group_id: int | None,
+    new_plan_id: int,
+) -> dict[int, int]:
+    if destination_route_group_id is not None:
+        if not any(group.id == destination_route_group_id for group in route_groups_for_new_plan):
+            raise ValidationFailed("route_group_id must belong to the destination route plan.")
+        return {order.id: destination_route_group_id for order in changed_orders}
+
+    if len(route_groups_for_new_plan) == 1:
+        only_group_id = route_groups_for_new_plan[0].id
+        return {order.id: only_group_id for order in changed_orders}
+
+    zone_assignments_by_order_id = _load_zone_assignments_by_order_id(
+        [order.id for order in changed_orders if order.id is not None]
+    )
+    route_group_id_by_zone_id = {
+        group.zone_id: group.id
+        for group in route_groups_for_new_plan
+        if group.zone_id is not None
+    }
+
+    destination_by_order_id: dict[int, int] = {}
+    for order in changed_orders:
+        if old_plan_id_by_order_id.get(order.id) == new_plan_id:
+            current_route_group_id = _get_order_route_group_id(order)
+            if current_route_group_id is not None:
+                destination_by_order_id[order.id] = current_route_group_id
+                continue
+
+        assignment = zone_assignments_by_order_id.get(order.id)
+        zone_id = None
+        if assignment is not None and not assignment.is_unassigned:
+            zone_id = assignment.zone_id
+
+        mapped_route_group_id = route_group_id_by_zone_id.get(zone_id)
+        if mapped_route_group_id is None:
+            raise ValidationFailed(
+                f"Unable to infer destination route_group_id for order {order.id}."
+            )
+        destination_by_order_id[order.id] = mapped_route_group_id
+
+    return destination_by_order_id
+
+
 def _resolve_plan_instance(ctx: ServiceContext, plan_id: int) -> RoutePlan:
     if isinstance(plan_id, bool) or not isinstance(plan_id, int):
         raise ValidationFailed("plan_id must be provided as an integer.")
@@ -777,3 +886,11 @@ def _get_order_route_plan_id(order: Order) -> int | None:
 
 def _set_order_route_plan_id(order: Order, route_plan_id: int | None) -> None:
     order.route_plan_id = route_plan_id
+
+
+def _get_order_route_group_id(order: Order) -> int | None:
+    return getattr(order, "route_group_id", None)
+
+
+def _set_order_route_group_id(order: Order, route_group_id: int | None) -> None:
+    order.route_group_id = route_group_id

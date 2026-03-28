@@ -3,6 +3,10 @@ from sqlalchemy.orm.exc import NoResultFound
 from Delivery_app_BK.models import RoutePlan
 from Delivery_app_BK.errors import NotFound
 from Delivery_app_BK.services.context import ServiceContext
+from Delivery_app_BK.services.domain.route_operations.plan.route_group_zone_snapshot import (
+    normalize_route_group_zone_snapshot,
+    route_group_snapshot_name,
+)
 from Delivery_app_BK.services.queries.get_instance import get_instance
 
 
@@ -31,12 +35,13 @@ def _serialize_route_group(route_group) -> dict:
     zone = getattr(route_group, "zone", None)
     driver = getattr(route_group, "driver", None)
     state = getattr(route_group, "state", None)
+    raw_snapshot = getattr(route_group, "zone_geometry_snapshot", None)
+    zone_snapshot = normalize_route_group_zone_snapshot(raw_snapshot)
     return {
         "id": route_group.id,
         "client_id": route_group.client_id,
-        "name": getattr(route_group, "name", None),
         "zone_id": getattr(route_group, "zone_id", None),
-        "zone_geometry_snapshot": getattr(route_group, "zone_geometry_snapshot", None),
+        "zone_snapshot": zone_snapshot,
         "template_snapshot": getattr(route_group, "template_snapshot", None),
         "actual_start_time": route_group.actual_start_time,
         "actual_end_time": route_group.actual_end_time,
@@ -80,7 +85,10 @@ def list_route_groups(route_plan_id: int, ctx: ServiceContext) -> dict:
 
     route_groups = sorted(
         list(route_plan.route_groups or []),
-        key=lambda group: (((group.name or "").lower()), (group.id or 0)),
+        key=lambda group: (
+            (route_group_snapshot_name(getattr(group, "zone_geometry_snapshot", None)) or "").lower(),
+            (group.id or 0),
+        ),
     )
     serialized = [_serialize_route_group(route_group) for route_group in route_groups]
 

@@ -43,8 +43,10 @@ ORDER_ALLOWED_FIELDS = {
     "delivery_windows",
     "order_state_id",
     "route_plan_id",
+    "route_group_id",
     "items",
     "operation_type",
+    "order_notes",
 }
 
 ORDER_FORBIDDEN_FIELDS = {
@@ -149,7 +151,8 @@ class OrderCreateRequest:
     fields: dict
     items: list[ItemCreateRequest]
     route_plan_id: int | None
-    costumer: OrderCostumerRequest | None
+    route_group_id: int | None = None
+    costumer: OrderCostumerRequest | None = None
     delivery_windows: list[dict] | None = None
 
 
@@ -177,8 +180,23 @@ def parse_create_order_request(raw_fields: dict) -> OrderCreateRequest:
         raw_fields.get("route_plan_id"),
         field="route_plan_id",
     )
+    route_group_id = _parse_route_group_id(
+        raw_fields.get("route_group_id"),
+        field="route_group_id",
+    )
+    if route_plan_id is not None and route_group_id is None:
+        raise ValidationFailed(
+            "route_group_id is required when route_plan_id is provided."
+        )
+    if route_group_id is not None and route_plan_id is None:
+        raise ValidationFailed(
+            "route_plan_id is required when route_group_id is provided."
+        )
+
     if route_plan_id is not None:
         order_fields["route_plan_id"] = route_plan_id
+    if route_group_id is not None:
+        order_fields["route_group_id"] = route_group_id
     costumer = _parse_costumer(raw_fields.get("costumer"))
 
     for field in ORDER_OPTIONAL_STRING_FIELDS:
@@ -225,12 +243,25 @@ def parse_create_order_request(raw_fields: dict) -> OrderCreateRequest:
             field="marketing_messages",
         )
 
+    if "order_notes" in raw_fields:
+        order_notes = parse_optional_json(
+            raw_fields.get("order_notes"),
+            field="order_notes",
+        )
+        if order_notes is not None:
+            if not isinstance(order_notes, list):
+                raise ValidationFailed("order_notes must be an array of strings.")
+            if any(not isinstance(note, str) for note in order_notes):
+                raise ValidationFailed("order_notes must be an array of strings.")
+        order_fields["order_notes"] = order_notes
+
     item_requests = _parse_items(raw_fields)
     delivery_windows = _parse_delivery_windows(raw_fields)
     return OrderCreateRequest(
         fields=order_fields,
         items=item_requests,
         route_plan_id=route_plan_id,
+        route_group_id=route_group_id,
         costumer=costumer,
         delivery_windows=delivery_windows,
     )
@@ -355,6 +386,15 @@ def _parse_route_plan_id(value, *, field: str) -> int | None:
     if value is None:
         return None
     return parse_required_int(value, field=field)
+
+
+def _parse_route_group_id(value, *, field: str) -> int | None:
+    if value is None:
+        return None
+    parsed = parse_required_int(value, field=field)
+    if parsed <= 0:
+        raise ValidationFailed(f"{field} must be greater than 0.")
+    return parsed
 
 
 def _parse_costumer_id(value) -> int | None:

@@ -13,10 +13,12 @@ from Delivery_app_BK.models import (
 
 @dataclass
 class PlanChangeApplyContext:
-    route_group_by_route_plan_id: dict[int, RouteGroup] = field(default_factory=dict)
+    route_groups_by_route_plan_id: dict[int, list[RouteGroup]] = field(default_factory=dict)
     route_solutions_by_route_group_id: dict[int, list[RouteSolution]] = field(
         default_factory=dict
     )
+    source_route_group_id_by_order_id: dict[int, int] = field(default_factory=dict)
+    destination_route_group_id_by_order_id: dict[int, int] = field(default_factory=dict)
     international_shipping_by_plan_id: dict[int, InternationalShippingPlan] = field(
         default_factory=dict
     )

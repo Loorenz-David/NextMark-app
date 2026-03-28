@@ -21,6 +21,9 @@ from Delivery_app_BK.services.domain.route_operations.local_delivery import (
     normalize_local_delivery_route_solution_defaults,
 )
 from Delivery_app_BK.services.domain.route_operations.plan.plan_states import PlanStateId
+from Delivery_app_BK.services.domain.route_operations.plan.route_group_zone_snapshot import (
+    build_route_group_zone_snapshot,
+)
 from Delivery_app_BK.services.domain.route_operations.plan.recompute_route_group_totals import (
     recompute_route_group_totals,
 )
@@ -63,6 +66,33 @@ def create_plan(ctx: ServiceContext):
         creation_context: list[dict] = []
 
         for item in create_items:
+            if item.client_id:
+                existing_plan = RoutePlan.query.filter_by(
+                    team_id=ctx.team_id,
+                    client_id=item.client_id,
+                ).first()
+                if existing_plan is not None:
+                    bundle: dict = {"delivery_plan": serialize_created_route_plan(existing_plan)}
+                    existing_groups = sorted(
+                        list(getattr(existing_plan, "route_groups", None) or []),
+                        key=lambda g: g.id,
+                    )
+                    if existing_groups:
+                        bundle["route_groups"] = [
+                            serialize_created_route_group(g) for g in existing_groups
+                        ]
+                        existing_solutions = [
+                            s
+                            for g in existing_groups
+                            for s in (g.route_solutions or [])
+                        ]
+                        if existing_solutions:
+                            bundle["route_solutions"] = [
+                                serialize_created_route_solution(s) for s in existing_solutions
+                            ]
+                    created_bundles.append(bundle)
+                    continue
+
             route_plan_fields = {
                 "client_id": item.client_id,
                 "label": item.label,
@@ -216,8 +246,10 @@ def _build_zone_route_group_instances(
                 "client_id": defaults.get("client_id") or generate_client_id("route_group"),
                 "route_plan_id": route_plan_instance.id,
                 "zone_id": zone.id,
-                "name": zone.name,
-                "zone_geometry_snapshot": zone.geometry,
+                "zone_geometry_snapshot": build_route_group_zone_snapshot(
+                    zone_name=zone.name,
+                    geometry=zone.geometry,
+                ),
                 "template_snapshot": template_config,
                 "total_orders": 0,
             },

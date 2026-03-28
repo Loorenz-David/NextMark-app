@@ -42,7 +42,6 @@ class RouteGroup(db.Model, TeamScopedMixin):
         nullable=False,
     )
     zone_id = Column(Integer, ForeignKey("zone.id", ondelete="SET NULL"), nullable=True, index=True)
-    name = Column(String(255), nullable=True)
     zone_geometry_snapshot = Column(JSONB().with_variant(JSON, "sqlite"), nullable=True)
     template_snapshot = Column(JSONB().with_variant(JSON, "sqlite"), nullable=True)
 
@@ -69,6 +68,12 @@ class RouteGroup(db.Model, TeamScopedMixin):
     route_plan = relationship(
         "RoutePlan",
         back_populates="route_groups",
+    )
+
+    orders = relationship(
+        "Order",
+        back_populates="route_group",
+        lazy="selectin",
     )
 
     zone = relationship("Zone", lazy="selectin")

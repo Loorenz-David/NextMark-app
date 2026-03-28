@@ -9,6 +9,9 @@ from Delivery_app_BK.services.context import ServiceContext
 from Delivery_app_BK.services.domain.route_operations.plan.recompute_route_group_totals import (
     recompute_route_group_totals,
 )
+from Delivery_app_BK.services.domain.route_operations.plan.route_group_zone_snapshot import (
+    build_route_group_zone_snapshot,
+)
 from Delivery_app_BK.services.queries.route_plan.plan_types.serialize_route_group import (
     serialize_route_group,
 )
@@ -83,8 +86,10 @@ def materialize_route_groups(ctx: ServiceContext) -> list[dict]:
             client_id=f"route_group:{route_plan_id}:{zone.id}",
             route_plan_id=route_plan_id,
             zone_id=zone.id,
-            name=zone.name,
-            zone_geometry_snapshot=zone.geometry,
+            zone_geometry_snapshot=build_route_group_zone_snapshot(
+                zone_name=zone.name,
+                geometry=zone.geometry,
+            ),
             template_snapshot=(active_template.config_json if active_template else {}),
         )
         try:
