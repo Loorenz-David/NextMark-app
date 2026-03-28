@@ -10,7 +10,6 @@ import { RouteGroupsPageContent } from "./RouteGroupsPageContent.page";
 
 type PlanOrdersPagePayload = {
   planId?: number;
-  routeGroupId?: number | null;
   freshAfter?: string | null;
 };
 
@@ -37,17 +36,17 @@ export const RouteGroupsPageLayout = ({
   hasActiveRouteGroup,
 }: RouteGroupsPageLayoutProps) => {
   return (
-    <div className="flex h-full w-full flex-col bg-[var(--color-primary)]/5 md:flex-row">
-      <div className="flex min-h-0 flex-1 flex-col">
+    <div className="flex h-full w-full min-w-0 flex-col overflow-hidden bg-[var(--color-primary)]/5 md:flex-row">
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
         <RouteGroupsPageHeader
           summary={headerSummary}
           onRequestClose={onRequestClose}
         />
-        <div className="flex min-h-0 flex-1 flex-col md:flex-row">
-          <div className="min-h-0 border-b border-white/8 md:h-full md:border-b-0 md:border-r md:border-white/8">
+        <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden md:flex-row">
+          <div className="min-h-0 min-w-0 border-b border-white/8 md:h-full md:border-b-0 md:border-r md:border-white/8">
             <RouteGroupRail items={routeGroups} onClick={onRouteGroupClick} />
           </div>
-          <div className="min-h-0 flex-1">
+          <div className="min-h-0 min-w-0 flex-1 overflow-hidden">
             <RouteGroupsPageContent
               showOptimizeRow={showOptimizeRow}
               hasActiveRouteGroup={hasActiveRouteGroup}
@@ -70,7 +69,6 @@ export const RouteGroupsPage = ({
   return (
     <RouteGroupPageProvider
       planId={planId}
-      preferredRouteGroupId={payload?.routeGroupId ?? null}
       freshAfter={payload?.freshAfter ?? null}
     >
       <RouteGroupsPageScreen planId={planId} onRequestClose={onRequestClose} />
@@ -98,7 +96,7 @@ const RouteGroupsPageScreen = ({
 
   if (!hasRouteGroups) {
     return (
-      <div className="flex h-full w-full flex-col bg-[var(--color-primary)]/5">
+      <div className="flex h-full w-full min-w-0 flex-col overflow-hidden bg-[var(--color-primary)]/5">
         <RouteGroupsPageHeader
           summary={headerSummary}
           onRequestClose={onRequestClose}

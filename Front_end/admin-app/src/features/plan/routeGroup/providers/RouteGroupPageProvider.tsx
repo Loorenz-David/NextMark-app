@@ -20,14 +20,12 @@ import type { PayloadBase } from '@/features/home-route-operations/types/types'
 
 type RouteGroupPageProviderProps = {
   planId: number | null
-  preferredRouteGroupId?: number | null
   freshAfter?: string | null
   children: ReactNode
 }
 
 export function RouteGroupPageProvider({
   planId,
-  preferredRouteGroupId,
   freshAfter,
   children,
 }: RouteGroupPageProviderProps) {
@@ -85,7 +83,6 @@ export function RouteGroupPageProvider({
   useRouteGroupPageInitializationFlow(
     planId,
     freshAfter ?? baseControls.payload?.freshAfter ?? null,
-    preferredRouteGroupId ?? baseControls.payload?.routeGroupId ?? null,
   )
   useRouteGroupPageEscapeFlow({
     isMobile,

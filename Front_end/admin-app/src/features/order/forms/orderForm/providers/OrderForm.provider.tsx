@@ -1,43 +1,46 @@
-import type { Dispatch, ReactNode, SetStateAction } from 'react'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import type { Dispatch, ReactNode, SetStateAction } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-import { useMobile } from '@/app/contexts/MobileContext'
-import { useCostumerByServerId, type Costumer } from '@/features/costumer'
-import { useCostumerQueries } from '@/features/costumer/controllers/costumerQueries.controller'
-import { hasFormChanges } from '@shared-domain'
-import { formatIsoDate } from '@/shared/utils/formatIsoDate'
+import { useMobile } from "@/app/contexts/MobileContext";
+import { useCostumerByServerId, type Costumer } from "@/features/costumer";
+import { useCostumerQueries } from "@/features/costumer/controllers/costumerQueries.controller";
+import { hasFormChanges } from "@shared-domain";
+import { formatIsoDate } from "@/shared/utils/formatIsoDate";
 
-import { useOrderItemDraftController } from '../../../item'
-import { useOrderByClientId } from '../../../store/orderHooks.store'
-import { useOrderFormActions } from '../controllers/useOrderFormSubmit.actions'
-import { OrderFormContextComposer } from '../context/OrderForm.context'
-import { applySelectedCostumerToOrderForm } from '../flows/orderFormCostumerApply.flow'
-import { normalizeEmail, useOrderFormCostumerLookupFlow } from '../flows/orderFormCostumerLookup.flow'
-import { useOrderFormItemsFlow } from '../flows/orderFormItems.flow'
-import { useOrderFormItemEditorActions } from '../actions/orderFormItemEditor.actions'
-import { useOrderFormCloseController } from './useOrderFormCloseController'
-import { useOrderFormBootstrapState } from './useOrderFormBootstrapState'
+import { useOrderItemDraftController } from "../../../item";
+import { useOrderByClientId } from "../../../store/orderHooks.store";
+import { useOrderFormActions } from "../controllers/useOrderFormSubmit.actions";
+import { OrderFormContextComposer } from "../context/OrderForm.context";
+import { applySelectedCostumerToOrderForm } from "../flows/orderFormCostumerApply.flow";
+import {
+  normalizeEmail,
+  useOrderFormCostumerLookupFlow,
+} from "../flows/orderFormCostumerLookup.flow";
+import { useOrderFormItemsFlow } from "../flows/orderFormItems.flow";
+import { useOrderFormItemEditorActions } from "../actions/orderFormItemEditor.actions";
+import { useOrderFormCloseController } from "./useOrderFormCloseController";
+import { useOrderFormBootstrapState } from "./useOrderFormBootstrapState";
 import type {
   CostumerSelectionRequestResult,
   CostumerSelectionSource,
   OrderFormMode,
   OrderFormState,
   OrderFormPayload,
-} from '../state/OrderForm.types'
-import { useOrderFormValidation } from '../state/OrderForm.validation'
-import { useOrderFormWarnings } from '../state/OrderForm.warnings'
-import { useOrderFormSetters } from '../state/orderForm.setters'
-import { useCostumerFromOrderFlow } from '../flows/orderFormCostumerLoad.flow'
+} from "../state/OrderForm.types";
+import { useOrderFormValidation } from "../state/OrderForm.validation";
+import { useOrderFormWarnings } from "../state/OrderForm.warnings";
+import { useOrderFormSetters } from "../state/orderForm.setters";
+import { useCostumerFromOrderFlow } from "../flows/orderFormCostumerLoad.flow";
 
-type PendingCostumerAction = 'replace' | 'keep' | 'cancel'
+type PendingCostumerAction = "replace" | "keep" | "cancel";
 
 export const shouldPromptCostumerSelection = ({
   mode,
   source,
 }: {
-  mode: OrderFormMode
-  source: CostumerSelectionSource
-}) => mode === 'edit' && source !== 'lookup'
+  mode: OrderFormMode;
+  source: CostumerSelectionSource;
+}) => mode === "edit" && source !== "lookup";
 
 export const resolvePendingCostumerAction = ({
   action,
@@ -46,177 +49,188 @@ export const resolvePendingCostumerAction = ({
   currentSelectedCostumer,
   currentSelectedCostumerSource,
 }: {
-  action: PendingCostumerAction
-  pendingCostumer: Costumer | null
-  pendingCostumerSource: CostumerSelectionSource | null
-  currentSelectedCostumer: Costumer | null
-  currentSelectedCostumerSource: CostumerSelectionSource | null
+  action: PendingCostumerAction;
+  pendingCostumer: Costumer | null;
+  pendingCostumerSource: CostumerSelectionSource | null;
+  currentSelectedCostumer: Costumer | null;
+  currentSelectedCostumerSource: CostumerSelectionSource | null;
 }) => {
-  if (!pendingCostumer || action === 'cancel') {
+  if (!pendingCostumer || action === "cancel") {
     return {
       selectedCostumer: currentSelectedCostumer,
       selectedCostumerSource: currentSelectedCostumerSource,
       shouldApplySnapshot: false,
-    }
+    };
   }
 
   return {
     selectedCostumer: pendingCostumer,
-    selectedCostumerSource: pendingCostumerSource ?? 'panel',
-    shouldApplySnapshot: action === 'replace',
-  }
-}
+    selectedCostumerSource: pendingCostumerSource ?? "panel",
+    shouldApplySnapshot: action === "replace",
+  };
+};
 
 const applyCostumerSnapshotToOrderForm = ({
   costumer,
   setFormState,
 }: {
-  costumer: Costumer
-  setFormState: Dispatch<SetStateAction<OrderFormState>>
+  costumer: Costumer;
+  setFormState: Dispatch<SetStateAction<OrderFormState>>;
 }) => {
   setFormState((previousState) =>
     applySelectedCostumerToOrderForm({
       selectedCostumer: costumer,
       previousState,
     }),
-  )
-}
+  );
+};
 
 export const OrderFormProvider = ({
   payload,
   onClose,
   children,
 }: {
-  payload?: OrderFormPayload
-  onClose?: () => void
-  children: ReactNode
+  payload?: OrderFormPayload;
+  onClose?: () => void;
+  children: ReactNode;
 }) => {
-  const { isMobile } = useMobile()
-  const mode = payload?.mode ?? 'create'
-  const payloadCostumerId = payload?.costumer_id ?? null
-  const order = useOrderByClientId(payload?.clientId ?? null)
-  const orderServerId = order?.id ?? null
-  const creationDate = formatIsoDate(order?.creation_date) ?? ''
+  const { isMobile } = useMobile();
+  const mode = payload?.mode ?? "create";
+  const payloadCostumerId = payload?.costumer_id ?? null;
+  const order = useOrderByClientId(payload?.clientId ?? null);
+  const orderServerId = order?.id ?? null;
+  const creationDate = formatIsoDate(order?.creation_date) ?? "";
 
-  const [selectedCostumer, setSelectedCostumer] = useState<Costumer | null>(null)
-  const [selectedCostumerSource, setSelectedCostumerSource] = useState<CostumerSelectionSource | null>(null)
-  const [pendingCostumerChange, setPendingCostumerChange] = useState<Costumer | null>(null)
-  const [pendingCostumerChangeSource, setPendingCostumerChangeSource] = useState<CostumerSelectionSource | null>(null)
-  const [isCostumerChangePromptOpen, setIsCostumerChangePromptOpen] = useState(false)
-  const payloadCostumer = useCostumerByServerId(payloadCostumerId)
-  const { queryCostumerByServerId } = useCostumerQueries()
-  const appliedPayloadCostumerIdRef = useRef<number | null>(null)
-  
+  const [selectedCostumer, setSelectedCostumer] = useState<Costumer | null>(
+    null,
+  );
+  const [selectedCostumerSource, setSelectedCostumerSource] =
+    useState<CostumerSelectionSource | null>(null);
+  const [pendingCostumerChange, setPendingCostumerChange] =
+    useState<Costumer | null>(null);
+  const [pendingCostumerChangeSource, setPendingCostumerChangeSource] =
+    useState<CostumerSelectionSource | null>(null);
+  const [isCostumerChangePromptOpen, setIsCostumerChangePromptOpen] =
+    useState(false);
+  const payloadCostumer = useCostumerByServerId(payloadCostumerId);
+  const { queryCostumerByServerId } = useCostumerQueries();
+  const appliedPayloadCostumerIdRef = useRef<number | null>(null);
+
   // this flow might not be the appropiate implementation we must check deep if it is not correct.
-  useCostumerFromOrderFlow({order, setSelectedCostumer})
-  
+  useCostumerFromOrderFlow({ order, setSelectedCostumer });
 
-  const { formState, setFormState, initialFormRef } = useOrderFormBootstrapState({
-    mode,
-    order,
-    payloadClientId: payload?.clientId ?? null,
-    payloadDeliveryPlanId: payload?.deliveryPlanId ?? null,
-    payloadRestoreFormState: payload?.restoreFormState ?? null,
-  })
+  const { formState, setFormState, initialFormRef } =
+    useOrderFormBootstrapState({
+      mode,
+      order,
+      payloadClientId: payload?.clientId ?? null,
+      payloadDeliveryPlanId: payload?.deliveryPlanId ?? null,
+      payloadRouteGroupId: payload?.routeGroupId ?? null,
+      payloadRestoreFormState: payload?.restoreFormState ?? null,
+    });
 
   const applySelectedCostumerNow = useCallback(
     (costumer: Costumer) => {
-      applyCostumerSnapshotToOrderForm({ costumer, setFormState })
+      applyCostumerSnapshotToOrderForm({ costumer, setFormState });
     },
     [setFormState],
-  )
+  );
 
   const resetPendingCostumerChange = useCallback(() => {
-    setPendingCostumerChange(null)
-    setPendingCostumerChangeSource(null)
-    setIsCostumerChangePromptOpen(false)
-  }, [])
+    setPendingCostumerChange(null);
+    setPendingCostumerChangeSource(null);
+    setIsCostumerChangePromptOpen(false);
+  }, []);
 
   const requestSelectCostumer = useCallback(
-    (value: Costumer, source: CostumerSelectionSource): CostumerSelectionRequestResult => {
+    (
+      value: Costumer,
+      source: CostumerSelectionSource,
+    ): CostumerSelectionRequestResult => {
       if (!value?.client_id) {
-        return 'ignored'
+        return "ignored";
       }
 
       if (selectedCostumer?.client_id === value.client_id) {
         // Embedded edit can save the same costumer id with updated fields.
         // Refresh selected costumer so UI reflects latest values and allow panel close flow.
-        if (source === 'embedded') {
-          setSelectedCostumer(value)
-          setSelectedCostumerSource(source)
-          if (mode === 'create') {
-            applySelectedCostumerNow(value)
+        if (source === "embedded") {
+          setSelectedCostumer(value);
+          setSelectedCostumerSource(source);
+          if (mode === "create") {
+            applySelectedCostumerNow(value);
           }
-          return 'applied'
+          return "applied";
         }
-        return 'ignored'
+        return "ignored";
       }
 
       if (shouldPromptCostumerSelection({ mode, source })) {
-        setPendingCostumerChange(value)
-        setPendingCostumerChangeSource(source)
-        setIsCostumerChangePromptOpen(true)
-        return 'prompted'
+        setPendingCostumerChange(value);
+        setPendingCostumerChangeSource(source);
+        setIsCostumerChangePromptOpen(true);
+        return "prompted";
       }
 
-      setSelectedCostumer(value)
-      setSelectedCostumerSource(source)
-      applySelectedCostumerNow(value)
-      return 'applied'
+      setSelectedCostumer(value);
+      setSelectedCostumerSource(source);
+      applySelectedCostumerNow(value);
+      return "applied";
     },
     [applySelectedCostumerNow, mode, selectedCostumer?.client_id],
-  )
+  );
 
   useEffect(() => {
-    if (mode !== 'create') {
-      return
+    if (mode !== "create") {
+      return;
     }
 
-    if (typeof payloadCostumerId !== 'number') {
-      return
+    if (typeof payloadCostumerId !== "number") {
+      return;
     }
 
     if (appliedPayloadCostumerIdRef.current === payloadCostumerId) {
-      return
+      return;
     }
 
-    let cancelled = false
+    let cancelled = false;
 
     const applyPayloadCostumer = async () => {
-      const resolvedCostumer = payloadCostumer ?? (await queryCostumerByServerId(payloadCostumerId))
-      if (cancelled || !resolvedCostumer) return
-      requestSelectCostumer(resolvedCostumer, 'panel')
-      appliedPayloadCostumerIdRef.current = payloadCostumerId
-    }
+      const resolvedCostumer =
+        payloadCostumer ?? (await queryCostumerByServerId(payloadCostumerId));
+      if (cancelled || !resolvedCostumer) return;
+      requestSelectCostumer(resolvedCostumer, "panel");
+      appliedPayloadCostumerIdRef.current = payloadCostumerId;
+    };
 
-    void applyPayloadCostumer()
+    void applyPayloadCostumer();
 
     return () => {
-      cancelled = true
-    }
+      cancelled = true;
+    };
   }, [
     mode,
     payloadCostumerId,
     payloadCostumer,
     queryCostumerByServerId,
     requestSelectCostumer,
-  ])
+  ]);
 
   const confirmReplaceWithPendingCostumer = useCallback(() => {
     const nextSelection = resolvePendingCostumerAction({
-      action: 'replace',
+      action: "replace",
       pendingCostumer: pendingCostumerChange,
       pendingCostumerSource: pendingCostumerChangeSource,
       currentSelectedCostumer: selectedCostumer,
       currentSelectedCostumerSource: selectedCostumerSource,
-    })
+    });
 
-    setSelectedCostumer(nextSelection.selectedCostumer)
-    setSelectedCostumerSource(nextSelection.selectedCostumerSource)
+    setSelectedCostumer(nextSelection.selectedCostumer);
+    setSelectedCostumerSource(nextSelection.selectedCostumerSource);
     if (nextSelection.shouldApplySnapshot && nextSelection.selectedCostumer) {
-      applySelectedCostumerNow(nextSelection.selectedCostumer)
+      applySelectedCostumerNow(nextSelection.selectedCostumer);
     }
-    resetPendingCostumerChange()
+    resetPendingCostumerChange();
   }, [
     applySelectedCostumerNow,
     pendingCostumerChange,
@@ -224,32 +238,35 @@ export const OrderFormProvider = ({
     resetPendingCostumerChange,
     selectedCostumer,
     selectedCostumerSource,
-  ])
+  ]);
 
   const confirmKeepSnapshotWithPendingCostumer = useCallback(() => {
     const nextSelection = resolvePendingCostumerAction({
-      action: 'keep',
+      action: "keep",
       pendingCostumer: pendingCostumerChange,
       pendingCostumerSource: pendingCostumerChangeSource,
       currentSelectedCostumer: selectedCostumer,
       currentSelectedCostumerSource: selectedCostumerSource,
-    })
-    setSelectedCostumer(nextSelection.selectedCostumer)
-    setSelectedCostumerSource(nextSelection.selectedCostumerSource)
-    resetPendingCostumerChange()
+    });
+    setSelectedCostumer(nextSelection.selectedCostumer);
+    setSelectedCostumerSource(nextSelection.selectedCostumerSource);
+    resetPendingCostumerChange();
   }, [
     pendingCostumerChange,
     pendingCostumerChangeSource,
     resetPendingCostumerChange,
     selectedCostumer,
     selectedCostumerSource,
-  ])
+  ]);
 
   const cancelPendingCostumerChange = useCallback(() => {
-    resetPendingCostumerChange()
-  }, [resetPendingCostumerChange])
+    resetPendingCostumerChange();
+  }, [resetPendingCostumerChange]);
 
-  const isLookupEnabled = mode === 'create' && selectedCostumerSource !== 'panel' && selectedCostumerSource !== 'embedded'
+  const isLookupEnabled =
+    mode === "create" &&
+    selectedCostumerSource !== "panel" &&
+    selectedCostumerSource !== "embedded";
 
   useOrderFormCostumerLookupFlow({
     mode,
@@ -257,42 +274,45 @@ export const OrderFormProvider = ({
     email: formState.client_email,
     selectedCostumerEmail: selectedCostumer?.email,
     onResolved: (costumer) => {
-      requestSelectCostumer(costumer, 'lookup')
+      requestSelectCostumer(costumer, "lookup");
     },
-  })
+  });
 
   // If email changes away from a lookup-selected costumer, clear that lookup selection.
   useEffect(() => {
-    if (selectedCostumerSource !== 'lookup' || !selectedCostumer) {
-      return
+    if (selectedCostumerSource !== "lookup" || !selectedCostumer) {
+      return;
     }
 
-    const normalizedInputEmail = normalizeEmail(formState.client_email)
-    const normalizedSelectedEmail = normalizeEmail(selectedCostumer.email ?? null)
+    const normalizedInputEmail = normalizeEmail(formState.client_email);
+    const normalizedSelectedEmail = normalizeEmail(
+      selectedCostumer.email ?? null,
+    );
     if (normalizedInputEmail === normalizedSelectedEmail) {
-      return
+      return;
     }
 
-    setSelectedCostumer(null)
-    setSelectedCostumerSource(null)
-  }, [formState.client_email, selectedCostumer, selectedCostumerSource])
+    setSelectedCostumer(null);
+    setSelectedCostumerSource(null);
+  }, [formState.client_email, selectedCostumer, selectedCostumerSource]);
 
-  const warnings = useOrderFormWarnings()
+  const warnings = useOrderFormWarnings();
   const formSetters = useOrderFormSetters({
     setFormState,
     warnings,
-  })
-  const { validateForm } = useOrderFormValidation({ formState, warnings })
+  });
+  const { validateForm } = useOrderFormValidation({ formState, warnings });
 
-  const { initialItems, isLoadingInitialItems, itemInitialByClientId } = useOrderFormItemsFlow({
-    mode,
-    orderServerId,
-  })
+  const { initialItems, isLoadingInitialItems, itemInitialByClientId } =
+    useOrderFormItemsFlow({
+      mode,
+      orderServerId,
+    });
 
   const itemDraftController = useOrderItemDraftController({
     mode,
     initialItems,
-  })
+  });
 
   const {
     visibleItems: visibleItemDrafts,
@@ -303,10 +323,10 @@ export const OrderFormProvider = ({
     getUpdatedItems,
     getDeletedItems,
     reset: resetItemDrafts,
-  } = itemDraftController
+  } = itemDraftController;
 
-  const draftOrderIdRef = useRef<number>(Date.now())
-  const effectiveDraftOrderId = orderServerId ?? draftOrderIdRef.current
+  const draftOrderIdRef = useRef<number>(Date.now());
+  const effectiveDraftOrderId = orderServerId ?? draftOrderIdRef.current;
 
   const itemEditor = useOrderFormItemEditorActions({
     itemDraftController: {
@@ -315,7 +335,7 @@ export const OrderFormProvider = ({
       deleteItem,
     },
     effectiveDraftOrderId,
-  })
+  });
 
   const actions = useOrderFormActions({
     mode,
@@ -332,15 +352,18 @@ export const OrderFormProvider = ({
     },
     itemInitialByClientId,
     selectedCostumer,
-  })
+  });
 
-  const hasUnsavedChanges = useMemo(() => hasFormChanges(formState, initialFormRef), [formState, initialFormRef])
+  const hasUnsavedChanges = useMemo(
+    () => hasFormChanges(formState, initialFormRef),
+    [formState, initialFormRef],
+  );
 
   const closeController = useOrderFormCloseController({
     isMobile,
     hasUnsavedChanges,
     onClose,
-  })
+  });
 
   const formSlice = useMemo(
     () => ({
@@ -349,21 +372,21 @@ export const OrderFormProvider = ({
       formSetters,
     }),
     [formSetters, formState, warnings],
-  )
+  );
 
   const actionsSlice = useMemo(
     () => ({
       actions,
     }),
     [actions],
-  )
+  );
 
   const itemEditorSlice = useMemo(
     () => ({
       itemEditor,
     }),
     [itemEditor],
-  )
+  );
 
   const metaSlice = useMemo(
     () => ({
@@ -402,14 +425,14 @@ export const OrderFormProvider = ({
       selectedCostumerSource,
       visibleItemDrafts,
     ],
-  )
+  );
 
   const closeSlice = useMemo(
     () => ({
       closeController,
     }),
     [closeController],
-  )
+  );
 
   return (
     <OrderFormContextComposer
@@ -421,5 +444,5 @@ export const OrderFormProvider = ({
     >
       {children}
     </OrderFormContextComposer>
-  )
-}
+  );
+};

@@ -6,8 +6,12 @@ import { sessionLocationService } from "@/app/services/sessionLocation.service";
 import { zoneApi } from "@/features/zone/api/zone.api";
 import {
   selectIsLoadingZonesForVersion,
+  selectZoneLoadErrorForVersion,
+  selectZoneLoadStatusForVersion,
+  selectZonePathEditSession,
   selectZonesByVersion,
   selectWorkingZoneVersion,
+  selectWorkingZoneVersionId,
   useZoneStore,
 } from "@/features/zone/store/zone.store";
 import type { GeoJSONPolygon } from "@/features/zone/types";
@@ -24,21 +28,49 @@ export function useZoneModeController() {
   const isZoneMode = useZoneStore((state) => state.isZoneMode);
   const versions = useZoneStore((state) => state.versions);
   const drawnGeometry = useZoneStore((state) => state.drawnGeometry);
+  const pathEditSession = useZoneStore(selectZonePathEditSession);
   const hoveredZoneId = useZoneStore((state) => state.hoveredZoneId);
   const isLoadingVersions = useZoneStore((state) => state.isLoadingVersions);
+  const ensureFirstVersionStatus = useZoneStore(
+    (state) => state.ensureFirstVersionStatus,
+  );
+  const ensureFirstVersionError = useZoneStore(
+    (state) => state.ensureFirstVersionError,
+  );
   const setIsZoneMode = useZoneStore((state) => state.setIsZoneMode);
   const setDrawnGeometry = useZoneStore((state) => state.setDrawnGeometry);
+  const updatePathEditDraft = useZoneStore((state) => state.updatePathEditDraft);
+  const cancelPathEditSession = useZoneStore(
+    (state) => state.cancelPathEditSession,
+  );
   const setHoveredZoneId = useZoneStore((state) => state.setHoveredZoneId);
+  const closeZoneDetailsPopover = useZoneStore(
+    (state) => state.closeZoneDetailsPopover,
+  );
   const replaceZonesForVersion = useZoneStore((state) => state.replaceZonesForVersion);
   const setLoadingZones = useZoneStore((state) => state.setLoadingZones);
   const setVersions = useZoneStore((state) => state.setVersions);
   const setSelectedVersionId = useZoneStore((state) => state.setSelectedVersionId);
   const setLoadingVersions = useZoneStore((state) => state.setLoadingVersions);
+  const setZoneLoadStatus = useZoneStore((state) => state.setZoneLoadStatus);
+  const setEnsureFirstVersionStatus = useZoneStore(
+    (state) => state.setEnsureFirstVersionStatus,
+  );
+  const resetEnsureFirstVersionState = useZoneStore(
+    (state) => state.resetEnsureFirstVersionState,
+  );
   const upsertZone = useZoneStore((state) => state.upsertZone);
   const removeZoneOptimistic = useZoneStore((state) => state.removeZoneOptimistic);
   const workingVersion = useZoneStore(selectWorkingZoneVersion);
+  const workingVersionId = useZoneStore(selectWorkingZoneVersionId);
   const isLoadingZones = useZoneStore((state) =>
     selectIsLoadingZonesForVersion(state, workingVersion?.id),
+  );
+  const zoneLoadStatus = useZoneStore((state) =>
+    selectZoneLoadStatusForVersion(state, workingVersion?.id),
+  );
+  const zoneLoadError = useZoneStore((state) =>
+    selectZoneLoadErrorForVersion(state, workingVersion?.id),
   );
   const zonesForWorkingVersionCount = useZoneStore((state) =>
     selectZonesByVersion(state, workingVersion?.id).length,
@@ -51,9 +83,15 @@ export function useZoneModeController() {
     if (!isZoneMode) return;
     if (versions.length > 0) return;
     if (isLoadingVersions) return;
+    if (ensureFirstVersionStatus === "retryable_failure") return;
+    if (ensureFirstVersionStatus === "success") return;
 
     const zoneCityKey = sessionLocationService.getZoneCityKey();
     if (!zoneCityKey) {
+      setEnsureFirstVersionStatus(
+        "retryable_failure",
+        "Missing session city. Complete your account city first.",
+      );
       showMessage({
         status: 400,
         message: "Missing session city. Complete your account city first.",
@@ -62,6 +100,7 @@ export function useZoneModeController() {
     }
 
     setLoadingVersions(true);
+    setEnsureFirstVersionStatus("loading", null);
 
     zoneApi
       .ensureFirstZoneVersion({
@@ -74,9 +113,15 @@ export function useZoneModeController() {
         setSelectedVersionId(
           typeof ensuredVersion?.id === "number" ? ensuredVersion.id : null,
         );
+        setEnsureFirstVersionStatus("success", null);
       })
-      .catch(() => {
-        showMessage({ status: 500, message: "Failed to load zone versions." });
+      .catch((error) => {
+        const message =
+          error instanceof Error
+            ? error.message
+            : "Failed to load zone versions.";
+        setEnsureFirstVersionStatus("retryable_failure", message);
+        showMessage({ status: 500, message });
       })
       .finally(() => {
         setLoadingVersions(false);
@@ -85,7 +130,9 @@ export function useZoneModeController() {
     isZoneMode,
     isLoadingVersions,
     versions.length,
+    ensureFirstVersionStatus,
     setSelectedVersionId,
+    setEnsureFirstVersionStatus,
     setLoadingVersions,
     setVersions,
     showMessage,
@@ -98,8 +145,11 @@ export function useZoneModeController() {
 
     if (zonesForWorkingVersionCount > 0) return;
     if (isLoadingZones) return;
+    if (zoneLoadStatus === "success") return;
+    if (zoneLoadStatus === "retryable_failure") return;
 
     setLoadingZones(versionId, true);
+    setZoneLoadStatus(versionId, "loading", null);
 
     zoneApi
       .fetchZonesForVersion(versionId)
@@ -108,9 +158,13 @@ export function useZoneModeController() {
           versionId,
           Array.isArray(response.data) ? response.data : [],
         );
+        setZoneLoadStatus(versionId, "success", null);
       })
-      .catch(() => {
-        showMessage({ status: 500, message: "Failed to load zones." });
+      .catch((error) => {
+        const message =
+          error instanceof Error ? error.message : "Failed to load zones.";
+        setZoneLoadStatus(versionId, "retryable_failure", message);
+        showMessage({ status: 500, message });
       })
       .finally(() => {
         setLoadingZones(versionId, false);
@@ -120,16 +174,30 @@ export function useZoneModeController() {
     isLoadingZones,
     replaceZonesForVersion,
     setLoadingZones,
+    setZoneLoadStatus,
     workingVersion?.id,
     showMessage,
+    zoneLoadStatus,
     zonesForWorkingVersionCount,
   ]);
 
   useEffect(() => {
-    if (!isZoneMode || typeof workingVersion?.id !== "number") {
+    if (!isZoneMode || typeof workingVersionId !== "number") {
       mapManager.disableZoneCapture();
+      mapManager.disableZonePathEdit();
       setDrawnGeometry(null);
       return;
+    }
+
+    if (pathEditSession) {
+      mapManager.disableZoneCapture();
+      mapManager.enableZonePathEdit(pathEditSession.draftGeometry, {
+        onGeometryChange: updatePathEditDraft,
+      });
+
+      return () => {
+        mapManager.disableZonePathEdit();
+      };
     }
 
     mapManager.enableZoneCapture((geometry: GeoJSONPolygon) => {
@@ -138,18 +206,35 @@ export function useZoneModeController() {
 
     return () => {
       mapManager.disableZoneCapture();
+      mapManager.disableZonePathEdit();
     };
-  }, [isZoneMode, mapManager, setDrawnGeometry, workingVersion?.id]);
+  }, [
+    isZoneMode,
+    mapManager,
+    pathEditSession,
+    setDrawnGeometry,
+    updatePathEditDraft,
+    workingVersionId,
+  ]);
 
   const enterZoneMode = useCallback(() => {
+    resetEnsureFirstVersionState();
     setIsZoneMode(true);
-  }, [setIsZoneMode]);
+  }, [resetEnsureFirstVersionState, setIsZoneMode]);
 
   const exitZoneMode = useCallback(() => {
     setIsZoneMode(false);
     setDrawnGeometry(null);
+    cancelPathEditSession();
     setHoveredZoneId(null);
-  }, [setDrawnGeometry, setHoveredZoneId, setIsZoneMode]);
+    closeZoneDetailsPopover();
+  }, [
+    cancelPathEditSession,
+    closeZoneDetailsPopover,
+    setDrawnGeometry,
+    setHoveredZoneId,
+    setIsZoneMode,
+  ]);
 
   const discardShape = useCallback(() => {
     setDrawnGeometry(null);
@@ -171,13 +256,20 @@ export function useZoneModeController() {
   return {
     isZoneMode,
     drawnGeometry,
+    pathEditSession,
     hoveredZoneId,
     isLoadingZones,
+    zoneLoadStatus,
+    zoneLoadError,
+    ensureFirstVersionStatus,
+    ensureFirstVersionError,
     activeVersion: workingVersion,
+    activeVersionId: workingVersionId,
     enterZoneMode,
     exitZoneMode,
     discardShape,
     openCreateForm,
+    retryEnsureFirstVersion: resetEnsureFirstVersionState,
     upsertZone,
     removeZoneOptimistic,
   };

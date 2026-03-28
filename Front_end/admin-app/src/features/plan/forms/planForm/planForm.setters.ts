@@ -1,6 +1,6 @@
 import type { Dispatch, SetStateAction } from "react";
 import type { ChangeEvent } from "react";
-import type { DeliveryPlan } from "../../types/plan";
+import type { DeliveryPlan, PlanDateStrategy } from "../../types/plan";
 import type { PlanTypeState } from "./PlanForm.types";
 import type { PlanWarningsControllers } from "./PlanForm.types";
 type SetDeliveryPlanState = Dispatch<SetStateAction<DeliveryPlan>>;
@@ -26,10 +26,10 @@ export const usePlanFormSetters = ({
 
   const handleStartDate = (value: string) => {
     setPlanForm((prev) => {
-      const { end_date } = prev;
+      const { end_date, date_strategy } = prev;
       planFormWarnings.planStartDateWarning.validate({
         start_date: value,
-        end_date,
+        end_date: date_strategy === "range" ? end_date : null,
       });
 
       return { ...prev, start_date: value };
@@ -37,10 +37,10 @@ export const usePlanFormSetters = ({
   };
   const handleEndDate = (value: string) => {
     setPlanForm((prev) => {
-      const { start_date } = prev;
+      const { start_date, date_strategy } = prev;
       planFormWarnings.planStartDateWarning.validate({
         start_date,
-        end_date: value,
+        end_date: date_strategy === "range" ? value : null,
       });
 
       return { ...prev, end_date: value };
@@ -60,11 +60,16 @@ export const usePlanFormSetters = ({
     });
   };
 
+  const handleDateStrategy = (strategy: PlanDateStrategy) => {
+    setPlanForm((prev) => ({ ...prev, date_strategy: strategy }));
+  };
+
   return {
     handlePlanType,
     handlePlanName,
     handleStartDate,
     handleEndDate,
     handleZoneSelectionToggle,
+    handleDateStrategy,
   };
 };

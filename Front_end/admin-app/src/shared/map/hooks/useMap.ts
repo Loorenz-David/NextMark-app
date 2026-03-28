@@ -7,11 +7,13 @@ import type {
   MapConfig,
   MapViewportInsets,
   SetMarkerLayerOptions,
+  ZonePathEditOptions,
 } from "../domain/types";
 import type { MapOrder } from "../domain/entities/MapOrder";
 import type { Route } from "../domain/entities/Route";
 import type { GeoJSONPolygon, ZoneDefinition } from "@/features/zone/types";
 import type { ZoneLayerOptions } from "../domain/types";
+import type { ZonePolygonOverlayOptions } from "../domain/types";
 import { MapController } from "../domain/services/MapController";
 import { GoogleMapAdapter } from "../infrastructure/GoogleMapAdapter";
 
@@ -116,6 +118,17 @@ export const useMap = (options?: MapConfig): MapBridge => {
     controller.disableZoneCapture();
   }, [controller]);
 
+  const enableZonePathEdit = useCallback(
+    (geometry: GeoJSONPolygon, options: ZonePathEditOptions) => {
+      controller.enableZonePathEdit(geometry, options);
+    },
+    [controller],
+  );
+
+  const disableZonePathEdit = useCallback(() => {
+    controller.disableZonePathEdit();
+  }, [controller]);
+
   const showRoute = useCallback(
     (route: Route | null) => {
       controller.showRoute(route);
@@ -135,8 +148,11 @@ export const useMap = (options?: MapConfig): MapBridge => {
   }, [controller]);
 
   const setZonePolygonOverlay = useCallback(
-    (geometry: GeoJSONPolygonGeometry | null) => {
-      controller.setZonePolygonOverlay(geometry);
+    (
+      geometry: GeoJSONPolygonGeometry | null,
+      options?: ZonePolygonOverlayOptions,
+    ) => {
+      controller.setZonePolygonOverlay(geometry, options);
     },
     [controller],
   );
@@ -159,6 +175,11 @@ export const useMap = (options?: MapConfig): MapBridge => {
   const subscribeBoundsChanged = useCallback(
     (callback: (bounds: MapBounds | null) => void) =>
       controller.subscribeBoundsChanged(callback),
+    [controller],
+  );
+
+  const subscribeReady = useCallback(
+    (callback: () => void) => controller.subscribeReady(callback),
     [controller],
   );
 
@@ -209,6 +230,8 @@ export const useMap = (options?: MapConfig): MapBridge => {
       disableCircleSelection,
       enableZoneCapture,
       disableZoneCapture,
+      enableZonePathEdit,
+      disableZonePathEdit,
       showRoute,
       selectOrder,
       setSelectedMarker,
@@ -220,6 +243,7 @@ export const useMap = (options?: MapConfig): MapBridge => {
       setZoneLayer,
       clearZoneLayer,
       subscribeBoundsChanged,
+      subscribeReady,
       resize,
     }),
     [
@@ -228,7 +252,9 @@ export const useMap = (options?: MapConfig): MapBridge => {
       clearZonePolygonOverlay,
       disableCircleSelection,
       disableZoneCapture,
+      disableZonePathEdit,
       enableZoneCapture,
+      enableZonePathEdit,
       enableCircleSelection,
       initialize,
       reframeToVisibleArea,
@@ -244,6 +270,7 @@ export const useMap = (options?: MapConfig): MapBridge => {
       showOrders,
       showRoute,
       subscribeBoundsChanged,
+      subscribeReady,
     ],
   );
 };

@@ -5,6 +5,7 @@ export type {
   ZoneTemplateRef,
   ZoneCentroid,
   ZoneBBox,
+  ZoneBootstrapBBox,
   ZoneGeometryResolution,
   ZoneDefinition,
   ZoneLite,

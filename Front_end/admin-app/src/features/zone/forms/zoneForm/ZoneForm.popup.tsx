@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import { useMessageHandler } from "@shared-message-handler";
 
@@ -9,7 +9,6 @@ import {
   ZoneFormFeature,
   type ZoneFormFields,
 } from "@/features/zone/forms/zoneForm/ZoneForm";
-import { useEnsureZoneGeometry } from "@/features/zone/controllers/useEnsureZoneGeometry";
 import { useEnsureZoneTemplate } from "@/features/zone/controllers/useEnsureZoneTemplate";
 import {
   selectZoneByVersionAndId,
@@ -73,10 +72,6 @@ export const ZoneFormPopup = ({
       ? selectZoneByVersionAndId(state, payload.versionId, payload.zoneId)
       : null,
   );
-  const { load: ensureZoneGeometry } = useEnsureZoneGeometry(
-    payload?.mode === "edit" ? payload.versionId : null,
-    payload?.mode === "edit" ? payload.zoneId : null,
-  );
   const { load: ensureZoneTemplate } = useEnsureZoneTemplate(
     payload?.mode === "edit" ? payload.versionId : null,
     payload?.mode === "edit" ? payload.zoneId : null,
@@ -84,16 +79,29 @@ export const ZoneFormPopup = ({
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const initialLoadAttemptKeyRef = useRef<string | null>(null);
 
   const mode = payload?.mode ?? "create";
 
   useEffect(() => {
     if (payload?.mode !== "edit") {
+      initialLoadAttemptKeyRef.current = null;
       return;
     }
 
-    void Promise.all([ensureZoneGeometry(), ensureZoneTemplate()]);
-  }, [ensureZoneGeometry, ensureZoneTemplate, payload?.mode]);
+    const loadAttemptKey = `${payload.versionId}:${payload.zoneId}`;
+    if (initialLoadAttemptKeyRef.current === loadAttemptKey) {
+      return;
+    }
+
+    initialLoadAttemptKeyRef.current = loadAttemptKey;
+    void ensureZoneTemplate();
+  }, [
+    ensureZoneTemplate,
+    payload?.mode,
+    payload?.versionId,
+    payload?.mode === "edit" ? payload.zoneId : null,
+  ]);
 
   const initialValues = useMemo(() => {
     if (!zone) {

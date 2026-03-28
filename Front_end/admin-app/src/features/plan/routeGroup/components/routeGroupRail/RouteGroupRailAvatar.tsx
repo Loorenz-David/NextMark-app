@@ -9,11 +9,13 @@ import { RouteGroupRailPopoverContent } from "./RouteGroupRailPopoverContent";
 type RouteGroupRailAvatarProps = {
   item: RouteGroupRailItem;
   onClick: (item: RouteGroupRailItem) => void;
+  isDropTarget?: boolean;
 };
 
 export const RouteGroupRailAvatar = ({
   item,
   onClick,
+  isDropTarget = false,
 }: RouteGroupRailAvatarProps) => {
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
   const completionRatio = Math.round(item.completionRatio);
@@ -37,9 +39,11 @@ export const RouteGroupRailAvatar = ({
         <span
           aria-hidden="true"
           className={`flex h-12 w-12 items-center justify-center rounded-full border p-[3px] shadow-[inset_0_1px_0_rgba(255,255,255,0.18),0_10px_22px_rgba(29,74,102,0.14)] ${
-            item.isActive
-              ? "border-[rgb(var(--color-light-blue-r),0.58)]"
-              : "border-[rgb(var(--color-light-blue-r),0.22)]"
+            isDropTarget
+              ? "border-[rgb(var(--color-light-blue-r),0.85)] ring-2 ring-[rgb(var(--color-light-blue-r),0.45)]"
+              : item.isActive
+                ? "border-[rgb(var(--color-light-blue-r),0.58)]"
+                : "border-[rgb(var(--color-light-blue-r),0.22)]"
           }`}
           style={progressStyle}
         />

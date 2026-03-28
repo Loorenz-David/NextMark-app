@@ -5,6 +5,7 @@ import {
   type DrawingSelectionModeEventDetail,
 } from "../../domain/constants/drawingSelectionModes";
 import type { GeoJSONPolygon } from "@/features/zone/types";
+import type { ZonePathEditOptions } from "../../domain/types";
 import type { MapInstanceManager } from "../core/MapInstanceManager";
 import type { MarkerMultiSelectionManager } from "../markers/MarkerMultiSelectionManager";
 import type { ShapeSelectionService } from "./ShapeSelectionService";
@@ -22,6 +23,8 @@ export class DrawingManagerService {
   private zoneCaptureCallback: ((geometry: GeoJSONPolygon) => void) | null =
     null;
   private isZoneCaptureMode = false;
+  private zonePathEditOptions: ZonePathEditOptions | null = null;
+  private isZonePathEditMode = false;
   private mapInstanceManager: MapInstanceManager;
   private shapeSelectionService: ShapeSelectionService;
   private markerMultiSelectionManager: MarkerMultiSelectionManager;
@@ -110,6 +113,49 @@ export class DrawingManagerService {
     }
   }
 
+  enableZonePathEdit(
+    geometry: GeoJSONPolygon,
+    options: ZonePathEditOptions,
+  ) {
+    const map = this.mapInstanceManager.getMap();
+    if (!map) return;
+
+    if (this.circleSelectionLayerId) {
+      this.disableCircleSelection();
+    }
+
+    this.disableZoneCapture();
+    this.zonePathEditOptions = options;
+    this.isZonePathEditMode = true;
+
+    this.ensureDrawingManager();
+    this.clearActiveShape();
+
+    const polygon = this.createEditablePolygonOverlay(geometry);
+    if (!polygon) {
+      this.isZonePathEditMode = false;
+      this.zonePathEditOptions = null;
+      return;
+    }
+
+    this.activeShape = polygon;
+    this.bindPathEditListeners(polygon, geometry.type);
+
+    if (this.drawingManager) {
+      this.drawingManager.setDrawingMode(null);
+    }
+  }
+
+  disableZonePathEdit() {
+    this.zonePathEditOptions = null;
+    this.isZonePathEditMode = false;
+    this.clearActiveShape();
+
+    if (this.drawingManager) {
+      this.drawingManager.setDrawingMode(null);
+    }
+  }
+
   handleLayerCleared(layerId: string) {
     if (layerId !== this.circleSelectionLayerId) {
       return;
@@ -122,6 +168,7 @@ export class DrawingManagerService {
   destroy() {
     this.disableCircleSelection();
     this.disableZoneCapture();
+    this.disableZonePathEdit();
 
     if (this.drawingCompleteListener) {
       this.drawingCompleteListener.remove?.();
@@ -308,7 +355,7 @@ export class DrawingManagerService {
       return;
     }
 
-    if (this.isZoneCaptureMode) {
+    if (this.isZoneCaptureMode || this.isZonePathEditMode) {
       const detail = (event as CustomEvent<DrawingSelectionModeEventDetail>)
         .detail;
       const overlayType = this.resolveOverlayType(detail?.mode);
@@ -353,6 +400,8 @@ export class DrawingManagerService {
 
     if (this.isZoneCaptureMode) {
       this.clearActiveShape();
+    } else if (this.isZonePathEditMode) {
+      return;
     } else {
       this.clearActiveShapeSelection();
     }
@@ -417,5 +466,95 @@ export class DrawingManagerService {
       google.maps.event.removeListener(listener);
     });
     this.shapeListeners = [];
+  }
+
+  private createEditablePolygonOverlay(geometry: GeoJSONPolygon) {
+    const map = this.mapInstanceManager.getMap();
+    const PolygonCtor = (globalThis as any)?.google?.maps?.Polygon;
+    if (!map || !PolygonCtor) {
+      return null;
+    }
+
+    const coordinates =
+      geometry.type === "MultiPolygon"
+        ? geometry.coordinates?.[0]
+        : geometry.coordinates;
+    const exteriorRing = Array.isArray(coordinates) ? coordinates[0] : null;
+    if (!Array.isArray(exteriorRing)) {
+      return null;
+    }
+
+    const paths = exteriorRing
+      .map((point) => {
+        if (!Array.isArray(point) || point.length < 2) {
+          return null;
+        }
+        return { lat: Number(point[1]), lng: Number(point[0]) };
+      })
+      .filter(
+        (point): point is { lat: number; lng: number } =>
+          point != null &&
+          Number.isFinite(point.lat) &&
+          Number.isFinite(point.lng),
+      );
+
+    if (paths.length < 3) {
+      return null;
+    }
+
+    return new PolygonCtor({
+      map,
+      paths,
+      editable: true,
+      clickable: false,
+      strokeColor: "#1d4ed8",
+      strokeOpacity: 0.9,
+      strokeWeight: 2,
+      fillColor: "#2563eb",
+      fillOpacity: 0.12,
+      zIndex: 3,
+    });
+  }
+
+  private bindPathEditListeners(polygon: any, geometryType: GeoJSONPolygon["type"]) {
+    const path = polygon?.getPath?.();
+    if (!path || !this.zonePathEditOptions) {
+      return;
+    }
+
+    const notifyGeometryChange = () => {
+      if (!this.zonePathEditOptions) {
+        return;
+      }
+
+      this.zonePathEditOptions.onGeometryChange(
+        this.extractPathEditGeometry(polygon, geometryType),
+      );
+    };
+
+    this.shapeListeners.push(
+      google.maps.event.addListener(path, "set_at", notifyGeometryChange),
+    );
+    this.shapeListeners.push(
+      google.maps.event.addListener(path, "insert_at", notifyGeometryChange),
+    );
+    this.shapeListeners.push(
+      google.maps.event.addListener(path, "remove_at", notifyGeometryChange),
+    );
+  }
+
+  private extractPathEditGeometry(
+    polygon: any,
+    geometryType: GeoJSONPolygon["type"],
+  ): GeoJSONPolygon {
+    const polygonGeometry = ZoneGeometryExtractor.fromPolygon(polygon);
+    if (geometryType === "MultiPolygon") {
+      return {
+        type: "MultiPolygon",
+        coordinates: [polygonGeometry.coordinates] as GeoJSONPolygon["coordinates"],
+      };
+    }
+
+    return polygonGeometry;
   }
 }

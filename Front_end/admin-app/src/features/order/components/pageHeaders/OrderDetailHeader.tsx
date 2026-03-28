@@ -1,24 +1,28 @@
-import { ArchiveIcon, DocumentIcon, EditIcon } from '@/assets/icons'
-import { BasicButton } from '@/shared/buttons/BasicButton'
-import { DropdownButton } from '@/shared/buttons/DropdownButton'
-import { CounterBadge } from '@/shared/layout/CounterBadge'
-import { toDateOnly } from '@/shared/data-validation/timeValidation'
+import { ArchiveIcon, DocumentIcon, EditIcon } from "@/assets/icons";
+import { BasicButton } from "@/shared/buttons/BasicButton";
+import { DropdownButton } from "@/shared/buttons/DropdownButton";
+import { CounterBadge } from "@/shared/layout/CounterBadge";
+import { toDateOnly } from "@/shared/data-validation/timeValidation";
 
-import { useOrderStateRegistry } from '../../domain/useOrderStateRegistry'
-import type { Order } from '../../types/order'
-import { OrderStateList } from '../lists/OrderStateList'
+import { useOrderStateRegistry } from "../../domain/useOrderStateRegistry";
+import type { Order } from "../../types/order";
+import { OrderStateList } from "../lists/OrderStateList";
 
 type OrderDetailHeaderProps = {
   openOrderForm: (payload: {
-    clientId?: string
-    mode?: 'create' | 'edit'
-    deliveryPlanId?: number | null
-  }) => void
-  openOrderCases: (payload: { orderId?: number; orderReference: string }) => void
-  onAdvanceOrderState: (clientId: string) => Promise<void>
-  onClose: () => void
-  order: Order | null
-}
+    clientId?: string;
+    mode?: "create" | "edit";
+    deliveryPlanId?: number | null;
+    routeGroupId?: number | null;
+  }) => void;
+  openOrderCases: (payload: {
+    orderId?: number;
+    orderReference: string;
+  }) => void;
+  onAdvanceOrderState: (clientId: string) => Promise<void>;
+  onClose: () => void;
+  order: Order | null;
+};
 
 export const OrderDetailHeader = ({
   openOrderForm,
@@ -27,13 +31,13 @@ export const OrderDetailHeader = ({
   onClose,
   order,
 }: OrderDetailHeaderProps) => {
-  const registry = useOrderStateRegistry()
+  const registry = useOrderStateRegistry();
 
-  const nextState = registry.getNextStateName(order?.order_state_id)
+  const nextState = registry.getNextStateName(order?.order_state_id);
   const currentStateName =
     order?.order_state_id != null
-      ? (registry.getById(order.order_state_id)?.name ?? 'Unknown state')
-      : 'Unknown state'
+      ? (registry.getById(order.order_state_id)?.name ?? "Unknown state")
+      : "Unknown state";
 
   return (
     <div className="px-5 pt-4">
@@ -51,10 +55,11 @@ export const OrderDetailHeader = ({
           <div className="flex shrink-0 flex-col items-end gap-2">
             <BasicButton
               params={{
-                variant: 'toolbarSecondary',
+                variant: "toolbarSecondary",
                 onClick: onClose,
-                ariaLabel: 'Close order detail',
-                className: 'min-w-[116px] justify-center px-4 uppercase tracking-[0.24em] text-[0.66rem]',
+                ariaLabel: "Close order detail",
+                className:
+                  "min-w-[116px] justify-center px-4 uppercase tracking-[0.24em] text-[0.66rem]",
               }}
             >
               Close
@@ -62,10 +67,12 @@ export const OrderDetailHeader = ({
 
             <BasicButton
               params={{
-                variant: 'toolbarSecondary',
-                onClick: () => order && openOrderForm({ mode: 'edit', clientId: order.client_id }),
-                ariaLabel: 'Edit order',
-                className: 'min-w-[116px] justify-center px-4 py-1.5 text-sm',
+                variant: "toolbarSecondary",
+                onClick: () =>
+                  order &&
+                  openOrderForm({ mode: "edit", clientId: order.client_id }),
+                ariaLabel: "Edit order",
+                className: "min-w-[116px] justify-center px-4 py-1.5 text-sm",
               }}
             >
               <EditIcon className="mr-2 h-4 w-4 stroke-[var(--color-text)]" />
@@ -78,13 +85,13 @@ export const OrderDetailHeader = ({
           <div className="flex min-w-[220px] flex-1 max-w-[270px]">
             <DropdownButton
               label={nextState ? `Mark as ${nextState}` : currentStateName}
-              style={{ fontSize: '14px' }}
+              style={{ fontSize: "14px" }}
               variant="lightBlue"
               fullWidth={true}
               disabled={!order}
               onClick={() => {
-                if (!order) return
-                void onAdvanceOrderState(order.client_id)
+                if (!order) return;
+                void onAdvanceOrderState(order.client_id);
               }}
               className="w-full"
               renderInPortal={true}
@@ -104,21 +111,23 @@ export const OrderDetailHeader = ({
 
           <BasicButton
             params={{
-              variant: 'toolbarSecondary',
+              variant: "toolbarSecondary",
               onClick: () =>
                 order?.id &&
                 openOrderCases({
                   orderId: order.id,
-                  orderReference: order.reference_number ?? '',
+                  orderReference: order.reference_number ?? "",
                 }),
-              ariaLabel: 'Open order cases',
-              className: 'min-w-[124px] justify-center px-4 py-1.5 text-sm',
+              ariaLabel: "Open order cases",
+              className: "min-w-[124px] justify-center px-4 py-1.5 text-sm",
             }}
           >
             <ArchiveIcon className="mr-2 h-4 w-4 stroke-[var(--color-text)]" />
             <div className="flex items-center gap-2">
               <span>Cases</span>
-              {Boolean(order?.open_order_cases && order.open_order_cases > 0) ? (
+              {Boolean(
+                order?.open_order_cases && order.open_order_cases > 0,
+              ) ? (
                 <CounterBadge
                   text={String(order?.open_order_cases)}
                   bgColor="rgba(255, 213, 3, 0.16)"
@@ -130,11 +139,11 @@ export const OrderDetailHeader = ({
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
 const HeaderTitle = ({ order }: { order: Order | null }) => {
-  const title = `# ${order?.order_scalar_id ?? 'reference number missing'}`
+  const title = `# ${order?.order_scalar_id ?? "reference number missing"}`;
 
   return (
     <div className="flex min-w-0 flex-col">
@@ -149,8 +158,11 @@ const HeaderTitle = ({ order }: { order: Order | null }) => {
         ) : null}
       </div>
       <div className="mt-0.5 flex items-center gap-2 text-[0.72rem] text-[var(--color-muted)]">
-        <span>Created at: {toDateOnly(order?.creation_date ?? null) ?? 'missing creation date'}</span>
+        <span>
+          Created at:{" "}
+          {toDateOnly(order?.creation_date ?? null) ?? "missing creation date"}
+        </span>
       </div>
     </div>
-  )
-}
+  );
+};

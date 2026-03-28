@@ -100,20 +100,20 @@ export const RouteGroupsPageHeader = ({
     const PlanTypeIcon = planIconTypeMap.local_delivery
     
     return (
-        <header className="flex w-full flex-col shadow-[0_12px_30px_rgba(0,0,0,0.12)]">
-            <div className="admin-glass-divider flex items-center justify-between gap-3 border-b px-4 py-3 transition-colors duration-200">
-                <div className="flex items-center gap-3">
+        <header className="flex w-full min-w-0 flex-col shadow-[0_12px_30px_rgba(0,0,0,0.12)]">
+            <div className="admin-glass-divider flex min-w-0 items-center justify-between gap-3 border-b px-4 py-3 transition-colors duration-200">
+                <div className="flex min-w-0 flex-1 items-center gap-3 overflow-hidden">
                     <div className="inline-flex items-center justify-center rounded-xl border border-white/8 bg-white/[0.06] px-3 py-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]">
                         <PlanTypeIcon className="h-6 w-6 text-[var(--color-muted)]" />
                     </div>
-                    <div className="text-lg font-semibold text-[var(--color-text)]">
-                        <div className="flex flex-col">
-                            <span>{summary.title}</span>
-                            <p className="text-[11px] font-normal text-[var(--color-muted)]">
+                    <div className="min-w-0 flex-1 text-lg font-semibold text-[var(--color-text)]">
+                        <div className="flex min-w-0 flex-col overflow-hidden">
+                            <span className="truncate">{summary.title}</span>
+                            <p className="truncate text-[11px] font-normal text-[var(--color-muted)]">
                                 {summary.orderCount} orders • {summary.itemCount} items • {formatMetric(summary.totalVolume, '㎥')} • {formatMetric(summary.totalWeight, 'kg')}
                             </p>
                             {summary.subtitle ? (
-                                <p className="text-[11px] font-normal text-[var(--color-muted)]/80">
+                                <p className="truncate text-[11px] font-normal text-[var(--color-muted)]/80">
                                     {summary.subtitle}
                                 </p>
                             ) : null}
@@ -126,6 +126,7 @@ export const RouteGroupsPageHeader = ({
                             variant: 'text',
                             onClick: onRequestClose,
                             ariaLabel: 'Close route groups page',
+                            className: 'shrink-0',
                         }}
                     >
                         Close

@@ -14,6 +14,24 @@ import type {
 import type { MapBounds } from "@/shared/map/domain/types";
 
 type ZoneEntityTable = Record<number, ZoneState>;
+export type EnsureFirstZoneVersionStatus =
+  | "idle"
+  | "loading"
+  | "success"
+  | "retryable_failure";
+export type ZoneLoadStatus = "idle" | "loading" | "success" | "retryable_failure";
+export type ZoneDetailsPopoverState = {
+  zoneId: number;
+  anchorRect: { top: number; left: number; width: number; height: number };
+};
+export type ZonePathEditSession = {
+  versionId: number;
+  zoneId: number;
+  originalGeometry: GeoJSONPolygon;
+  draftGeometry: GeoJSONPolygon;
+  isSaving: boolean;
+  error: string | null;
+};
 
 type ZoneStoreState = {
   versions: ZoneVersion[];
@@ -24,9 +42,15 @@ type ZoneStoreState = {
   zonesByVersionId: Record<number, ZoneEntityTable>;
   isZoneMode: boolean;
   drawnGeometry: GeoJSONPolygon | null;
+  pathEditSession: ZonePathEditSession | null;
   hoveredZoneId: number | null;
+  activeZoneDetailsPopover: ZoneDetailsPopoverState | null;
   isLoadingVersions: boolean;
+  ensureFirstVersionStatus: EnsureFirstZoneVersionStatus;
+  ensureFirstVersionError: string | null;
   isLoadingZonesByVersionId: Record<number, boolean>;
+  zoneLoadStatusByVersionId: Record<number, ZoneLoadStatus>;
+  zoneLoadErrorByVersionId: Record<number, string | null>;
   setVersions: (versions: ZoneVersion[]) => void;
   setActiveVersionId: (versionId: number | null) => void;
   setSelectedVersionId: (versionId: number | null) => void;
@@ -35,12 +59,33 @@ type ZoneStoreState = {
   setSelectedZoneId: (zoneId: number | null, versionId?: number | null) => void;
   setIsZoneMode: (isZoneMode: boolean) => void;
   setDrawnGeometry: (geometry: GeoJSONPolygon | null) => void;
+  startPathEditSession: (
+    session: Omit<ZonePathEditSession, "isSaving" | "error">,
+  ) => void;
+  updatePathEditDraft: (geometry: GeoJSONPolygon) => void;
+  setPathEditSaving: (isSaving: boolean) => void;
+  setPathEditError: (error: string | null) => void;
+  completePathEditSession: (geometry: GeoJSONPolygon) => void;
+  cancelPathEditSession: () => void;
   setHoveredZoneId: (zoneId: number | null) => void;
+  setActiveZoneDetailsPopover: (popover: ZoneDetailsPopoverState | null) => void;
+  toggleZoneDetailsPopover: (popover: ZoneDetailsPopoverState) => void;
+  closeZoneDetailsPopover: () => void;
   upsertZone: (zone: ZoneDefinition) => void;
   removeZoneOptimistic: (versionId: number, zoneId: number) => void;
   removeZoneById: (versionId: number, zoneId: number) => void;
   setLoadingVersions: (isLoading: boolean) => void;
+  setEnsureFirstVersionStatus: (
+    status: EnsureFirstZoneVersionStatus,
+    error?: string | null,
+  ) => void;
+  resetEnsureFirstVersionState: () => void;
   setLoadingZones: (versionId: number, isLoading: boolean) => void;
+  setZoneLoadStatus: (
+    versionId: number,
+    status: ZoneLoadStatus,
+    error?: string | null,
+  ) => void;
   markZoneGeometryLoading: (versionId: number, zoneId: number, isLoading: boolean) => void;
   markZoneTemplateLoading: (versionId: number, zoneId: number, isLoading: boolean) => void;
   setZoneFullGeometry: (
@@ -76,9 +121,15 @@ const initialState = {
   zonesByVersionId: {} as Record<number, ZoneEntityTable>,
   isZoneMode: false,
   drawnGeometry: null as GeoJSONPolygon | null,
+  pathEditSession: null as ZonePathEditSession | null,
   hoveredZoneId: null,
+  activeZoneDetailsPopover: null as ZoneDetailsPopoverState | null,
   isLoadingVersions: false,
+  ensureFirstVersionStatus: "idle" as EnsureFirstZoneVersionStatus,
+  ensureFirstVersionError: null,
   isLoadingZonesByVersionId: {} as Record<number, boolean>,
+  zoneLoadStatusByVersionId: {} as Record<number, ZoneLoadStatus>,
+  zoneLoadErrorByVersionId: {} as Record<number, string | null>,
 };
 
 const resolveWorkingVersionId = (state: ZoneStoreState) =>
@@ -96,6 +147,11 @@ const getVersionZoneIds = (state: ZoneStoreState, versionId: number) =>
 
 const getVersionZoneTable = (state: ZoneStoreState, versionId: number) =>
   state.zonesByVersionId[versionId] ?? {};
+
+const areZoneGeometriesEqual = (
+  left: GeoJSONPolygon | null,
+  right: GeoJSONPolygon | null,
+) => JSON.stringify(left) === JSON.stringify(right);
 
 const mergeZoneIntoVersion = (
   state: ZoneStoreState,
@@ -285,7 +341,105 @@ export const useZoneStore = create<ZoneStoreState>((set) => ({
     }),
   setIsZoneMode: (isZoneMode) => set(() => ({ isZoneMode })),
   setDrawnGeometry: (drawnGeometry) => set(() => ({ drawnGeometry })),
+  startPathEditSession: (session) =>
+    set(() => ({
+      pathEditSession: {
+        ...session,
+        isSaving: false,
+        error: null,
+      },
+      drawnGeometry: null,
+    })),
+  updatePathEditDraft: (geometry) =>
+    set((state) => {
+      if (!state.pathEditSession) {
+        return state;
+      }
+
+      if (
+        areZoneGeometriesEqual(state.pathEditSession.draftGeometry, geometry)
+      ) {
+        return state;
+      }
+
+      return {
+        ...state,
+        pathEditSession: {
+          ...state.pathEditSession,
+          draftGeometry: geometry,
+        },
+      };
+    }),
+  setPathEditSaving: (isSaving) =>
+    set((state) => {
+      if (!state.pathEditSession) {
+        return state;
+      }
+
+      return {
+        ...state,
+        pathEditSession: {
+          ...state.pathEditSession,
+          isSaving,
+        },
+      };
+    }),
+  setPathEditError: (error) =>
+    set((state) => {
+      if (!state.pathEditSession) {
+        return state;
+      }
+
+      return {
+        ...state,
+        pathEditSession: {
+          ...state.pathEditSession,
+          error,
+          isSaving: false,
+        },
+      };
+    }),
+  completePathEditSession: (geometry) =>
+    set((state) => {
+      if (!state.pathEditSession) {
+        return state;
+      }
+
+      return {
+        ...state,
+        pathEditSession: null,
+        drawnGeometry: null,
+      };
+    }),
+  cancelPathEditSession: () =>
+    set((state) => {
+      if (!state.pathEditSession) {
+        return state;
+      }
+
+      return {
+        ...state,
+        pathEditSession: null,
+      };
+    }),
   setHoveredZoneId: (hoveredZoneId) => set(() => ({ hoveredZoneId })),
+  setActiveZoneDetailsPopover: (activeZoneDetailsPopover) =>
+    set(() => ({ activeZoneDetailsPopover })),
+  toggleZoneDetailsPopover: (popover) =>
+    set((state) => ({
+      activeZoneDetailsPopover:
+        state.activeZoneDetailsPopover?.zoneId === popover.zoneId
+          ? null
+          : popover,
+    })),
+  closeZoneDetailsPopover: () =>
+    set((state) => {
+      if (state.activeZoneDetailsPopover == null) {
+        return state;
+      }
+
+      return { activeZoneDetailsPopover: null };
+    }),
   upsertZone: (zone) =>
     set((state) => {
       const mappedZone = mapZoneDefinitionToZoneState(
@@ -353,11 +507,32 @@ export const useZoneStore = create<ZoneStoreState>((set) => ({
       };
     }),
   setLoadingVersions: (isLoadingVersions) => set(() => ({ isLoadingVersions })),
+  setEnsureFirstVersionStatus: (ensureFirstVersionStatus, error = null) =>
+    set(() => ({
+      ensureFirstVersionStatus,
+      ensureFirstVersionError: error,
+    })),
+  resetEnsureFirstVersionState: () =>
+    set(() => ({
+      ensureFirstVersionStatus: "idle",
+      ensureFirstVersionError: null,
+    })),
   setLoadingZones: (versionId, isLoading) =>
     set((state) => ({
       isLoadingZonesByVersionId: {
         ...state.isLoadingZonesByVersionId,
         [versionId]: isLoading,
+      },
+    })),
+  setZoneLoadStatus: (versionId, status, error = null) =>
+    set((state) => ({
+      zoneLoadStatusByVersionId: {
+        ...state.zoneLoadStatusByVersionId,
+        [versionId]: status,
+      },
+      zoneLoadErrorByVersionId: {
+        ...state.zoneLoadErrorByVersionId,
+        [versionId]: error,
       },
     })),
   markZoneGeometryLoading: (versionId, zoneId, isLoading) =>
@@ -544,6 +719,9 @@ export const selectSelectedZoneId = (state: ZoneStoreState) => {
 export const selectWorkingZoneVersionId = (state: ZoneStoreState) =>
   resolveWorkingVersionId(state);
 
+export const selectZonePathEditSession = (state: ZoneStoreState) =>
+  state.pathEditSession;
+
 export const selectRenderableZoneGeometry = (
   state: ZoneStoreState,
   versionId: number | null | undefined,
@@ -601,4 +779,20 @@ export const selectIsLoadingZonesForVersion = (
 ) => {
   if (typeof versionId !== "number") return false;
   return state.isLoadingZonesByVersionId[versionId] ?? false;
+};
+
+export const selectZoneLoadStatusForVersion = (
+  state: ZoneStoreState,
+  versionId: number | null | undefined,
+) => {
+  if (typeof versionId !== "number") return "idle" as ZoneLoadStatus;
+  return state.zoneLoadStatusByVersionId[versionId] ?? "idle";
+};
+
+export const selectZoneLoadErrorForVersion = (
+  state: ZoneStoreState,
+  versionId: number | null | undefined,
+) => {
+  if (typeof versionId !== "number") return null;
+  return state.zoneLoadErrorByVersionId[versionId] ?? null;
 };

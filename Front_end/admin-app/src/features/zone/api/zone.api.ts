@@ -26,6 +26,9 @@ type CreateZonePayload = {
 
 type UpdateZonePayload = {
   name?: string;
+};
+
+type UpdateZoneGeometryPayload = {
   geometry?: GeoJSONPolygon | null;
   centroid_lat?: number | null;
   centroid_lng?: number | null;
@@ -49,6 +52,44 @@ type ZoneGeometryResponse =
   | GeoJSONPolygon
   | { geometry: GeoJSONPolygon | null }
   | null;
+
+type ZoneDto = ZoneDefinition & {
+  zone_version_id?: number;
+};
+
+const normalizeZoneDto = (zone: ZoneDto | null | undefined): ZoneDefinition | null => {
+  if (!zone) {
+    return null;
+  }
+
+  return {
+    ...zone,
+    version_id:
+      typeof zone.version_id === "number"
+        ? zone.version_id
+        : typeof zone.zone_version_id === "number"
+          ? zone.zone_version_id
+          : undefined,
+  };
+};
+
+const normalizeZoneListResult = (
+  result: ApiResult<ZoneDto[]>,
+): ApiResult<ZoneDefinition[]> => ({
+  ...result,
+  data: Array.isArray(result.data)
+    ? result.data
+        .map((zone) => normalizeZoneDto(zone))
+        .filter((zone): zone is ZoneDefinition => zone != null)
+    : [],
+});
+
+const normalizeZoneResult = (
+  result: ApiResult<ZoneDto>,
+): ApiResult<ZoneDefinition> => ({
+  ...result,
+  data: normalizeZoneDto(result.data) as ZoneDefinition,
+});
 
 export const zoneApi = {
   fetchZoneVersions: (): Promise<ApiResult<ZoneVersion[]>> =>
@@ -84,31 +125,50 @@ export const zoneApi = {
   fetchZonesForVersion: (
     versionId: number,
   ): Promise<ApiResult<ZoneDefinition[]>> =>
-    apiClient.request<ZoneDefinition[]>({
-      path: `/zones/${versionId}/zones`,
-      method: "GET",
-    }),
+    apiClient
+      .request<ZoneDto[]>({
+        path: `/zones/${versionId}/zones`,
+        method: "GET",
+      })
+      .then(normalizeZoneListResult),
 
   createZone: (
     versionId: number,
     payload: CreateZonePayload,
   ): Promise<ApiResult<ZoneDefinition>> =>
-    apiClient.request<ZoneDefinition>({
-      path: `/zones/${versionId}/zones`,
-      method: "PUT",
-      data: payload,
-    }),
+    apiClient
+      .request<ZoneDto>({
+        path: `/zones/${versionId}/zones`,
+        method: "PUT",
+        data: payload,
+      })
+      .then(normalizeZoneResult),
 
-  updateZone: (
+  updateZoneName: (
     versionId: number,
     zoneId: number,
     payload: UpdateZonePayload,
   ): Promise<ApiResult<ZoneDefinition>> =>
-    apiClient.request<ZoneDefinition>({
-      path: `/zones/${versionId}/zones/${zoneId}`,
-      method: "PATCH",
-      data: payload,
-    }),
+    apiClient
+      .request<ZoneDto>({
+        path: `/zones/${versionId}/zones/${zoneId}`,
+        method: "PATCH",
+        data: payload,
+      })
+      .then(normalizeZoneResult),
+
+  updateZoneGeometry: (
+    versionId: number,
+    zoneId: number,
+    payload: UpdateZoneGeometryPayload,
+  ): Promise<ApiResult<ZoneDefinition>> =>
+    apiClient
+      .request<ZoneDto>({
+        path: `/zones/${versionId}/zones/${zoneId}/geometry`,
+        method: "PATCH",
+        data: payload,
+      })
+      .then(normalizeZoneResult),
 
   deleteZone: (
     versionId: number,

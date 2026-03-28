@@ -49,11 +49,76 @@ export const PlanFormLayout = ({}) => {
               />
             </Field>
           </Cell>
-          <SplitRow
-            splitRowClass={
-              "grid grid-cols-2 divide-x divide-[var(--color-border-accent)]"
-            }
-          >
+          <Cell>
+            <Field label="Date type:">
+              <div className="flex items-center gap-1 pt-1">
+                <BasicButton
+                  params={{
+                    variant:
+                      planForm.date_strategy !== "range"
+                        ? "primary"
+                        : "secondary",
+                    className: "py-1 px-3 text-sm",
+                    onClick: () => planSetters.handleDateStrategy("single"),
+                  }}
+                >
+                  Single
+                </BasicButton>
+                <BasicButton
+                  params={{
+                    variant:
+                      planForm.date_strategy === "range"
+                        ? "primary"
+                        : "secondary",
+                    className: "py-1 px-3 text-sm",
+                    onClick: () => planSetters.handleDateStrategy("range"),
+                  }}
+                >
+                  Range
+                </BasicButton>
+              </div>
+            </Field>
+          </Cell>
+          {planForm.date_strategy === "range" ? (
+            <SplitRow
+              splitRowClass={
+                "grid grid-cols-2 divide-x divide-[var(--color-border-accent)]"
+              }
+            >
+              <Cell cellClass="py-2 px-3">
+                <Field label="From:" required={true}>
+                  <CustomDatePicker
+                    date={
+                      planForm.start_date
+                        ? new Date(planForm.start_date)
+                        : new Date()
+                    }
+                    onChange={(value) =>
+                      planSetters.handleStartDate(value ?? "")
+                    }
+                    disablePast
+                    className="pl-3 py-2"
+                    renderPopoverInPortal
+                  />
+                </Field>
+              </Cell>
+              <Cell cellClass="py-2 px-3">
+                <Field label="To:" required={true}>
+                  <CustomDatePicker
+                    date={
+                      planForm.end_date
+                        ? new Date(planForm.end_date)
+                        : new Date()
+                    }
+                    onChange={(value) => planSetters.handleEndDate(value ?? "")}
+                    disablePast
+                    className="pl-3 py-2"
+                    renderPopoverInPortal
+                  />
+                </Field>
+              </Cell>
+            </SplitRow>
+          ) : (
             <Cell cellClass="py-2 px-3">
               <Field label="From:" required={true}>
                 <CustomDatePicker
@@ -69,20 +134,7 @@ export const PlanFormLayout = ({}) => {
                 />
               </Field>
             </Cell>
-            <Cell cellClass="py-2 px-3">
-              <Field label="To:" required={true}>
-                <CustomDatePicker
-                  date={
-                    planForm.end_date ? new Date(planForm.end_date) : new Date()
-                  }
-                  onChange={(value) => planSetters.handleEndDate(value ?? "")}
-                  disablePast
-                  className="pl-3 py-2"
-                  renderPopoverInPortal
-                />
-              </Field>
-            </Cell>
-          </SplitRow>
+          )}
           <ZoneSelectionStep
             availableZones={availableZones}
             isZonesLoading={isZonesLoading}

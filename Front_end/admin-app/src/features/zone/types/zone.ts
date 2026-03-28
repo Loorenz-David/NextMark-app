@@ -42,6 +42,13 @@ export type ZoneBBox = {
   west: number;
 };
 
+export type ZoneBootstrapBBox = {
+  max_lat: number;
+  min_lat: number;
+  max_lng: number;
+  min_lng: number;
+};
+
 export type ZoneGeometryResolution = "none" | "simplified" | "full";
 
 export type ZoneDefinition = {
@@ -97,8 +104,24 @@ export type ZoneState = {
 };
 
 export type ZonesContext = {
-  version_id: number;
-  zones: ZoneLite[];
+  city_key: string;
+  selected_version: {
+    id: number;
+    is_active?: boolean;
+    version_number?: number;
+  } | null;
+  zones: Array<{
+    id: number;
+    name: string;
+    zone_type?: "bootstrap" | "system" | "user" | null;
+    centroid: ZoneCentroid | null;
+    bbox: ZoneBootstrapBBox;
+    geometry_resolution: ZoneGeometryResolution;
+    geometry_simplified?: GeoJSONPolygon | null;
+    has_geometry?: boolean;
+    is_active?: boolean;
+    template_ref?: ZoneTemplateRef | null;
+  }>;
 };
 
 export type ZoneVersion = {

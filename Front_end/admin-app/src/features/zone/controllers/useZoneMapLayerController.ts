@@ -5,6 +5,7 @@ import { useShallow } from "zustand/react/shallow";
 import { mapZoneStateToRenderableDefinition } from "@/features/zone/domain/zoneState.mapper";
 import {
   selectIsZoneMode,
+  selectZonePathEditSession,
   selectVisibleZones,
   selectWorkingZoneVersionId,
   useZoneStore,
@@ -14,20 +15,22 @@ import {
   useZoneVisibilityStore,
 } from "@/features/zone/store/zoneVisibility.store";
 import type { MapBounds } from "@/shared/map/domain/types";
-import {
-  useMapManager,
-  usePopupManager,
-} from "@/shared/resource-manager/useResourceManager";
+import { useMapManager } from "@/shared/resource-manager/useResourceManager";
 
 export const useZoneMapLayerController = () => {
   const mapManager = useMapManager();
-  const popupManager = usePopupManager();
   const [viewportBounds, setViewportBounds] = useState<MapBounds | null>(null);
+  const [mapReadyTick, setMapReadyTick] = useState(0);
 
   const isZoneMode = useZoneStore(selectIsZoneMode);
+  const pathEditSession = useZoneStore(selectZonePathEditSession);
   const workingVersionId = useZoneStore(selectWorkingZoneVersionId);
-  const setHoveredZoneId = useZoneStore((state) => state.setHoveredZoneId);
-  const setSelectedZoneId = useZoneStore((state) => state.setSelectedZoneId);
+  const closeZoneDetailsPopover = useZoneStore(
+    (state) => state.closeZoneDetailsPopover,
+  );
+  const toggleZoneDetailsPopover = useZoneStore(
+    (state) => state.toggleZoneDetailsPopover,
+  );
   const isZoneVisible = useZoneVisibilityStore(selectZoneVisibility);
   const visibleZones = useZoneStore(
     useShallow((state) =>
@@ -48,24 +51,38 @@ export const useZoneMapLayerController = () => {
   }, [mapManager]);
 
   useEffect(() => {
+    return mapManager.subscribeReady(() => {
+      setMapReadyTick((tick) => tick + 1);
+    });
+  }, [mapManager]);
+
+  useEffect(() => {
+    if (!pathEditSession) {
+      return;
+    }
+
+    closeZoneDetailsPopover();
+  }, [closeZoneDetailsPopover, pathEditSession]);
+
+  useEffect(() => {
     if (!shouldRenderZones) {
-      setHoveredZoneId(null);
+      closeZoneDetailsPopover();
       mapManager.clearZoneLayer();
       return;
     }
 
     mapManager.setZoneLayer(renderableZones, {
-      onHover: setHoveredZoneId,
-      onClick: (zoneId) => {
-        if (!isZoneMode || typeof workingVersionId !== "number") {
+      onClick: () => {
+        if (pathEditSession) {
           return;
         }
-
-        setSelectedZoneId(zoneId, workingVersionId);
-        popupManager.open({
-          key: "zone.form",
-          payload: { mode: "edit", zoneId, versionId: workingVersionId },
-        });
+        closeZoneDetailsPopover();
+      },
+      onLabelClick: (zoneId, anchorRect) => {
+        if (pathEditSession) {
+          return;
+        }
+        toggleZoneDetailsPopover({ zoneId, anchorRect });
       },
     });
 
@@ -75,11 +92,11 @@ export const useZoneMapLayerController = () => {
   }, [
     isZoneMode,
     mapManager,
-    popupManager,
     renderableZones,
-    setHoveredZoneId,
-    setSelectedZoneId,
+    closeZoneDetailsPopover,
+    pathEditSession,
     shouldRenderZones,
-    workingVersionId,
+    toggleZoneDetailsPopover,
+    mapReadyTick,
   ]);
 };

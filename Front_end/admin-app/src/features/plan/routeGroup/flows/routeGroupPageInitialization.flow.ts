@@ -18,7 +18,6 @@ import {
 export const useRouteGroupPageInitializationFlow = (
   planId: number | null,
   freshAfter?: string | null,
-  preferredRouteGroupId?: number | null,
   options?: { disabled?: boolean },
 ) => {
   const { fetchRouteGroupOverview } = useRouteGroupOverviewFlow();
@@ -44,23 +43,12 @@ export const useRouteGroupPageInitializationFlow = (
       return;
     }
 
-    const selectionKey = `${planId}:${preferredRouteGroupId ?? "default"}`;
+    const selectionKey = `${planId}:default`;
     if (initialSelectionKeyRef.current === selectionKey) {
       return;
     }
 
     if (activeRouteGroupId != null) {
-      initialSelectionKeyRef.current = selectionKey;
-      return;
-    }
-
-    const preferredRouteGroupExists =
-      typeof preferredRouteGroupId === "number" &&
-      routeGroups.some((candidateRouteGroup) => candidateRouteGroup.id === preferredRouteGroupId);
-
-    if (preferredRouteGroupExists) {
-      setActiveRouteGroupId(preferredRouteGroupId);
-      rememberRouteGroupForPlan(planId, preferredRouteGroupId);
       initialSelectionKeyRef.current = selectionKey;
       return;
     }
@@ -76,7 +64,6 @@ export const useRouteGroupPageInitializationFlow = (
     isFixtureMode,
     options?.disabled,
     planId,
-    preferredRouteGroupId,
     routeGroups,
   ]);
 
@@ -91,16 +78,14 @@ export const useRouteGroupPageInitializationFlow = (
       return;
     }
 
-    const requestedRouteGroupId =
-      activeRouteGroupId ?? preferredRouteGroupId ?? null;
-
     const hasRouteGroups = routeGroups.length > 0;
     const hasActiveRouteGroup = routeGroup != null;
-    const isWorkspaceHydrated = Boolean(
-      !hasRouteGroups ||
-      !hasActiveRouteGroup ||
-      (routeSolutions.length > 0 && selectedRouteSolution),
-    );
+    const hasHydratedSelectedRouteGroup =
+      hasActiveRouteGroup &&
+      routeSolutions.length > 0 &&
+      selectedRouteSolution != null;
+    const isWorkspaceHydrated =
+      hasRouteGroups && hasHydratedSelectedRouteGroup;
     const needsRefresh =
       plan == null ||
       !isWorkspaceHydrated ||
@@ -110,18 +95,17 @@ export const useRouteGroupPageInitializationFlow = (
       return;
     }
 
-    const refreshKey = `${planId}:${freshAfter ?? ""}:${requestedRouteGroupId ?? ""}`;
+    const refreshKey = `${planId}:${freshAfter ?? ""}`;
     if (lastRefreshAttemptRef.current === refreshKey) {
       return;
     }
     lastRefreshAttemptRef.current = refreshKey;
 
-    fetchRouteGroupOverview(planId, requestedRouteGroupId);
+    fetchRouteGroupOverview(planId);
   }, [
     activeRouteGroupId,
     fetchRouteGroupOverview,
     freshAfter,
-    preferredRouteGroupId,
     routeGroup,
     plan,
     planId,

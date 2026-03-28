@@ -1,20 +1,17 @@
-import { RouteGroupRailAvatar } from './RouteGroupRailAvatar'
-import type { RouteGroupRailItem } from './types'
+import { DroppableRouteGroupRailAvatar } from "./DroppableRouteGroupRailAvatar";
+import type { RouteGroupRailItem } from "./types";
 
 type RouteGroupRailProps = {
-  items: RouteGroupRailItem[]
-  onClick: (item: RouteGroupRailItem) => void
-}
+  items: RouteGroupRailItem[];
+  onClick: (item: RouteGroupRailItem) => void;
+};
 
-export const RouteGroupRail = ({
-  items,
-  onClick,
-}: RouteGroupRailProps) => {
+export const RouteGroupRail = ({ items, onClick }: RouteGroupRailProps) => {
   return (
     <aside className="min-h-0 h-full w-full md:w-[100px] md:min-w-[100px] md:max-w-[100px]">
       <div className="flex min-h-0 h-full flex-row gap-2 overflow-x-auto px-3 py-3 md:flex-col md:overflow-x-visible md:overflow-y-auto md:px-2">
         {items.map((item) => (
-          <RouteGroupRailAvatar
+          <DroppableRouteGroupRailAvatar
             key={item.route_group_id}
             item={item}
             onClick={onClick}
@@ -22,5 +19,5 @@ export const RouteGroupRail = ({
         ))}
       </div>
     </aside>
-  )
-}
+  );
+};

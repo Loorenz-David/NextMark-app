@@ -7,10 +7,13 @@ import type { address } from "@/types/address";
 
 export type RoutePlanObjective = "local_delivery";
 
+export type PlanDateStrategy = "single" | "range";
+
 export type DeliveryPlan = {
   id?: number;
   client_id: string;
   label: string;
+  date_strategy?: PlanDateStrategy | null;
   start_date?: string | null;
   end_date?: string | null;
   created_at?: string | null;
@@ -72,6 +75,7 @@ export type RouteGroupPlanTypeDefaults = RouteGroupDefaults;
 export type PlanCreatePayload = {
   client_id?: string;
   label: string;
+  date_strategy?: PlanDateStrategy;
   start_date: string;
   end_date?: string | null;
   order_ids?: number[];

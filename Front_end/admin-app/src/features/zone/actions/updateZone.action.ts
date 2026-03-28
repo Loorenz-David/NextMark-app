@@ -50,7 +50,7 @@ export async function updateZoneAction(
 
   try {
     if (command.name !== command.zone.name) {
-      const patchResponse = await zoneApi.updateZone(
+      const patchResponse = await zoneApi.updateZoneName(
         command.versionId,
         command.zone.id,
         { name: command.name },

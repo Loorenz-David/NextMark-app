@@ -1,3 +1,4 @@
-export { RouteGroupRail } from './RouteGroupRail'
-export { RouteGroupRailAvatar } from './RouteGroupRailAvatar'
-export type { RouteGroupRailItem } from './types'
+export { RouteGroupRail } from "./RouteGroupRail";
+export { RouteGroupRailAvatar } from "./RouteGroupRailAvatar";
+export { DroppableRouteGroupRailAvatar } from "./DroppableRouteGroupRailAvatar";
+export type { RouteGroupRailItem } from "./types";

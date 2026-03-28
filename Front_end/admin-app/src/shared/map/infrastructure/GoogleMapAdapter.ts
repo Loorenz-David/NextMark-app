@@ -12,6 +12,8 @@ import type {
   MapViewportInsets,
   SetMarkerLayerOptions,
   ZoneLayerOptions,
+  ZonePathEditOptions,
+  ZonePolygonOverlayOptions,
 } from "../domain/types";
 import type { GeoJSONPolygon, ZoneDefinition } from "@/features/zone/types";
 import { LocateControlManager } from "./controls/LocateControlManager";
@@ -39,8 +41,10 @@ export class GoogleMapAdapter implements MapAdapter {
   private boundsChangedListeners = new Set<
     (bounds: MapBounds | null) => void
   >();
+  private readyListeners = new Set<() => void>();
   private idleListener: any = null;
   private zoneOverlayPolygons: any[] = [];
+  private zoneOverlayLabelMarkers: any[] = [];
   private zoneLayerPolygons: any[] = [];
   private zoneLabelMarkers: any[] = [];
 
@@ -106,6 +110,9 @@ export class GoogleMapAdapter implements MapAdapter {
     if (activeLayerId) {
       this.markerMultiSelectionManager.syncLayerStyles(activeLayerId);
     }
+
+    this.readyListeners.forEach((listener) => listener());
+    this.emitBoundsChanged();
   }
 
   setMarkers(orders: MapOrder[]) {
@@ -182,6 +189,17 @@ export class GoogleMapAdapter implements MapAdapter {
     this.drawingManagerService.disableZoneCapture();
   }
 
+  enableZonePathEdit(
+    geometry: GeoJSONPolygon,
+    options: ZonePathEditOptions,
+  ) {
+    this.drawingManagerService.enableZonePathEdit(geometry, options);
+  }
+
+  disableZonePathEdit() {
+    this.drawingManagerService.disableZonePathEdit();
+  }
+
   selectMarker(id: string) {
     this.markerSelectionManager.selectMarker(id);
   }
@@ -210,11 +228,16 @@ export class GoogleMapAdapter implements MapAdapter {
     this.viewportManager.reframeToVisibleArea();
   }
 
-  setZonePolygonOverlay(geometry: GeoJSONPolygonGeometry | null) {
+  setZonePolygonOverlay(
+    geometry: GeoJSONPolygonGeometry | null,
+    options?: ZonePolygonOverlayOptions,
+  ) {
     this.clearZonePolygonOverlay();
 
     const map = this.mapInstanceManager.getMap();
-    const PolygonCtor = (google as any)?.maps?.Polygon;
+    const googleMaps = (globalThis as any)?.google?.maps;
+    const PolygonCtor = googleMaps?.Polygon;
+    const MarkerCtor = googleMaps?.marker?.AdvancedMarkerElement;
 
     if (!map || !geometry || !PolygonCtor) {
       return;
@@ -244,6 +267,25 @@ export class GoogleMapAdapter implements MapAdapter {
 
       this.zoneOverlayPolygons.push(polygon);
     });
+
+    const label = options?.label?.trim();
+    const labelPosition = label ? this.resolveGeometryCenter(geometry) : null;
+    if (!label || !labelPosition || !MarkerCtor) {
+      return;
+    }
+
+    const labelContent = document.createElement("div");
+    labelContent.className =
+      "rounded-md border border-white/25 bg-black/50 px-2 py-1 text-xs font-semibold text-white";
+    labelContent.textContent = label;
+
+    const marker = new MarkerCtor({
+      map,
+      position: labelPosition,
+      content: labelContent,
+    });
+
+    this.zoneOverlayLabelMarkers.push(marker);
   }
 
   clearZonePolygonOverlay() {
@@ -251,6 +293,10 @@ export class GoogleMapAdapter implements MapAdapter {
       polygon?.setMap?.(null);
     });
     this.zoneOverlayPolygons = [];
+    this.zoneOverlayLabelMarkers.forEach((marker) => {
+      marker.map = null;
+    });
+    this.zoneOverlayLabelMarkers = [];
   }
 
   setZoneLayer(zones: ZoneDefinition[], options: ZoneLayerOptions) {
@@ -302,8 +348,6 @@ export class GoogleMapAdapter implements MapAdapter {
 
       const addListener = googleMaps?.event?.addListener;
       if (addListener) {
-        addListener(polygon, "mouseover", () => options.onHover(zoneId));
-        addListener(polygon, "mouseout", () => options.onHover(null));
         addListener(polygon, "click", () => options.onClick(zoneId));
       }
 
@@ -318,6 +362,17 @@ export class GoogleMapAdapter implements MapAdapter {
         label.className =
           "rounded-md border border-white/25 bg-black/50 px-2 py-1 text-xs font-semibold text-white";
         label.textContent = zone.name || `Zone ${zoneId}`;
+        label.style.cursor = "pointer";
+        label.onclick = (event: MouseEvent) => {
+          event.stopPropagation();
+          const rect = label.getBoundingClientRect();
+          options.onLabelClick(zoneId, {
+            top: rect.top,
+            left: rect.left,
+            width: rect.width,
+            height: rect.height,
+          });
+        };
 
         const marker = new MarkerCtor({
           map,
@@ -343,6 +398,10 @@ export class GoogleMapAdapter implements MapAdapter {
     this.zoneLayerPolygons = [];
 
     this.zoneLabelMarkers.forEach((marker) => {
+      const content = marker?.content as HTMLElement | undefined;
+      if (content) {
+        content.onclick = null;
+      }
       marker.map = null;
     });
     this.zoneLabelMarkers = [];
@@ -357,10 +416,23 @@ export class GoogleMapAdapter implements MapAdapter {
     };
   }
 
+  subscribeReady(callback: () => void) {
+    this.readyListeners.add(callback);
+
+    if (this.mapInstanceManager.getMap()) {
+      callback();
+    }
+
+    return () => {
+      this.readyListeners.delete(callback);
+    };
+  }
+
   destroy() {
     this.idleListener?.remove?.();
     this.idleListener = null;
     this.boundsChangedListeners.clear();
+    this.readyListeners.clear();
     this.clearMarkers();
     this.userLocationManager.clearUserLocationMarker();
     this.locateControlManager.unmountLocateControl();
@@ -391,6 +463,51 @@ export class GoogleMapAdapter implements MapAdapter {
     }
 
     return [];
+  }
+
+  private resolveGeometryCenter(
+    geometry: GeoJSONPolygonGeometry,
+  ): { lat: number; lng: number } | null {
+    const exteriorRing = this.resolveExteriorRing(geometry as GeoJSONPolygon);
+    if (!Array.isArray(exteriorRing) || exteriorRing.length === 0) {
+      return null;
+    }
+
+    let minLat = Number.POSITIVE_INFINITY;
+    let maxLat = Number.NEGATIVE_INFINITY;
+    let minLng = Number.POSITIVE_INFINITY;
+    let maxLng = Number.NEGATIVE_INFINITY;
+
+    exteriorRing.forEach((point) => {
+      if (!Array.isArray(point) || point.length < 2) {
+        return;
+      }
+
+      const lng = Number(point[0]);
+      const lat = Number(point[1]);
+      if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+        return;
+      }
+
+      minLat = Math.min(minLat, lat);
+      maxLat = Math.max(maxLat, lat);
+      minLng = Math.min(minLng, lng);
+      maxLng = Math.max(maxLng, lng);
+    });
+
+    if (
+      !Number.isFinite(minLat) ||
+      !Number.isFinite(maxLat) ||
+      !Number.isFinite(minLng) ||
+      !Number.isFinite(maxLng)
+    ) {
+      return null;
+    }
+
+    return {
+      lat: (minLat + maxLat) / 2,
+      lng: (minLng + maxLng) / 2,
+    };
   }
 
   private normalizeRing(ring: unknown): Array<{ lat: number; lng: number }> {
@@ -446,9 +563,13 @@ export class GoogleMapAdapter implements MapAdapter {
     }
 
     this.idleListener = google.maps.event.addListener(map, "idle", () => {
-      const bounds = this.resolveBounds();
-      this.boundsChangedListeners.forEach((listener) => listener(bounds));
+      this.emitBoundsChanged();
     });
+  }
+
+  private emitBoundsChanged() {
+    const bounds = this.resolveBounds();
+    this.boundsChangedListeners.forEach((listener) => listener(bounds));
   }
 
   private resolveBounds(): MapBounds | null {

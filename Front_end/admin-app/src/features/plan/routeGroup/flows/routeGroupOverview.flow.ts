@@ -53,12 +53,10 @@ export function useRouteGroupOverviewFlow() {
 
   const fetchRouteGroupOverview = useCallback(async (
     planId: number | string,
-    routeGroupId?: number | null,
   ) => {
     try {
       const response = await planOverviewApi.getRouteGroupOverview(
         planId,
-        routeGroupId,
       )
 
       applyOverviewPayload(response.data)

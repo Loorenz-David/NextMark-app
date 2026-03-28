@@ -1,6 +1,8 @@
 import type {
   ZoneLayerOptions,
   GeoJSONPolygonGeometry,
+  ZonePolygonOverlayOptions,
+  ZonePathEditOptions,
   MapAdapter,
   MapBounds,
   MapConfig,
@@ -75,6 +77,17 @@ export class MapController {
     this.adapter.disableZoneCapture();
   }
 
+  enableZonePathEdit(
+    geometry: GeoJSONPolygon,
+    options: ZonePathEditOptions,
+  ) {
+    this.adapter.enableZonePathEdit(geometry, options);
+  }
+
+  disableZonePathEdit() {
+    this.adapter.disableZonePathEdit();
+  }
+
   showRoute(route: Route | null) {
     this.adapter.drawRoute(route);
   }
@@ -91,8 +104,11 @@ export class MapController {
     this.adapter.reframeToVisibleArea();
   }
 
-  setZonePolygonOverlay(geometry: GeoJSONPolygonGeometry | null) {
-    this.adapter.setZonePolygonOverlay(geometry);
+  setZonePolygonOverlay(
+    geometry: GeoJSONPolygonGeometry | null,
+    options?: ZonePolygonOverlayOptions,
+  ) {
+    this.adapter.setZonePolygonOverlay(geometry, options);
   }
 
   clearZonePolygonOverlay() {
@@ -109,6 +125,10 @@ export class MapController {
 
   subscribeBoundsChanged(callback: (bounds: MapBounds | null) => void) {
     return this.adapter.subscribeBoundsChanged(callback);
+  }
+
+  subscribeReady(callback: () => void) {
+    return this.adapter.subscribeReady(callback);
   }
 
   resize() {

@@ -24,7 +24,7 @@ const resolveCompletionRatio = (
 };
 
 const resolveRouteGroupLabel = (routeGroup: RouteGroup, fallbackIndex: number) =>
-  routeGroup.name?.trim() ||
+  routeGroup.zone_snapshot?.name?.trim() ||
   (typeof routeGroup.zone_id === "number"
     ? `Zone ${routeGroup.zone_id}`
     : `Group ${fallbackIndex + 1}`);

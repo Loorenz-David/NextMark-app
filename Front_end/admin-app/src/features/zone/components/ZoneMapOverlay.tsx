@@ -10,6 +10,7 @@ import {
 
 import { useZoneMapLayerController } from "@/features/zone/controllers/useZoneMapLayerController";
 import { useZoneModeController } from "@/features/zone/controllers/useZoneModeController";
+import { useZonePathEditController } from "@/features/zone/controllers/useZonePathEditController";
 
 import { ZonePolygonLayer } from "./ZonePolygonLayer";
 
@@ -19,12 +20,23 @@ export const ZoneMapOverlay = () => {
   const {
     isZoneMode,
     drawnGeometry,
+    pathEditSession,
     activeVersion,
+    activeVersionId,
+    zoneLoadStatus,
+    zoneLoadError,
+    ensureFirstVersionStatus,
+    ensureFirstVersionError,
     enterZoneMode,
     exitZoneMode,
     discardShape,
     openCreateForm,
+    retryEnsureFirstVersion,
   } = useZoneModeController();
+  const { savePathEdit, cancelPathEdit } = useZonePathEditController(
+    pathEditSession?.versionId ?? activeVersionId,
+    pathEditSession?.zoneId ?? null,
+  );
 
   const [activeShape, setActiveShape] =
     useState<DrawingSelectionMode>("polygon");
@@ -66,7 +78,12 @@ export const ZoneMapOverlay = () => {
     );
   }
 
-  const hasActiveVersion = typeof activeVersion?.id === "number";
+  const hasEnsureFirstVersionFailure =
+    ensureFirstVersionStatus === "retryable_failure";
+  const hasZoneLoadFailure = zoneLoadStatus === "retryable_failure";
+  const isPathEditing = pathEditSession != null;
+  const hasActiveVersion =
+    typeof activeVersion?.id === "number" || typeof activeVersionId === "number";
 
   return (
     <>
@@ -82,23 +99,77 @@ export const ZoneMapOverlay = () => {
           </button>
 
           <p className="mb-3 text-sm font-semibold text-[var(--color-muted)]">
-            Zone Mode
+            {isPathEditing ? "Zone Path Edit" : "Zone Mode"}
           </p>
 
-          <MapDrawingSideControls
-            selectedShape={activeShape}
-            onShapeSelect={handleShapeSelect}
-            onClear={discardShape}
-            shapeOrder={["polygon", "rectangle", "circle"]}
-            disabled={!hasActiveVersion}
-            clearDisabled={drawnGeometry == null}
-            wrapperClassName="absolute -left-36 top-0 flex w-32 flex-col gap-2"
-          />
+          {!isPathEditing ? (
+            <MapDrawingSideControls
+              selectedShape={activeShape}
+              onShapeSelect={handleShapeSelect}
+              onClear={discardShape}
+              shapeOrder={["polygon", "rectangle", "circle"]}
+              disabled={!hasActiveVersion}
+              clearDisabled={drawnGeometry == null}
+              wrapperClassName="absolute -left-36 top-0 flex w-32 flex-col gap-2"
+            />
+          ) : null}
 
-          {!hasActiveVersion ? (
+          {hasEnsureFirstVersionFailure ? (
+            <div className="flex flex-col gap-2">
+              <p className="text-xs text-[var(--color-muted)]/60">
+                {ensureFirstVersionError ?? "Unable to initialize zone version."}
+              </p>
+              <BasicButton
+                params={{
+                  variant: "secondary",
+                  onClick: retryEnsureFirstVersion,
+                  ariaLabel: "Retry loading zone version",
+                }}
+              >
+                Retry
+              </BasicButton>
+            </div>
+          ) : hasZoneLoadFailure ? (
+            <p className="text-xs text-[var(--color-muted)]/60">
+              {zoneLoadError ?? "Unable to load zones for this version."}
+            </p>
+          ) : !hasActiveVersion ? (
             <p className="text-xs text-[var(--color-muted)]/60">
               No zone version available.
             </p>
+          ) : isPathEditing ? (
+            <div className="flex flex-col gap-2">
+              <p className="text-xs text-[var(--color-muted)]/60">
+                Edit the current zone shape on the map, then save or cancel.
+              </p>
+              {pathEditSession?.error ? (
+                <p className="text-xs text-[var(--color-danger,#ef4444)]">
+                  {pathEditSession.error}
+                </p>
+              ) : null}
+              <div className="flex items-center gap-2">
+                <BasicButton
+                  params={{
+                    variant: "secondary",
+                    onClick: cancelPathEdit,
+                    disabled: pathEditSession.isSaving,
+                    ariaLabel: "Cancel zone path edit",
+                  }}
+                >
+                  Cancel
+                </BasicButton>
+                <BasicButton
+                  params={{
+                    variant: "primary",
+                    onClick: () => void savePathEdit(),
+                    disabled: pathEditSession.isSaving,
+                    ariaLabel: "Save zone path",
+                  }}
+                >
+                  {pathEditSession.isSaving ? "Saving..." : "Save Path"}
+                </BasicButton>
+              </div>
+            </div>
           ) : drawnGeometry == null ? (
             <p className="text-xs text-[var(--color-muted)]/60">
               Draw a zone boundary on the map.

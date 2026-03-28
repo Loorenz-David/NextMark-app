@@ -1,15 +1,42 @@
 import { useZoneStore } from "@/features/zone/store/zone.store";
-import type { ZonesContext } from "@/features/zone/types";
+import type { ZoneLite, ZonesContext } from "@/features/zone/types";
 
 export const insertZonesFromBootstrap = (zonesContext: ZonesContext) => {
+  const zoneStore = useZoneStore.getState();
+  const versionId = zonesContext?.selected_version?.id;
   if (
-    typeof zonesContext?.version_id !== "number" ||
+    typeof versionId !== "number" ||
     !Array.isArray(zonesContext.zones)
   ) {
     return;
   }
 
-  useZoneStore
-    .getState()
-    .replaceZoneLitesForVersion(zonesContext.version_id, zonesContext.zones);
+  const zoneLites: ZoneLite[] = zonesContext.zones.map((zone) => ({
+    id: zone.id,
+    version_id: versionId,
+    name: zone.name,
+    zone_type: zone.zone_type ?? null,
+    centroid: zone.centroid ?? null,
+    bbox: {
+      north: zone.bbox.max_lat,
+      south: zone.bbox.min_lat,
+      east: zone.bbox.max_lng,
+      west: zone.bbox.min_lng,
+    },
+    geometry_simplified: zone.geometry_simplified ?? null,
+    geometry_resolution: zone.geometry_resolution,
+    template_ref: zone.template_ref ?? null,
+    is_active: zone.is_active ?? false,
+  }));
+
+  zoneStore.setVersions([
+    {
+      id: versionId,
+      city_key: zonesContext.city_key,
+      version_number: zonesContext.selected_version?.version_number,
+      is_active: zonesContext.selected_version?.is_active,
+    },
+  ]);
+  zoneStore.setSelectedVersionId(versionId);
+  zoneStore.replaceZoneLitesForVersion(versionId, zoneLites);
 };

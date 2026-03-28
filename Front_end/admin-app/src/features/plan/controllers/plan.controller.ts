@@ -121,13 +121,17 @@ export function usePlanController() {
           client_id: planClientId,
           label: normalizedPlanFields.label,
           start_date: normalizedStartDate,
-          ...(typeof normalizedPlanFields.end_date !== "undefined"
+          date_strategy: normalizedPlanFields.date_strategy ?? "single",
+          ...(normalizedPlanFields.date_strategy === "range" &&
+          typeof normalizedPlanFields.end_date !== "undefined"
             ? { end_date: normalizedPlanFields.end_date }
             : {}),
           ...(sanitizedNewOrderLinks.length > 0
             ? { order_ids: sanitizedNewOrderLinks }
             : {}),
-          ...(sanitizedZoneIds.length > 0 ? { zone_ids: sanitizedZoneIds } : {}),
+          ...(sanitizedZoneIds.length > 0
+            ? { zone_ids: sanitizedZoneIds }
+            : {}),
         };
 
         const response = await planApi.createPlan(planPayloadApi);

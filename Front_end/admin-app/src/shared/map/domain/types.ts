@@ -38,8 +38,20 @@ export type MapConfig = {
 };
 
 export type ZoneLayerOptions = {
-  onHover: (zoneId: number | null) => void;
   onClick: (zoneId: number) => void;
+  onLabelClick: (
+    zoneId: number,
+    anchorRect: { top: number; left: number; width: number; height: number },
+  ) => void;
+};
+
+export type ZonePolygonOverlayOptions = {
+  label?: string | null;
+};
+
+export type ZonePathEditOptions = {
+  label?: string | null;
+  onGeometryChange: (geometry: GeoJSONPolygon) => void;
 };
 
 export type MapBridge = {
@@ -62,19 +74,28 @@ export type MapBridge = {
   disableCircleSelection: () => void;
   enableZoneCapture: (callback: (geometry: GeoJSONPolygon) => void) => void;
   disableZoneCapture: () => void;
+  enableZonePathEdit: (
+    geometry: GeoJSONPolygon,
+    options: ZonePathEditOptions,
+  ) => void;
+  disableZonePathEdit: () => void;
   showRoute: (route: Route | null) => void;
   selectOrder: (id: number | string) => void;
   setSelectedMarker: (id: string | null) => void;
   setHoveredMarker: (id: string | null) => void;
   setViewportInsets: (insets: MapViewportInsets) => void;
   reframeToVisibleArea: () => void;
-  setZonePolygonOverlay: (geometry: GeoJSONPolygonGeometry | null) => void;
+  setZonePolygonOverlay: (
+    geometry: GeoJSONPolygonGeometry | null,
+    options?: ZonePolygonOverlayOptions,
+  ) => void;
   clearZonePolygonOverlay: () => void;
   setZoneLayer: (zones: ZoneDefinition[], options: ZoneLayerOptions) => void;
   clearZoneLayer: () => void;
   subscribeBoundsChanged: (
     callback: (bounds: MapBounds | null) => void,
   ) => () => void;
+  subscribeReady: (callback: () => void) => () => void;
   resize: () => void;
 };
 
@@ -95,6 +116,11 @@ export interface MapAdapter {
   disableCircleSelection: () => void;
   enableZoneCapture: (callback: (geometry: GeoJSONPolygon) => void) => void;
   disableZoneCapture: () => void;
+  enableZonePathEdit: (
+    geometry: GeoJSONPolygon,
+    options: ZonePathEditOptions,
+  ) => void;
+  disableZonePathEdit: () => void;
   clearMarkers: () => void;
   drawRoute: (route: Route | null) => void;
   fitBounds: (points?: Coordinates[]) => void;
@@ -103,13 +129,17 @@ export interface MapAdapter {
   setHoveredMarker: (id: string | null) => void;
   setViewportInsets: (insets: MapViewportInsets) => void;
   reframeToVisibleArea: () => void;
-  setZonePolygonOverlay: (geometry: GeoJSONPolygonGeometry | null) => void;
+  setZonePolygonOverlay: (
+    geometry: GeoJSONPolygonGeometry | null,
+    options?: ZonePolygonOverlayOptions,
+  ) => void;
   clearZonePolygonOverlay: () => void;
   setZoneLayer: (zones: ZoneDefinition[], options: ZoneLayerOptions) => void;
   clearZoneLayer: () => void;
   subscribeBoundsChanged: (
     callback: (bounds: MapBounds | null) => void,
   ) => () => void;
+  subscribeReady: (callback: () => void) => () => void;
   destroy: () => void;
   resize: () => void;
 }

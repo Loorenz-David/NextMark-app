@@ -1,180 +1,205 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useState } from "react";
 
-import { usePopupManager, useSectionManager } from '@/shared/resource-manager/useResourceManager'
-import { deleteQueryFilter, resetQuery, setQueryFilters, setQuerySearch, updateQueryFilters, useOrderQuery } from '../store/orderQuery.store'
-import type { OrderQueryFilters, OrderQueryStringQueries } from "../types/orderMeta";
-import { filterBehavior, orderStringFilters, resolveConflicts } from '../domain/orderFilterConfig'
-import type { Order } from '../types/order';
-import { useOrderController } from '../controllers/order.controller';
+import {
+  usePopupManager,
+  useSectionManager,
+} from "@/shared/resource-manager/useResourceManager";
+import {
+  deleteQueryFilter,
+  resetQuery,
+  setQueryFilters,
+  setQuerySearch,
+  updateQueryFilters,
+  useOrderQuery,
+} from "../store/orderQuery.store";
+import type {
+  OrderQueryFilters,
+  OrderQueryStringQueries,
+} from "../types/orderMeta";
+import {
+  filterBehavior,
+  orderStringFilters,
+  resolveConflicts,
+} from "../domain/orderFilterConfig";
+import type { Order } from "../types/order";
+import { useOrderController } from "../controllers/order.controller";
 
-type openOrderDetailProps ={ 
-  clientId?: string; 
-  serverId?: number; 
-  mode?: 'view' | 'edit'
-  freshAfter?: string | null
-  openSource?: 'card' | 'marker'
-}
-type parentParamsProps ={
-  borderLeft?:string
-  pageClass?:string
-}
-
+type openOrderDetailProps = {
+  clientId?: string;
+  serverId?: number;
+  mode?: "view" | "edit";
+  freshAfter?: string | null;
+  openSource?: "card" | "marker";
+};
+type parentParamsProps = {
+  borderLeft?: string;
+  pageClass?: string;
+};
 
 export const useOrderActions = () => {
+  const popupManager = usePopupManager();
+  const sectionManager = useSectionManager();
+  const query = useOrderQuery();
+  const { archiveOrder, unarchiveOrder } = useOrderController();
 
-
-  const popupManager = usePopupManager()
-  const sectionManager = useSectionManager()
-  const query = useOrderQuery()
-  const { archiveOrder, unarchiveOrder } = useOrderController()
-  
   const handleArchiveOrder = useCallback(
-    (order:Order)=>{
-        archiveOrder( order.client_id, order.id )
+    (order: Order) => {
+      archiveOrder(order.client_id, order.id);
     },
-    [archiveOrder]
-  )
+    [archiveOrder],
+  );
 
   const handleUnarchiveOrder = useCallback(
     (order: Order) => {
-      unarchiveOrder(order.client_id, order.id)
+      unarchiveOrder(order.client_id, order.id);
     },
-    [unarchiveOrder]
-  )
+    [unarchiveOrder],
+  );
   const openOrderForm = useCallback(
-    (payload?: { clientId?: string; mode?: 'create' | 'edit'; deliveryPlanId?: number | null }) => {
-      console.log('Opening order form with payload:', payload)
-      popupManager.open({ key: 'order.edit', payload:{...payload, controllBodyLayout:true} })
+    (payload?: {
+      clientId?: string;
+      mode?: "create" | "edit";
+      deliveryPlanId?: number | null;
+      routeGroupId?: number | null;
+    }) => {
+      console.log("Opening order form with payload:", payload);
+      popupManager.open({
+        key: "order.edit",
+        payload: { ...payload, controllBodyLayout: true },
+      });
     },
     [popupManager],
-  )
+  );
   const openOrderCases = useCallback(
-    (payload: { orderId?: number, orderReference:string })=>{
-      sectionManager.open({key:'orderCase.orderCases', payload, parentParams:{ borderLeft:'rgb(var(--color-turques-r),0.7)'}})
+    (payload: { orderId?: number; orderReference: string }) => {
+      sectionManager.open({
+        key: "orderCase.orderCases",
+        payload,
+        parentParams: { borderLeft: "rgb(var(--color-turques-r),0.7)" },
+      });
     },
-    []
-  )
+    [],
+  );
   const openOrderDetail = useCallback(
-    (payload: openOrderDetailProps, parentParams:parentParamsProps) => {
-      const key = 'order.details'
+    (payload: openOrderDetailProps, parentParams: parentParamsProps) => {
+      const key = "order.details";
 
       const latestOpenEntry = sectionManager
         .getSnapshot()
         .filter((entry) => entry.key === key && !entry.isClosing)
-        .at(-1)
+        .at(-1);
 
-      const openPayload = latestOpenEntry?.payload as openOrderDetailProps | undefined
+      const openPayload = latestOpenEntry?.payload as
+        | openOrderDetailProps
+        | undefined;
       if (openPayload && openPayload.clientId === payload.clientId) {
-        return
+        return;
       }
 
       if (latestOpenEntry) {
-        sectionManager.atomicOpenClose({ key, payload, parentParams }, latestOpenEntry.id)
+        sectionManager.atomicOpenClose(
+          { key, payload, parentParams },
+          latestOpenEntry.id,
+        );
       } else {
-        sectionManager.open({ key, payload, parentParams })
+        sectionManager.open({ key, payload, parentParams });
       }
     },
     [sectionManager],
-  )
+  );
 
-  const applySearch = useCallback(
-    (input: string) => {
-      const trimmed = input.trim()
-      setQuerySearch(trimmed)
-    },
-    []
-  )
-  const applyFilters = useCallback(
-    (filters: OrderQueryFilters) => {
-      setQueryFilters(filters)
-    },
-    []
-  )
+  const applySearch = useCallback((input: string) => {
+    const trimmed = input.trim();
+    setQuerySearch(trimmed);
+  }, []);
+  const applyFilters = useCallback((filters: OrderQueryFilters) => {
+    setQueryFilters(filters);
+  }, []);
   const resetFilters = useCallback(() => {
-    resetQuery()
-
-  }, [])
+    resetQuery();
+  }, []);
 
   const updateFilters = useCallback(
     (key: string, value: unknown) => {
-
-      if (key in filterBehavior){
-        const updatedFilters = resolveConflicts(query.filters, key)
-        applyFilters({...updatedFilters, [key]:value} as OrderQueryFilters)
-        return
+      if (key in filterBehavior) {
+        const updatedFilters = resolveConflicts(query.filters, key);
+        applyFilters({ ...updatedFilters, [key]: value } as OrderQueryFilters);
+        return;
       }
-      
-     
 
       if (orderStringFilters.has(key as OrderQueryStringQueries)) {
-        const previous = query.filters.s ?? []
-        const stringKey = key as OrderQueryStringQueries
-        const alreadySelected = previous.includes(stringKey)
-        if (alreadySelected) return
+        const previous = query.filters.s ?? [];
+        const stringKey = key as OrderQueryStringQueries;
+        const alreadySelected = previous.includes(stringKey);
+        if (alreadySelected) return;
 
-        updateQueryFilters({ s: [ ...(query.filters.s || []), stringKey] })
-        return
-      } 
-      updateQueryFilters({ [key]: value } as Partial<OrderQueryFilters>)
+        updateQueryFilters({ s: [...(query.filters.s || []), stringKey] });
+        return;
+      }
+      updateQueryFilters({ [key]: value } as Partial<OrderQueryFilters>);
     },
-    [query, ]
-  )
+    [query],
+  );
   const deleteFilter = useCallback(
     (key: string, value?: unknown) => {
-        if (key === 's' && typeof value === 'string') {
-          const stringKey = value as OrderQueryStringQueries
-          const newStringFilters = (query.filters.s || []).filter((filterKey) => filterKey !== stringKey)
+      if (key === "s" && typeof value === "string") {
+        const stringKey = value as OrderQueryStringQueries;
+        const newStringFilters = (query.filters.s || []).filter(
+          (filterKey) => filterKey !== stringKey,
+        );
 
-          if (newStringFilters.length === 0) {
-            deleteQueryFilter('s')
-            return
-          }
-
-          updateQueryFilters({ s: newStringFilters })
-          return
+        if (newStringFilters.length === 0) {
+          deleteQueryFilter("s");
+          return;
         }
 
-        if (orderStringFilters.has(key as OrderQueryStringQueries)) {
-          const stringKey = key as OrderQueryStringQueries
-          const newStringFilters = (query.filters.s || []).filter((filterKey) => filterKey !== stringKey)
-
-          if (newStringFilters.length === 0) {
-            deleteQueryFilter('s')
-            return
-          }
-
-          updateQueryFilters({ s: newStringFilters })
-          return
-        }
-
-      const existingValue = query.filters[key as keyof OrderQueryFilters]
-      if (Array.isArray(existingValue) && value !== undefined) {
-        const nextValue = existingValue.filter((item) => item !== value)
-        if (nextValue.length === 0) {
-          deleteQueryFilter(key as keyof OrderQueryFilters)
-          return
-        }
-        updateQueryFilters({ [key]: nextValue } as Partial<OrderQueryFilters>)
-        return
+        updateQueryFilters({ s: newStringFilters });
+        return;
       }
 
-      deleteQueryFilter(key as keyof OrderQueryFilters)
+      if (orderStringFilters.has(key as OrderQueryStringQueries)) {
+        const stringKey = key as OrderQueryStringQueries;
+        const newStringFilters = (query.filters.s || []).filter(
+          (filterKey) => filterKey !== stringKey,
+        );
+
+        if (newStringFilters.length === 0) {
+          deleteQueryFilter("s");
+          return;
+        }
+
+        updateQueryFilters({ s: newStringFilters });
+        return;
+      }
+
+      const existingValue = query.filters[key as keyof OrderQueryFilters];
+      if (Array.isArray(existingValue) && value !== undefined) {
+        const nextValue = existingValue.filter((item) => item !== value);
+        if (nextValue.length === 0) {
+          deleteQueryFilter(key as keyof OrderQueryFilters);
+          return;
+        }
+        updateQueryFilters({ [key]: nextValue } as Partial<OrderQueryFilters>);
+        return;
+      }
+
+      deleteQueryFilter(key as keyof OrderQueryFilters);
     },
-    [query]
-  )
+    [query],
+  );
 
   const handleOrderMarkerClick = useCallback(
-      (_event: MouseEvent, order: Order) => {
-        openOrderDetail(
-          { clientId: order.client_id, mode: 'view', openSource: 'marker' },
-          {
-            pageClass: 'bg-[var(--color-muted)]/10 ',
-            borderLeft: 'rgb(var(--color-light-blue-r),0.7)',
-          },
-        )
-      },
-      [openOrderDetail],
-    )
+    (_event: MouseEvent, order: Order) => {
+      openOrderDetail(
+        { clientId: order.client_id, mode: "view", openSource: "marker" },
+        {
+          pageClass: "bg-[var(--color-muted)]/10 ",
+          borderLeft: "rgb(var(--color-light-blue-r),0.7)",
+        },
+      );
+    },
+    [openOrderDetail],
+  );
 
   return {
     openOrderForm,
@@ -187,6 +212,6 @@ export const useOrderActions = () => {
     openOrderCases,
     handleArchiveOrder,
     handleUnarchiveOrder,
-    handleOrderMarkerClick
-  }
-}
+    handleOrderMarkerClick,
+  };
+};

@@ -19,7 +19,6 @@ export type ZoneTemplateConfig = {
 export type RouteGroup = {
   id?: number;
   client_id: string;
-  name?: string | null;
   total_orders?: number | null;
   state_id?: number | null;
   state?: {
@@ -27,7 +26,10 @@ export type RouteGroup = {
     name?: string | null;
   } | null;
   zone_id?: number | null;
-  zone_geometry_snapshot?: GeoJSONPolygon | null;
+  zone_snapshot?: {
+    name?: string | null;
+    geometry?: GeoJSONPolygon | null;
+  } | null;
   template_snapshot?: ZoneTemplateConfig | null;
   actual_start_time?: string | null;
   actual_end_time?: string | null;

@@ -34,7 +34,7 @@ const resolveAggregateOrderCount = (
 };
 
 const resolveRouteGroupTitle = (routeGroup: RouteGroup) =>
-  routeGroup.name?.trim() ||
+  routeGroup.zone_snapshot?.name?.trim() ||
   (typeof routeGroup.zone_id === "number"
     ? `Zone ${routeGroup.zone_id}`
     : "Route group");
