@@ -10,6 +10,10 @@ import {
 type SavedLocationsMap = Record<string, SavedLocation[]>
 
 const isBrowser = typeof window !== 'undefined'
+const LEGACY_INTENT_KEY_MIGRATIONS: Record<string, string> = {
+  'local-delivery-start-address': 'route-group-start-address',
+  'local-delivery-end-address': 'route-group-end-address',
+}
 
 const normalize = (value: number): number => Number(value.toFixed(6))
 
@@ -61,6 +65,59 @@ const readStore = (): SavedLocationsMap => {
   }
 }
 
+const mergeLocations = (
+  current: SavedLocation[] | undefined,
+  incoming: SavedLocation[] | undefined,
+): SavedLocation[] => {
+  const byAddressId = new Map<string, SavedLocation>()
+
+  ;[...(current ?? []), ...(incoming ?? [])].forEach((location) => {
+    const existing = byAddressId.get(location.id)
+    if (!existing) {
+      byAddressId.set(location.id, location)
+      return
+    }
+
+    byAddressId.set(location.id, {
+      ...existing,
+      ...location,
+      usageCount: Math.max(existing.usageCount, location.usageCount),
+      lastUsedAt: Math.max(existing.lastUsedAt, location.lastUsedAt),
+    })
+  })
+
+  return Array.from(byAddressId.values())
+    .sort((left, right) => {
+      if (right.usageCount !== left.usageCount) {
+        return right.usageCount - left.usageCount
+      }
+      return right.lastUsedAt - left.lastUsedAt
+    })
+    .slice(0, SAVED_LOCATIONS_MAX)
+}
+
+const migrateLegacyIntentKeys = (map: SavedLocationsMap): SavedLocationsMap => {
+  let hasChanges = false
+  const next = { ...map }
+
+  Object.entries(LEGACY_INTENT_KEY_MIGRATIONS).forEach(([legacyKey, nextKey]) => {
+    const legacyLocations = next[legacyKey]
+    if (!legacyLocations?.length) {
+      return
+    }
+
+    next[nextKey] = mergeLocations(next[nextKey], legacyLocations)
+    delete next[legacyKey]
+    hasChanges = true
+  })
+
+  if (hasChanges) {
+    writeStore(next)
+  }
+
+  return next
+}
+
 const writeStore = (value: SavedLocationsMap): void => {
   if (!isBrowser) return
   try {
@@ -78,13 +135,13 @@ const areSameAddress = (left: address, right: address): boolean => {
 
 export const getSavedLocations = (intentKey: string): SavedLocation[] => {
   if (!intentKey.trim()) return []
-  const map = readStore()
+  const map = migrateLegacyIntentKeys(readStore())
   return map[intentKey] ?? []
 }
 
 export const clearSavedLocations = (intentKey: string): void => {
   if (!intentKey.trim()) return
-  const map = readStore()
+  const map = migrateLegacyIntentKeys(readStore())
   if (!(intentKey in map)) return
   delete map[intentKey]
   writeStore(map)
@@ -94,7 +151,7 @@ export const recordSavedLocation = (intentKey: string, value: address): void => 
   if (!intentKey.trim()) return
 
   const now = Date.now()
-  const map = readStore()
+  const map = migrateLegacyIntentKeys(readStore())
   const current = map[intentKey] ?? []
 
   const existingIndex = current.findIndex((item) => areSameAddress(item.address, value))

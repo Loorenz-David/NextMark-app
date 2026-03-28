@@ -65,11 +65,14 @@ export type RouteGroupDefaults = {
       | "custom_end_address"
       | "end_at_last_stop";
     driver_id?: number | null;
+    vehicle_id?: number | null;
     eta_tolerance_seconds?: number | null;
   };
 };
 
-export type PlanTypeDefaults = RouteGroupDefaults | Record<string, unknown>;
+export type PlanTypeDefaults = {
+  route_group_defaults?: RouteGroupDefaults;
+};
 export type RouteGroupPlanTypeDefaults = RouteGroupDefaults;
 
 export type PlanCreatePayload = {

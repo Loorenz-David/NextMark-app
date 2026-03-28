@@ -6,6 +6,7 @@ import { useMessageHandler } from '@shared-message-handler'
 import { routeSolutionApi } from '@/features/plan/routeGroup/api/routeSolution.api'
 import type {
   RouteSolutionAddressPayload,
+  RouteSolutionFullGetResponse,
   RouteSolutionGetResponse,
   RouteSolutionTimesPayload,
   RouteSolutionUpdateResponse,
@@ -14,6 +15,7 @@ import { normalizeByClientIdArray } from '@/features/plan/routeGroup/api/mappers
 import {
   selectRouteSolutionByServerId,
   selectRouteSolutionsByRouteGroupId,
+  purgeNonSelectedRouteSolutionsForGroup,
   setSelectedRouteSolution,
   upsertRouteSolution,
   upsertRouteSolutions,
@@ -22,9 +24,16 @@ import {
 import {
   upsertRouteSolutionStop,
   upsertRouteSolutionStops,
+  removeRouteSolutionStopsBySolutionIds,
+  replaceRouteSolutionStopsForSolution,
+  useRouteSolutionStopStore,
 } from '@/features/plan/routeGroup/store/routeSolutionStop.store'
 import { useOrderStateBatch } from '@/features/order/controllers/orderStateBatch.controller'
 import { usePlanStateChanges } from '@/features/plan/controllers/planState.controller'
+import {
+  getPreviewedSolutionId,
+  useRouteSolutionPreviewStore,
+} from '@/features/plan/routeGroup/store/routeSolutionPreview.store'
 
 const resolveError = (error: unknown, fallback: string) => ({
   message: error instanceof ApiError ? error.message : fallback,
@@ -72,6 +81,35 @@ const applyGetPayload = (payload?: RouteSolutionGetResponse | null) => {
       upsertRouteSolutionStop(stop)
     }
   })
+}
+
+const applyFullGetPayload = (payload?: RouteSolutionFullGetResponse | null) => {
+  if (!payload?.route_solution?.client_id || payload.route_solution.id == null) return
+
+  upsertRouteSolution(payload.route_solution)
+  replaceRouteSolutionStopsForSolution(
+    payload.route_solution.id,
+    payload.route_solution_stops,
+  )
+}
+
+const purgeNonSelectedSolutionsAndStopsForGroup = (routeGroupId: number) => {
+  const state = useRouteSolutionStore.getState()
+  const solutionIdsToRemove: number[] = []
+
+  state.allIds.forEach((clientId) => {
+    const solution = state.byClientId[clientId]
+    if (
+      solution?.route_group_id === routeGroupId &&
+      !solution.is_selected &&
+      solution.id != null
+    ) {
+      solutionIdsToRemove.push(solution.id)
+    }
+  })
+
+  removeRouteSolutionStopsBySolutionIds(solutionIdsToRemove)
+  purgeNonSelectedRouteSolutionsForGroup(routeGroupId)
 }
 
 export function useRouteSolutionMutations() {
@@ -150,6 +188,96 @@ export function useRouteSolutionMutations() {
     [showMessage],
   )
 
+  const previewRouteSolution = useCallback(
+    async (routeSolutionId: number, planId: number, routeGroupId: number) => {
+      const currentPreview = getPreviewedSolutionId(routeGroupId)
+      if (currentPreview === routeSolutionId) {
+        return
+      }
+
+      const storedSolution = selectRouteSolutionByServerId(routeSolutionId)(
+        useRouteSolutionStore.getState(),
+      )
+      const stopsAlreadyLoaded =
+        storedSolution?._representation === 'full' &&
+        useRouteSolutionStopStore
+          .getState()
+          .allIds.some(
+            (clientId) =>
+              useRouteSolutionStopStore.getState().byClientId[clientId]
+                ?.route_solution_id === routeSolutionId,
+          )
+
+      if (!stopsAlreadyLoaded) {
+        useRouteSolutionPreviewStore.getState().setLoadingPreviewGroupId(routeGroupId)
+        try {
+          const response = await routeSolutionApi.getRouteSolutionFull(
+            planId,
+            routeGroupId,
+            routeSolutionId,
+          )
+
+          if (!response.data) {
+            throw new Error('Failed to load route solution')
+          }
+
+          applyFullGetPayload(response.data)
+        } catch (error) {
+          const resolved = resolveError(error, 'Unable to load route solution preview.')
+          console.error('Failed to load route solution for preview', error)
+          showMessage({ status: resolved.status, message: resolved.message })
+          return
+        } finally {
+          useRouteSolutionPreviewStore.getState().setLoadingPreviewGroupId(null)
+        }
+      }
+
+      useRouteSolutionPreviewStore.getState().setPreviewedId(routeGroupId, routeSolutionId)
+    },
+    [showMessage],
+  )
+
+  const confirmSelectRouteSolution = useCallback(
+    async (routeSolutionId: number, planId: number, routeGroupId: number) => {
+      const state = useRouteSolutionStore.getState()
+      const previous = selectRouteSolutionsByRouteGroupId(routeGroupId)(state).map((solution) => ({
+        client_id: solution.client_id,
+        is_selected: solution.is_selected ?? false,
+      }))
+
+      setSelectedRouteSolution(routeSolutionId, routeGroupId)
+
+      try {
+        const response = await routeSolutionApi.selectRouteSolutionV2(
+          planId,
+          routeGroupId,
+          routeSolutionId,
+        )
+
+        if (!response.data) {
+          throw new Error('Select failed')
+        }
+
+        applyUpdatePayload(response.data)
+        useRouteSolutionPreviewStore.getState().clearPreviewedId(routeGroupId)
+        purgeNonSelectedSolutionsAndStopsForGroup(routeGroupId)
+        return response.data
+      } catch (error) {
+        previous.forEach((entry) => {
+          useRouteSolutionStore.getState().update(entry.client_id, (solution) => ({
+            ...solution,
+            is_selected: entry.is_selected,
+          }))
+        })
+        const resolved = resolveError(error, 'Unable to select route solution.')
+        console.error('Failed to confirm route solution selection', error)
+        showMessage({ status: resolved.status, message: resolved.message })
+        return null
+      }
+    },
+    [showMessage],
+  )
+
   const routeReadyForDelivery = useCallback(
     async (deliveryPlanId:number) =>{
 
@@ -194,6 +322,8 @@ export function useRouteSolutionMutations() {
     updateRouteSolutionAddress,
     updateRouteSolutionTimes,
     selectRouteSolution,
+    previewRouteSolution,
+    confirmSelectRouteSolution,
     routeReadyForDelivery
   }
 }

@@ -3,10 +3,6 @@ import { shouldRefreshForFreshness } from "@shared-utils";
 
 import { useRouteGroupOverviewFlow } from "@/features/plan/routeGroup/flows/routeGroupOverview.flow";
 import { useRouteGroupsByPlanId } from "@/features/plan/routeGroup/store/useRouteGroup.selector";
-import {
-  useRouteSolutionsByRouteGroupId,
-  useSelectedRouteSolutionByRouteGroupId,
-} from "@/features/plan/routeGroup/store/useRouteSolution.selector";
 import { useRoutePlanByServerId } from "@/features/plan/store/useRoutePlan.selector";
 import { isRouteOperationsFixtureModeEnabled } from "@/features/home-route-operations/dev/routeOperationsFixtureMode";
 import { useActiveRouteGroupId } from "../store/useActiveRouteGroup.selector";
@@ -25,15 +21,6 @@ export const useRouteGroupPageInitializationFlow = (
   const plan = useRoutePlanByServerId(planId);
   const routeGroups = useRouteGroupsByPlanId(planId);
   const activeRouteGroupId = useActiveRouteGroupId();
-  const routeGroup =
-    routeGroups.find((candidateRouteGroup) => candidateRouteGroup.id === activeRouteGroupId) ??
-    null;
-  const routeGroupId = routeGroup?.id ?? null;
-  const routeSolutions = useRouteSolutionsByRouteGroupId(routeGroupId);
-  const selectedRouteSolution =
-    useSelectedRouteSolutionByRouteGroupId(routeGroupId) ??
-    routeSolutions[0] ??
-    null;
   const lastRefreshAttemptRef = useRef<string | null>(null);
   const initialSelectionKeyRef = useRef<string | null>(null);
 
@@ -79,13 +66,7 @@ export const useRouteGroupPageInitializationFlow = (
     }
 
     const hasRouteGroups = routeGroups.length > 0;
-    const hasActiveRouteGroup = routeGroup != null;
-    const hasHydratedSelectedRouteGroup =
-      hasActiveRouteGroup &&
-      routeSolutions.length > 0 &&
-      selectedRouteSolution != null;
-    const isWorkspaceHydrated =
-      hasRouteGroups && hasHydratedSelectedRouteGroup;
+    const isWorkspaceHydrated = plan != null && hasRouteGroups;
     const needsRefresh =
       plan == null ||
       !isWorkspaceHydrated ||
@@ -103,15 +84,11 @@ export const useRouteGroupPageInitializationFlow = (
 
     fetchRouteGroupOverview(planId);
   }, [
-    activeRouteGroupId,
     fetchRouteGroupOverview,
     freshAfter,
-    routeGroup,
     plan,
     planId,
     routeGroups,
-    routeSolutions.length,
-    selectedRouteSolution,
     options?.disabled,
     isFixtureMode,
   ]);

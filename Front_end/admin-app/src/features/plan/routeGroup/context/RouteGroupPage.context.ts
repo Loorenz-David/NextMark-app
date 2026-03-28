@@ -26,6 +26,8 @@ export type RouteGroupPageStateContextValue = {
   ordersById: Map<number, Order>
   selectedRouteSolution: RouteSolution | null
   routeSolutionsOrdered: RouteSolution[]
+  previewedSolutionId: number | null
+  isLoadingPreview: boolean
   bestRouteSolutionId: number | null
   isSelectedSolutionOptimized: boolean
   routeSolutionId: number | null

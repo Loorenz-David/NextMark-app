@@ -2,7 +2,7 @@ import type { address } from '@/types/address'
 import type { PlanTypeDefaults } from '@/features/plan/types/plan'
 
 export type PlanTypeDefaultsContext = {
-  getCurrentLocationAddress: () => Promise<address>
+  getCurrentLocationAddress: () => Promise<address | null>
   planStartDate?: string | Date | null
 }
 

@@ -3,8 +3,8 @@ import { useCallback } from 'react'
 import { ApiError } from '@/lib/api/ApiClient'
 import { useMessageHandler } from '@shared-message-handler'
 
-import { planOverviewApi } from '@/features/plan/routeGroup/api/planOverview.api'
 import type { RouteGroupOverviewResponse } from '@/features/plan/routeGroup/api/planOverview.api'
+import { planOverviewApi } from '@/features/plan/routeGroup/api/planOverview.api'
 import { upsertOrders } from '@/features/order/store/order.store'
 import { setOrderListError } from '@/features/order/store/orderList.store'
 import {
@@ -17,7 +17,7 @@ import {
 } from '@/features/plan/routeGroup/store/routeSolutionStop.store'
 import { upsertRouteGroups } from '@/features/plan/routeGroup/store/routeGroup.slice'
 
-const applyOverviewPayload = (
+export const applyRouteGroupPayload = (
   payload?: RouteGroupOverviewResponse | null,
 ) => {
   if (!payload) return
@@ -55,11 +55,9 @@ export function useRouteGroupOverviewFlow() {
     planId: number | string,
   ) => {
     try {
-      const response = await planOverviewApi.getRouteGroupOverview(
-        planId,
-      )
+      const response = await planOverviewApi.getRouteGroupOverview(planId)
 
-      applyOverviewPayload(response.data)
+      applyRouteGroupPayload(response.data)
       
 
       return response.data

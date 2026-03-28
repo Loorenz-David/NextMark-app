@@ -19,6 +19,7 @@ type SetFormState = Dispatch<SetStateAction<RouteGroupEditFormState>>
 type Props = {
   setFormState: SetFormState
   formWarnings: RouteGroupEditFormWarnings
+  isNoZoneGroup: boolean
 }
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000
@@ -49,7 +50,11 @@ const normalizeRouteEndStrategy = (
   return 'round_trip'
 }
 
-export const useRouteGroupEditFormSetters = ({ setFormState, formWarnings }: Props) => {
+export const useRouteGroupEditFormSetters = ({
+  setFormState,
+  formWarnings,
+  isNoZoneGroup,
+}: Props) => {
   const handlePlanLabel = (event: ChangeEvent<HTMLInputElement>) => {
     const value = event.target.value
     setFormState((prev) => ({
@@ -126,7 +131,7 @@ export const useRouteGroupEditFormSetters = ({ setFormState, formWarnings }: Pro
   }
 
   const handleRouteStartTime = (value: string | null) => {
-    saveStartTimePreference(value)
+    if (isNoZoneGroup) saveStartTimePreference(value)
     setFormState((prev) => {
       const next = {
         ...prev,
@@ -147,7 +152,7 @@ export const useRouteGroupEditFormSetters = ({ setFormState, formWarnings }: Pro
   }
 
   const handleRouteEndTime = (value: string | null) => {
-    saveEndTimePreference(value)
+    if (isNoZoneGroup) saveEndTimePreference(value)
     setFormState((prev) => {
       const next = {
         ...prev,
@@ -165,7 +170,7 @@ export const useRouteGroupEditFormSetters = ({ setFormState, formWarnings }: Pro
 
   const handleEtaToleranceMinutes = (value: number) => {
     const normalized = Math.max(0, Math.min(120, Math.trunc(value)))
-    saveEtaToleranceMinutesPreference(normalized)
+    if (isNoZoneGroup) saveEtaToleranceMinutesPreference(normalized)
     setFormState((prev) => ({
       ...prev,
       route_solution: { ...prev.route_solution, eta_tolerance_minutes: normalized },
@@ -173,7 +178,7 @@ export const useRouteGroupEditFormSetters = ({ setFormState, formWarnings }: Pro
   }
 
   const handleRouteStartLocation = (value: address | null) => {
-    saveStartLocationPreference(value)
+    if (isNoZoneGroup) saveStartLocationPreference(value)
 
     setFormState((prev) => ({
       ...prev,
@@ -182,7 +187,7 @@ export const useRouteGroupEditFormSetters = ({ setFormState, formWarnings }: Pro
   }
 
   const handleRouteEndLocation = (value: address | null) => {
-    saveEndLocationPreference(value)
+    if (isNoZoneGroup) saveEndLocationPreference(value)
     setFormState((prev) => ({
       ...prev,
       route_solution: { ...prev.route_solution, end_location: value },
@@ -191,7 +196,7 @@ export const useRouteGroupEditFormSetters = ({ setFormState, formWarnings }: Pro
 
   const handleRouteEndStrategy = (value: string | number) => {
     const normalized = normalizeRouteEndStrategy(value)
-    saveRouteEndStrategyPreference(normalized)
+    if (isNoZoneGroup) saveRouteEndStrategyPreference(normalized)
     setFormState((prev) => ({
       ...prev,
       route_solution: { ...prev.route_solution, route_end_strategy: normalized },
@@ -199,7 +204,7 @@ export const useRouteGroupEditFormSetters = ({ setFormState, formWarnings }: Pro
   }
 
   const handleDriverSelection = (value: number | null) => {
-    saveDriverIdPreference(value)
+    if (isNoZoneGroup) saveDriverIdPreference(value)
     setFormState((prev) => ({
       ...prev,
       route_solution: { ...prev.route_solution, driver_id: value },
@@ -207,7 +212,7 @@ export const useRouteGroupEditFormSetters = ({ setFormState, formWarnings }: Pro
   }
 
   const handleVehicleSelection = (value: number | null) => {
-    saveVehicleIdPreference(value)
+    if (isNoZoneGroup) saveVehicleIdPreference(value)
     setFormState((prev) => ({
       ...prev,
       route_solution: { ...prev.route_solution, vehicle_id: value },
@@ -228,7 +233,7 @@ export const useRouteGroupEditFormSetters = ({ setFormState, formWarnings }: Pro
         ...current,
         time: Math.max(0, Math.trunc(value)),
       }
-      saveStopsServiceTimePreference(nextServiceTime)
+      if (isNoZoneGroup) saveStopsServiceTimePreference(nextServiceTime)
       return {
         ...prev,
         route_solution: { ...prev.route_solution, stops_service_time: nextServiceTime },
@@ -243,7 +248,7 @@ export const useRouteGroupEditFormSetters = ({ setFormState, formWarnings }: Pro
         ...current,
         per_item: Math.max(0, Math.trunc(value)),
       }
-      saveStopsServiceTimePreference(nextServiceTime)
+      if (isNoZoneGroup) saveStopsServiceTimePreference(nextServiceTime)
       return {
         ...prev,
         route_solution: { ...prev.route_solution, stops_service_time: nextServiceTime },

@@ -19,6 +19,11 @@ export type RouteSolutionGetResponse = {
   route_solution_stop?: RouteSolutionStop[] | { byClientId: Record<string, RouteSolutionStop>; allIds: string[] }
 }
 
+export type RouteSolutionFullGetResponse = {
+  route_solution: RouteSolution
+  route_solution_stops: RouteSolutionStopMap
+}
+
 export type RouteSolutionAddressPayload = {
   route_solution_id: number
   start_location?: Record<string, unknown> | null
@@ -118,6 +123,26 @@ export const routeSolutionApi = {
       path: `/route_solutions/${routeSolutionId}`,
       method: 'GET',
       query: { return_stops: returnStops ? 'true' : 'false' },
+    }),
+
+  getRouteSolutionFull: (
+    planId: number,
+    routeGroupId: number,
+    routeSolutionId: number,
+  ): Promise<ApiResult<RouteSolutionFullGetResponse>> =>
+    apiClient.request<RouteSolutionFullGetResponse>({
+      path: `/route_plans/${planId}/route-groups/${routeGroupId}/route-solutions/${routeSolutionId}`,
+      method: 'GET',
+    }),
+
+  selectRouteSolutionV2: (
+    planId: number,
+    routeGroupId: number,
+    routeSolutionId: number,
+  ): Promise<ApiResult<RouteSolutionUpdateResponse>> =>
+    apiClient.request<RouteSolutionUpdateResponse>({
+      path: `/route_plans/${planId}/route-groups/${routeGroupId}/route-solutions/${routeSolutionId}/select`,
+      method: 'PATCH',
     }),
 
   routeReadyForDelivery: (

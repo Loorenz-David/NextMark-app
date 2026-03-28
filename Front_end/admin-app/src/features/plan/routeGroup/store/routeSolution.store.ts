@@ -105,6 +105,31 @@ export const setSelectedRouteSolution = (selectedId: number, routeGroupId: numbe
   })
 }
 
+export const purgeNonSelectedRouteSolutionsForGroup = (routeGroupId: number): string[] => {
+  const state = useRouteSolutionStore.getState()
+  const affectedClientIds: string[] = []
+
+  state.allIds.forEach((clientId) => {
+    const solution = state.byClientId[clientId]
+    if (solution?.route_group_id === routeGroupId && !solution.is_selected) {
+      affectedClientIds.push(clientId)
+    }
+  })
+
+  affectedClientIds.forEach((clientId) => {
+    state.update(clientId, (solution) => ({
+      ...solution,
+      _representation: 'summary',
+      route_warnings: null,
+      has_route_warnings: false,
+      start_leg_polyline: null,
+      end_leg_polyline: null,
+    }))
+  })
+
+  return affectedClientIds
+}
+
 export const removeRouteSolution = (clientId: string) =>
   useRouteSolutionStore.getState().remove(clientId)
 

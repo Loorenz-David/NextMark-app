@@ -1,5 +1,7 @@
 import { useDroppable } from "@dnd-kit/core";
 
+import { useDroppableRouteGroupTargetHighlight } from "@/features/plan/dnd/controllers/useDroppableTargetHighlight.controller";
+
 import { RouteGroupRailAvatar } from "./RouteGroupRailAvatar";
 import type { RouteGroupRailItem } from "./types";
 
@@ -16,13 +18,17 @@ export const DroppableRouteGroupRailAvatar = ({ item, onClick }: Props) => {
       routeGroupId: item.route_group_id,
     },
   });
+  const shouldHighlightDropTarget = useDroppableRouteGroupTargetHighlight({
+    isOver,
+    targetRouteGroupId: item.route_group_id,
+  });
 
   return (
     <div ref={setNodeRef}>
       <RouteGroupRailAvatar
         item={item}
         onClick={onClick}
-        isDropTarget={isOver}
+        isDropTarget={shouldHighlightDropTarget}
       />
     </div>
   );

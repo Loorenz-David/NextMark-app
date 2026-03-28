@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 
 import type { RouteSolution } from '../types/routeSolution'
 import { setSelectedRouteSolution } from '../store/routeSolution.store'
+import { useRouteSolutionPreviewStore } from '../store/routeSolutionPreview.store'
 
 type SyncActiveRouteSolutionSelectionParams = {
   routeGroupId: number | null
@@ -16,6 +17,14 @@ export const useSyncActiveRouteSolutionSelectionFlow = ({
   storedSelectedRouteSolutionId,
   fallbackRouteSolutionId,
 }: SyncActiveRouteSolutionSelectionParams) => {
+  useEffect(() => {
+    if (routeGroupId == null) return
+
+    return () => {
+      useRouteSolutionPreviewStore.getState().clearPreviewedId(routeGroupId)
+    }
+  }, [routeGroupId])
+
   useEffect(() => {
     if (routeGroupId == null || routeSolutions.length === 0) {
       return

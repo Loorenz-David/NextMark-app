@@ -12,9 +12,6 @@ export const normalizeRouteGroupEditFormToSettingsPayload = (
     start_date: formState.delivery_plan.start_date,
     end_date: formState.delivery_plan.end_date,
   },
-  route_group: {
-    driver_id: formState.route_solution.driver_id,
-  },
   route_solution: {
     id: formState.route_solution.id,
     set_start_time: formState.route_solution.set_start_time,

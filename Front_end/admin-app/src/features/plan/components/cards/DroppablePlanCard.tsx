@@ -1,6 +1,7 @@
 import { useDroppable } from '@dnd-kit/core'
 
 import { useResourceManager } from '@/shared/resource-manager/useResourceManager'
+import { useDroppablePlanTargetHighlight } from '@/features/plan/dnd/controllers/useDroppableTargetHighlight.controller'
 
 import { PlanCard } from './PlanCard'
 import type { DeliveryPlan } from '../../types/plan'
@@ -18,6 +19,10 @@ export const DroppablePlanCard = ({ plan }: PropsPlanCard) => {
         }
 
     })
+    const shouldHighlightDropTarget = useDroppablePlanTargetHighlight({
+      isOver,
+      targetPlanId: plan.id ?? null,
+    })
     const { planDropFeedback } = useResourceManager()
     const planFeedback = planDropFeedback && planDropFeedback.planClientId === plan.client_id
       ? planDropFeedback
@@ -27,7 +32,11 @@ export const DroppablePlanCard = ({ plan }: PropsPlanCard) => {
         <div
             ref={setNodeRef}
         >
-            <PlanCard plan={plan} isOver={isOver} dropFeedback={planFeedback} />
+            <PlanCard
+              plan={plan}
+              isOver={shouldHighlightDropTarget}
+              dropFeedback={planFeedback}
+            />
         </div>
     )
 }

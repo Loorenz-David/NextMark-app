@@ -1,5 +1,8 @@
 import { useState } from "react";
 
+import { AnimatePresence, motion } from "framer-motion";
+
+import { PlusIcon } from "@/assets/icons";
 import { StateCard } from "@/shared/layout/StateCard";
 import { FloatingPopover } from "@/shared/popups/FloatingPopover/FloatingPopover";
 
@@ -36,19 +39,64 @@ export const RouteGroupRailAvatar = ({
       onBlur={() => setIsPopoverOpen(false)}
     >
       <span className="relative flex h-12 w-12 items-center justify-center">
-        <span
+        <motion.span
           aria-hidden="true"
-          className={`flex h-12 w-12 items-center justify-center rounded-full border p-[3px] shadow-[inset_0_1px_0_rgba(255,255,255,0.18),0_10px_22px_rgba(29,74,102,0.14)] ${
+          animate={
             isDropTarget
-              ? "border-[rgb(var(--color-light-blue-r),0.85)] ring-2 ring-[rgb(var(--color-light-blue-r),0.45)]"
+              ? {
+                  scale: 1.12,
+                  boxShadow: "0px 0px 0px 6px rgba(0,197,49,0.20)",
+                }
+              : {
+                  scale: 1,
+                  boxShadow:
+                    "inset 0 1px 0 rgba(255,255,255,0.18), 0 10px 22px rgba(29,74,102,0.14)",
+                }
+          }
+          transition={{ type: "tween", duration: 0.3, ease: "easeOut" }}
+          className={`flex h-12 w-12 items-center justify-center rounded-full border p-[3px] ${
+            isDropTarget
+              ? "border-[#00c531]"
               : item.isActive
                 ? "border-[rgb(var(--color-light-blue-r),0.58)]"
                 : "border-[rgb(var(--color-light-blue-r),0.22)]"
           }`}
-          style={progressStyle}
+          style={
+            isDropTarget
+              ? {
+                  backgroundColor: "#00c5311A",
+                }
+              : progressStyle
+          }
         />
         <span className="pointer-events-none absolute flex h-[42px] w-[42px] items-center justify-center rounded-full bg-[rgba(11,21,24,0.92)] text-[11px] font-semibold text-[var(--color-text)] shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]">
-          {completionRatio}%
+          <AnimatePresence mode="wait" initial={false}>
+            {isDropTarget ? (
+              <motion.span
+                key="plus"
+                initial={{ scale: 0.85, opacity: 0 }}
+                animate={{ scale: 1.08, opacity: 1 }}
+                exit={{ scale: 0.85, opacity: 0 }}
+                transition={{ duration: 0.18, ease: "easeOut" }}
+                className="flex items-center justify-center"
+              >
+                <PlusIcon
+                  className="h-4 w-4"
+                  style={{ color: "#00c531" }}
+                />
+              </motion.span>
+            ) : (
+              <motion.span
+                key="progress"
+                initial={{ scale: 0.94, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.94, opacity: 0 }}
+                transition={{ duration: 0.18, ease: "easeOut" }}
+              >
+                {completionRatio}%
+              </motion.span>
+            )}
+          </AnimatePresence>
         </span>
       </span>
       <span

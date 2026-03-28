@@ -52,6 +52,8 @@ export const useRouteGroupPageActions = ({
   const {
     routeReadyForDelivery,
     selectRouteSolution: selectRouteSolutionMutation,
+    previewRouteSolution: previewRouteSolutionMutation,
+    confirmSelectRouteSolution: confirmSelectRouteSolutionMutation,
   } = useRouteSolutionMutations();
   const { createOptimization, updateOptimization } =
     useRouteOptimizationMutations();
@@ -164,6 +166,20 @@ export const useRouteGroupPageActions = ({
     void selectRouteSolutionMutation(solutionId, routeGroupId);
   };
 
+  const previewRouteSolution = (solutionId: number) => {
+    if (!routeGroupId || !planId) return;
+    void previewRouteSolutionMutation(solutionId, planId, routeGroupId);
+  };
+
+  const confirmSelectRouteSolution = () => {
+    if (!routeGroupId || !planId || !selectedRouteSolution?.id) return;
+    void confirmSelectRouteSolutionMutation(
+      selectedRouteSolution.id,
+      planId,
+      routeGroupId,
+    );
+  };
+
   const resolveRouteWarnings = async (warnings: RouteSolutionWarning[]) => {
     const warningList = Array.isArray(warnings) ? warnings : [];
     if (warningList.length === 0) return false;
@@ -203,6 +219,8 @@ export const useRouteGroupPageActions = ({
     optimizeRoute,
     reOptimizeRoute,
     selectRouteSolution,
+    previewRouteSolution,
+    confirmSelectRouteSolution,
     resolveRouteWarnings,
   };
 };

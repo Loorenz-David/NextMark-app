@@ -128,12 +128,8 @@ export function useRouteGroupSettingsMutations() {
         const localPlan = selectRouteGroupByServerId(payload.route_group_id)(
           useRouteGroupStore.getState(),
         )
-        if (localPlan && payload.route_group) {
+        if (localPlan) {
           snapshots.local = { ...localPlan }
-          updateRouteGroup(localPlan.client_id, (prev) => ({
-            ...prev,
-            ...payload.route_group,
-          }))
         }
       }
 

@@ -1,3 +1,4 @@
+import { BasicButton } from "@/shared/buttons/BasicButton";
 import {
   RouteGroupRail,
   RouteGroupsPageHeader,
@@ -23,6 +24,7 @@ type RouteGroupsPageLayoutProps = {
   onRequestClose?: () => void;
   routeGroups: RouteGroupRailItem[];
   onRouteGroupClick: (item: RouteGroupRailItem) => void;
+  onCreateRouteGroup: () => void;
   showOptimizeRow: boolean;
   hasActiveRouteGroup: boolean;
 };
@@ -32,6 +34,7 @@ export const RouteGroupsPageLayout = ({
   onRequestClose,
   routeGroups,
   onRouteGroupClick,
+  onCreateRouteGroup,
   showOptimizeRow,
   hasActiveRouteGroup,
 }: RouteGroupsPageLayoutProps) => {
@@ -44,7 +47,11 @@ export const RouteGroupsPageLayout = ({
         />
         <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden md:flex-row">
           <div className="min-h-0 min-w-0 border-b border-white/8 md:h-full md:border-b-0 md:border-r md:border-white/8">
-            <RouteGroupRail items={routeGroups} onClick={onRouteGroupClick} />
+            <RouteGroupRail
+              items={routeGroups}
+              onClick={onRouteGroupClick}
+              onCreate={onCreateRouteGroup}
+            />
           </div>
           <div className="min-h-0 min-w-0 flex-1 overflow-hidden">
             <RouteGroupsPageContent
@@ -88,6 +95,7 @@ const RouteGroupsPageScreen = ({
   const {
     railItems,
     handleRouteGroupClick,
+    handleCreateRouteGroup,
     headerSummary,
     hasRouteGroups,
     hasActiveRouteGroup,
@@ -107,9 +115,20 @@ const RouteGroupsPageScreen = ({
               No Route Groups Yet
             </h3>
             <p className="mt-2 text-sm text-white/70">
-              This plan has no materialized route groups yet. Select zones to
-              materialize route groups for this plan.
+              This plan has no route groups yet. Create one now by selecting a
+              zone or leaving it as a no-zone group.
             </p>
+            <div className="mt-4 flex justify-center">
+              <BasicButton
+                params={{
+                  variant: "primary",
+                  className: "px-4 py-2",
+                  onClick: handleCreateRouteGroup,
+                }}
+              >
+                Create Route Group
+              </BasicButton>
+            </div>
           </div>
         </div>
       </div>
@@ -117,13 +136,14 @@ const RouteGroupsPageScreen = ({
   }
 
   return (
-    <RouteGroupsPageLayout
-      headerSummary={headerSummary}
-      onRequestClose={onRequestClose}
-      routeGroups={railItems}
-      onRouteGroupClick={handleRouteGroupClick}
-      showOptimizeRow={showOptimizeRow}
-      hasActiveRouteGroup={hasActiveRouteGroup}
-    />
+      <RouteGroupsPageLayout
+        headerSummary={headerSummary}
+        onRequestClose={onRequestClose}
+        routeGroups={railItems}
+        onRouteGroupClick={handleRouteGroupClick}
+        onCreateRouteGroup={handleCreateRouteGroup}
+        showOptimizeRow={showOptimizeRow}
+        hasActiveRouteGroup={hasActiveRouteGroup}
+      />
   );
 };

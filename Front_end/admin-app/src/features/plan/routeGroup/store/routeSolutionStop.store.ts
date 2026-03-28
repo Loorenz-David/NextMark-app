@@ -164,6 +164,20 @@ export const removeRouteSolutionStopsByOrderId = (orderId: number | null | undef
   })
 }
 
+export const removeRouteSolutionStopsBySolutionIds = (solutionIds: number[]) => {
+  if (!solutionIds.length) return
+
+  const solutionIdSet = new Set(solutionIds)
+  const state = useRouteSolutionStopStore.getState()
+
+  state.allIds.forEach((clientId) => {
+    const stop = state.byClientId[clientId]
+    if (stop?.route_solution_id != null && solutionIdSet.has(stop.route_solution_id)) {
+      state.remove(clientId)
+    }
+  })
+}
+
 export const clearRouteSolutionStops = () =>
   useRouteSolutionStopStore.getState().clear()
 

@@ -44,11 +44,9 @@ export const formatSignedDurationDelta = (diffSecondsValue: number | null): stri
 
 export const computeRouteTimingDiffs = ({
   routeSolution,
-  routeGroup,
   stops,
 }: {
   routeSolution: RouteSolution | null | undefined
-  routeGroup?: RouteGroup | null
   stops: RouteSolutionStop[]
 }): RouteTimingDiffs => {
   const orderedStops = [...stops].sort(
@@ -57,10 +55,7 @@ export const computeRouteTimingDiffs = ({
 
   const expectedStart = parseUtcDate(routeSolution?.expected_start_time)
   const expectedEnd = parseUtcDate(routeSolution?.expected_end_time)
-  const routeActualStart =
-    parseUtcDate(routeSolution?.actual_start_time) ??
-    parseUtcDate(routeGroup?.actual_start_time) ??
-    null
+  const routeActualStart = parseUtcDate(routeSolution?.actual_start_time)
   const routeStartAnchor = routeActualStart ?? expectedStart
 
   const expectedTotalSeconds = Math.max(0, diffSeconds(expectedStart, expectedEnd) ?? 0)

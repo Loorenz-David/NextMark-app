@@ -7,6 +7,7 @@ import { useRouteGroupPageResourcesController } from '../controllers/useRouteGro
 import { useRouteGroupPageCommandsController } from '../controllers/useRouteGroupPageCommands.controller'
 import { useSyncActiveRouteGroupSelectionFlow } from '../flows/syncActiveRouteGroupSelection.flow'
 import { useSyncActiveRouteSolutionSelectionFlow } from '../flows/syncActiveRouteSolutionSelection.flow'
+import { useActiveRouteGroupDetailsHydrationFlow } from '../flows/activeRouteGroupDetailsHydration.flow'
 
 import {
   RouteGroupPageCommandsContext,
@@ -45,6 +46,8 @@ export function RouteGroupPageProvider({
     routeGroupId,
     routeSolutions,
     routeSolutionsOrdered,
+    previewedSolutionId,
+    isLoadingPreview,
     selectedRouteSolution,
     routeSolutionId,
     routeSolutionStops,
@@ -68,6 +71,12 @@ export function RouteGroupPageProvider({
     routeSolutions,
     storedSelectedRouteSolutionId,
     fallbackRouteSolutionId: routeSolutionId,
+  })
+  useActiveRouteGroupDetailsHydrationFlow({
+    planId,
+    routeGroup: routeGroup ?? null,
+    selectedRouteSolution: selectedRouteSolution ?? null,
+    routeSolutionStops,
   })
 
   const { routeGroupPageActions, loadingController: commandLoadingController } = useRouteGroupPageCommandsController({
@@ -106,6 +115,8 @@ export function RouteGroupPageProvider({
       ordersById,
       selectedRouteSolution: selectedRouteSolution ?? null,
       routeSolutionsOrdered,
+      previewedSolutionId,
+      isLoadingPreview,
       bestRouteSolutionId,
       isSelectedSolutionOptimized,
       routeSolutionId,
@@ -127,6 +138,8 @@ export function RouteGroupPageProvider({
       ordersById,
       selectedRouteSolution,
       routeSolutionsOrdered,
+      previewedSolutionId,
+      isLoadingPreview,
       bestRouteSolutionId,
       isSelectedSolutionOptimized,
       routeSolutionId,

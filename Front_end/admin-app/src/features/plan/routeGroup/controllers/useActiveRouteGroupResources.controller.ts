@@ -11,6 +11,7 @@ import {
   useRouteSolutionsByRouteGroupId,
   useSelectedRouteSolutionByRouteGroupId,
 } from '../store/useRouteSolution.selector'
+import { useRouteSolutionPreviewStore } from '../store/routeSolutionPreview.store'
 import {
   selectRouteSolutionStopsBySolutionId,
   useRouteSolutionStopStore,
@@ -25,8 +26,21 @@ export const useActiveRouteGroupResourcesController = (planId: number | null) =>
   const routeGroupId = routeGroup?.id ?? null
   const planOrders = useOrdersByPlanId(planId)
   const routeSolutions = useRouteSolutionsByRouteGroupId(routeGroupId)
+  const previewedSolutionId = useRouteSolutionPreviewStore(
+    (state) => state.previewedIdByGroupId[routeGroupId ?? -1] ?? null,
+  )
+  const isLoadingPreview = useRouteSolutionPreviewStore(
+    (state) => state.loadingPreviewGroupId === routeGroupId,
+  )
   const storedSelectedRouteSolution = useSelectedRouteSolutionByRouteGroupId(routeGroupId)
-  const selectedRouteSolution = storedSelectedRouteSolution ?? routeSolutions[0] ?? null
+  const selectedRouteSolution = useMemo(() => {
+    if (previewedSolutionId != null) {
+      const previewed =
+        routeSolutions.find((routeSolution) => routeSolution.id === previewedSolutionId) ?? null
+      if (previewed) return previewed
+    }
+    return storedSelectedRouteSolution ?? routeSolutions[0] ?? null
+  }, [previewedSolutionId, routeSolutions, storedSelectedRouteSolution])
   const routeSolutionId = selectedRouteSolution?.id ?? null
   const routeSolutionStops = useRouteSolutionStopStore(
     useShallow(selectRouteSolutionStopsBySolutionId(routeSolutionId)),
@@ -78,6 +92,8 @@ export const useActiveRouteGroupResourcesController = (planId: number | null) =>
     orderCount: Math.max(0, routeGroup?.total_orders ?? orders.length),
     routeSolutions,
     routeSolutionsOrdered,
+    previewedSolutionId,
+    isLoadingPreview,
     storedSelectedRouteSolutionId: storedSelectedRouteSolution?.id ?? null,
     selectedRouteSolution,
     routeSolutionId,

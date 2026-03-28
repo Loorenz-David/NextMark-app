@@ -642,7 +642,6 @@ export const useRouteGroupStatsOverlayController = () => {
     if (!selectedRouteSolution) return null
     const routeTimingDiffs = computeRouteTimingDiffs({
       routeSolution: selectedRouteSolution,
-      routeGroup: routeGroup,
       stops: routeSolutionStops,
     })
 

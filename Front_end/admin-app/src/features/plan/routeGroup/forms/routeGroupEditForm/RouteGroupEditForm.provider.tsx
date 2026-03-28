@@ -11,6 +11,7 @@ import { useRouteGroupEditFormValidation } from './RouteGroupEditForm.validation
 import { useRouteGroupEditFormActions } from './routeGroupEditForm.actions'
 import { buildFormState, initialRouteGroupEditForm } from './routeGroupEditForm.bootstrap'
 import { useVehicleAvailabilityCheck } from '../../flows/useVehicleAvailabilityCheck.flow'
+import { useRouteGroupDetailsFlow } from '../../flows/routeGroupDetails.flow'
 
 import type { RouteGroupEditFormState, PopupPayload } from './RouteGroupEditForm.types'
 
@@ -30,6 +31,8 @@ export const RouteGroupEditFormProvider = ({
 }: ProviderProps) => {
   const [formState, setFormState] = useState<RouteGroupEditFormState>(initialRouteGroupEditForm())
   const initialFormRef = useRef<RouteGroupEditFormState | null>(null)
+  const requestedOverviewKeyRef = useRef<string | null>(null)
+  const { fetchRouteGroupDetails } = useRouteGroupDetailsFlow()
 
   const {
     routeGroupId,
@@ -38,9 +41,14 @@ export const RouteGroupEditFormProvider = ({
     selectedRouteSolution,
     routeSolutions,
   } = useRouteGroupEditFormContextData(payload)
+  const isNoZoneGroup = routeGroup?.zone_id == null
 
   const formWarnings = useRouteGroupEditFormWarnings()
-  const formSetters = useRouteGroupEditFormSetters({ setFormState, formWarnings })
+  const formSetters = useRouteGroupEditFormSetters({
+    setFormState,
+    formWarnings,
+    isNoZoneGroup,
+  })
 
   useVehicleAvailabilityCheck({ formState, formWarnings })
 
@@ -96,6 +104,35 @@ export const RouteGroupEditFormProvider = ({
       return nextState
     })
   }, [routeGroupId, routeGroup, plan, selectedRouteSolution])
+
+  useEffect(() => {
+    if (!routeGroupId || !routeGroup || !plan) {
+      requestedOverviewKeyRef.current = null
+      return
+    }
+
+    if (selectedRouteSolution) {
+      requestedOverviewKeyRef.current = null
+      return
+    }
+
+    const requestKey = `${plan.id ?? routeGroup.route_plan_id ?? 'unknown'}:${routeGroupId}`
+    if (requestedOverviewKeyRef.current === requestKey) {
+      return
+    }
+    requestedOverviewKeyRef.current = requestKey
+
+    void fetchRouteGroupDetails(
+      plan.id ?? routeGroup.route_plan_id ?? routeGroupId,
+      routeGroupId,
+    )
+  }, [
+    fetchRouteGroupDetails,
+    plan,
+    routeGroup,
+    routeGroupId,
+    selectedRouteSolution,
+  ])
 
   const hasUnsavedChanges = hasFormChanges(formState, initialFormRef)
 

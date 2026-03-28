@@ -14,11 +14,6 @@ export type RouteGroupSettingsPayload = {
     start_date?: string | null
     end_date?: string | null
   }
-  route_group?: {
-    driver_id?: number | null
-    actual_start_time?: string | null
-    actual_end_time?: string | null
-  }
   route_solution?: {
     id?: number 
     route_solution_id?: number | null

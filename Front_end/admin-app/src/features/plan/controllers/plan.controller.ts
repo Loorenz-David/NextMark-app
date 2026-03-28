@@ -7,6 +7,7 @@ import { planApi } from "@/features/plan/api/plan.api";
 import { routeGroupApi } from "@/features/plan/routeGroup/api/routeGroup.api";
 import { useOrderFlow, useOrderPlanPatchController } from "@/features/order";
 import { reactivePlanVisibility } from "@/features/plan/domain/planReactiveVisibility";
+import { resolvePlanTypeDefaults } from "@/features/plan/domain/planTypeDefaults/planTypeDefaults.registry";
 import {
   getQueryFilters,
   getQuerySearch,
@@ -38,6 +39,7 @@ import {
   incrementRoutePlanListTotal,
   useRoutePlanListStore,
 } from "@/features/plan/store/routePlanList.store";
+import { resolveUserCurrentLocation } from "@/shared/utils/resolveUserCurrentLocation";
 
 const resolveError = (error: unknown, fallback: string) => ({
   message: error instanceof ApiError ? error.message : fallback,
@@ -117,6 +119,11 @@ export function usePlanController() {
           throw new Error("start_date is required to create a plan.");
         }
 
+        const planTypeDefaults = await resolvePlanTypeDefaults({
+          planStartDate: normalizedPlanFields.start_date ?? null,
+          getCurrentLocationAddress: resolveUserCurrentLocation,
+        }).catch(() => undefined);
+
         const planPayloadApi: PlanCreatePayload = {
           client_id: planClientId,
           label: normalizedPlanFields.label,
@@ -132,6 +139,7 @@ export function usePlanController() {
           ...(sanitizedZoneIds.length > 0
             ? { zone_ids: sanitizedZoneIds }
             : {}),
+          ...(planTypeDefaults ? planTypeDefaults : {}),
         };
 
         const response = await planApi.createPlan(planPayloadApi);

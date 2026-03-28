@@ -31,10 +31,7 @@ export type RouteGroup = {
     geometry?: GeoJSONPolygon | null;
   } | null;
   template_snapshot?: ZoneTemplateConfig | null;
-  actual_start_time?: string | null;
-  actual_end_time?: string | null;
   is_optimized?: boolean;
-  driver_id?: number | null;
   route_plan_id?: number | null;
   updated_at?: string | null;
   route_solutions_ids?: number[];
