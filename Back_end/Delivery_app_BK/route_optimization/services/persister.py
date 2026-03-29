@@ -165,8 +165,6 @@ def persist_solution(
             transition_polylines=result.transition_polylines or [],
         )
 
-    route_solution.stop_count = len(stop_payloads) + len(skipped_payloads)
-
     # Apply vehicle warnings after distance/duration are finalised on the
     # route_solution.  route_warnings was reset to None at the top of this
     # function so we start from a clean slate — no stale vehicle entries.
@@ -226,7 +224,7 @@ def _build_route_solution_payload(route_solution:RouteSolution) -> Dict[str, Any
         "label": route_solution.label,
         "is_selected": route_solution.is_selected,
         "is_optimized": route_solution.is_optimized,
-        "stop_count": route_solution.stop_count,
+        "stop_count": len(route_solution.stops or []),
         "total_distance_meters": route_solution.total_distance_meters,
         "total_travel_time_seconds": route_solution.total_travel_time_seconds,
         "expected_start_time": _serialize_datetime(route_solution.expected_start_time),

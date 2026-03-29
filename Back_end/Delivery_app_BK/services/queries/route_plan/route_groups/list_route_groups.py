@@ -26,14 +26,13 @@ def _serialize_selected_route_solution(route_group):
         "is_optimized": selected.is_optimized,
         "total_distance_meters": selected.total_distance_meters,
         "total_travel_time_seconds": selected.total_travel_time_seconds,
-        "stop_count": selected.stop_count,
-        "order_count": selected.order_count,
+        "stop_count": len(selected.stops or []),
+        "order_count": route_group.total_orders or 0,
     }
 
 
 def _serialize_route_group(route_group) -> dict:
     zone = getattr(route_group, "zone", None)
-    driver = getattr(route_group, "driver", None)
     state = getattr(route_group, "state", None)
     raw_snapshot = getattr(route_group, "zone_geometry_snapshot", None)
     zone_snapshot = normalize_route_group_zone_snapshot(raw_snapshot)
@@ -43,17 +42,7 @@ def _serialize_route_group(route_group) -> dict:
         "zone_id": getattr(route_group, "zone_id", None),
         "zone_snapshot": zone_snapshot,
         "template_snapshot": getattr(route_group, "template_snapshot", None),
-        "actual_start_time": route_group.actual_start_time,
-        "actual_end_time": route_group.actual_end_time,
         "updated_at": route_group.updated_at.isoformat() if route_group.updated_at else None,
-        "driver_id": route_group.driver_id,
-        "driver": {
-            "id": driver.id,
-            "username": driver.username,
-            "email": driver.email,
-        }
-        if driver is not None
-        else None,
         "route_plan_id": route_group.route_plan_id,
         "state": {
             "id": state.id,

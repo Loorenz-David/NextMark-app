@@ -44,7 +44,6 @@ def create_route_solution(ctx: ServiceContext):
         label="variant 1",
         is_selected=True,
         is_optimized=IS_OPTIMIZED_NOT_OPTIMIZED,
-        stop_count=0,
         team_id=ctx.team_id,
         route_group_id=route_group.id,
     )
@@ -80,7 +79,7 @@ def create_route_solution(ctx: ServiceContext):
     route_solution_result = build_create_result(
         ctx,
         [route_solution],
-        extract_fields=["id", "label", "is_optimized", "is_selected", "stop_count"],
+        extract_fields=["id", "label", "is_optimized", "is_selected"],
     )
     route_stop_result = build_create_result(
         ctx,

@@ -49,7 +49,6 @@ def build_route_solution_stops_for_order_ids(
 
             stop_instances.append(stop_instance)
 
-        route_solution.stop_count = current_stop
         updated_route_solutions.append(route_solution)
 
     return stop_instances, updated_route_solutions

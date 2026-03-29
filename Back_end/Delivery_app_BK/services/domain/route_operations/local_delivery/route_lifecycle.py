@@ -123,7 +123,6 @@ def normalize_route_solution_stop_ordering(
         else:
             first_changed_position = min(first_changed_position, candidate_position)
 
-    route_solution.stop_count = len(ordered_stops)
     return changed_stops, first_changed_position
 
 
@@ -174,7 +173,6 @@ def refresh_local_delivery_route_execution_instance(
             )
 
     if not any(getattr(stop, "order_id", None) for stop in (route_solution.stops or [])):
-        route_solution.stop_count = len(route_solution.stops or [])
         return route_solution, dedupe_route_solution_stops(normalized_stops)
 
     refreshed_stops: list[RouteSolutionStop] = []
@@ -198,7 +196,6 @@ def refresh_local_delivery_route_execution_instance(
             error=exc,
         )
 
-    route_solution.stop_count = len(route_solution.stops or [])
     return route_solution, dedupe_route_solution_stops(
         [*normalized_stops, *(refreshed_stops or [])]
     )
@@ -260,8 +257,7 @@ def sync_route_solution_stop_count(route_solution: RouteSolution | None) -> int:
         .scalar()
         or 0
     )
-    route_solution.stop_count = int(stop_count)
-    return route_solution.stop_count
+    return int(stop_count)
 
 
 def _emit_refresh_warning(

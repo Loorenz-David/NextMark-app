@@ -13,11 +13,10 @@ def _base_payload() -> dict:
         "route_plan": {
             "label": "Morning routes",
         },
-        "route_group": {
-            "driver_id": 22,
-        },
+        "route_group": {},
         "route_solution": {
             "route_solution_id": 900,
+            "driver_id": 22,
         },
     }
 
@@ -27,8 +26,8 @@ def test_parse_update_local_delivery_settings_request_accepts_canonical_keys():
 
     assert parsed.route_group_id == 10
     assert parsed.route_plan.label == "Morning routes"
-    assert parsed.route_group.driver_id == 22
     assert parsed.route_solution.route_solution_id == 900
+    assert parsed.route_solution.driver_id == 22
 
 
 def test_parse_update_local_delivery_settings_request_rejects_legacy_top_level_keys():
@@ -45,3 +44,11 @@ def test_parse_update_route_group_settings_request_rejects_legacy_local_delivery
 
     with pytest.raises(ValidationFailed):
         parse_update_route_group_settings_request(payload)
+
+
+def test_parse_update_local_delivery_settings_request_rejects_route_group_driver_field():
+    payload = _base_payload()
+    payload["route_group"] = {"driver_id": 22}
+
+    with pytest.raises(ValidationFailed):
+        parse_update_local_delivery_settings_request(payload)

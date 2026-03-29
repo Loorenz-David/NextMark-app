@@ -32,9 +32,6 @@ from Delivery_app_BK.services.commands.route_operations import (
     update_route_stop_service_time as update_route_stop_service_time_service,
 )
 from Delivery_app_BK.services.context import ServiceContext
-from Delivery_app_BK.services.queries.route_operations import (
-    get_route_solution as get_route_solution_service,
-)
 from Delivery_app_BK.services.run_service import run_service
 
 
@@ -270,28 +267,6 @@ def mark_route_solution_actual_end_time(route_solution_id: int):
             route_solution_id,
             incoming_data,
         ),
-        ctx,
-    )
-    response = Response()
-
-    if outcome.error:
-        return response.build_unsuccessful_response(outcome.error)
-
-    return response.build_successful_response(
-        outcome.data or {},
-        warnings=ctx.warnings,
-    )
-
-
-@route_operations_bp.route("/routes/<int:route_solution_id>", methods=["GET"])
-@jwt_required()
-@role_required([ADMIN, ASSISTANT])
-def get_route_solution(route_solution_id: int):
-    identity = get_jwt()
-    return_stops = request.args.get("return_stops", "false").lower() == "true"
-    ctx = ServiceContext(identity=identity)
-    outcome = run_service(
-        lambda c: get_route_solution_service(route_solution_id, c, return_stops),
         ctx,
     )
     response = Response()

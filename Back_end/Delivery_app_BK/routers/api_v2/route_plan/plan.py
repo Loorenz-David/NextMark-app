@@ -42,8 +42,20 @@ from Delivery_app_BK.services.queries.route_plan.plan_states.list_plan_states im
 from Delivery_app_BK.services.queries.route_plan.route_groups.list_route_groups import (
     list_route_groups as list_route_groups_service,
 )
+from Delivery_app_BK.services.queries.route_plan.route_groups.get_route_group import (
+    get_route_group as get_route_group_service,
+)
+from Delivery_app_BK.services.queries.route_solutions.get_route_solution import (
+    get_route_solution_with_stops as get_route_solution_with_stops_service,
+)
+from Delivery_app_BK.services.commands.route_plan.local_delivery.route_solution.select_route_solution import (
+    select_route_solution as select_route_solution_service,
+)
 from Delivery_app_BK.services.commands.route_plan.materialize_route_groups import (
     materialize_route_groups as materialize_route_groups_service,
+)
+from Delivery_app_BK.services.commands.route_plan.create_route_group_in_plan import (
+    create_route_group_in_plan as create_route_group_in_plan_service,
 )
 from Delivery_app_BK.services.commands.route_plan.delete_route_group import (
     delete_route_group as delete_route_group_service,
@@ -257,6 +269,90 @@ def materialize_route_plan_route_groups(route_plan_id: int):
 
     return response.build_successful_response(
         outcome.data,
+        warnings=ctx.warnings,
+    )
+
+
+@route_plans_bp.route("/<int:route_plan_id>/route-groups", methods=["POST"])
+@jwt_required()
+@role_required([ADMIN, ASSISTANT])
+def create_route_plan_route_group(route_plan_id: int):
+    identity = get_jwt()
+    incoming_data = request.get_json(silent=True) or {}
+    ctx = ServiceContext(
+        incoming_data={**incoming_data, "route_plan_id": route_plan_id},
+        identity=identity,
+    )
+    outcome = run_service(lambda c: create_route_group_in_plan_service(c), ctx)
+    response = Response()
+
+    if outcome.error:
+        return response.build_unsuccessful_response(outcome.error)
+
+    return response.build_successful_response(
+        outcome.data,
+        warnings=ctx.warnings,
+    )
+
+
+@route_plans_bp.route("/<int:route_plan_id>/route-groups/<int:route_group_id>", methods=["GET"])
+@jwt_required()
+@role_required([ADMIN, ASSISTANT])
+def get_route_plan_route_group(route_plan_id: int, route_group_id: int):
+    identity = get_jwt()
+    ctx = ServiceContext(identity=identity)
+    outcome = run_service(
+        lambda c: get_route_group_service(route_plan_id, route_group_id, c), ctx
+    )
+    response = Response()
+
+    if outcome.error:
+        return response.build_unsuccessful_response(outcome.error)
+
+    return response.build_successful_response(
+        outcome.data,
+        warnings=ctx.warnings,
+    )
+
+
+@route_plans_bp.route("/<int:route_plan_id>/route-groups/<int:route_group_id>/route-solutions/<int:route_solution_id>", methods=["GET"])
+@jwt_required()
+@role_required([ADMIN, ASSISTANT])
+def get_route_group_route_solution(route_plan_id: int, route_group_id: int, route_solution_id: int):
+    identity = get_jwt()
+    ctx = ServiceContext(identity=identity)
+    outcome = run_service(
+        lambda c: get_route_solution_with_stops_service(route_plan_id, route_group_id, route_solution_id, c),
+        ctx,
+    )
+    response = Response()
+
+    if outcome.error:
+        return response.build_unsuccessful_response(outcome.error)
+
+    return response.build_successful_response(
+        outcome.data,
+        warnings=ctx.warnings,
+    )
+
+
+@route_plans_bp.route("/<int:route_plan_id>/route-groups/<int:route_group_id>/route-solutions/<int:route_solution_id>/select", methods=["PATCH"])
+@jwt_required()
+@role_required([ADMIN, ASSISTANT])
+def select_route_group_route_solution(route_plan_id: int, route_group_id: int, route_solution_id: int):
+    identity = get_jwt()
+    ctx = ServiceContext(identity=identity)
+    outcome = run_service(
+        lambda c: select_route_solution_service(c, route_solution_id),
+        ctx,
+    )
+    response = Response()
+
+    if outcome.error:
+        return response.build_unsuccessful_response(outcome.error)
+
+    return response.build_successful_response(
+        outcome.data or {},
         warnings=ctx.warnings,
     )
 

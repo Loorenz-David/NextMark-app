@@ -83,12 +83,6 @@ class User(
         back_populates = "driver"
     )
 
-
-    route_groups = relationship(
-        "RouteGroup",
-        back_populates="driver",
-    )
-
     store_pickup_plans = relationship(
         "StorePickupPlan",
         back_populates = "assigned_user"

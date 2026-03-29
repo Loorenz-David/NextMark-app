@@ -34,10 +34,14 @@ def list_orders(
         route_group = db.session.get(RouteGroup, route_group_id)
         if (
             route_group is None
+            or route_group.team_id != ctx.team_id
             or (effective_route_plan_id is not None and route_group.route_plan_id != effective_route_plan_id)
-            or route_group.zone_id is None
         ):
             base_query = base_query.filter(false())
+        elif route_group.zone_id is None:
+            # No-Zone groups can now be created multiple times inside a plan,
+            # so filtering must be explicit by route_group_id.
+            base_query = base_query.filter(Order.route_group_id == route_group.id)
         else:
             base_query = base_query.join(
                 OrderZoneAssignment,

@@ -24,6 +24,7 @@ from Delivery_app_BK.services.domain.route_operations.plan.plan_states import Pl
 
 if TYPE_CHECKING:
     from Delivery_app_BK.models import RoutePlan
+    from Delivery_app_BK.models import RouteGroup
     from Delivery_app_BK.models import RouteSolution
 
 logger = logging.getLogger(__name__)
@@ -31,23 +32,23 @@ logger = logging.getLogger(__name__)
 _COMPLETED_STATE_NAME = OrderStateEnum.COMPLETED.value
 
 
-def derive_auto_complete_state(route_solution: "RouteSolution | None") -> int | None:
+def derive_auto_complete_state(route_group: "RouteGroup | None") -> int | None:
     """
-    Return PlanStateId.COMPLETED if all orders in the route solution are
+    Return PlanStateId.COMPLETED if all orders in the route group are
     completed, otherwise return None.
 
     Preconditions:
-      - route_solution.order_count and route_solution.order_state_counts must
+      - route_group.total_orders and route_group.order_state_counts must
         already have been recomputed before calling this function.
     """
-    if route_solution is None:
+    if route_group is None:
         return None
 
-    total = route_solution.order_count or 0
+    total = route_group.total_orders or 0
     if total == 0:
         return None
 
-    counts = route_solution.order_state_counts or {}
+    counts = route_group.order_state_counts or {}
     completed = counts.get(_COMPLETED_STATE_NAME, 0)
 
     if completed >= total:
@@ -106,8 +107,33 @@ def maybe_auto_complete_plan(plan: "RoutePlan") -> bool:
     # without first transitioning the plan to PROCESSING.
 
     route_solution = get_selected_route_solution(plan)
-    auto_state = derive_auto_complete_state(route_solution)
+    route_group = getattr(route_solution, "route_group", None) if route_solution else None
+    auto_state = derive_auto_complete_state(route_group)
     if auto_state is None:
         return False
 
     return apply_plan_state(plan, auto_state)
+
+
+def derive_plan_state_from_groups(plan: "RoutePlan") -> int:
+    """Derive plan state from non-deleted route groups using strict all-match rules."""
+    groups = [
+        group
+        for group in (plan.route_groups or [])
+        if not getattr(group, "deleted_at", None)
+    ]
+    if not groups:
+        return PlanStateId.OPEN
+
+    state_ids = {group.state_id for group in groups}
+    if len(state_ids) == 1:
+        sole = next(iter(state_ids))
+        if sole in (PlanStateId.COMPLETED, PlanStateId.PROCESSING, PlanStateId.READY):
+            return sole
+    return PlanStateId.OPEN
+
+
+def maybe_sync_plan_state_from_groups(plan: "RoutePlan") -> bool:
+    """Derive and apply plan state from route groups; returns True when changed."""
+    derived_state_id = derive_plan_state_from_groups(plan)
+    return apply_plan_state(plan, derived_state_id)

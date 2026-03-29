@@ -243,7 +243,6 @@ def create_route_solution_row(
         "stops_service_time": _as_optional_dict(payload.get("stops_service_time")),
         "is_selected": bool(payload.get("is_selected", route_index == 1)),
         "is_optimized": payload.get("is_optimized") or IS_OPTIMIZED_NOT_OPTIMIZED,
-        "stop_count": _as_non_negative_int(payload.get("stop_count"), default=0),
         "driver_id": _as_optional_positive_int(payload.get("driver_id")),
         "vehicle_id": _as_optional_positive_int(payload.get("vehicle_id")),
         "start_leg_polyline": _as_optional_dict(payload.get("start_leg_polyline")),

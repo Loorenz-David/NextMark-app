@@ -86,6 +86,7 @@ def materialize_route_groups(ctx: ServiceContext) -> list[dict]:
             client_id=f"route_group:{route_plan_id}:{zone.id}",
             route_plan_id=route_plan_id,
             zone_id=zone.id,
+            is_system_default_bucket=False,
             zone_geometry_snapshot=build_route_group_zone_snapshot(
                 zone_name=zone.name,
                 geometry=zone.geometry,

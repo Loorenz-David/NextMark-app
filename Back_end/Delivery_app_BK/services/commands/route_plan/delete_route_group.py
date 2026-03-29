@@ -21,6 +21,11 @@ def delete_route_group(ctx: ServiceContext) -> dict:
     if route_plan_id is not None and route_group.route_plan_id != route_plan_id:
         raise NotFound(f"Route group {route_group_id} not found")
 
+    if route_group.zone_id is None and getattr(route_group, "is_system_default_bucket", False):
+        raise ValidationFailed(
+            "The no-zone route group cannot be deleted. It is a system-managed group present on every plan."
+        )
+
     has_executed_selected_solution = (
         RouteSolution.query.filter(
             RouteSolution.route_group_id == route_group.id,

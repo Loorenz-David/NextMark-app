@@ -29,7 +29,7 @@ def _stub_no_zone_solution():
     return SimpleNamespace(id=601)
 
 
-def _parsed_request(label="No Zones", zone_ids=None, order_ids=None):
+def _parsed_request(label="No Zones", zone_ids=None, order_ids=None, route_group_defaults=None):
     """Return a stub parsed plan request without touching the DB."""
     return SimpleNamespace(
         client_id=None,          # suppress the existing-plan lookup
@@ -39,11 +39,11 @@ def _parsed_request(label="No Zones", zone_ids=None, order_ids=None):
         date_strategy=None,
         zone_ids=zone_ids or [],
         order_ids=order_ids or [],
-        route_group_defaults={},
+        route_group_defaults=route_group_defaults or {},
     )
 
 
-def _patch_common(monkeypatch, zone_ids=None, order_ids=None):
+def _patch_common(monkeypatch, zone_ids=None, order_ids=None, route_group_defaults=None):
     """Minimal patches shared across creation tests."""
     monkeypatch.setattr(module.db.session, "begin", _noop_transaction)
     monkeypatch.setattr(module.db.session, "add_all", lambda rows: None)
@@ -67,7 +67,11 @@ def _patch_common(monkeypatch, zone_ids=None, order_ids=None):
     )
     monkeypatch.setattr(
         module, "parse_create_plan_request",
-        lambda field_set: _parsed_request(zone_ids=zone_ids, order_ids=order_ids),
+        lambda field_set: _parsed_request(
+            zone_ids=zone_ids,
+            order_ids=order_ids,
+            route_group_defaults=route_group_defaults,
+        ),
     )
 
 
@@ -174,6 +178,34 @@ def test_create_plan_with_zone_ids_recomputes_totals(monkeypatch):
     assert recomputed_plan_ids == [101]
 
 
+def test_create_plan_passes_route_solution_defaults_to_no_zone_builder(monkeypatch):
+    route_group_defaults = {
+        "name": "Unassigned Bucket",
+        "route_solution": {
+            "set_start_time": "08:45",
+            "eta_tolerance_minutes": 20,
+            "start_location": {"lat": 59.3293, "lng": 18.0686},
+        },
+    }
+
+    _patch_common(monkeypatch, route_group_defaults=route_group_defaults)
+    monkeypatch.setattr(module, "create_instance", _fake_plan_create_instance)
+
+    captured_defaults = {}
+
+    def _capture_no_zone_call(**kwargs):
+        captured_defaults.update(kwargs.get("route_group_defaults") or {})
+        return _stub_no_zone_group(), _stub_no_zone_solution()
+
+    monkeypatch.setattr(module, "_build_no_zone_route_group_instance", _capture_no_zone_call)
+
+    module.create_plan(_ctx({"label": "No Zones", "start_date": "2026-04-01"}))
+
+    assert captured_defaults["name"] == "Unassigned Bucket"
+    assert captured_defaults["route_solution"]["set_start_time"] == "08:45"
+    assert captured_defaults["route_solution"]["eta_tolerance_minutes"] == 20
+
+
 def test_load_active_zones_raises_for_invalid_zone_ids(monkeypatch):
     monkeypatch.setattr(
         module,
@@ -190,3 +222,45 @@ def test_load_active_zones_raises_for_invalid_zone_ids(monkeypatch):
             zone_ids=[3, 99],
             route_group_defaults={},
         )
+
+
+def test_build_no_zone_group_applies_route_group_defaults(monkeypatch):
+    captured_create_fields = {}
+    captured_route_solution_defaults = {}
+
+    def _fake_create_instance(_ctx, model, fields):
+        captured_create_fields.update(fields)
+        return SimpleNamespace(id=777, zone_id=fields.get("zone_id"), route_solutions=[])
+
+    def _fake_build_route_solution_instance(**kwargs):
+        captured_route_solution_defaults.update(kwargs.get("route_group_defaults") or {})
+        return SimpleNamespace(id=888)
+
+    monkeypatch.setattr(module, "create_instance", _fake_create_instance)
+    monkeypatch.setattr(module, "_build_route_solution_instance", _fake_build_route_solution_instance)
+
+    group_defaults = {
+        "client_id": "route_group_custom",
+        "name": "Unassigned Bucket",
+        "route_solution": {
+            "set_start_time": "08:30",
+            "eta_tolerance_minutes": 15,
+        },
+    }
+
+    route_group, route_solution = module._build_no_zone_route_group_instance(
+        ctx=SimpleNamespace(team_id=1),
+        route_plan_instance=SimpleNamespace(id=123),
+        route_group_defaults=group_defaults,
+    )
+
+    assert route_group.id == 777
+    assert route_solution.id == 888
+    assert captured_create_fields["client_id"] == "route_group_custom"
+    assert captured_create_fields["zone_id"] is None
+    assert captured_create_fields["is_system_default_bucket"] is True
+    assert captured_create_fields["zone_geometry_snapshot"] == {
+        "name": "Unassigned Bucket",
+        "geometry": None,
+    }
+    assert captured_route_solution_defaults["route_solution"]["set_start_time"] == "08:30"

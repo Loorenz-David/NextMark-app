@@ -49,6 +49,15 @@ from Delivery_app_BK.services.domain.route_operations.plan.recompute_plan_totals
 from Delivery_app_BK.services.domain.route_operations.plan.recompute_route_group_totals import (
     recompute_route_group_totals,
 )
+from Delivery_app_BK.services.domain.state_transitions.order_count_engine import (
+    recompute_route_group_order_counts,
+)
+from Delivery_app_BK.services.domain.state_transitions.plan_state_engine import (
+    maybe_sync_plan_state_from_groups,
+)
+from Delivery_app_BK.services.domain.state_transitions.route_group_state_engine import (
+    maybe_sync_route_group_state,
+)
 
 
 def create_order(ctx: ServiceContext):
@@ -70,6 +79,7 @@ def create_order(ctx: ServiceContext):
     pending_events: list[dict] = []
     created_bundles: list[dict] = []
     touched_route_plans: dict[int, RoutePlan] = {}
+    touched_route_groups: dict[int, RouteGroup] = {}
 
     def _apply() -> None:
         team_timezone = resolve_order_delivery_windows_timezone(ctx)
@@ -190,6 +200,8 @@ def create_order(ctx: ServiceContext):
                 order_instance.route_group = route_group
                 if route_plan is not None:
                     touched_route_plans[route_plan.id] = route_plan
+                if route_group is not None:
+                    touched_route_groups[route_group.id] = route_group
             order_instances.append(order_instance)
 
             # Auto-generate public tracking identifiers (once, on creation).
@@ -252,6 +264,14 @@ def create_order(ctx: ServiceContext):
         for route_plan in touched_route_plans.values():
             touch_route_freshness(route_plan)
             recompute_route_group_totals(route_plan)
+
+        for route_group in touched_route_groups.values():
+            recompute_route_group_order_counts(route_group)
+            maybe_sync_route_group_state(route_group)
+
+        for route_plan in touched_route_plans.values():
+            maybe_sync_plan_state_from_groups(route_plan)
+
         if touched_route_plans:
             db.session.flush()
 

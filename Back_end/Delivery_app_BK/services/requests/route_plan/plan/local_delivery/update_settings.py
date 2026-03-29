@@ -26,6 +26,8 @@ ALLOWED_TOP_LEVEL_FIELDS = {
     "time_zone",
 }
 
+ALLOWED_ROUTE_GROUP_FIELDS: set[str] = set()
+
 
 @dataclass
 class RoutePlanPatchRequest:
@@ -39,12 +41,7 @@ class RoutePlanPatchRequest:
 
 @dataclass
 class RouteGroupPatchRequest:
-    driver_id: int | None = None
-    actual_start_time: datetime | None = None
-    actual_end_time: datetime | None = None
-    has_driver_id: bool = False
-    has_actual_start_time: bool = False
-    has_actual_end_time: bool = False
+    pass
 
 
 @dataclass
@@ -83,7 +80,7 @@ class RouteGroupSettingsRequest:
 def parse_update_local_delivery_settings_request(raw: dict) -> RouteGroupSettingsRequest:
     if not isinstance(raw, dict):
         raise ValidationFailed("Payload must be an object.")
-
+    
     validate_unexpected(
         raw,
         ALLOWED_TOP_LEVEL_FIELDS,
@@ -114,21 +111,6 @@ def parse_update_local_delivery_settings_request(raw: dict) -> RouteGroupSetting
         route_solution_id=route_solution_id,
         route_solution_raw=route_solution_raw,
     )
-
-    # Route solution driver is the source of truth for this flow.
-    effective_driver_provided = (
-        route_solution_patch.has_driver_id or route_group_patch.has_driver_id
-    )
-    if effective_driver_provided:
-        effective_driver_id = (
-            route_solution_patch.driver_id
-            if route_solution_patch.has_driver_id
-            else route_group_patch.driver_id
-        )
-        route_group_patch.driver_id = effective_driver_id
-        route_group_patch.has_driver_id = True
-        route_solution_patch.driver_id = effective_driver_id
-        route_solution_patch.has_driver_id = True
 
     if (
         route_plan_patch.has_start_date
@@ -177,29 +159,12 @@ def _parse_route_plan_patch(raw: dict) -> RoutePlanPatchRequest:
 
 
 def _parse_route_group_patch(raw: dict) -> RouteGroupPatchRequest:
+    validate_unexpected(
+        raw,
+        ALLOWED_ROUTE_GROUP_FIELDS,
+        context_msg="Unexpected fields in route_group payload:",
+    )
     patch = RouteGroupPatchRequest()
-
-    if "driver_id" in raw:
-        patch.has_driver_id = True
-        patch.driver_id = _validate_nullable_int(
-            raw.get("driver_id"),
-            field="route_group.driver_id",
-        )
-
-    if "actual_start_time" in raw:
-        patch.has_actual_start_time = True
-        patch.actual_start_time = _validate_nullable_datetime(
-            raw.get("actual_start_time"),
-            field="route_group.actual_start_time",
-        )
-
-    if "actual_end_time" in raw:
-        patch.has_actual_end_time = True
-        patch.actual_end_time = _validate_nullable_datetime(
-            raw.get("actual_end_time"),
-            field="route_group.actual_end_time",
-        )
-
     return patch
 
 

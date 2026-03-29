@@ -4,9 +4,18 @@ from sqlalchemy.exc import InvalidRequestError
 from sqlalchemy.orm.exc import NoResultFound
 
 from Delivery_app_BK.errors import NotFound, ValidationFailed
-from Delivery_app_BK.models import Order, OrderState, db
-from Delivery_app_BK.services.domain.state_transitions.order_count_engine import recompute_plan_order_counts
-from Delivery_app_BK.services.domain.state_transitions.plan_state_engine import maybe_auto_complete_plan
+from Delivery_app_BK.models import Order, OrderState, RouteGroup, RouteSolution, RouteSolutionStop, db
+from Delivery_app_BK.services.domain.state_transitions.order_count_engine import (
+    recompute_plan_order_counts,
+    recompute_route_group_order_counts,
+)
+from Delivery_app_BK.services.domain.state_transitions.plan_state_engine import (
+    maybe_auto_complete_plan,
+    maybe_sync_plan_state_from_groups,
+)
+from Delivery_app_BK.services.domain.state_transitions.route_group_state_engine import (
+    maybe_sync_route_group_state,
+)
 from Delivery_app_BK.services.infra.events.builders.order import (
     build_order_state_transition_events,
 )
@@ -66,16 +75,17 @@ def update_orders_state(
     try:
         with db.session.begin():
             changed_orders_result = _apply()
+            if changed_orders_result:
+                _recompute_and_auto_complete_plans(changed_orders_result)
     except InvalidRequestError as exc:
         if "already begun" not in str(exc).lower():
             raise
         changed_orders_result = _apply()
+        if changed_orders_result:
+            _recompute_and_auto_complete_plans(changed_orders_result)
 
     if pending_events:
         emit_order_events(ctx, pending_events)
-
-    if changed_orders_result:
-        _recompute_and_auto_complete_plans(changed_orders_result)
 
     return changed_orders_result
 
@@ -87,14 +97,71 @@ def _recompute_and_auto_complete_plans(changed_orders: list[Order]) -> None:
     Runs inside whatever transaction/session is already active.
     """
     affected_plans: dict[int, object] = {}
+    affected_route_groups: dict[int, object] = {}
+    unresolved_order_ids: list[int] = []
     for order in changed_orders:
         plan = getattr(order, "delivery_plan", None)
+        if plan is None:
+            plan = getattr(order, "route_plan", None)
         if plan is not None and getattr(plan, "id", None) is not None:
             affected_plans[plan.id] = plan
+
+        route_group = getattr(order, "route_group", None)
+        if route_group is None and plan is not None and getattr(order, "route_group_id", None) is not None:
+            route_group = next(
+                (
+                    group
+                    for group in (getattr(plan, "route_groups", None) or [])
+                    if getattr(group, "id", None) == order.route_group_id
+                ),
+                None,
+            )
+        if route_group is not None and getattr(route_group, "id", None) is not None:
+            affected_route_groups[route_group.id] = route_group
+        else:
+            order_id = getattr(order, "id", None)
+            if order_id is not None:
+                unresolved_order_ids.append(order_id)
+
+    # Fallback path: resolve route groups via route stops for orders that do not
+    # have a direct order.route_group relationship set.
+    if unresolved_order_ids:
+        rows = (
+            db.session.query(RouteGroup)
+            .join(RouteSolution, RouteSolution.route_group_id == RouteGroup.id)
+            .join(RouteSolutionStop, RouteSolutionStop.route_solution_id == RouteSolution.id)
+            .filter(RouteSolutionStop.order_id.in_(unresolved_order_ids))
+            .all()
+        )
+        for route_group in rows:
+            if route_group is not None and getattr(route_group, "id", None) is not None:
+                affected_route_groups[route_group.id] = route_group
 
     for plan in affected_plans.values():
         recompute_plan_order_counts(plan)
         maybe_auto_complete_plan(plan)
+
+    for route_group in affected_route_groups.values():
+        # Recompute order counts for this route group by finding its selected route solution
+        route_solutions = getattr(route_group, "route_solutions", None)
+        if route_solutions is None:
+            route_solutions = (
+                db.session.query(RouteSolution)
+                .filter(RouteSolution.route_group_id == route_group.id)
+                .all()
+            )
+        selected_solution = next(
+            (rs for rs in (route_solutions or []) if getattr(rs, "is_selected", False)),
+            None,
+        )
+        if selected_solution is None and route_solutions:
+            selected_solution = route_solutions[0]
+        if selected_solution is not None:
+            recompute_route_group_order_counts(selected_solution)
+        maybe_sync_route_group_state(route_group)
+
+    for plan in affected_plans.values():
+        maybe_sync_plan_state_from_groups(plan)
 
 
 

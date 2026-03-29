@@ -89,6 +89,8 @@ def build_route_plan_changed_event(
     old_plan_id: int | None,
     new_plan: RoutePlan,
 ) -> dict:
+    # RoutePlan.plan_type was removed; date_strategy is the canonical field.
+    plan_strategy = getattr(new_plan, "date_strategy", None)
     return {
         "order_id": order_instance.id,
         "team_id": order_instance.team_id,
@@ -96,7 +98,8 @@ def build_route_plan_changed_event(
         "payload": {
             "old_route_plan_id": old_plan_id,
             "new_route_plan_id": new_plan.id,
-            "new_plan_type": new_plan.plan_type,
+            "new_plan_type": plan_strategy,
+            "new_date_strategy": plan_strategy,
         },
     }
 

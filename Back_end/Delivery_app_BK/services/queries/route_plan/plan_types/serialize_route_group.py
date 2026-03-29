@@ -16,18 +16,14 @@ def _serialize_route_group_item(instance: RouteGroup) -> dict:
         "zone_id": getattr(instance, "zone_id", None),
         "zone_snapshot": zone_snapshot,
         "template_snapshot": getattr(instance, "template_snapshot", None),
-        "actual_start_time": instance.actual_start_time,
-        "actual_end_time": instance.actual_end_time,
         "updated_at": instance.updated_at.isoformat() if instance.updated_at else None,
-        "driver_id": instance.driver_id,
         "route_plan_id": instance.route_plan_id,
-        "state": {
-            "id": state.id,
-            "name": state.name,
-        }
-        if state is not None
-        else None,
+        "state_id": state.id if state is not None else None,
         "total_orders": instance.total_orders,
+        "total_item_count": instance.total_item_count,
+        "total_volume_cm3": instance.total_volume_cm3,
+        "total_weight_grams": instance.total_weight_g,
+        "order_state_counts": instance.order_state_counts,
     }
 
 

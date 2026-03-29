@@ -155,7 +155,16 @@ def _get_route_group(
                 return zone_group
 
     # Priority 3 – No-Zone fallback bucket.
-    no_zone_group = next((g for g in all_groups if g.zone_id is None), None)
+    no_zone_group = next(
+        (
+            g
+            for g in all_groups
+            if g.zone_id is None and getattr(g, "is_system_default_bucket", False)
+        ),
+        None,
+    )
+    if no_zone_group is None:
+        no_zone_group = next((g for g in all_groups if g.zone_id is None), None)
     if no_zone_group is not None:
         return no_zone_group
 

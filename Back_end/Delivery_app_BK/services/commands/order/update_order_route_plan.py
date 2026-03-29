@@ -34,8 +34,18 @@ from Delivery_app_BK.services.domain.route_operations.plan.recompute_plan_totals
 from Delivery_app_BK.services.domain.route_operations.plan.recompute_route_group_totals import (
     recompute_route_group_totals,
 )
-from Delivery_app_BK.services.domain.state_transitions.order_count_engine import recompute_plan_order_counts
-from Delivery_app_BK.services.domain.state_transitions.plan_state_engine import apply_plan_state, maybe_auto_complete_plan
+from Delivery_app_BK.services.domain.state_transitions.order_count_engine import (
+    recompute_plan_order_counts,
+    recompute_route_group_order_counts,
+)
+from Delivery_app_BK.services.domain.state_transitions.plan_state_engine import (
+    apply_plan_state,
+    maybe_auto_complete_plan,
+    maybe_sync_plan_state_from_groups,
+)
+from Delivery_app_BK.services.domain.state_transitions.route_group_state_engine import (
+    maybe_sync_route_group_state,
+)
 from Delivery_app_BK.services.domain.state_transitions.order_move_rules import compute_destination_move_result, OrderMoveResult
 from Delivery_app_BK.services.domain.order.order_case_states import OrderCaseState
 from Delivery_app_BK.services.utils import model_requires_team, require_team_id
@@ -105,6 +115,11 @@ def apply_orders_route_plan_change(
         route_groups_for_new_plan=route_groups_for_new_plan,
         destination_route_group_id=destination_route_group_id,
         new_plan_id=new_plan.id,
+    )
+    affected_route_groups = _resolve_affected_route_groups(
+        ctx=ctx,
+        old_route_group_id_by_order_id=old_route_group_id_by_order_id,
+        destination_route_group_id_by_order_id=destination_route_group_id_by_order_id,
     )
 
     relevant_plan_ids = set(old_plan_ids)
@@ -204,6 +219,7 @@ def apply_orders_route_plan_change(
         changed_orders=changed_orders,
         new_plan=new_plan,
         plans_to_recompute=_plans_to_recompute,
+        affected_route_groups=affected_route_groups,
         case_message=case_message,
     )
     db.session.flush()
@@ -449,6 +465,7 @@ def _apply_move_state_heritage(
     changed_orders: list,
     new_plan,
     plans_to_recompute: dict,
+    affected_route_groups: list[RouteGroup],
     case_message: str | None,
 ) -> None:
     from datetime import datetime, timezone
@@ -466,8 +483,17 @@ def _apply_move_state_heritage(
     for plan in plans_to_recompute.values():
         recompute_plan_order_counts(plan)
 
+    for route_group in affected_route_groups:
+        recompute_route_group_order_counts(route_group)
+
     for plan in plans_to_recompute.values():
         maybe_auto_complete_plan(plan)
+
+    for route_group in affected_route_groups:
+        maybe_sync_route_group_state(route_group)
+
+    for plan in plans_to_recompute.values():
+        maybe_sync_plan_state_from_groups(plan)
 
 
 def _create_move_case(
@@ -682,6 +708,10 @@ def apply_orders_route_plan_unassign(
         recompute_route_group_totals(plan)
         recompute_plan_order_counts(plan)
         maybe_auto_complete_plan(plan)
+        for route_group in (plan.route_groups or []):
+            recompute_route_group_order_counts(route_group)
+            maybe_sync_route_group_state(route_group)
+        maybe_sync_plan_state_from_groups(plan)
     if old_plans_by_id:
         db.session.flush()
 
@@ -805,6 +835,10 @@ def _resolve_destination_route_group_ids(
         for group in route_groups_for_new_plan
         if group.zone_id is not None
     }
+    no_zone_group_id = next(
+        (group.id for group in route_groups_for_new_plan if group.zone_id is None),
+        None,
+    )
 
     destination_by_order_id: dict[int, int] = {}
     for order in changed_orders:
@@ -821,12 +855,36 @@ def _resolve_destination_route_group_ids(
 
         mapped_route_group_id = route_group_id_by_zone_id.get(zone_id)
         if mapped_route_group_id is None:
-            raise ValidationFailed(
-                f"Unable to infer destination route_group_id for order {order.id}."
-            )
+            if no_zone_group_id is not None:
+                mapped_route_group_id = no_zone_group_id
+            else:
+                raise ValidationFailed(
+                    f"Unable to infer destination route_group_id for order {order.id}."
+                )
         destination_by_order_id[order.id] = mapped_route_group_id
 
     return destination_by_order_id
+
+
+def _resolve_affected_route_groups(
+    *,
+    ctx: ServiceContext,
+    old_route_group_id_by_order_id: dict[int, int | None],
+    destination_route_group_id_by_order_id: dict[int, int],
+) -> list[RouteGroup]:
+    affected_ids = {
+        route_group_id
+        for route_group_id in old_route_group_id_by_order_id.values()
+        if route_group_id is not None
+    }
+    affected_ids.update(destination_route_group_id_by_order_id.values())
+    if not affected_ids:
+        return []
+
+    query = db.session.query(RouteGroup).filter(RouteGroup.id.in_(affected_ids))
+    if ctx.team_id:
+        query = query.filter(RouteGroup.team_id == ctx.team_id)
+    return query.all()
 
 
 def _resolve_plan_instance(ctx: ServiceContext, plan_id: int) -> RoutePlan:

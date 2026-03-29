@@ -22,6 +22,7 @@ from Delivery_app_BK.services.domain.route_operations.local_delivery import (
 )
 from Delivery_app_BK.services.domain.route_operations.plan.plan_states import PlanStateId
 from Delivery_app_BK.services.domain.route_operations.plan.route_group_zone_snapshot import (
+    NO_ZONE_SNAPSHOT_NAME,
     build_no_zone_route_group_snapshot,
     build_route_group_zone_snapshot,
 )
@@ -131,6 +132,7 @@ def create_plan(ctx: ServiceContext):
             no_zone_group, no_zone_solution = _build_no_zone_route_group_instance(
                 ctx=ctx,
                 route_plan_instance=route_plan_instance,
+                route_group_defaults=item.route_group_defaults,
             )
             entry["route_groups"].append(no_zone_group)
             entry["extra_instances"].append(no_zone_solution)
@@ -263,7 +265,9 @@ def _build_zone_route_group_instances(
             {
                 "client_id": defaults.get("client_id") or generate_client_id("route_group"),
                 "route_plan_id": route_plan_instance.id,
+                "state_id": PlanStateId.OPEN,
                 "zone_id": zone.id,
+                "is_system_default_bucket": False,
                 "zone_geometry_snapshot": build_route_group_zone_snapshot(
                     zone_name=zone.name,
                     geometry=zone.geometry,
@@ -327,7 +331,6 @@ def _build_route_solution_instance(
         label="variant 1",
         is_selected=True,
         is_optimized=IS_OPTIMIZED_NOT_OPTIMIZED,
-        stop_count=0,
         team_id=ctx.team_id,
         start_location=normalized_defaults["start_location"],
         end_location=normalized_defaults["end_location"],
@@ -353,6 +356,7 @@ def _extract_route_solution_defaults(route_group_defaults: dict) -> dict:
 def _build_no_zone_route_group_instance(
     ctx: ServiceContext,
     route_plan_instance: RoutePlan,
+    route_group_defaults: dict,
 ) -> tuple[RouteGroup, RouteSolution]:
     """Create the default No-Zone RouteGroup and its selected RouteSolution.
 
@@ -364,10 +368,12 @@ def _build_no_zone_route_group_instance(
         ctx,
         RouteGroup,
         {
-            "client_id": generate_client_id("route_group"),
+            "client_id": _extract_route_group_client_id(route_group_defaults),
             "route_plan_id": route_plan_instance.id,
+            "state_id": PlanStateId.OPEN,
             "zone_id": None,
-            "zone_geometry_snapshot": build_no_zone_route_group_snapshot(),
+            "is_system_default_bucket": True,
+            "zone_geometry_snapshot": _build_no_zone_snapshot(route_group_defaults),
             "template_snapshot": {},
             "total_orders": 0,
         },
@@ -377,6 +383,32 @@ def _build_no_zone_route_group_instance(
         route_plan_instance=route_plan_instance,
         route_group=route_group,
         template_config={},
-        route_group_defaults={},
+        route_group_defaults=route_group_defaults if isinstance(route_group_defaults, dict) else {},
     )
     return route_group, route_solution
+
+
+def _extract_route_group_client_id(route_group_defaults: dict) -> str:
+    if not isinstance(route_group_defaults, dict):
+        return generate_client_id("route_group")
+    candidate = route_group_defaults.get("client_id")
+    if isinstance(candidate, str) and candidate.strip():
+        return candidate.strip()
+    return generate_client_id("route_group")
+
+
+def _build_no_zone_snapshot(route_group_defaults: dict) -> dict:
+    default_snapshot = build_no_zone_route_group_snapshot()
+    if not isinstance(route_group_defaults, dict):
+        return default_snapshot
+
+    custom_name = route_group_defaults.get("name")
+    if isinstance(custom_name, str) and custom_name.strip():
+        return {
+            "name": custom_name.strip(),
+            "geometry": None,
+        }
+    return {
+        "name": NO_ZONE_SNAPSHOT_NAME,
+        "geometry": default_snapshot.get("geometry"),
+    }

@@ -14,8 +14,19 @@ class _DummyCtx:
         self.team_id = team_id
 
 
-def _group(group_id: int, zone_id: int | None) -> SimpleNamespace:
-    return SimpleNamespace(id=group_id, zone_id=zone_id, team_id=1, route_plan_id=10)
+def _group(
+    group_id: int,
+    zone_id: int | None,
+    *,
+    is_system_default_bucket: bool = False,
+) -> SimpleNamespace:
+    return SimpleNamespace(
+        id=group_id,
+        zone_id=zone_id,
+        team_id=1,
+        route_plan_id=10,
+        is_system_default_bucket=is_system_default_bucket,
+    )
 
 
 def _order(order_id: int | None) -> SimpleNamespace:
@@ -195,6 +206,24 @@ def test_order_without_id_falls_back_to_no_zone_group(monkeypatch):
     )
 
     assert result is no_zone
+
+
+def test_fallback_prefers_system_default_no_zone_group(monkeypatch):
+    ctx = _DummyCtx()
+    manual_no_zone = _group(1, zone_id=None, is_system_default_bucket=False)
+    default_no_zone = _group(2, zone_id=None, is_system_default_bucket=True)
+    zone3 = _group(3, zone_id=3)
+
+    monkeypatch.setattr(
+        module.db.session, "query",
+        _make_query([manual_no_zone, default_no_zone, zone3], zone_assignment=None),
+    )
+
+    result = module._get_route_group(
+        ctx, route_plan_id=10, route_group_id=None, order_instance=_order(501)
+    )
+
+    assert result is default_no_zone
 
 
 # ── Failure paths ─────────────────────────────────────────────────────────────

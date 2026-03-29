@@ -22,18 +22,13 @@ from .loader import load_route_group_settings_entities
 from ..update_plan import apply_route_plan_patch
 from .response_builder import build_route_group_settings_response
 from .event_helpers import (
-    create_route_group_event,
     create_route_solution_event,
     create_route_solution_stop_event,
 )
 from Delivery_app_BK.sockets.contracts.realtime import (
     BUSINESS_EVENT_ROUTE_PLAN_UPDATED,
-    BUSINESS_EVENT_ROUTE_GROUP_UPDATED,
     BUSINESS_EVENT_ROUTE_SOLUTION_UPDATED,
     BUSINESS_EVENT_ROUTE_SOLUTION_STOP_UPDATED,
-)
-from Delivery_app_BK.sockets.emitters.route_group_events import (
-    emit_route_group_updated,
 )
 from Delivery_app_BK.sockets.emitters.route_solution_events import (
     emit_route_solution_updated,
@@ -55,7 +50,6 @@ logger = logging.getLogger(__name__)
 
 def update_local_delivery_settings(ctx: ServiceContext) -> dict:
     incoming_data = ctx.incoming_data or {}
-    _warn_if_driver_conflict(ctx, incoming_data)
     request: RouteGroupSettingsRequest = parse_update_local_delivery_settings_request(
         incoming_data
     )
@@ -64,7 +58,6 @@ def update_local_delivery_settings(ctx: ServiceContext) -> dict:
 
 def update_route_group_settings(ctx: ServiceContext) -> dict:
     incoming_data = ctx.incoming_data or {}
-    _warn_if_driver_conflict(ctx, incoming_data)
     request: RouteGroupSettingsRequest = parse_update_route_group_settings_request(
         incoming_data
     )
@@ -82,9 +75,8 @@ def apply_route_group_settings_request(
         request=request,
     )
 
-    # Capture old driver IDs before update
+    # Capture old driver ID before update
     old_route_solution_driver_id = getattr(route_solution, "driver_id", None)
-    old_route_group_driver_id = getattr(route_group, "driver_id", None)
 
     previous_start, previous_end, pending_plan_events = apply_route_plan_patch(
         route_plan=route_plan,
@@ -107,8 +99,6 @@ def apply_route_group_settings_request(
         route_solution.actual_start_time = None
         route_solution.actual_end_time = None
         route_solution.actual_end_time_source = None
-        route_group.actual_start_time = None
-        route_group.actual_end_time = None
 
     if not hasattr(route_solution, "route_warnings"):
         route_solution.route_warnings = None
@@ -198,20 +188,6 @@ def apply_route_group_settings_request(
         )
         emit_route_solution_updated(route_solution, payload={"driver_id": getattr(route_solution, "driver_id", None)})
     
-    # Emit event if route_group driver changed
-    if getattr(route_group, "driver_id", None) != old_route_group_driver_id:
-        create_route_group_event(
-            ctx=ctx,
-            team_id=team_id,
-            route_group_id=route_group.id,
-            event_name=BUSINESS_EVENT_ROUTE_GROUP_UPDATED,
-            payload={
-                "driver_id": getattr(route_group, "driver_id", None),
-                "old_driver_id": old_route_group_driver_id,
-            },
-        )
-        emit_route_group_updated(route_group, payload={"driver_id": getattr(route_group, "driver_id", None)})
-    
     # Emit event if route_solution was modified (other than driver assignment)
     if route_solution_changed and getattr(route_solution, "driver_id", None) == old_route_solution_driver_id:
         create_route_solution_event(
@@ -286,19 +262,6 @@ def _build_route_solution_updates(route_patch: RouteSolutionPatchRequest) -> dic
         updates["stops_service_time"] = route_patch.stops_service_time
 
     return updates
-
-
-def _warn_if_driver_conflict(ctx: ServiceContext, raw: dict) -> None:
-    if not isinstance(raw, dict):
-        return
-    local_payload = raw.get("route_group") if isinstance(raw.get("route_group"), dict) else {}
-    route_payload = raw.get("route_solution") if isinstance(raw.get("route_solution"), dict) else {}
-    if "driver_id" not in local_payload or "driver_id" not in route_payload:
-        return
-    if local_payload.get("driver_id") != route_payload.get("driver_id"):
-        ctx.set_warning(
-            "route_solution.driver_id overrides route_group.driver_id in this update."
-        )
 
 
 def _has_route_solution_patch(route_patch: RouteSolutionPatchRequest) -> bool:

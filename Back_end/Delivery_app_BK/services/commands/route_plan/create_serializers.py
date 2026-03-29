@@ -39,15 +39,13 @@ def serialize_created_route_group(instance: RouteGroup) -> dict:
     return {
         "id": instance.id,
         "client_id": instance.client_id,
-        "actual_start_time": _to_iso(instance.actual_start_time),
-        "actual_end_time": _to_iso(instance.actual_end_time),
-        "driver_id": instance.driver_id,
         "route_plan_id": instance.route_plan_id,
         "state_id": instance.state_id,
         "total_weight_g": instance.total_weight_g,
         "total_volume_cm3": instance.total_volume_cm3,
         "total_item_count": instance.total_item_count,
         "total_orders": instance.total_orders,
+        "order_state_counts": instance.order_state_counts,
     }
 
 

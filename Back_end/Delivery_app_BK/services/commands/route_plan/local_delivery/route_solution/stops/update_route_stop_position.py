@@ -118,7 +118,6 @@ def update_route_stop_position(
 
     route_stop.stop_order = position
     route_stop.eta_status = "estimated"
-    route_solution.stop_count = len(stops)
     affected_start_position = min(current_position, position)
 
 
@@ -146,9 +145,25 @@ def update_route_stop_position(
    
   
     db.session.add(route_solution)
+    
+    # Store final positions before updating to temporary values
+    # This avoids unique constraint violations when multiple stops change positions
+    final_positions = {stop.id: stop.stop_order for stop in touched_stops}
+    
+    # Phase 1: Assign temporary negative positions to clear constraint violations
+    for idx, stop in enumerate(touched_stops):
+        stop.stop_order = -(idx + 1)
+    
     db.session.add_all(_dedupe_and_sort_stops(touched_stops + refreshed_stops))
     if original_route_solution is not None:
         db.session.add(original_route_solution)
+    db.session.flush()
+    
+    # Phase 2: Assign final positions now that temporary positions are in place
+    for stop in touched_stops:
+        stop.stop_order = final_positions[stop.id]
+    
+    db.session.add_all(_dedupe_and_sort_stops(touched_stops))
     db.session.commit()
 
     # Emit real-time events for all affected stops

@@ -35,7 +35,13 @@ class GoogleDirectionsRequestMapper:
 
         
         if request.departure_time:
-            payload["departure_time"] = _format_time(request.departure_time)
+            now = datetime.now(timezone.utc)
+            departure = request.departure_time
+            if departure.tzinfo is None:
+                departure = departure.replace(tzinfo=timezone.utc)
+            if departure <= now:
+                departure = now + timedelta(minutes=1)
+            payload["departure_time"] = _format_time(departure)
         field_mask = (
             "routes.duration,"
             "routes.distance_meters,"

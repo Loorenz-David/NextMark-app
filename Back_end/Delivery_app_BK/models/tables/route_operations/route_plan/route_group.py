@@ -3,13 +3,14 @@ from datetime import datetime, timezone
 
 from sqlalchemy import JSON, Column, Float, ForeignKey, Integer, String, UniqueConstraint
 from sqlalchemy.dialects.postgresql import JSONB
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import relationship, validates
 
 # Local application import
 
 from Delivery_app_BK.models import db
 from Delivery_app_BK.models.mixins.team_mixings.team_id import TeamScopedMixin
 from Delivery_app_BK.models.utils import UTCDateTime
+from Delivery_app_BK.services.domain.order.order_states import OrderState as OrderStateEnum
 
 
 
@@ -22,18 +23,11 @@ class RouteGroup(db.Model, TeamScopedMixin):
     client_id = Column(String, index=True)
 
     
-    # record of the actual start and end time after completion.
-    actual_start_time = Column(UTCDateTime)
-    actual_end_time = Column(UTCDateTime)
     updated_at = Column(
         UTCDateTime,
         default=lambda: datetime.now(timezone.utc),
         onupdate=lambda: datetime.now(timezone.utc),
     )
- 
-    
-
-    driver_id = Column(Integer, ForeignKey("user.id"))
 
     route_plan_id = Column(
         Integer,
@@ -42,6 +36,13 @@ class RouteGroup(db.Model, TeamScopedMixin):
         nullable=False,
     )
     zone_id = Column(Integer, ForeignKey("zone.id", ondelete="SET NULL"), nullable=True, index=True)
+    is_system_default_bucket = Column(
+        db.Boolean,
+        nullable=False,
+        default=False,
+        server_default=db.text("false"),
+        index=True,
+    )
     zone_geometry_snapshot = Column(JSONB().with_variant(JSON, "sqlite"), nullable=True)
     template_snapshot = Column(JSONB().with_variant(JSON, "sqlite"), nullable=True)
 
@@ -51,6 +52,7 @@ class RouteGroup(db.Model, TeamScopedMixin):
     total_volume_cm3 = Column(Float, nullable=True)
     total_item_count = Column(Integer, nullable=True)
     total_orders = Column(Integer, nullable=True)
+    order_state_counts = Column(JSONB().with_variant(JSON, "sqlite"), nullable=True)
 
     
 
@@ -58,11 +60,6 @@ class RouteGroup(db.Model, TeamScopedMixin):
         "RouteSolution",
         back_populates="route_group",
         cascade="all, delete-orphan",
-    )
-
-    driver = relationship(
-        "User",
-        back_populates="route_groups",
     )
 
     route_plan = relationship(
@@ -98,3 +95,17 @@ class RouteGroup(db.Model, TeamScopedMixin):
             name="uq_route_group_team_plan_zone",
         ),
     )
+
+    @validates("order_state_counts")
+    def validate_order_state_counts(self, key, value):
+        if value is None:
+            return value
+        if not isinstance(value, dict):
+            raise ValueError("order_state_counts must be a dict.")
+        valid_states = {state.value for state in OrderStateEnum}
+        invalid = [state_name for state_name in value if state_name not in valid_states]
+        if invalid:
+            raise ValueError(
+                f"order_state_counts keys must be valid OrderState values. Invalid: {invalid}"
+            )
+        return value

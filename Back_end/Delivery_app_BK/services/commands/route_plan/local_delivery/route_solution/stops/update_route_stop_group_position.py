@@ -135,11 +135,12 @@ def update_route_stop_group_position(
 
     ordered_stops = [stop_by_id[stop_id] for stop_id in next_ordered_ids]
     touched_stops: list[RouteSolutionStop] = []
+    next_positions: dict[int, int] = {}  # Store final positions without updating yet
     for index, stop in enumerate(ordered_stops):
         next_stop_order = index + 1
         previous_stop_order = stop.stop_order
         if previous_stop_order != next_stop_order:
-            stop.stop_order = next_stop_order
+            next_positions[stop.id] = next_stop_order
             stop.eta_status = 'estimated'
             touched_stops.append(stop)
             continue
@@ -148,7 +149,6 @@ def update_route_stop_group_position(
             stop.eta_status = 'estimated'
             touched_stops.append(stop)
 
-    route_solution.stop_count = len(ordered_stops)
     if route_solution.is_optimized != IS_OPTIMIZED_NOT_OPTIMIZED:
         route_solution.is_optimized = IS_OPTIMIZED_PARTIAL
 
@@ -174,6 +174,23 @@ def update_route_stop_group_position(
     db.session.add(route_solution)
     if original_route_solution is not None:
         db.session.add(original_route_solution)
+    
+    # Phase 1: Assign temporary negative positions to clear constraint violations
+    # Only need to do this if we have position changes
+    if next_positions:
+        for idx, stop in enumerate(touched_stops):
+            if stop.id in next_positions:
+                stop.stop_order = -(idx + 1)
+        
+        if changed_stops:
+            db.session.add_all(changed_stops)
+        db.session.flush()
+        
+        # Phase 2: Assign final positions now that temporary positions are in place
+        for stop in touched_stops:
+            if stop.id in next_positions:
+                stop.stop_order = next_positions[stop.id]
+    
     if changed_stops:
         db.session.add_all(changed_stops)
     db.session.commit()

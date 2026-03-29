@@ -42,7 +42,6 @@ def clone_route_solution(
         stops_service_time=route_solution.stops_service_time,
         is_selected=True,
         is_optimized=IS_OPTIMIZED_PARTIAL,
-        stop_count=route_solution.stop_count,
         driver_id=route_solution.driver_id,
         route_group_id=route_solution.route_group_id,
         team_id=route_solution.team_id,
@@ -76,7 +75,6 @@ def clone_route_solution(
         new_stops.append(cloned_stop)
 
     new_route_solution.stops = new_stops
-    new_route_solution.stop_count = len(new_stops)
     route_group.route_solutions.append(new_route_solution)
 
     return new_route_solution, stop_map, original

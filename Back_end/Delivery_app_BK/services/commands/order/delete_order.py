@@ -5,10 +5,19 @@ from sqlalchemy.orm import joinedload
 from sqlalchemy.orm.exc import NoResultFound
 
 from Delivery_app_BK.errors import NotFound
-from Delivery_app_BK.models import Order, RoutePlan, db
+from Delivery_app_BK.models import Order, RouteGroup, RoutePlan, db
 from Delivery_app_BK.services.utils import model_requires_team, require_team_id
 from Delivery_app_BK.services.domain.route_operations.plan.recompute_plan_totals import recompute_plan_totals
 from Delivery_app_BK.services.domain.state_transitions.order_count_engine import recompute_plan_order_counts
+from Delivery_app_BK.services.domain.state_transitions.order_count_engine import (
+    recompute_route_group_order_counts,
+)
+from Delivery_app_BK.services.domain.state_transitions.plan_state_engine import (
+    maybe_sync_plan_state_from_groups,
+)
+from Delivery_app_BK.services.domain.state_transitions.route_group_state_engine import (
+    maybe_sync_route_group_state,
+)
 
 from ...context import ServiceContext
 from ..utils import extract_ids
@@ -50,10 +59,14 @@ def delete_order(ctx: ServiceContext):
     def _apply() -> None:
         # Capture affected plans before deletion so we can recompute totals after flush.
         affected_plans_by_id: dict[int, RoutePlan] = {}
+        affected_route_group_ids: set[int] = set()
         for order in ordered_orders:
             plan = getattr(order, "route_plan", None)
             if plan is not None and plan.id is not None:
                 affected_plans_by_id[plan.id] = plan
+            route_group_id = getattr(order, "route_group_id", None)
+            if route_group_id is not None:
+                affected_route_group_ids.add(route_group_id)
 
         for order in ordered_orders:
             db.session.delete(order)
@@ -63,6 +76,22 @@ def delete_order(ctx: ServiceContext):
         for plan in affected_plans_by_id.values():
             recompute_plan_totals(plan)
             recompute_plan_order_counts(plan)
+
+        if affected_route_group_ids:
+            route_groups = (
+                db.session.query(RouteGroup)
+                .filter(RouteGroup.id.in_(affected_route_group_ids))
+                .all()
+            )
+        else:
+            route_groups = []
+
+        for route_group in route_groups:
+            recompute_route_group_order_counts(route_group)
+            maybe_sync_route_group_state(route_group)
+
+        for plan in affected_plans_by_id.values():
+            maybe_sync_plan_state_from_groups(plan)
 
         for action in extension_result.post_flush_actions:
             action()
@@ -103,7 +132,7 @@ def _resolve_orders_by_targets(
     if int_ids:
         query = (
             db.session.query(Order)
-            .options(joinedload(Order.route_plan))
+            .options(joinedload(Order.route_plan), joinedload(Order.route_group))
             .filter(Order.id.in_(int_ids))
         )
         if team_id is not None:
@@ -113,7 +142,7 @@ def _resolve_orders_by_targets(
     if client_ids:
         query = (
             db.session.query(Order)
-            .options(joinedload(Order.route_plan))
+            .options(joinedload(Order.route_plan), joinedload(Order.route_group))
             .filter(Order.client_id.in_(client_ids))
         )
         if team_id is not None:

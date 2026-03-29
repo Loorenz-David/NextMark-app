@@ -34,9 +34,6 @@ def emit_route_group_updated(route_group: RouteGroup, *, payload: dict | None = 
             "label": route_plan.label,
             "plan_type": route_plan.plan_type,
             "route_freshness_updated_at": get_route_freshness_updated_at(route_plan),
-            "driver_id": route_group.driver_id,
-            "actual_start_time": route_group.actual_start_time.isoformat() if route_group.actual_start_time else None,
-            "actual_end_time": route_group.actual_end_time.isoformat() if route_group.actual_end_time else None,
             **(payload or {}),
         },
     )
