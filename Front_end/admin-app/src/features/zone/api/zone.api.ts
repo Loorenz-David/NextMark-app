@@ -10,6 +10,11 @@ import type {
 
 type CreateZoneVersionPayload = {
   city_key: string;
+  name: string;
+};
+
+type EnsureFirstZoneVersionPayload = {
+  city_key: string;
 };
 
 type CreateZonePayload = {
@@ -45,8 +50,7 @@ type DeleteZoneResult = {
 
 type UpsertZoneTemplatePayload = {
   name: string;
-  config_json: ZoneTemplateConfig;
-};
+} & ZoneTemplateConfig;
 
 type ZoneGeometryResponse =
   | GeoJSONPolygon
@@ -55,6 +59,20 @@ type ZoneGeometryResponse =
 
 type ZoneDto = ZoneDefinition & {
   zone_version_id?: number;
+};
+
+type SearchZonesQuery = {
+  q?: string;
+  s?: string;
+  zone_type?: "bootstrap" | "system" | "user";
+  is_active?: boolean;
+  city_key?: string;
+  limit?: number;
+  cursor?: string;
+};
+
+type FetchZoneVersionsQuery = {
+  city_key?: string;
 };
 
 const normalizeZoneDto = (zone: ZoneDto | null | undefined): ZoneDefinition | null => {
@@ -72,6 +90,32 @@ const normalizeZoneDto = (zone: ZoneDto | null | undefined): ZoneDefinition | nu
           : undefined,
   };
 };
+
+const normalizeZoneVersion = (version: ZoneVersion): ZoneVersion => ({
+  ...version,
+  version_number:
+    typeof version.version_number === "number"
+      ? version.version_number
+      : typeof version.version === "number"
+        ? version.version
+        : undefined,
+});
+
+const normalizeZoneVersionListResult = (
+  result: ApiResult<ZoneVersion[]>,
+): ApiResult<ZoneVersion[]> => ({
+  ...result,
+  data: Array.isArray(result.data)
+    ? result.data.map(normalizeZoneVersion)
+    : [],
+});
+
+const normalizeZoneVersionResult = (
+  result: ApiResult<ZoneVersion>,
+): ApiResult<ZoneVersion> => ({
+  ...result,
+  data: result.data ? normalizeZoneVersion(result.data) : result.data,
+});
 
 const normalizeZoneListResult = (
   result: ApiResult<ZoneDto[]>,
@@ -92,35 +136,46 @@ const normalizeZoneResult = (
 });
 
 export const zoneApi = {
-  fetchZoneVersions: (): Promise<ApiResult<ZoneVersion[]>> =>
-    apiClient.request<ZoneVersion[]>({
-      path: "/zones/",
-      method: "GET",
-    }),
+  fetchZoneVersions: (
+    query?: FetchZoneVersionsQuery,
+  ): Promise<ApiResult<ZoneVersion[]>> =>
+    apiClient
+      .request<ZoneVersion[]>({
+        path: "/zones/",
+        method: "GET",
+        query,
+      })
+      .then(normalizeZoneVersionListResult),
 
   createZoneVersion: (
     payload: CreateZoneVersionPayload,
   ): Promise<ApiResult<ZoneVersion>> =>
-    apiClient.request<ZoneVersion>({
-      path: "/zones/",
-      method: "PUT",
-      data: payload,
-    }),
+    apiClient
+      .request<ZoneVersion>({
+        path: "/zones/",
+        method: "PUT",
+        data: payload,
+      })
+      .then(normalizeZoneVersionResult),
 
   ensureFirstZoneVersion: (
-    payload: CreateZoneVersionPayload,
+    payload: EnsureFirstZoneVersionPayload,
   ): Promise<ApiResult<ZoneVersion>> =>
-    apiClient.request<ZoneVersion>({
-      path: "/zones/ensure-first-version",
-      method: "POST",
-      data: payload,
-    }),
+    apiClient
+      .request<ZoneVersion>({
+        path: "/zones/ensure-first-version",
+        method: "POST",
+        data: payload,
+      })
+      .then(normalizeZoneVersionResult),
 
   activateZoneVersion: (versionId: number): Promise<ApiResult<ZoneVersion>> =>
-    apiClient.request<ZoneVersion>({
-      path: `/zones/${versionId}/activate`,
-      method: "PATCH",
-    }),
+    apiClient
+      .request<ZoneVersion>({
+        path: `/zones/${versionId}/activate`,
+        method: "PATCH",
+      })
+      .then(normalizeZoneVersionResult),
 
   fetchZonesForVersion: (
     versionId: number,
@@ -129,6 +184,20 @@ export const zoneApi = {
       .request<ZoneDto[]>({
         path: `/zones/${versionId}/zones`,
         method: "GET",
+      })
+      .then(normalizeZoneListResult),
+
+  searchZones: (
+    versionId: number,
+    query: SearchZonesQuery,
+    signal?: AbortSignal,
+  ): Promise<ApiResult<ZoneDefinition[]>> =>
+    apiClient
+      .request<ZoneDto[]>({
+        path: `/zones/${versionId}/zones`,
+        method: "GET",
+        query,
+        signal,
       })
       .then(normalizeZoneListResult),
 
@@ -209,8 +278,10 @@ export const zoneApi = {
     }),
 
   // Backward-compat aliases used by current plan form integration.
-  listZoneVersions: (): Promise<ApiResult<ZoneVersion[]>> =>
-    zoneApi.fetchZoneVersions(),
+  listZoneVersions: (
+    query?: FetchZoneVersionsQuery,
+  ): Promise<ApiResult<ZoneVersion[]>> =>
+    zoneApi.fetchZoneVersions(query),
 
   listZonesForVersion: (
     versionId: number,

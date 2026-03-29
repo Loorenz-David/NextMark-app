@@ -8,7 +8,7 @@ import { ItemPropertyForm } from '@/features/itemConfigurations/popups/ItemPrope
 import { ItemPositionForm } from '@/features/itemConfigurations/popups/ItemPositionForm/ItemPositionForm'
 import { ItemStateForm } from '@/features/itemConfigurations/popups/ItemStateForm/ItemStateForm'
 import { VehicleForm } from '@/features/infrastructure/vehicle/popups/VehicleForm/VehicleForm'
-import { WarehouseForm } from '@/features/infrastructure/warehouse/popups/WarehouseForm/WarehouseForm'
+import { FacilityForm } from '@/features/infrastructure/facility/popups/FacilityForm/FacilityForm'
 
 export type SectionKey = keyof typeof popupRegistry
 
@@ -21,7 +21,7 @@ export type SettingsPopupsPayloads = {
   [K in keyof typeof popupRegistry]: ExtractPayload<(typeof popupRegistry)[K]>
 }
 
-const PlaceholderPopup = (_: StackComponentProps<undefined>) => <div />
+const placeholderPopup = () => <div />
 
 export const popupRegistry = {
   'user.edit': UserEdit,
@@ -32,6 +32,6 @@ export const popupRegistry = {
   'item.position.form': ItemPositionForm,
   'item.state.form': ItemStateForm,
   'vehicle.form': VehicleForm,
-  'warehouse.form': WarehouseForm,
-  'settings.placeholder': PlaceholderPopup,
+  'facility.form': FacilityForm,
+  'settings.placeholder': placeholderPopup,
 }

@@ -1,5 +1,5 @@
 // PopupProvider.tsx
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { PopupContextProvider } from './PopupContext'
 import { useCloseGuard } from './useCloseGuard'
 import type { parentParams, PropsHeaderConfig } from './MainPopup.types'
@@ -20,11 +20,11 @@ export const MainPopupProvider = ({ children, onRequestClose, parentParams }: Pr
   const {isMobile} = useMobile()
   const closeGuards = useCloseGuard({ onRequestClose })
 
-  const handleKeyDown = (event: KeyboardEvent) => {
+  const handleKeyDown = useCallback((event: KeyboardEvent) => {
     if (event.key === 'Escape') {
       closeGuards.closePopup()
     }
-  }
+  }, [closeGuards])
   useEffect(() => {
     if(!isMobile){
       window.addEventListener('keydown', handleKeyDown)
@@ -33,17 +33,20 @@ export const MainPopupProvider = ({ children, onRequestClose, parentParams }: Pr
     return () => {
       window.removeEventListener('keydown', handleKeyDown)
     }
-  }, [closeGuards, isMobile])
+  }, [handleKeyDown, isMobile])
+
+  const contextValue = useMemo(
+    () => ({
+      headerConfig,
+      setPopupHeader,
+      parentParams,
+      ...closeGuards,
+    }),
+    [closeGuards, headerConfig, parentParams],
+  )
 
   return (
-    <PopupContextProvider
-      value={{
-        headerConfig,
-        setPopupHeader,
-        parentParams,
-        ...closeGuards
-      }}
-    >
+    <PopupContextProvider value={contextValue}>
       {children}
     </PopupContextProvider>
   )

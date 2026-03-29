@@ -1,5 +1,5 @@
-import { ZoneFormPopup } from "@/features/zone/forms/zoneForm/ZoneForm.popup";
+import { ZoneForm } from "@/features/zone/popups/ZoneForm/ZoneForm";
 
 export const zonePopupRegistry = {
-  "zone.form": ZoneFormPopup,
+  "zone.form": ZoneForm,
 } as const;

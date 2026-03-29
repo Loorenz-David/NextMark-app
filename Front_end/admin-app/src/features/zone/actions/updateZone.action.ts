@@ -11,7 +11,7 @@ export type UpdateZoneCommand = {
   versionId: number;
   zone: ZoneState & { id: number };
   name: string;
-  templateConfig: ZoneTemplateConfig | null;
+  templatePayload: ({ name: string } & ZoneTemplateConfig) | null;
 };
 
 export type UpdateZoneDeps = {
@@ -37,11 +37,11 @@ export async function updateZoneAction(
     max_lng: command.zone.bbox.east,
     geometry: command.zone.geometry_full ?? command.zone.geometry_simplified,
     is_active: command.zone.is_active,
-    template: command.templateConfig
+    template: command.templatePayload
       ? {
           ...(command.zone.template_full ?? {}),
           zone_id: command.zone.id,
-          config_json: command.templateConfig,
+          ...command.templatePayload,
         }
       : (command.zone.template_full ?? null),
   };
@@ -60,14 +60,11 @@ export async function updateZoneAction(
       }
     }
 
-    if (command.templateConfig) {
+    if (command.templatePayload) {
       const templateResponse = await zoneApi.upsertZoneTemplate(
         command.versionId,
         command.zone.id,
-        {
-          name: command.name,
-          config_json: command.templateConfig,
-        },
+        command.templatePayload,
       );
       if (templateResponse.data) {
         deps.upsertZone({ ...optimisticZone, template: templateResponse.data });

@@ -6,21 +6,13 @@ import { hasFormChanges } from '@shared-domain'
 import { buildClientId } from '@/lib/utils/clientId'
 
 import { useCreateVehicle, useUpdateVehicle } from '../../api/vehicleApi'
-import type { VehicleUpdatePayload } from '../../api/vehicleApi'
+import { buildVehicleCreateInput, buildVehicleUpdateFields } from '../../domain/vehicleForm.domain'
 import { useVehicleByClientId } from '../../hooks/useVehicleSelectors'
 import { useVehiclePopupController } from '../../hooks/useVehiclePopupController'
 import { upsertVehicle } from '../../store/vehicleStore'
-import type { VehicleInput } from '../../types/vehicle'
+import type { VehicleUpdatePayload } from '../../types/vehicle'
 
 import type { VehicleFormPayload, VehicleFormState } from './VehicleForm.types'
-
-const toNumberOrNull = (value: string | undefined) => {
-  if (!value) return null
-  const numeric = Number(value)
-  return Number.isNaN(numeric) ? null : numeric
-}
-
-const toOptionalString = (value: string | undefined) => (value?.trim() ? value.trim() : null)
 
 export const useVehicleFormSubmit = ({
   payload,
@@ -56,35 +48,43 @@ export const useVehicleFormSubmit = ({
       return
     }
 
-    const diff = getObjectDiff(initialForm, formState)
-    const basePayload: VehicleInput = {
-      client_id: existing?.client_id ?? buildClientId('vehicle'),
-      registration_number: diff.registration_number ?? formState.registration_number,
-      label: toOptionalString(diff.label ?? formState.label),
-      fuel_type: toOptionalString(diff.fuel_type ?? formState.fuel_type) as VehicleInput['fuel_type'],
-      travel_mode: toOptionalString(diff.travel_mode ?? formState.travel_mode) as VehicleInput['travel_mode'],
-      max_volume_load_cm3: toNumberOrNull(diff.max_volume_load_cm3 ?? formState.max_volume_load_cm3),
-      max_weight_load_g: toNumberOrNull(diff.max_weight_load_g ?? formState.max_weight_load_g),
-      max_speed_kmh: toNumberOrNull(diff.max_speed_kmh ?? formState.max_speed_kmh),
-      cost_per_km: toNumberOrNull(diff.cost_per_km ?? formState.cost_per_km),
-      cost_per_hour: toNumberOrNull(diff.cost_per_hour ?? formState.cost_per_hour),
-      travel_distance_limit_km: toNumberOrNull(diff.travel_distance_limit_km ?? formState.travel_distance_limit_km),
-      travel_duration_limit_minutes: toNumberOrNull(diff.travel_duration_limit_minutes ?? formState.travel_duration_limit_minutes),
-      is_system: diff.is_system ?? formState.is_system,
-    }
-
     try {
       if (payload.mode === 'create') {
-        await createVehicle(basePayload)
-        upsertVehicle({ ...basePayload })
-      } else if (existing?.id) {
-        const updatePayload: VehicleUpdatePayload = {
-          target_id: existing.id,
-          fields: basePayload,
+        const clientId = existing?.client_id ?? buildClientId('vehicle')
+        const createResult = buildVehicleCreateInput(clientId, formState)
+        if (!createResult.ok) {
+          showMessage({ status: 400, message: createResult.error })
+          return
         }
+
+        const response = await createVehicle(createResult.value)
+        const persistedId = typeof response.data?.[clientId] === 'number' ? response.data[clientId] : undefined
+        upsertVehicle({ ...createResult.value, ...(persistedId ? { id: persistedId as number } : {}) })
+      } else {
+        const targetId = existing?.id ?? existing?.client_id
+        if (!targetId) {
+          showMessage({ status: 400, message: 'Vehicle target is missing.' })
+          return
+        }
+
+        const diff = getObjectDiff(initialForm, formState)
+        const updateResult = buildVehicleUpdateFields(diff)
+        if (!updateResult.ok) {
+          showMessage({ status: 400, message: updateResult.error })
+          return
+        }
+
+        const updatePayload: VehicleUpdatePayload = {
+          target_id: targetId,
+          fields: updateResult.value,
+        }
+
         await updateVehicle(updatePayload)
-        upsertVehicle({ ...existing, ...basePayload })
+        if (existing) {
+          upsertVehicle({ ...existing, ...updatePayload.fields })
+        }
       }
+
       closeVehicleForm()
     } catch (error) {
       console.error('Failed to save vehicle', error)

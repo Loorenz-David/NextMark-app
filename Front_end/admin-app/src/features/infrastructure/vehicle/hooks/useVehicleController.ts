@@ -1,22 +1,22 @@
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 
-import { filterVehicles } from '../domain/useVehicleRules'
-import { useVehicleFlow } from './useVehicleFlow'
-import { useVehicles } from './useVehicleSelectors'
 import { useVehicleActions } from './useVehicleActions'
+import { useVehicleSelectorQuery } from './useVehicleSelectorQuery'
 
 export const useVehicleController = () => {
-  useVehicleFlow()
-  const items = useVehicles()
-  const actions = useVehicleActions()
   const [query, setQuery] = useState('')
-
-  const filtered = useMemo(() => filterVehicles(items, query), [items, query])
+  const actions = useVehicleActions()
+  const { items, isLoading } = useVehicleSelectorQuery({
+    query,
+    limit: 25,
+    initialLimit: 25,
+  })
 
   return {
-    items: filtered,
+    items,
     query,
     setQuery,
+    isLoading,
     openCreate: () => actions.openVehicleForm({ mode: 'create' }),
     openEdit: (clientId: string) => actions.openVehicleForm({ mode: 'edit', clientId }),
   }

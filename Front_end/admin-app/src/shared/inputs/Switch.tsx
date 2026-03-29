@@ -1,13 +1,13 @@
-import { cn } from '@/lib/utils/cn'
+import { cn } from "@/lib/utils/cn";
 
 export type SwitchProps = {
-  value: boolean
-  onChange: (value: boolean) => void
-  disabled?: boolean
-  sizeClassName?: string
-  className?: string
-  ariaLabel?: string
-}
+  value: boolean;
+  onChange: (value: boolean) => void;
+  disabled?: boolean;
+  sizeClassName?: string;
+  className?: string;
+  ariaLabel?: string;
+};
 
 export const Switch = ({
   value,
@@ -26,23 +26,25 @@ export const Switch = ({
       disabled={disabled}
       onClick={() => {
         if (disabled) {
-          return
+          return;
         }
-        onChange(!value)
+        onChange(!value);
       }}
       className={cn(
-        'relative inline-flex items-center rounded-full border border-[var(--color-muted)]/50 px-1 transition-colors',
+        "relative inline-flex items-center rounded-full border border-[var(--color-muted)]/50 px-1 transition-colors",
         sizeClassName,
-        value ? 'justify-end bg-[var(--color-primary)]' : 'justify-start bg-[var(--color-page)]',
-        disabled ? 'cursor-not-allowed opacity-60' : 'cursor-pointer',
+        value
+          ? "justify-end bg-[rgba(var(--color-light-blue-r),0.30)]"
+          : "justify-start bg-[var(--color-page)]",
+        disabled ? "cursor-not-allowed opacity-60" : "cursor-pointer",
         className,
       )}
     >
       <span
         className={cn(
-          'inline-block h-6 w-6 rounded-full bg-white shadow transition-transform border border-[var(--color-muted)]/18',
+          "inline-block h-6 w-6 rounded-full bg-white shadow transition-transform border border-[var(--color-muted)]/18",
         )}
       />
     </button>
-  )
-}
+  );
+};

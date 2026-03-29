@@ -1,21 +1,20 @@
 import { useMobile } from '@/app/contexts/MobileContext'
-
-import { SettingsProvider } from '../context/SettingsProvider'
-import { SettingsDesktopView } from '../views/SettingsDesktopView'
-import { SettingsMobileView } from '../views/SettingsMobileView'
-import { SettingsOverlays } from '../components/SettingsOverlays'
 import { Navigate, Route, Routes } from 'react-router-dom'
-import { sectionRegistry } from '../registry/sectionRegistry'
+
 import { PrintTemplateChannelPage } from '@/features/templates/printDocument/pages/PrintTemplateChannelPage'
 import { PrintTemplateConfigPage } from '@/features/templates/printDocument/pages/PrintTemplateConfigPage'
-
+import { SettingsProvider } from '../context/SettingsProvider'
+import { SettingsOverlays } from '../components/SettingsOverlays'
+import { sectionRegistry } from '../registry/sectionRegistry'
+import { SettingsDesktopView } from '../views/SettingsDesktopView'
+import { SettingsMobileView } from '../views/SettingsMobileView'
 
 const SettingsView = () => {
   const { isMobile } = useMobile()
 
   return (
     <div className="h-screen overflow-hidden bg-[var(--color-page)] text-[var(--color-text)]">
-      <SettingsOverlays/>
+      <SettingsOverlays />
       <div className="flex h-full w-screen flex-col overflow-hidden">
         {isMobile ? <SettingsMobileView /> : <SettingsDesktopView />}
       </div>
@@ -32,10 +31,10 @@ export const SettingsPage = () => {
   const MessagesMainPage = sectionRegistry['messages.main']
   const ItemsMain = sectionRegistry['item.main']
   const VehiclesMain = sectionRegistry['vehicle.main']
-  const WarehousesMain = sectionRegistry['warehouse.main']
+  const FacilitiesMain = sectionRegistry['facility.main']
   const PrintDocumentMain = sectionRegistry['printDocument.main']
   const ExternalFormAccess = sectionRegistry['externalForm.access']
-  return(
+  return (
     <SettingsProvider>
       <Routes>
         <Route element={<SettingsView />}>
@@ -48,13 +47,12 @@ export const SettingsPage = () => {
           <Route path="messages" element={<MessagesMainPage />} />
           <Route path="items" element={<ItemsMain />} />
           <Route path="vehicles" element={<VehiclesMain />} />
-          <Route path="warehouses" element={<WarehousesMain />} />
+          <Route path="facilities" element={<FacilitiesMain />} />
           <Route path="external-form" element={<ExternalFormAccess />} />
           <Route path="print-templates" element={<PrintDocumentMain />}>
-            <Route path=":channel" element={<PrintTemplateChannelPage />}/>
+            <Route path=":channel" element={<PrintTemplateChannelPage />} />
             <Route path=":channel/:event" element={<PrintTemplateConfigPage />} />
           </Route>
-          
         </Route>
       </Routes>
     </SettingsProvider>

@@ -1,21 +1,17 @@
 import { useEffect, useState } from "react";
 
-import type { ZoneTemplate, ZoneTemplateConfig } from "@/features/zone/types";
+import {
+  buildZoneTemplatePayload,
+  getInitialZoneTemplateFormFields,
+  type ZoneTemplateFormFields,
+  type ZoneTemplateUpsertPayload,
+} from "@/features/zone/domain/zoneTemplateForm.domain";
+import type { ZoneTemplate } from "@/features/zone/types";
 
 type ZoneTemplateFormProps = {
   initialTemplate?: ZoneTemplate | null;
   isSubmitting?: boolean;
-  onSubmit: (payload: {
-    name: string;
-    config_json: ZoneTemplateConfig;
-  }) => void | Promise<void>;
-};
-
-const toNumberOrNull = (value: string): number | null => {
-  const trimmed = value.trim();
-  if (!trimmed) return null;
-  const numeric = Number(trimmed);
-  return Number.isFinite(numeric) ? numeric : null;
+  onSubmit: (payload: ZoneTemplateUpsertPayload) => void | Promise<void>;
 };
 
 export const ZoneTemplateForm = ({
@@ -23,50 +19,12 @@ export const ZoneTemplateForm = ({
   isSubmitting = false,
   onSubmit,
 }: ZoneTemplateFormProps) => {
-  const [name, setName] = useState(initialTemplate?.name ?? "");
-  const [vehicleTypeId, setVehicleTypeId] = useState(
-    initialTemplate?.config_json?.vehicle_type_id == null
-      ? ""
-      : String(initialTemplate.config_json.vehicle_type_id),
-  );
-  const [serviceTimeSeconds, setServiceTimeSeconds] = useState(
-    initialTemplate?.config_json?.default_service_time_seconds == null
-      ? ""
-      : String(initialTemplate.config_json.default_service_time_seconds),
-  );
-  const [depotId, setDepotId] = useState(
-    initialTemplate?.config_json?.depot_id == null
-      ? ""
-      : String(initialTemplate.config_json.depot_id),
-  );
-  const [maxStops, setMaxStops] = useState(
-    initialTemplate?.config_json?.max_stops == null
-      ? ""
-      : String(initialTemplate.config_json.max_stops),
+  const [fields, setFields] = useState<ZoneTemplateFormFields>(
+    getInitialZoneTemplateFormFields(initialTemplate),
   );
 
   useEffect(() => {
-    setName(initialTemplate?.name ?? "");
-    setVehicleTypeId(
-      initialTemplate?.config_json?.vehicle_type_id == null
-        ? ""
-        : String(initialTemplate.config_json.vehicle_type_id),
-    );
-    setServiceTimeSeconds(
-      initialTemplate?.config_json?.default_service_time_seconds == null
-        ? ""
-        : String(initialTemplate.config_json.default_service_time_seconds),
-    );
-    setDepotId(
-      initialTemplate?.config_json?.depot_id == null
-        ? ""
-        : String(initialTemplate.config_json.depot_id),
-    );
-    setMaxStops(
-      initialTemplate?.config_json?.max_stops == null
-        ? ""
-        : String(initialTemplate.config_json.max_stops),
-    );
+    setFields(getInitialZoneTemplateFormFields(initialTemplate));
   }, [initialTemplate]);
 
   return (
@@ -74,61 +32,152 @@ export const ZoneTemplateForm = ({
       className="space-y-3"
       onSubmit={(event) => {
         event.preventDefault();
-        void onSubmit({
-          name: name.trim(),
-          config_json: {
-            vehicle_type_id: toNumberOrNull(vehicleTypeId),
-            default_service_time_seconds: toNumberOrNull(serviceTimeSeconds),
-            depot_id: toNumberOrNull(depotId),
-            max_stops: toNumberOrNull(maxStops),
-          },
-        });
+        const payload = buildZoneTemplatePayload(fields);
+        if (!payload) {
+          return;
+        }
+        void onSubmit(payload);
       }}
     >
       <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
         <label className="flex flex-col gap-1 text-sm text-white/80">
           Template Name
           <input
-            value={name}
-            onChange={(event) => setName(event.target.value)}
+            value={fields.template_name}
+            onChange={(event) =>
+              setFields((current) => ({
+                ...current,
+                template_name: event.target.value,
+              }))
+            }
             className="rounded-md border border-white/15 bg-white/5 px-3 py-2 text-sm text-white"
             placeholder="Downtown Vans"
           />
         </label>
         <label className="flex flex-col gap-1 text-sm text-white/80">
-          Vehicle Type ID
+          Default Facility ID
           <input
-            value={vehicleTypeId}
-            onChange={(event) => setVehicleTypeId(event.target.value)}
+            value={fields.default_facility_id}
+            onChange={(event) =>
+              setFields((current) => ({
+                ...current,
+                default_facility_id: event.target.value,
+              }))
+            }
             className="rounded-md border border-white/15 bg-white/5 px-3 py-2 text-sm text-white"
-            placeholder="101"
+            placeholder="5"
           />
         </label>
         <label className="flex flex-col gap-1 text-sm text-white/80">
-          Service Time (seconds)
+          Max Orders per Route
           <input
-            value={serviceTimeSeconds}
-            onChange={(event) => setServiceTimeSeconds(event.target.value)}
+            value={fields.max_orders_per_route}
+            onChange={(event) =>
+              setFields((current) => ({
+                ...current,
+                max_orders_per_route: event.target.value,
+              }))
+            }
             className="rounded-md border border-white/15 bg-white/5 px-3 py-2 text-sm text-white"
-            placeholder="120"
+            placeholder="20"
           />
         </label>
         <label className="flex flex-col gap-1 text-sm text-white/80">
-          Depot ID
+          Max Vehicles
           <input
-            value={depotId}
-            onChange={(event) => setDepotId(event.target.value)}
+            value={fields.max_vehicles}
+            onChange={(event) =>
+              setFields((current) => ({
+                ...current,
+                max_vehicles: event.target.value,
+              }))
+            }
             className="rounded-md border border-white/15 bg-white/5 px-3 py-2 text-sm text-white"
-            placeholder="12"
+            placeholder="4"
           />
         </label>
         <label className="flex flex-col gap-1 text-sm text-white/80">
-          Max Stops
+          Window Start
           <input
-            value={maxStops}
-            onChange={(event) => setMaxStops(event.target.value)}
+            type="time"
+            value={fields.operating_window_start}
+            onChange={(event) =>
+              setFields((current) => ({
+                ...current,
+                operating_window_start: event.target.value,
+              }))
+            }
             className="rounded-md border border-white/15 bg-white/5 px-3 py-2 text-sm text-white"
-            placeholder="40"
+          />
+        </label>
+        <label className="flex flex-col gap-1 text-sm text-white/80">
+          Window End
+          <input
+            type="time"
+            value={fields.operating_window_end}
+            onChange={(event) =>
+              setFields((current) => ({
+                ...current,
+                operating_window_end: event.target.value,
+              }))
+            }
+            className="rounded-md border border-white/15 bg-white/5 px-3 py-2 text-sm text-white"
+          />
+        </label>
+        <label className="flex flex-col gap-1 text-sm text-white/80">
+          ETA Tolerance Seconds
+          <input
+            value={fields.eta_tolerance_seconds}
+            onChange={(event) =>
+              setFields((current) => ({
+                ...current,
+                eta_tolerance_seconds: event.target.value,
+              }))
+            }
+            className="rounded-md border border-white/15 bg-white/5 px-3 py-2 text-sm text-white"
+            placeholder="300"
+          />
+        </label>
+        <label className="flex flex-col gap-1 text-sm text-white/80">
+          Route End Strategy
+          <input
+            value={fields.default_route_end_strategy}
+            onChange={(event) =>
+              setFields((current) => ({
+                ...current,
+                default_route_end_strategy: event.target.value,
+              }))
+            }
+            className="rounded-md border border-white/15 bg-white/5 px-3 py-2 text-sm text-white"
+            placeholder="round_trip"
+          />
+        </label>
+        <label className="flex flex-col gap-1 text-sm text-white/80">
+          Vehicle Capabilities
+          <input
+            value={fields.vehicle_capabilities_required}
+            onChange={(event) =>
+              setFields((current) => ({
+                ...current,
+                vehicle_capabilities_required: event.target.value,
+              }))
+            }
+            className="rounded-md border border-white/15 bg-white/5 px-3 py-2 text-sm text-white"
+            placeholder="cold_chain, fragile"
+          />
+        </label>
+        <label className="flex flex-col gap-1 text-sm text-white/80">
+          Preferred Vehicle IDs
+          <input
+            value={fields.preferred_vehicle_ids}
+            onChange={(event) =>
+              setFields((current) => ({
+                ...current,
+                preferred_vehicle_ids: event.target.value,
+              }))
+            }
+            className="rounded-md border border-white/15 bg-white/5 px-3 py-2 text-sm text-white"
+            placeholder="10, 11"
           />
         </label>
       </div>

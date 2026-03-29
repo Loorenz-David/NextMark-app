@@ -5,5 +5,14 @@ const matches = (value: string, query: string) =>
 
 export const filterVehicles = (items: Vehicle[], query: string) =>
   query
-    ? items.filter((item) => matches(item.label ?? item.registration_number, query))
+    ? items.filter((item) =>
+      [
+        item.label,
+        item.registration_number,
+        item.fuel_type,
+        item.status,
+        item.client_id,
+      ]
+        .filter(Boolean)
+        .some((value) => matches(String(value), query)))
     : items

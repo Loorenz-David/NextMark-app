@@ -3,7 +3,8 @@ import { useCallback } from 'react'
 import { apiClient } from '@/lib/api/ApiClient'
 import type { ApiResult } from '@/lib/api/types'
 
-import type { Vehicle, VehicleInput, VehicleMap } from '../types/vehicle'
+import type { Vehicle, VehicleInput, VehicleUpdatePayload } from '../types/vehicle'
+import type { VehicleListQuery } from '../domain/vehicleQuery.domain'
 
 export type VehicleConflict = {
   route_solution_id: number
@@ -18,22 +19,20 @@ export type VehicleAvailabilityResponse = {
 }
 
 export type VehicleListResponse = {
-  vehicle: VehicleMap
-  vehicle_pagination: {
-    page: number
-    per_page: number
-    total: number
+  vehicles: Vehicle[]
+  vehicles_pagination: {
+    next_cursor?: string | null
+    has_more: boolean
   }
 }
 
 export type VehicleDetailResponse = {
-  vehicle: Vehicle | VehicleMap
+  vehicle: Vehicle
 }
 
-export type VehicleUpdatePayload = {
-  target_id: number | string
-  fields: VehicleInput
-}
+export type VehicleCreateResponse = {
+  ids_without_match?: string[]
+} & Record<string, number | string[] | undefined>
 
 export type VehicleDeletePayload = {
   target_id?: number | string
@@ -41,35 +40,37 @@ export type VehicleDeletePayload = {
 }
 
 export const vehicleApi = {
-  list: (): Promise<ApiResult<VehicleListResponse>> =>
+  list: (query?: VehicleListQuery, signal?: AbortSignal): Promise<ApiResult<VehicleListResponse>> =>
     apiClient.request<VehicleListResponse>({
-      path: '/infrastructures/vehicle/',
+      path: '/infrastructures/vehicles/',
       method: 'GET',
+      query,
+      signal,
     }),
 
   getById: (vehicleId: number | string): Promise<ApiResult<VehicleDetailResponse>> =>
     apiClient.request<VehicleDetailResponse>({
-      path: `/infrastructures/vehicle/${vehicleId}`,
+      path: `/infrastructures/vehicles/${vehicleId}`,
       method: 'GET',
     }),
 
-  create: (payload: VehicleInput | VehicleInput[]): Promise<ApiResult<Record<string, number>>> =>
-    apiClient.request<Record<string, number>>({
-      path: '/infrastructures/vehicle/',
+  create: (payload: VehicleInput | VehicleInput[]): Promise<ApiResult<VehicleCreateResponse>> =>
+    apiClient.request<VehicleCreateResponse>({
+      path: '/infrastructures/vehicles/',
       method: 'POST',
       data: { fields: payload },
     }),
 
   update: (payload: VehicleUpdatePayload | VehicleUpdatePayload[]): Promise<ApiResult<Record<string, never>>> =>
     apiClient.request<Record<string, never>>({
-      path: '/infrastructures/vehicle/',
+      path: '/infrastructures/vehicles/',
       method: 'PATCH',
-      data: { target: payload },
+      data: Array.isArray(payload) ? { targets: payload } : { target: payload },
     }),
 
   remove: (payload: VehicleDeletePayload): Promise<ApiResult<Record<string, never>>> =>
     apiClient.request<Record<string, never>>({
-      path: '/infrastructures/vehicle/',
+      path: '/infrastructures/vehicles/',
       method: 'DELETE',
       data: payload,
     }),
@@ -81,7 +82,7 @@ export const vehicleApi = {
     excludeRouteSolutionId?: number | null
   }): Promise<ApiResult<VehicleAvailabilityResponse>> =>
     apiClient.request<VehicleAvailabilityResponse>({
-      path: `/infrastructures/vehicle/${params.vehicleId}/availability`,
+      path: `/infrastructures/vehicles/${params.vehicleId}/availability`,
       method: 'GET',
       query: {
         start_date: params.startDate,
@@ -93,7 +94,8 @@ export const vehicleApi = {
     }),
 }
 
-export const useGetVehicles = () => useCallback(() => vehicleApi.list(), [])
+export const useGetVehicles = () =>
+  useCallback((query?: VehicleListQuery, signal?: AbortSignal) => vehicleApi.list(query, signal), [])
 
 export const useGetVehicle = () =>
   useCallback((vehicleId: number | string) => vehicleApi.getById(vehicleId), [])

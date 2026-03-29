@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useCallback, useMemo, useState } from "react"
 
 interface PropsUseCloseGuard{
     onRequestClose: ()=>void
@@ -9,15 +9,15 @@ export const useCloseGuard = ({onRequestClose}: PropsUseCloseGuard)=>{
     const [ closeState, setCloseState ] = useState<'idle' | 'confirming'>( 'idle' )
 
  
-    const cancelClose = ()=>{
+    const cancelClose = useCallback(()=>{
         setCloseState('idle')
-    }
-    const confirmClose = ()=>{
+    }, [])
+    const confirmClose = useCallback(()=>{
         setCloseState( 'idle' )
         onRequestClose()
-    }
+    }, [onRequestClose])
 
-    const closePopup = () =>{
+    const closePopup = useCallback(() =>{
         
         if ( !confirmBeforeClosing ){
             onRequestClose()
@@ -28,18 +28,18 @@ export const useCloseGuard = ({onRequestClose}: PropsUseCloseGuard)=>{
             return
         }
         setCloseState('confirming')
-    }
+    }, [confirmBeforeClosing, onRequestClose])
 
-    const registerCloseGuard = (fn: ()=> boolean)=>{
+    const registerCloseGuard = useCallback((fn: ()=> boolean)=>{
         setConfirmBeforeClosing(() => fn)
         return ()=> setConfirmBeforeClosing( null )
-    }
+    }, [])
 
-    const clearCloseGuard = ()=>{
+    const clearCloseGuard = useCallback(()=>{
         setConfirmBeforeClosing(null)
-    }
+    }, [])
 
-    return {
+    return useMemo(() => ({
         closeState,
         closePopup,
         registerCloseGuard,
@@ -47,5 +47,13 @@ export const useCloseGuard = ({onRequestClose}: PropsUseCloseGuard)=>{
         confirmBeforeClosing,
         cancelClose,
         confirmClose,
-    }
+    }), [
+        cancelClose,
+        clearCloseGuard,
+        closePopup,
+        closeState,
+        confirmBeforeClosing,
+        confirmClose,
+        registerCloseGuard,
+    ])
 }

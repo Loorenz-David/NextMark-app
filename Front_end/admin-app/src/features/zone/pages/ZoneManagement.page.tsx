@@ -8,6 +8,7 @@ import { zoneApi } from "@/features/zone/api/zone.api";
 import { ZoneMapLayer } from "@/features/zone/components/ZoneMapLayer";
 import { ZoneTemplateForm } from "@/features/zone/components/ZoneTemplateForm";
 import { mapZoneStateToRenderableDefinition } from "@/features/zone/domain/zoneState.mapper";
+import { validateZoneTemplatePayload } from "@/features/zone/domain/zoneTemplateForm.domain";
 import {
   selectIsLoadingZonesForVersion,
   selectSelectedZone,
@@ -177,8 +178,10 @@ export const ZoneManagementPage = () => {
 
     setIsCreatingVersion(true);
     try {
+      const normalizedCityKey = cityKeyDraft.trim();
       const response = await zoneApi.createZoneVersion({
-        city_key: cityKeyDraft.trim(),
+        city_key: normalizedCityKey,
+        name: `${normalizedCityKey} Zones v${versions.length + 1}`,
       });
       const createdVersion = response.data;
       if (createdVersion) {
@@ -263,12 +266,21 @@ export const ZoneManagementPage = () => {
 
   const handleSaveTemplate = async (payload: {
     name: string;
-    config_json: {
-      vehicle_type_id?: number | null;
-      default_service_time_seconds?: number | null;
-      depot_id?: number | null;
-      max_stops?: number | null;
-    };
+    default_facility_id?: number | null;
+    max_orders_per_route?: number | null;
+    max_vehicles?: number | null;
+    operating_window_start?: string | null;
+    operating_window_end?: string | null;
+    eta_tolerance_seconds?: number | null;
+    vehicle_capabilities_required?: string[] | null;
+    preferred_vehicle_ids?: number[] | null;
+    default_route_end_strategy?:
+      | "round_trip"
+      | "custom_end_address"
+      | "end_at_last_stop"
+      | "last_stop"
+      | null;
+    meta?: Record<string, unknown> | null;
   }) => {
     if (
       typeof selectedVersion?.id !== "number" ||
@@ -277,6 +289,15 @@ export const ZoneManagementPage = () => {
       showMessage({
         status: 400,
         message: "Select a zone before saving template.",
+      });
+      return;
+    }
+
+    const validation = validateZoneTemplatePayload(payload);
+    if (!validation.valid) {
+      showMessage({
+        status: 400,
+        message: validation.issues[0],
       });
       return;
     }

@@ -399,7 +399,7 @@ export const useZoneStore = create<ZoneStoreState>((set) => ({
         },
       };
     }),
-  completePathEditSession: (geometry) =>
+  completePathEditSession: () =>
     set((state) => {
       if (!state.pathEditSession) {
         return state;

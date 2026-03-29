@@ -2,6 +2,7 @@ import { zoneApi } from "@/features/zone/api/zone.api";
 import type {
   GeoJSONPolygon,
   ZoneDefinition,
+  ZoneTemplate,
   ZoneTemplateConfig,
 } from "@/features/zone/types";
 
@@ -9,7 +10,7 @@ export type CreateZoneCommand = {
   versionId: number;
   name: string;
   geometry: GeoJSONPolygon;
-  templateConfig: ZoneTemplateConfig | null;
+  templatePayload: ({ name: string } & ZoneTemplateConfig) | null;
 };
 
 export type CreateZoneDeps = {
@@ -64,10 +65,17 @@ export async function createZoneAction(
     deps.removeZoneOptimistic(command.versionId, optimisticId);
     deps.upsertZone(createdZone);
 
-    if (command.templateConfig && typeof createdZone.id === "number") {
-      await zoneApi.upsertZoneTemplate(command.versionId, createdZone.id, {
-        name: command.name,
-        config_json: command.templateConfig,
+    if (command.templatePayload && typeof createdZone.id === "number") {
+      const templateResponse = await zoneApi.upsertZoneTemplate(
+        command.versionId,
+        createdZone.id,
+        command.templatePayload,
+      );
+
+      const nextTemplate = templateResponse.data ?? null;
+      deps.upsertZone({
+        ...createdZone,
+        template: nextTemplate as ZoneTemplate | null,
       });
     }
 

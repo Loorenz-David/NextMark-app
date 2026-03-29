@@ -7,20 +7,47 @@ export type GeoJSONPolygon = {
 };
 
 export type ZoneTemplateConfig = {
-  vehicle_type_id?: number | null;
-  default_service_time_seconds?: number | null;
-  depot_id?: number | null;
-  max_stops?: number | null;
-  constraints?: Record<string, unknown> | null;
+  default_facility_id?: number | null;
+  max_orders_per_route?: number | null;
+  max_vehicles?: number | null;
+  operating_window_start?: string | null;
+  operating_window_end?: string | null;
+  eta_tolerance_seconds?: number | null;
+  vehicle_capabilities_required?: string[] | null;
+  preferred_vehicle_ids?: number[] | null;
+  default_route_end_strategy?:
+    | "round_trip"
+    | "custom_end_address"
+    | "end_at_last_stop"
+    | "last_stop"
+    | null;
+  meta?: Record<string, unknown> | null;
 };
 
 export type ZoneTemplate = {
   id?: number;
+  team_id?: number;
   zone_id?: number;
   name?: string | null;
-  config_json?: ZoneTemplateConfig | null;
   version?: number | null;
   is_active?: boolean;
+  default_facility_id?: number | null;
+  max_orders_per_route?: number | null;
+  max_vehicles?: number | null;
+  operating_window_start?: string | null;
+  operating_window_end?: string | null;
+  eta_tolerance_seconds?: number | null;
+  vehicle_capabilities_required?: string[] | null;
+  preferred_vehicle_ids?: number[] | null;
+  default_route_end_strategy?:
+    | "round_trip"
+    | "custom_end_address"
+    | "end_at_last_stop"
+    | "last_stop"
+    | null;
+  meta?: Record<string, unknown> | null;
+  created_at?: string | null;
+  updated_at?: string | null;
 };
 
 export type ZoneTemplateRef = {
@@ -53,8 +80,10 @@ export type ZoneGeometryResolution = "none" | "simplified" | "full";
 
 export type ZoneDefinition = {
   id?: number;
+  client_id?: string | null;
   team_id?: number;
   version_id?: number;
+  city_key?: string | null;
   name: string;
   zone_type?: "bootstrap" | "system" | "user" | null;
   centroid_lat?: number | null;
@@ -70,8 +99,10 @@ export type ZoneDefinition = {
 
 export type ZoneLite = {
   id: number;
+  client_id?: string | null;
   version_id: number;
   team_id?: number;
+  city_key?: string | null;
   name: string;
   zone_type?: "bootstrap" | "system" | "user" | null;
   centroid: ZoneCentroid | null;
@@ -84,8 +115,10 @@ export type ZoneLite = {
 
 export type ZoneState = {
   id: number;
+  client_id?: string | null;
   version_id: number;
   team_id?: number;
+  city_key?: string | null;
   name: string;
   zone_type?: "bootstrap" | "system" | "user" | null;
   is_active: boolean;
@@ -112,6 +145,8 @@ export type ZonesContext = {
   } | null;
   zones: Array<{
     id: number;
+    client_id?: string | null;
+    city_key?: string | null;
     name: string;
     zone_type?: "bootstrap" | "system" | "user" | null;
     centroid: ZoneCentroid | null;
@@ -128,7 +163,11 @@ export type ZoneVersion = {
   id?: number;
   team_id?: number;
   city_key: string;
+  name?: string;
+  version?: number | null;
   version_number?: number;
   is_active?: boolean;
+  created_by?: string | null;
   created_at?: string | null;
+  updated_at?: string | null;
 };

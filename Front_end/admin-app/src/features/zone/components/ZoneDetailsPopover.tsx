@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 
 import { BasicButton } from "@/shared/buttons/BasicButton";
@@ -34,10 +34,7 @@ export const ZoneDetailsPopover = () => {
     activePopover?.zoneId,
   );
 
-  const config = useMemo(
-    () => zone?.template_full?.config_json ?? null,
-    [zone],
-  );
+  const template = zone?.template_full ?? null;
   const isPathEditDisabled = workingVersion?.is_active === true;
 
   useEffect(() => {
@@ -145,15 +142,28 @@ export const ZoneDetailsPopover = () => {
             new draft version to redraw zones.
           </p>
         ) : null}
-        {config?.vehicle_type_id != null ? (
-          <p>Vehicle type: {config.vehicle_type_id}</p>
+        {template?.default_facility_id != null ? (
+          <p>Facility: {template.default_facility_id}</p>
         ) : null}
-        {config?.max_stops != null ? <p>Max stops: {config.max_stops}</p> : null}
-        {config?.depot_id != null ? <p>Depot: {config.depot_id}</p> : null}
-        {config?.default_service_time_seconds != null ? (
-          <p>Service time: {config.default_service_time_seconds}s</p>
+        {template?.max_orders_per_route != null ? (
+          <p>Max orders/route: {template.max_orders_per_route}</p>
         ) : null}
-        {!zone.is_loading_template && !zone.template_error && !config ? (
+        {template?.max_vehicles != null ? (
+          <p>Max vehicles: {template.max_vehicles}</p>
+        ) : null}
+        {template?.operating_window_start || template?.operating_window_end ? (
+          <p>
+            Window: {template.operating_window_start ?? "--:--"} -{" "}
+            {template.operating_window_end ?? "--:--"}
+          </p>
+        ) : null}
+        {template?.eta_tolerance_seconds != null ? (
+          <p>ETA tolerance: {template.eta_tolerance_seconds}s</p>
+        ) : null}
+        {template?.default_route_end_strategy ? (
+          <p>Route end: {template.default_route_end_strategy}</p>
+        ) : null}
+        {!zone.is_loading_template && !zone.template_error && !template ? (
           <p className="text-[var(--color-muted)]/40">No defaults configured</p>
         ) : null}
       </div>

@@ -15,8 +15,6 @@ type VehicleFormContextValue = {
 
 const VehicleFormContext = createContext<VehicleFormContextValue | null>(null)
 
-export const VehicleFormContextProvider = VehicleFormContext.Provider
-
 export const useVehicleForm = () => {
   const context = useContext(VehicleFormContext)
   if (!context) {
@@ -24,3 +22,5 @@ export const useVehicleForm = () => {
   }
   return context
 }
+
+export const useVehicleFormContextValue = () => VehicleFormContext

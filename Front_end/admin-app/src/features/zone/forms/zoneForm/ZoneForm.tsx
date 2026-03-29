@@ -1,12 +1,29 @@
 import {
   ZoneFormLayout,
-  type ZoneFormLayoutProps,
-  type ZoneFormFields,
 } from "./ZoneForm.layout";
+import { useZoneForm } from "../../popups/ZoneForm/ZoneForm.context";
+import { ZoneFormFields } from "./components/ZoneFormFields";
 
-export type ZoneFormFeatureProps = ZoneFormLayoutProps;
-export type { ZoneFormFields };
+export const ZoneFormFeature = () => {
+  const {
+    payload,
+    handleSave,
+    handleDelete,
+    handleCancel,
+    isSubmitting,
+    isDeleting,
+  } = useZoneForm();
 
-export const ZoneFormFeature = (props: ZoneFormFeatureProps) => {
-  return <ZoneFormLayout {...props} />;
+  return (
+    <ZoneFormLayout
+      isSubmitting={isSubmitting}
+      isDeleting={isDeleting}
+      onSubmit={handleSave}
+      onDelete={handleDelete ? () => void handleDelete() : undefined}
+      onCancel={handleCancel}
+      submitLabel={payload.mode === "create" ? "Create Zone" : "Save Changes"}
+    >
+      <ZoneFormFields />
+    </ZoneFormLayout>
+  );
 };

@@ -25,5 +25,5 @@ export const useVehicleFormConfig = ({
   useEffect(() => {
     registerCloseGuard(() => !hasFormChanges(formState, initialFormRef))
     return () => clearCloseGuard()
-  }, [formState, initialFormRef])
+  }, [clearCloseGuard, formState, initialFormRef, registerCloseGuard])
 }
