@@ -74,7 +74,7 @@ const createOptimisticRouteGroup = ({
     },
     template_snapshot: null,
     total_orders: 0,
-    state: null,
+    state_id: null,
     route_solutions_ids: [],
   };
 };

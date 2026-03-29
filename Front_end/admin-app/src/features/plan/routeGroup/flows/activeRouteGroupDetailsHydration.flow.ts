@@ -24,7 +24,10 @@ export const useActiveRouteGroupDetailsHydrationFlow = ({
   useEffect(() => {
     const routeGroupId = routeGroup?.id ?? null;
 
-    if (planId == null || routeGroupId == null) {
+    const isHydratableRouteGroupId =
+      typeof routeGroupId === "number" && Number.isFinite(routeGroupId) && routeGroupId > 0;
+
+    if (planId == null || !isHydratableRouteGroupId) {
       lastRequestKeyRef.current = null;
       return;
     }

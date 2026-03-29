@@ -51,6 +51,11 @@ export type OrderDeletePayload = {
   target_ids?: Array<number | string>
 }
 
+export type UpdateOrderDeliveryPlanPayload = {
+  route_group_id?: number
+  prevent_event_bus?: boolean
+}
+
 export const createOrdersApi = (client: Pick<HttpApiClient, 'request'>) => ({
   listOrders: (query?: OrderQueryFilters): Promise<ApiResult<OrderListResponse>> =>
     client.request<OrderListResponse>({
@@ -105,17 +110,19 @@ export const createOrdersApi = (client: Pick<HttpApiClient, 'request'>) => ({
   updateOrderDeliveryPlan: (
     orderId: number | string,
     planId: number | string,
+    payload?: UpdateOrderDeliveryPlanPayload,
   ): Promise<ApiResult<OrderPlanUpdateResponse>> =>
     client.request<OrderPlanUpdateResponse>({
-      path: `/orders/${orderId}/plan/${planId}`,
+      path: `/order_assignments/orders/${orderId}/plan/${planId}`,
       method: 'PATCH',
+      data: payload,
     }),
 
   resolveOrderBatchSelection: (
     selection: OrderBatchSelectionPayload,
   ): Promise<ApiResult<OrderBatchSelectionResolveResponse>> =>
     client.request<OrderBatchSelectionResolveResponse>({
-      path: '/orders/selection/resolve',
+      path: '/order_assignments/selection/resolve',
       method: 'POST',
       data: { selection },
     }),
@@ -125,7 +132,7 @@ export const createOrdersApi = (client: Pick<HttpApiClient, 'request'>) => ({
     selection: OrderBatchSelectionPayload,
   ): Promise<ApiResult<OrderBatchMoveResponse>> =>
     client.request<OrderBatchMoveResponse>({
-      path: `/orders/plan/${planId}/batch`,
+      path: `/order_assignments/plans/${planId}/batch`,
       method: 'PATCH',
       data: { selection },
     }),

@@ -20,11 +20,11 @@ export type RouteGroup = {
   id?: number;
   client_id: string;
   total_orders?: number | null;
+  total_item_count?: number | null;
+  total_volume_cm3?: number | null;
+  total_weight_grams?: number | null;
+  order_state_counts?: Record<string, number> | null;
   state_id?: number | null;
-  state?: {
-    id?: number | null;
-    name?: string | null;
-  } | null;
   zone_id?: number | null;
   zone_snapshot?: {
     name?: string | null;

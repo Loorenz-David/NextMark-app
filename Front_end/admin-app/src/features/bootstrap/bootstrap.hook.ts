@@ -56,8 +56,8 @@ export function useBootstrap() {
           insertSmsMessages(payload.message_templates_sms)
         }
 
-        if (payload.route_plan_states) {
-          insertRoutePlanStates(payload.route_plan_states)
+        if (payload.plan_states) {
+          insertRoutePlanStates(payload.plan_states)
         }
 
         if (payload.vehicles) {

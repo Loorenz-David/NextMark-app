@@ -22,6 +22,8 @@ import {
   useOrderStore,
 } from '../store/order.store'
 import { patchRoutePlanTotals, selectRoutePlanByServerId, useRoutePlanStore } from '@/features/plan/store/routePlan.slice'
+import { syncRouteGroupSummaries } from '@/features/plan/routeGroup/flows/syncRouteGroupSummaries.flow'
+import { markRouteGroupOverviewFreshAfter } from '@/features/plan/routeGroup/store/routeGroupOverviewFreshness.store'
 
 export const useOrderMutations = () => {
   const updateOrderDeliveryPlanApi = useUpdateOrderDeliveryPlanApi()
@@ -139,10 +141,19 @@ export const useOrderMutations = () => {
         request: () => updateOrderDeliveryPlanApi(orderServerId, parsedPlanId),
         commit: (response) => {
           const updatedBundles = response.data?.updated ?? []
+          const affectedRouteGroupIds = new Set<number>()
+
+          if (typeof order.route_group_id === 'number') {
+            affectedRouteGroupIds.add(order.route_group_id)
+          }
+
           updatedBundles.forEach((bundle) => {
             const updatedOrder = bundle?.order
             if (!updatedOrder?.id) return
 
+            if (typeof updatedOrder.route_group_id === 'number') {
+              affectedRouteGroupIds.add(updatedOrder.route_group_id)
+            }
             setOrder(updatedOrder)
             removeRouteSolutionStopsByOrderId(updatedOrder.id)
 
@@ -157,6 +168,9 @@ export const useOrderMutations = () => {
               }
             })
           })
+
+          syncRouteGroupSummaries(Array.from(affectedRouteGroupIds))
+          markRouteGroupOverviewFreshAfter([oldPlanId, parsedPlanId])
 
           // Server-authoritative plan totals override the optimistic deltas
           response.data?.plan_totals?.forEach((p) => {

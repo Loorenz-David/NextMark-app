@@ -30,6 +30,7 @@ import {
   upsertRouteSolutionStops,
   useRouteSolutionStopStore,
 } from "@/features/plan/routeGroup/store/routeSolutionStop.store";
+import { syncRouteGroupSummaries } from "@/features/plan/routeGroup/flows/syncRouteGroupSummaries.flow";
 
 const takeSnapshot = () => ({
   ...createOrderOptimisticSnapshot(),
@@ -44,6 +45,7 @@ const restoreSnapshot = (snapshot: ReturnType<typeof takeSnapshot>) => {
 const applyResponse = (
   data: MoveOrderToRouteGroupResponse,
   onDrift: () => void,
+  affectedRouteGroupIds: number[],
 ) => {
   const bundles = data.updated_bundles ?? data.updated ?? [];
   const resolvedCount = data.resolved_count ?? 0;
@@ -72,6 +74,7 @@ const applyResponse = (
   const hasDrift =
     bundles.length === 0 ||
     (resolvedCount > 0 && bundles.length < updatedCount);
+  syncRouteGroupSummaries(affectedRouteGroupIds);
   if (hasDrift) {
     onDrift();
   }
@@ -131,26 +134,7 @@ const applyOptimisticMutation = (
     });
   });
 
-  const sourceGroup = selectRouteGroupByServerId(sourceRouteGroupId)(
-    useRouteGroupStore.getState(),
-  );
-  const targetGroup = selectRouteGroupByServerId(targetRouteGroupId)(
-    useRouteGroupStore.getState(),
-  );
-
-  if (sourceGroup?.client_id) {
-    updateRouteGroup(sourceGroup.client_id, (group) => ({
-      ...group,
-      total_orders: Math.max(0, (group.total_orders ?? 0) - orderIds.length),
-    }));
-  }
-
-  if (targetGroup?.client_id) {
-    updateRouteGroup(targetGroup.client_id, (group) => ({
-      ...group,
-      total_orders: (group.total_orders ?? 0) + orderIds.length,
-    }));
-  }
+  syncRouteGroupSummaries([sourceRouteGroupId, targetRouteGroupId]);
 };
 
 export const moveOrderToRouteGroupAction = async (params: {
@@ -182,7 +166,11 @@ export const moveOrderToRouteGroupAction = async (params: {
         prevent_event_bus: false,
       }),
     commit: (response) => {
-      applyResponse(response.data, params.onDrift ?? (() => {}));
+      applyResponse(
+        response.data,
+        params.onDrift ?? (() => {}),
+        [params.sourceRouteGroupId, params.targetRouteGroupId],
+      );
       success = true;
     },
     rollback: (snapshot) => {

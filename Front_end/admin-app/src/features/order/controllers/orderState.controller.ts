@@ -3,6 +3,7 @@ import { useCallback } from 'react'
 import { ApiError } from '@/lib/api/ApiClient'
 import { useMessageHandler } from '@shared-message-handler'
 
+import { applyOrderStateUpdatePayload } from '../actions/applyOrderStateUpdatePayload.action'
 import { useUpdateOrderState } from '../api/orderState.api'
 import { useOrderStateRegistry } from '../domain/useOrderStateRegistry'
 import { selectOrderByClientId, updateOrderByClientId, useOrderStore } from '../store/order.store'
@@ -31,7 +32,8 @@ export const useOrderStateController = () => {
       }))
 
       try {
-        await updateOrderStateApi(order.id, targetStateId)
+        const response = await updateOrderStateApi(order.id, targetStateId)
+        applyOrderStateUpdatePayload(response.data)
         return true
       } catch (error) {
         updateOrderByClientId(clientId, (currentOrder) => ({

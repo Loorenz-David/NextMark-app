@@ -4,6 +4,10 @@ export interface SessionUser {
   id?: string | number
   client_id?: string
   email?: string
+  city?: string | null
+  country_code?: string | null
+  default_city_key?: string | null
+  default_country_code?: string | null
   teamId?: string | number | null
   active_team_id?: string | number | null
   username?: string
@@ -24,6 +28,10 @@ export interface SessionIdentity {
   user_id?: string | number
   team_id?: string | number | null
   active_team_id?: string | number | null
+  city?: string | null
+  country_code?: string | null
+  default_city_key?: string | null
+  default_country_code?: string | null
   user_role_id?: number | null
   role_id?: number | null
   base_role_id?: number | null

@@ -1,3 +1,5 @@
+import { formatMetric } from "@shared-utils";
+
 import type { RouteGroupRailItem } from "./types";
 
 type RouteGroupRailPopoverContentProps = {
@@ -39,10 +41,39 @@ export const RouteGroupRailPopoverContent = ({
           value={`${Math.round(item.completionRatio)}%`}
         />
         <SummaryRow label="Orders" value={`${item.orderCount}`} />
-        <SummaryRow label="Solutions" value={`${item.routeSolutionCount}`} />
+        <SummaryRow label="Active orders" value={`${item.activeOrderCount}`} />
+        <SummaryRow label="Items" value={`${item.itemCount}`} />
+        <SummaryRow
+          label="Weight"
+          value={formatMetric(item.totalWeightGrams / 1000, "kg")}
+        />
+        <SummaryRow
+          label="Volume"
+          value={formatMetric(item.totalVolumeCm3 / 1000000, "㎥")}
+        />
         <SummaryRow
           label="State"
-          value={item.stateLabel ?? "Unknown"}
+          value={
+            item.stateLabel
+              ? `${item.stateLabel} (${item.currentStateOrderCount})`
+              : "Unknown"
+          }
+        />
+        <SummaryRow
+          label="Progress points"
+          value={`${item.earnedPoints}/${item.maxPoints}`}
+        />
+        <SummaryRow
+          label="Next state"
+          value={item.nextStateLabel ?? "Reached"}
+        />
+        <SummaryRow
+          label="Missing to next"
+          value={
+            item.remainingPointsToNextState == null
+              ? "0"
+              : `${item.remainingPointsToNextState} pts`
+          }
         />
       </div>
     </div>

@@ -9,6 +9,17 @@ import { FloatingPopover } from "@/shared/popups/FloatingPopover/FloatingPopover
 import type { RouteGroupRailItem } from "./types";
 import { RouteGroupRailPopoverContent } from "./RouteGroupRailPopoverContent";
 
+const DEFAULT_STATE_COLOR = "#6B7280";
+
+const withAlpha = (hexColor: string, alphaHex: string) => {
+  if (!hexColor.startsWith("#")) return hexColor;
+  const normalized =
+    hexColor.length === 4
+      ? `#${hexColor[1]}${hexColor[1]}${hexColor[2]}${hexColor[2]}${hexColor[3]}${hexColor[3]}`
+      : hexColor;
+  return `${normalized}${alphaHex}`;
+};
+
 type RouteGroupRailAvatarProps = {
   item: RouteGroupRailItem;
   onClick: (item: RouteGroupRailItem) => void;
@@ -22,9 +33,9 @@ export const RouteGroupRailAvatar = ({
 }: RouteGroupRailAvatarProps) => {
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
   const completionRatio = Math.round(item.completionRatio);
-  const progressStyle = {
-    background: `conic-gradient(rgba(172,228,244,0.92) ${completionRatio}%, rgba(172,228,244,0.14) ${completionRatio}% 100%)`,
-  };
+  const stateColor = item.stateColor ?? DEFAULT_STATE_COLOR;
+  const stateBorderColor = withAlpha(stateColor, item.isActive ? "CC" : "66");
+  const fillHeight = `${completionRatio}%`;
 
   const avatarButton = (
     <button
@@ -55,21 +66,38 @@ export const RouteGroupRailAvatar = ({
           }
           transition={{ type: "tween", duration: 0.3, ease: "easeOut" }}
           className={`flex h-12 w-12 items-center justify-center rounded-full border p-[3px] ${
-            isDropTarget
-              ? "border-[#00c531]"
-              : item.isActive
-                ? "border-[rgb(var(--color-light-blue-r),0.58)]"
-                : "border-[rgb(var(--color-light-blue-r),0.22)]"
+            isDropTarget ? "border-[#00c531]" : ""
           }`}
           style={
             isDropTarget
               ? {
                   backgroundColor: "#00c5311A",
                 }
-              : progressStyle
+              : {
+                  backgroundColor: withAlpha(stateColor, "18"),
+                  borderColor: stateBorderColor,
+                }
           }
-        />
-        <span className="pointer-events-none absolute flex h-[42px] w-[42px] items-center justify-center rounded-full bg-[rgba(11,21,24,0.92)] text-[11px] font-semibold text-[var(--color-text)] shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]">
+        >
+          <span className="relative block h-full w-full overflow-hidden rounded-full bg-[rgba(11,21,24,0.40)]">
+            <motion.span
+              aria-hidden="true"
+              className="absolute inset-x-0 bottom-0"
+              animate={{ height: fillHeight }}
+              transition={{ duration: 0.35, ease: "easeOut" }}
+              style={{
+                background: `linear-gradient(180deg, ${withAlpha(stateColor, "FF")} 0%, ${withAlpha(stateColor, "E6")} 100%)`,
+              }}
+            />
+          </span>
+        </motion.span>
+        <span
+          className="pointer-events-none absolute flex h-[42px] w-[42px] items-center justify-center rounded-full text-[11px] font-semibold text-[var(--color-text)] shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]"
+          style={{
+            background:
+              "radial-gradient(circle at 35% 30%, rgba(19,30,34,0.68) 0%, rgba(12,21,24,0.52) 58%, rgba(7,14,16,0.42) 100%)",
+          }}
+        >
           <AnimatePresence mode="wait" initial={false}>
             {isDropTarget ? (
               <motion.span
@@ -80,10 +108,7 @@ export const RouteGroupRailAvatar = ({
                 transition={{ duration: 0.18, ease: "easeOut" }}
                 className="flex items-center justify-center"
               >
-                <PlusIcon
-                  className="h-4 w-4"
-                  style={{ color: "#00c531" }}
-                />
+                <PlusIcon className="h-4 w-4" style={{ color: "#00c531" }} />
               </motion.span>
             ) : (
               <motion.span

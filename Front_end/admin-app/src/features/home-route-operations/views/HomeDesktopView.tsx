@@ -199,7 +199,7 @@ export function HomeDesktopView() {
           <SectionManagerHost
             stackKey="dynamicSectionPanels"
             isBaseOpen={baseControlls.isBaseOpen}
-            width={layout.overlayWidth}
+            width={layout.orderOverlayWidth}
           />
         }
         buttonTogglePlan={

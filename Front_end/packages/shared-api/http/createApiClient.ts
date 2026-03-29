@@ -59,6 +59,50 @@ export class HttpApiClient {
     return typeof timeZone === 'string' && timeZone.trim() ? timeZone.trim() : null
   }
 
+  getSessionCountryCode(): string | null {
+    const identityDefaultCountryCode = this.getSessionIdentity()?.default_country_code
+    if (typeof identityDefaultCountryCode === 'string' && identityDefaultCountryCode.trim()) {
+      return identityDefaultCountryCode.trim()
+    }
+
+    const identityCountryCode = this.getSessionIdentity()?.country_code
+    if (typeof identityCountryCode === 'string' && identityCountryCode.trim()) {
+      return identityCountryCode.trim()
+    }
+
+    const userDefaultCountryCode = this.getSessionUser()?.default_country_code
+    if (typeof userDefaultCountryCode === 'string' && userDefaultCountryCode.trim()) {
+      return userDefaultCountryCode.trim()
+    }
+
+    const userCountryCode = this.getSessionUser()?.country_code
+    return typeof userCountryCode === 'string' && userCountryCode.trim()
+      ? userCountryCode.trim()
+      : null
+  }
+
+  getSessionCity(): string | null {
+    const identityDefaultCityKey = this.getSessionIdentity()?.default_city_key
+    if (typeof identityDefaultCityKey === 'string' && identityDefaultCityKey.trim()) {
+      return identityDefaultCityKey.trim()
+    }
+
+    const identityCity = this.getSessionIdentity()?.city
+    if (typeof identityCity === 'string' && identityCity.trim()) {
+      return identityCity.trim()
+    }
+
+    const userDefaultCityKey = this.getSessionUser()?.default_city_key
+    if (typeof userDefaultCityKey === 'string' && userDefaultCityKey.trim()) {
+      return userDefaultCityKey.trim()
+    }
+
+    const userCity = this.getSessionUser()?.city
+    return typeof userCity === 'string' && userCity.trim()
+      ? userCity.trim()
+      : null
+  }
+
   async request<T>(options: RequestOptions, attempt = 0): Promise<ApiResult<T>> {
     const {
       path,
@@ -395,6 +439,22 @@ export class HttpApiClient {
     const currentWorkspace = identity?.current_workspace
     if (typeof currentWorkspace === 'string') {
       nextUser.current_workspace = currentWorkspace
+    }
+    const defaultCountryCode = identity?.default_country_code
+    if (typeof defaultCountryCode === 'string') {
+      nextUser.default_country_code = defaultCountryCode
+    }
+    const defaultCityKey = identity?.default_city_key
+    if (typeof defaultCityKey === 'string') {
+      nextUser.default_city_key = defaultCityKey
+    }
+    const countryCode = identity?.country_code
+    if (typeof countryCode === 'string') {
+      nextUser.country_code = countryCode
+    }
+    const city = identity?.city
+    if (typeof city === 'string') {
+      nextUser.city = city
     }
     const hasTeamWorkspace = identity?.has_team_workspace
     if (typeof hasTeamWorkspace === 'boolean') {

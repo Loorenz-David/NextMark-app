@@ -7,15 +7,15 @@ import {
   useActiveRouteGroupActions,
   useActiveRouteGroupId,
 } from "@/features/plan/routeGroup/store/useActiveRouteGroup.selector";
-import { useRouteSolutions } from "@/features/plan/routeGroup/store/useRouteSolution.selector";
+import { useOrderStates } from "@/features/order/store/orderStateHooks.store";
 import { useRoutePlanStates } from "@/features/plan/store/useRoutePlanState.selector";
 
 export const useRouteGroupRailController = (
   planId: number | null | undefined,
 ) => {
   const routeGroups = useRouteGroupsByPlanId(planId);
-  const routeSolutions = useRouteSolutions();
-  const routePlanStates = useRoutePlanStates();
+  const orderStates = useOrderStates();
+  const routeGroupStates = useRoutePlanStates();
   const activeRouteGroupId = useActiveRouteGroupId();
   const { clearActiveRouteGroupSelection, setActiveRouteGroupId } =
     useActiveRouteGroupActions();
@@ -25,11 +25,11 @@ export const useRouteGroupRailController = (
     () =>
       buildRouteGroupRailItems({
         routeGroups,
-        routeSolutions,
-        routePlanStates,
+        orderStates,
+        routeGroupStates,
         activeRouteGroupId,
       }),
-    [activeRouteGroupId, routeGroups, routePlanStates, routeSolutions],
+    [activeRouteGroupId, orderStates, routeGroupStates, routeGroups],
   );
 
   const handleRouteGroupClick = useCallback(

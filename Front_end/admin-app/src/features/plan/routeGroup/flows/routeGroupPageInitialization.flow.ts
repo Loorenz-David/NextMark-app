@@ -10,6 +10,10 @@ import {
   rememberRouteGroupForPlan,
   setActiveRouteGroupId,
 } from "../store/activeRouteGroup.store";
+import {
+  clearRouteGroupOverviewFreshAfter,
+  useRouteGroupOverviewFreshAfter,
+} from "../store/routeGroupOverviewFreshness.store";
 
 export const useRouteGroupPageInitializationFlow = (
   planId: number | null,
@@ -21,6 +25,7 @@ export const useRouteGroupPageInitializationFlow = (
   const plan = useRoutePlanByServerId(planId);
   const routeGroups = useRouteGroupsByPlanId(planId);
   const activeRouteGroupId = useActiveRouteGroupId();
+  const invalidatedFreshAfter = useRouteGroupOverviewFreshAfter(planId);
   const lastRefreshAttemptRef = useRef<string | null>(null);
   const initialSelectionKeyRef = useRef<string | null>(null);
 
@@ -67,25 +72,35 @@ export const useRouteGroupPageInitializationFlow = (
 
     const hasRouteGroups = routeGroups.length > 0;
     const isWorkspaceHydrated = plan != null && hasRouteGroups;
+    const effectiveFreshAfter =
+      [freshAfter ?? null, invalidatedFreshAfter ?? null]
+        .filter((value): value is string => typeof value === "string" && value.length > 0)
+        .sort((left, right) => Date.parse(right) - Date.parse(left))[0] ?? null;
+
     const needsRefresh =
       plan == null ||
       !isWorkspaceHydrated ||
-      shouldRefreshForFreshness(plan.updated_at ?? null, freshAfter ?? null);
+      shouldRefreshForFreshness(plan.updated_at ?? null, effectiveFreshAfter);
     if (!needsRefresh) {
       lastRefreshAttemptRef.current = null;
       return;
     }
 
-    const refreshKey = `${planId}:${freshAfter ?? ""}`;
+    const refreshKey = `${planId}:${effectiveFreshAfter ?? ""}`;
     if (lastRefreshAttemptRef.current === refreshKey) {
       return;
     }
     lastRefreshAttemptRef.current = refreshKey;
 
-    fetchRouteGroupOverview(planId);
+    void fetchRouteGroupOverview(planId).then((payload) => {
+      if (payload) {
+        clearRouteGroupOverviewFreshAfter(planId);
+      }
+    });
   }, [
     fetchRouteGroupOverview,
     freshAfter,
+    invalidatedFreshAfter,
     plan,
     planId,
     routeGroups,

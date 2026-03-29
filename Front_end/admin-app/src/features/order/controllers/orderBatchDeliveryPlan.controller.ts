@@ -20,6 +20,9 @@ import { setOrder } from '../store/order.store'
 import { createOrderOptimisticSnapshot, restoreOrderOptimisticSnapshot } from '../utils/orderOptimisticSnapshot'
 import type { OrderBatchSelectionPayload } from '../types/orderBatchSelection'
 import { useOrderPlanPatchController } from './orderPlanPatch.controller'
+import { syncRouteGroupSummaries } from '@/features/plan/routeGroup/flows/syncRouteGroupSummaries.flow'
+import { selectOrderByServerId, useOrderStore } from '../store/order.store'
+import { markRouteGroupOverviewFreshAfter } from '@/features/plan/routeGroup/store/routeGroupOverviewFreshness.store'
 
 type UpdateOrdersDeliveryPlanBatchParams = {
   planId: number
@@ -54,10 +57,19 @@ export const useOrderBatchDeliveryPlanController = () => {
           const bundles = payload?.updated_bundles ?? []
           const resolvedCount = payload?.resolved_count ?? 0
           const updatedCount = payload?.updated_count ?? 0
+          const affectedRouteGroupIds = new Set<number>()
 
           bundles.forEach((bundle) => {
             const updatedOrder = bundle?.order
             if (!updatedOrder?.id) return
+
+             const previousOrder = selectOrderByServerId(updatedOrder.id)(useOrderStore.getState())
+            if (typeof previousOrder?.route_group_id === 'number') {
+              affectedRouteGroupIds.add(previousOrder.route_group_id)
+            }
+            if (typeof updatedOrder.route_group_id === 'number') {
+              affectedRouteGroupIds.add(updatedOrder.route_group_id)
+            }
 
             setOrder(updatedOrder)
             removeRouteSolutionStopsByOrderId(updatedOrder.id)
@@ -74,6 +86,9 @@ export const useOrderBatchDeliveryPlanController = () => {
               }
             })
           })
+
+          syncRouteGroupSummaries(Array.from(affectedRouteGroupIds))
+          markRouteGroupOverviewFreshAfter([planId])
 
           if (resolvedCount > 0 && updatedCount < resolvedCount) {
             showMessage({
