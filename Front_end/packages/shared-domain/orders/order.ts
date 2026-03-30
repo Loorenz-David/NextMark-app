@@ -103,6 +103,22 @@ export type OrderPlanUpdateBundle = {
   order: Order;
   order_stops?: RouteSolutionStop[];
   route_solution?: RouteSolution[];
+  plan_totals?: PlanTotalsEntry[];
+  state_changes?: {
+    route_groups?: Array<{
+      id: number;
+      state_id: number | null;
+      total_orders: number | null;
+      order_state_counts?: Record<string, number> | null;
+      route_plan_id?: number | null;
+      zone_id?: number | null;
+    }>;
+    route_plans?: Array<{
+      id: number;
+      state_id: number | null;
+      total_orders: number | null;
+    }>;
+  };
 };
 
 export type OrderPlanUpdateResponse = {
