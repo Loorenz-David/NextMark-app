@@ -118,7 +118,8 @@ export const applyOrderBatchMoveStateSync = (
       state_id: groupChange.state_id,
       total_orders: groupChange.total_orders,
       order_state_counts: groupChange.order_state_counts ?? null,
-      route_plan_id: groupChange.route_plan_id ?? existing.route_plan_id ?? null,
+      route_plan_id:
+        groupChange.route_plan_id ?? existing.route_plan_id ?? null,
       zone_id: groupChange.zone_id ?? existing.zone_id ?? null,
     }));
   });

@@ -9,6 +9,7 @@ import { usePlanStateRegistryFlow } from '@/features/plan/flows/planStateRegistr
 
 type Params = {
   plan: DeliveryPlan | null | undefined
+  routeGroupStateId?: number | null
   orders: Order[]
   routeSolutions: RouteSolution[]
   routeSolutionStops: RouteSolutionStop[]
@@ -17,6 +18,7 @@ type Params = {
 
 export const useRouteGroupDerivedResources = ({
   plan,
+  routeGroupStateId,
   orders,
   routeSolutions,
   routeSolutionStops,
@@ -24,6 +26,7 @@ export const useRouteGroupDerivedResources = ({
 }: Params) => {
   const planStateRegistry = usePlanStateRegistryFlow()
   const planState = planStateRegistry.getById(plan?.state_id ?? null)
+  const routeGroupState = planStateRegistry.getById(routeGroupStateId ?? null)
   const routeSolutionsOrdered = useMemo(
     () =>
       [...routeSolutions].sort((a, b) => {
@@ -74,6 +77,7 @@ export const useRouteGroupDerivedResources = ({
 
   return {
     planState,
+    routeGroupState,
     routeSolutionsOrdered,
     bestRouteSolutionId,
     isSelectedSolutionOptimized,

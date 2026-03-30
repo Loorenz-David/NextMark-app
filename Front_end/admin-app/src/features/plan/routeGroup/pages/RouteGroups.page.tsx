@@ -53,7 +53,7 @@ export const RouteGroupsPageLayout = ({
               onCreate={onCreateRouteGroup}
             />
           </div>
-          <div className="min-h-0 min-w-0 flex-1 overflow-hidden">
+          <div className="h-full min-h-0 min-w-0 flex-1 overflow-hidden">
             <RouteGroupsPageContent
               showOptimizeRow={showOptimizeRow}
               hasActiveRouteGroup={hasActiveRouteGroup}
@@ -136,14 +136,14 @@ const RouteGroupsPageScreen = ({
   }
 
   return (
-      <RouteGroupsPageLayout
-        headerSummary={headerSummary}
-        onRequestClose={onRequestClose}
-        routeGroups={railItems}
-        onRouteGroupClick={handleRouteGroupClick}
-        onCreateRouteGroup={handleCreateRouteGroup}
-        showOptimizeRow={showOptimizeRow}
-        hasActiveRouteGroup={hasActiveRouteGroup}
-      />
+    <RouteGroupsPageLayout
+      headerSummary={headerSummary}
+      onRequestClose={onRequestClose}
+      routeGroups={railItems}
+      onRouteGroupClick={handleRouteGroupClick}
+      onCreateRouteGroup={handleCreateRouteGroup}
+      showOptimizeRow={showOptimizeRow}
+      hasActiveRouteGroup={hasActiveRouteGroup}
+    />
   );
 };

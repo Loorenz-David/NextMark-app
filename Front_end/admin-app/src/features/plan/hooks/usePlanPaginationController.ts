@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef } from 'react'
+import { useCallback, useMemo, useRef, useState } from 'react'
 
 import { appendVisibleRoutePlans, setVisibleRoutePlans } from '../store/routePlan.slice'
 import { buildPlanQueryKey, usePlanQueries } from '../flows/planQueries.flow'
@@ -27,6 +27,7 @@ export const usePlanPaginationController = ({ query, scrollToTop }: Params = {})
   const { fetchPlansPage } = usePlanQueries()
   const fetchPlansPageRef = useRef(fetchPlansPage)
   fetchPlansPageRef.current = fetchPlansPage
+  const [isReplacingList, setIsReplacingList] = useState(false)
   const currentPage = useRoutePlanPaginationStore(selectRoutePlanCurrentPage)
   const hasMore = useRoutePlanPaginationStore(selectRoutePlanHasMore)
   const isLoadingPage = useRoutePlanPaginationStore(selectRoutePlanIsLoadingPage)
@@ -43,6 +44,7 @@ export const usePlanPaginationController = ({ query, scrollToTop }: Params = {})
     const cursor = append ? paginationState.nextCursor : null
 
     if (!append) {
+      setIsReplacingList(true)
       paginationState.reset(queryKey)
       setVisibleRoutePlans([])
       scrollToTop?.()
@@ -58,12 +60,18 @@ export const usePlanPaginationController = ({ query, scrollToTop }: Params = {})
     })
 
     if (useRoutePlanPaginationStore.getState().requestVersion !== requestVersion) {
+      if (!append) {
+        setIsReplacingList(false)
+      }
       return null
     }
 
     if (!response?.route_plan) {
       useRoutePlanPaginationStore.getState().setLoadingPage(false)
       setRoutePlanListError('Missing route plans response.')
+      if (!append) {
+        setIsReplacingList(false)
+      }
       return null
     }
 
@@ -90,6 +98,10 @@ export const usePlanPaginationController = ({ query, scrollToTop }: Params = {})
       append,
     })
 
+    if (!append) {
+      setIsReplacingList(false)
+    }
+
     return response
   }, [isFixtureMode, query, queryKey, scrollToTop])
 
@@ -103,6 +115,7 @@ export const usePlanPaginationController = ({ query, scrollToTop }: Params = {})
     currentPage,
     hasMore,
     isLoadingPage,
+    isReplacingList,
     loadFirstPage,
     loadNextPage,
     queryKey,

@@ -1,12 +1,9 @@
-import {
-  RouteGroupOrderList,
-  RouteGroupReadyFooter,
-  RouteGroupsActionBar,
-} from "../components";
+import { RouteGroupOrderList, RouteGroupsActionBar } from "../components";
 import { OptimizationLoading } from "../components/spinners/Optimization.spinner";
 import { MIN_LOADER_VISIBLE_MS } from "../constants/optimization.constants";
 import { useRouteGroupPageContext } from "../context/useRouteGroupPageContext";
 import { useRouteGroupActionBarVisibility } from "../hooks/useRouteGroupActionBarVisibility";
+import { OrderLoadingList } from "@/shared/loadingCards/order";
 
 type RouteGroupsPageContentProps = {
   showOptimizeRow: boolean;
@@ -15,17 +12,27 @@ type RouteGroupsPageContentProps = {
 
 const ACTION_BAR_HEIGHT_WITH_OPTIMIZE = 138;
 const ACTION_BAR_HEIGHT_WITHOUT_OPTIMIZE = 82;
-const ACTION_BAR_COLLAPSED_HEIGHT = 12;
 
 export const RouteGroupsPageContent = ({
   showOptimizeRow,
   hasActiveRouteGroup,
 }: RouteGroupsPageContentProps) => {
-  const { orderCount, orders, planState, routeGroup, routeGroupPageActions } =
+  const { orderCount, routeGroup, routeSolutionStops, selectedRouteSolution } =
     useRouteGroupPageContext();
 
   const isLoading = routeGroup?.is_loading;
   const optimizationStartedAt = routeGroup?.optimization_started_at ?? null;
+  const shouldHaveStops = Math.max(0, routeGroup?.total_orders ?? 0) > 0;
+  const hasFullSelectedSolution =
+    selectedRouteSolution?._representation === "full";
+  const hasHydratedStops = !shouldHaveStops || routeSolutionStops.length > 0;
+  const isHydratingRouteGroupOrders =
+    hasActiveRouteGroup &&
+    !isLoading &&
+    shouldHaveStops &&
+    (selectedRouteSolution == null ||
+      !hasFullSelectedSolution ||
+      !hasHydratedStops);
   const {
     isActionBarVisible,
     actionBarReservedHeight,
@@ -36,10 +43,8 @@ export const RouteGroupsPageContent = ({
     expandedHeight: showOptimizeRow
       ? ACTION_BAR_HEIGHT_WITH_OPTIMIZE
       : ACTION_BAR_HEIGHT_WITHOUT_OPTIMIZE,
-    collapsedHeight: ACTION_BAR_COLLAPSED_HEIGHT,
   });
-  console.log(planState, "planState");
-  console.log(orders.length, "orders.length");
+
   return (
     <div className="relative flex h-full w-full min-w-0 flex-col overflow-hidden bg-[var(--color-primary)]/5">
       {hasActiveRouteGroup ? (
@@ -62,20 +67,23 @@ export const RouteGroupsPageContent = ({
           </div>
         </div>
       ) : !isLoading ? (
-        <>
-          <RouteGroupOrderList
-            onScrollContainer={handleScroll}
-            topReservedOffset={
-              isDesktopActionBarBehaviorEnabled ? actionBarReservedHeight : 0
-            }
-          />
-
-          {planState?.name.trim() === "Open" && orders.length > 0 ? (
-            <RouteGroupReadyFooter
-              onReadyForDelivery={routeGroupPageActions.routeReadyForDelivery}
+        <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden">
+          {isHydratingRouteGroupOrders ? (
+            <OrderLoadingList
+              variant="routeGroup"
+              topReservedOffset={
+                isDesktopActionBarBehaviorEnabled ? actionBarReservedHeight : 0
+              }
             />
-          ) : null}
-        </>
+          ) : (
+            <RouteGroupOrderList
+              onScrollContainer={handleScroll}
+              topReservedOffset={
+                isDesktopActionBarBehaviorEnabled ? actionBarReservedHeight : 0
+              }
+            />
+          )}
+        </div>
       ) : isLoading == "isOptimizing" ? (
         <OptimizationLoading
           message={

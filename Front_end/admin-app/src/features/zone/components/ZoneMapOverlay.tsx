@@ -62,7 +62,7 @@ export const ZoneMapOverlay = () => {
   if (!isZoneMode) {
     return (
       <>
-        <div className="pointer-events-auto absolute right-4 top-4 z-0">
+        <div className="pointer-events-auto absolute right-10 top-4 z-0">
           <BasicButton
             params={{
               variant: "secondaryInvers",
@@ -83,11 +83,12 @@ export const ZoneMapOverlay = () => {
   const hasZoneLoadFailure = zoneLoadStatus === "retryable_failure";
   const isPathEditing = pathEditSession != null;
   const hasActiveVersion =
-    typeof activeVersion?.id === "number" || typeof activeVersionId === "number";
+    typeof activeVersion?.id === "number" ||
+    typeof activeVersionId === "number";
 
   return (
     <>
-      <div className="pointer-events-auto absolute right-4 top-4 z-0">
+      <div className="pointer-events-auto absolute right-10 top-4 z-0">
         <div className="relative w-52 rounded-xl border border-[var(--color-muted)]/30 bg-[var(--color-page)]/95 p-3 shadow-lg backdrop-blur-sm">
           <button
             aria-label="Exit zone mode"
@@ -117,7 +118,8 @@ export const ZoneMapOverlay = () => {
           {hasEnsureFirstVersionFailure ? (
             <div className="flex flex-col gap-2">
               <p className="text-xs text-[var(--color-muted)]/60">
-                {ensureFirstVersionError ?? "Unable to initialize zone version."}
+                {ensureFirstVersionError ??
+                  "Unable to initialize zone version."}
               </p>
               <BasicButton
                 params={{

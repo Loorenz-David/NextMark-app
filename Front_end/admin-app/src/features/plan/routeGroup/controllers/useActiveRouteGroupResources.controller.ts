@@ -66,6 +66,7 @@ export const useActiveRouteGroupResourcesController = (planId: number | null) =>
 
   const {
     planState,
+    routeGroupState,
     routeSolutionsOrdered,
     bestRouteSolutionId,
     isSelectedSolutionOptimized,
@@ -74,6 +75,7 @@ export const useActiveRouteGroupResourcesController = (planId: number | null) =>
     boundaryLocations,
   } = useRouteGroupDerivedResources({
     plan: plan ?? null,
+    routeGroupStateId: routeGroup?.state_id ?? null,
     orders,
     routeSolutions,
     routeSolutionStops,
@@ -83,6 +85,7 @@ export const useActiveRouteGroupResourcesController = (planId: number | null) =>
   return {
     plan,
     planState,
+    routeGroupState,
     planStartDate,
     routeGroups,
     activeRouteGroupId,

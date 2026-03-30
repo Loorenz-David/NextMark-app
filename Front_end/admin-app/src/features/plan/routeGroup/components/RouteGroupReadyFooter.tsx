@@ -9,7 +9,7 @@ export const RouteGroupReadyFooter = ({
   onReadyForDelivery,
 }: RouteGroupReadyFooterProps) => {
   return (
-    <div className="border-t border-white/8 bg-[rgba(14,22,23,0.82)] px-4 py-4 backdrop-blur-[24px]">
+    <div className="flex mt-auto pb-25 flex-col justify-end items-end shrink-0    ">
       <BasicButton
         params={{
           variant: "primary",

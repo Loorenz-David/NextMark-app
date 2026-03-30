@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import { createContext, useContext } from 'react'
 import type { ReactNode } from 'react'
 
@@ -19,6 +20,7 @@ export type OrderContextValue = {
   handleOrderRowMouseLeave: () => void
   currentPage: number
   hasMorePages: boolean
+  isInitialLoading: boolean
   isLoadingNextPage: boolean
   loadNextPage: () => Promise<unknown>
   query: {

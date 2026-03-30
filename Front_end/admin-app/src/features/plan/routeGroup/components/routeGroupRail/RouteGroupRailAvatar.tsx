@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import { AnimatePresence, motion } from "framer-motion";
 
@@ -10,6 +10,7 @@ import type { RouteGroupRailItem } from "./types";
 import { RouteGroupRailPopoverContent } from "./RouteGroupRailPopoverContent";
 
 const DEFAULT_STATE_COLOR = "#6B7280";
+const HOVER_OPEN_DELAY_MS = 200;
 
 const withAlpha = (hexColor: string, alphaHex: string) => {
   if (!hexColor.startsWith("#")) return hexColor;
@@ -32,10 +33,52 @@ export const RouteGroupRailAvatar = ({
   isDropTarget = false,
 }: RouteGroupRailAvatarProps) => {
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
+  const hoverOpenTimeoutRef = useRef<number | null>(null);
+  const suppressHoverUntilLeaveRef = useRef(false);
   const completionRatio = Math.round(item.completionRatio);
   const stateColor = item.stateColor ?? DEFAULT_STATE_COLOR;
   const stateBorderColor = withAlpha(stateColor, item.isActive ? "CC" : "66");
   const fillHeight = `${completionRatio}%`;
+
+  const clearHoverOpenTimeout = useCallback(() => {
+    if (hoverOpenTimeoutRef.current != null) {
+      window.clearTimeout(hoverOpenTimeoutRef.current);
+      hoverOpenTimeoutRef.current = null;
+    }
+  }, []);
+
+  const schedulePopoverOpen = useCallback(() => {
+    if (suppressHoverUntilLeaveRef.current) {
+      return;
+    }
+    clearHoverOpenTimeout();
+    hoverOpenTimeoutRef.current = window.setTimeout(() => {
+      setIsPopoverOpen(true);
+      hoverOpenTimeoutRef.current = null;
+    }, HOVER_OPEN_DELAY_MS);
+  }, [clearHoverOpenTimeout]);
+
+  const handlePointerLeave = useCallback(() => {
+    clearHoverOpenTimeout();
+    suppressHoverUntilLeaveRef.current = false;
+    setIsPopoverOpen(false);
+  }, [clearHoverOpenTimeout]);
+
+  useEffect(() => {
+    return () => {
+      clearHoverOpenTimeout();
+    };
+  }, [clearHoverOpenTimeout]);
+
+  useEffect(() => {
+    if (!isDropTarget) {
+      return;
+    }
+
+    suppressHoverUntilLeaveRef.current = true;
+    clearHoverOpenTimeout();
+    setIsPopoverOpen(false);
+  }, [clearHoverOpenTimeout, isDropTarget]);
 
   const avatarButton = (
     <button
@@ -44,10 +87,10 @@ export const RouteGroupRailAvatar = ({
         item.isActive ? "bg-white/[0.08]" : "hover:bg-white/[0.04]"
       }`}
       onClick={() => onClick(item)}
-      onMouseEnter={() => setIsPopoverOpen(true)}
-      onMouseLeave={() => setIsPopoverOpen(false)}
+      onMouseEnter={schedulePopoverOpen}
+      onMouseLeave={handlePointerLeave}
       onFocus={() => setIsPopoverOpen(true)}
-      onBlur={() => setIsPopoverOpen(false)}
+      onBlur={handlePointerLeave}
     >
       <span className="relative flex h-12 w-12 items-center justify-center">
         <motion.span
@@ -155,8 +198,11 @@ export const RouteGroupRailAvatar = ({
       floatingClassName="z-[220]"
     >
       <div
-        onMouseEnter={() => setIsPopoverOpen(true)}
-        onMouseLeave={() => setIsPopoverOpen(false)}
+        onMouseEnter={() => {
+          clearHoverOpenTimeout();
+          setIsPopoverOpen(true);
+        }}
+        onMouseLeave={handlePointerLeave}
       >
         <RouteGroupRailPopoverContent item={item} />
       </div>

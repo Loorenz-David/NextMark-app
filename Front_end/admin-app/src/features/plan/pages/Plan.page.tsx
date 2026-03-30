@@ -5,7 +5,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 import { useVisibleRoutePlans } from "../store/useRoutePlan.selector";
 
-import { PlanList, PlanMainHeader } from "../components";
+import { PlanList, PlanLoadingList, PlanMainHeader } from "../components";
 import { usePlanHeaderAction } from "../actions/usePlanActions";
 import { useRoutePlanListStats } from "../store/routePlanList.selector";
 import { BasicButton } from "@/shared/buttons/BasicButton";
@@ -75,9 +75,9 @@ export const RoutePlanPage = ({
     }, [])
 
     const {
-      currentPage,
       hasMore,
       isLoadingPage,
+      isReplacingList,
       loadFirstPage,
       loadNextPage,
     } = usePlanPaginationController({
@@ -87,6 +87,8 @@ export const RoutePlanPage = ({
     useEffect(()=>{
         void loadFirstPage()
     }, [loadFirstPage])
+
+    const isListLoading = isReplacingList
 
 
     return ( 
@@ -101,19 +103,25 @@ export const RoutePlanPage = ({
             applyFilterSelection={handleFilterSelection}
         />
             <div ref={scrollContainerRef} className="w-full h-full flex flex-col overflow-y-auto scroll-thin">
-                <PlanList plans={plans} droppable={true}/>
-                <div className="flex justify-center px-5 pb-8 pt-2">
-                  <BasicButton
-                    params={{
-                      onClick: () => { void loadNextPage() },
-                      disabled: isLoadingPage || !hasMore,
-                      variant: 'secondary',
-                      ariaLabel: 'Load next page of plans',
-                    }}
-                  >
-                    {isLoadingPage ? 'Loading…' : hasMore ? 'Show more' : 'No more plans'}
-                  </BasicButton>
-                </div>
+                {isListLoading ? (
+                  <PlanLoadingList count={4} />
+                ) : (
+                  <PlanList plans={plans} droppable={true}/>
+                )}
+                {!isListLoading ? (
+                  <div className="flex justify-center px-5 pb-8 pt-2">
+                    <BasicButton
+                      params={{
+                        onClick: () => { void loadNextPage() },
+                        disabled: isLoadingPage || !hasMore,
+                        variant: 'secondary',
+                        ariaLabel: 'Load next page of plans',
+                      }}
+                    >
+                      {isLoadingPage ? 'Loading…' : hasMore ? 'Show more' : 'No more plans'}
+                    </BasicButton>
+                  </div>
+                ) : null}
             </div>
         </div>
      );

@@ -9,7 +9,7 @@ import { useOrderSelectionListActions } from '../actions/orderSelection.actions'
 import { useBaseControlls, useMapManager, useSectionManager } from '@/shared/resource-manager/useResourceManager'
 import { useOrderCircleSelectionFlow } from '../flows/orderCircleSelection.flow'
 import { useOrderBatchSelectionResolveFlow } from '../flows/orderBatchSelectionResolve.flow'
-import { useOrderStats } from '../store/orderList.store'
+import { selectOrderListLoading, useOrderListStore, useOrderStats } from '../store/orderList.store'
 import {
   useHoveredOrderClientId,
   useOrderMapInteractionActions,
@@ -33,6 +33,7 @@ type OrderProviderProps = PropsWithChildren<{
 export const OrderProvider = ({ children, scrollContainerRef }: OrderProviderProps) => {
   const isFixtureMode = isRouteOperationsFixtureModeEnabled()
   const orders = useVisibleOrders()
+  const isOrderListLoading = useOrderListStore(selectOrderListLoading)
   const orderStats = useOrderStats()
   const orderActions = useOrderActions()
   const isSelectionMode = useOrderSelectionMode()
@@ -98,7 +99,7 @@ export const OrderProvider = ({ children, scrollContainerRef }: OrderProviderPro
     [setHovered],
   )
 
-  const handleOrderMarkerMouseLeave = useCallback((_event: MouseEvent, _order: Order) => {
+  const handleOrderMarkerMouseLeave = useCallback(() => {
     clearHovered('map')
   }, [clearHovered])
 
@@ -212,6 +213,7 @@ export const OrderProvider = ({ children, scrollContainerRef }: OrderProviderPro
       handleOrderRowMouseLeave,
       currentPage,
       hasMorePages: hasMore,
+      isInitialLoading: isOrderListLoading && orders.length === 0,
       isLoadingNextPage: isLoadingPage,
       loadNextPage,
     }),
@@ -223,6 +225,7 @@ export const OrderProvider = ({ children, scrollContainerRef }: OrderProviderPro
       hoveredClientId,
       isOrderSelected,
       isSelectionMode,
+      isOrderListLoading,
       isLoadingPage,
       loadNextPage,
       orderActions,

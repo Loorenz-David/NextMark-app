@@ -116,28 +116,28 @@ export const PlanCard = ({ plan, isOver, dropFeedback }: PropsPlanCard) => {
       </div>
       <div className="flex  flex-col gap-2 text-xs text-[var(--color-muted)]">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 text-[12px]">
+            <LayersIcon className="h-3 w-3 app-icon" />
+            <span>
+              {routeGroupCount} {routeGroupCount === 1 ? "zone" : "zones"}
+            </span>
+          </div>
+          <div className="flex items-center gap-2 text-[12px]">
             <OrderIcon className="h-3 w-3 app-icon" />
             <span>{orderCount} Orders</span>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 text-[12px]">
             <ItemIcon className="h-3 w-3 app-icon" />
-            <span>{itemCount} </span>
+            <span>{itemCount}</span>
           </div>
-          <div className="flex items-center gap-2">
-            <WeightIcon className="h-3 w-3 app-icon" />
-            <span>{formatMetric(totalWeight, "kg")}</span>
+          <div className="flex items-center gap-2 text-[12px]">
+            <WeightIcon className="h-2 w-2 app-icon" />
+            <span>{formatMetric(totalWeight, "kg")} </span>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 text-[12px]">
             <DimensionsIcon className="h-3 w-3 app-icon" />
-            <span>{formatMetric(totalVolume, "㎥")}</span>
+            <span>{formatMetric(totalVolume, "㎥")} </span>
           </div>
-        </div>
-        <div className="flex items-center gap-2">
-          <LayersIcon className="h-3 w-3 app-icon" />
-          <span>
-            {routeGroupCount} {routeGroupCount === 1 ? "zone" : "zones"}
-          </span>
         </div>
       </div>
     </motion.div>

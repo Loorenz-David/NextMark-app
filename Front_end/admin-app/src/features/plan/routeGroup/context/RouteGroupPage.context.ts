@@ -16,6 +16,7 @@ export type RouteGroupPageStateContextValue = {
   planId: number | null
   plan: DeliveryPlan | null
   planState: DeliveryPlanState | null
+  routeGroupState: DeliveryPlanState | null
   routeGroups: RouteGroup[]
   routeGroup: RouteGroup | null
   routeGroupId: number | null

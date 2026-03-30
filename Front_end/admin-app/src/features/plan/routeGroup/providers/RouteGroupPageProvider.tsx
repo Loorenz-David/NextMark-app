@@ -42,6 +42,7 @@ export function RouteGroupPageProvider({
   const {
     plan,
     planState,
+    routeGroupState,
     planStartDate,
     routeGroups,
     activeRouteGroupId,
@@ -124,6 +125,7 @@ export function RouteGroupPageProvider({
       planId,
       plan: plan ?? null,
       planState,
+      routeGroupState,
       routeGroups,
       routeGroup: routeGroup ?? null,
       routeGroupId,
@@ -147,6 +149,7 @@ export function RouteGroupPageProvider({
       planId,
       plan,
       planState,
+      routeGroupState,
       routeGroups,
       routeGroup,
       routeGroupId,

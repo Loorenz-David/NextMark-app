@@ -1,17 +1,21 @@
-import type { RefObject } from 'react'
-import { useEffect, useRef, useState } from 'react'
+import type { RefObject } from "react";
+import { useEffect, useRef, useState } from "react";
 
-import type { StackComponentProps } from '@/shared/stack-manager/types'
-import { BasicButton } from '@/shared/buttons/BasicButton'
-import { useScrollHideActionBar } from '@/shared/hooks/useScrollHideActionBar'
+import { BasicButton } from "@/shared/buttons/BasicButton";
+import { useScrollHideActionBar } from "@/shared/hooks/useScrollHideActionBar";
+import { OrderLoadingList } from "@/shared/loadingCards/order";
 
-import { OrderMainHeader } from '../components/pageHeaders/OrderMainHeader'
-import { OrderList } from '../components/lists/OrderList'
-import { OrderProvider } from '../context/OrderProvider'
-import { useOrderContext } from '../context/OrderContext'
-import type { Order } from '../types/order'
+import { OrderMainHeader } from "../components/pageHeaders/OrderMainHeader";
+import { OrderList } from "../components/lists/OrderList";
+import { OrderProvider } from "../context/OrderProvider";
+import { useOrderContext } from "../context/OrderContext";
+import type { Order } from "../types/order";
 
-const OrderMainContent = ({ scrollContainerRef }: { scrollContainerRef: RefObject<HTMLDivElement | null> }) => {
+const OrderMainContent = ({
+  scrollContainerRef,
+}: {
+  scrollContainerRef: RefObject<HTMLDivElement | null>;
+}) => {
   const {
     orders,
     orderActions,
@@ -24,40 +28,43 @@ const OrderMainContent = ({ scrollContainerRef }: { scrollContainerRef: RefObjec
     handleOrderRowMouseEnter,
     handleOrderRowMouseLeave,
     hasMorePages,
+    isInitialLoading,
     isLoadingNextPage,
     loadNextPage,
-  } = useOrderContext()
-  const actionStackRef = useRef<HTMLDivElement | null>(null)
-  const [actionStackHeight, setActionStackHeight] = useState(0)
+  } = useOrderContext();
+  const actionStackRef = useRef<HTMLDivElement | null>(null);
+  const [actionStackHeight, setActionStackHeight] = useState(0);
 
   useEffect(() => {
-    const element = actionStackRef.current
+    const element = actionStackRef.current;
     if (!element) {
-      setActionStackHeight(0)
-      return
+      setActionStackHeight(0);
+      return;
     }
 
     const updateHeight = () => {
-      const nextHeight = element.getBoundingClientRect().height
-      setActionStackHeight((current) => (current === nextHeight ? current : nextHeight))
-    }
+      const nextHeight = element.getBoundingClientRect().height;
+      setActionStackHeight((current) =>
+        current === nextHeight ? current : nextHeight,
+      );
+    };
 
-    updateHeight()
+    updateHeight();
 
-    if (typeof ResizeObserver === 'undefined') {
-      return
+    if (typeof ResizeObserver === "undefined") {
+      return;
     }
 
     const observer = new ResizeObserver(() => {
-      updateHeight()
-    })
+      updateHeight();
+    });
 
-    observer.observe(element)
+    observer.observe(element);
 
     return () => {
-      observer.disconnect()
-    }
-  }, [query.filters, isSelectionMode])
+      observer.disconnect();
+    };
+  }, [query.filters, isSelectionMode]);
 
   const {
     isActionBarVisible,
@@ -68,19 +75,22 @@ const OrderMainContent = ({ scrollContainerRef }: { scrollContainerRef: RefObjec
     enabled: true,
     expandedHeight: actionStackHeight,
     collapsedHeight: 0,
-  })
+  });
 
   const handleOpenOrder = (order: Order) => {
     orderActions.openOrderDetail(
-      { clientId: order.client_id, mode: 'view', openSource: 'card' },
-      {pageClass:'bg-[var(--color-muted)]/10 ', borderLeft:'rgb(var(--color-light-blue-r),0.7)'}
-    )
-  }
+      { clientId: order.client_id, mode: "view", openSource: "card" },
+      {
+        pageClass: "bg-[var(--color-muted)]/10 ",
+        borderLeft: "rgb(var(--color-light-blue-r),0.7)",
+      },
+    );
+  };
 
   return (
     <div className="relative flex h-full w-full flex-col bg-[var(--color-primary)]/5">
-      <OrderMainHeader 
-        onCreate={() => orderActions.openOrderForm({ mode: 'create' })}
+      <OrderMainHeader
+        onCreate={() => orderActions.openOrderForm({ mode: "create" })}
         onEnterSelectionMode={orderSelectionActions.handleEnterSelectionMode}
         onExitSelectionMode={orderSelectionActions.handleExitSelectionMode}
         onSelectAllFiltered={orderSelectionActions.handleSelectAllFiltered}
@@ -103,49 +113,59 @@ const OrderMainContent = ({ scrollContainerRef }: { scrollContainerRef: RefObjec
       >
         <div
           style={{
-            paddingTop: isDesktopActionBarBehaviorEnabled ? `${actionBarReservedHeight}px` : undefined,
-            transition: 'padding-top 220ms cubic-bezier(0.22, 1, 0.36, 1)',
+            paddingTop: isDesktopActionBarBehaviorEnabled
+              ? `${actionBarReservedHeight}px`
+              : undefined,
+            transition: "padding-top 220ms cubic-bezier(0.22, 1, 0.36, 1)",
           }}
         >
-          <OrderList
-            orders={orders}
-            scrollContainerRef={scrollContainerRef}
-            isSelectionMode={isSelectionMode}
-            isOrderSelected={isOrderSelected}
-            onToggleSelection={orderSelectionActions.handleToggleOrderSelection}
-            onOpenOrder={handleOpenOrder}
-            onArchive={orderActions.handleArchiveOrder}
-            onUnarchive={orderActions.handleUnarchiveOrder}
-            hoveredClientId={hoveredClientId}
-            onOrderMouseEnter={handleOrderRowMouseEnter}
-            onOrderMouseLeave={handleOrderRowMouseLeave}
-          />
+          {isInitialLoading ? (
+            <OrderLoadingList variant="orderMain" count={6} />
+          ) : (
+            <OrderList
+              orders={orders}
+              scrollContainerRef={scrollContainerRef}
+              isSelectionMode={isSelectionMode}
+              isOrderSelected={isOrderSelected}
+              onToggleSelection={
+                orderSelectionActions.handleToggleOrderSelection
+              }
+              onOpenOrder={handleOpenOrder}
+              onArchive={orderActions.handleArchiveOrder}
+              onUnarchive={orderActions.handleUnarchiveOrder}
+              hoveredClientId={hoveredClientId}
+              onOrderMouseEnter={handleOrderRowMouseEnter}
+              onOrderMouseLeave={handleOrderRowMouseLeave}
+            />
+          )}
         </div>
       </div>
-      {(isLoadingNextPage || hasMorePages) && (
+      {!isInitialLoading && (isLoadingNextPage || hasMorePages) && (
         <div className="flex justify-center  px-4 pb-4 pt-3">
           <BasicButton
             params={{
-              onClick: () => { void loadNextPage() },
+              onClick: () => {
+                void loadNextPage();
+              },
               disabled: isLoadingNextPage || !hasMorePages,
-              variant: 'secondary',
-              ariaLabel: 'Load next page of orders',
+              variant: "secondary",
+              ariaLabel: "Load next page of orders",
             }}
           >
-            {isLoadingNextPage ? 'Loading…' : 'Show more'}
+            {isLoadingNextPage ? "Loading…" : "Show more"}
           </BasicButton>
         </div>
       )}
     </div>
-  )
-}
+  );
+};
 
-export const OrderMainPage = (_: StackComponentProps<undefined>) => {
-  const scrollContainerRef = useRef<HTMLDivElement | null>(null)
+export const OrderMainPage = () => {
+  const scrollContainerRef = useRef<HTMLDivElement | null>(null);
 
   return (
     <OrderProvider scrollContainerRef={scrollContainerRef}>
       <OrderMainContent scrollContainerRef={scrollContainerRef} />
     </OrderProvider>
-  )
-}
+  );
+};

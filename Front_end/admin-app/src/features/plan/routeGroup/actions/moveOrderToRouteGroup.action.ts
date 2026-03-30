@@ -172,11 +172,10 @@ export const moveOrderToRouteGroupAction = async (params: {
         prevent_event_bus: false,
       }),
     commit: (response) => {
-      applyResponse(
-        response.data,
-        params.onDrift ?? (() => {}),
-        [params.sourceRouteGroupId, params.targetRouteGroupId],
-      );
+      applyResponse(response.data, params.onDrift ?? (() => {}), [
+        params.sourceRouteGroupId,
+        params.targetRouteGroupId,
+      ]);
       success = true;
     },
     rollback: (snapshot) => {

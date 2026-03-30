@@ -1,6 +1,7 @@
 export { RouteGroupOrderList } from './RouteGroupOrderList'
 export { RouteGroupReadyFooter } from './RouteGroupReadyFooter'
 export { RouteOptimizationDropdownButton } from './RouteOptimizationDropdownButton'
+export { OrderLoadingList as RouteGroupOrderLoadingList } from '@/shared/loadingCards/order'
 export { RouteStopDragOverlay } from './overlays/RouteStopDragOverlay'
 export { RouteStopWarnings } from './warnings/RouteStopWarnings'
 export { RouteSolutionWarnings } from './warnings/RouteSolutionWarnings'
