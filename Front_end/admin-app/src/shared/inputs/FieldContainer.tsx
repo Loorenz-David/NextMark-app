@@ -1,9 +1,9 @@
-import { InputWarning, type InputWarningState } from './InputWarning'
-import type { InputWarningController } from './useInputWarning.hook'
-import type { ReactNode } from 'react'
-import { InfoHover } from '@/shared/layout/InfoHover'
-import type { InfoHoverMessage } from '@/shared/layout/InfoHover'
-import type { Placement } from '@floating-ui/react'
+import { InputWarning, type InputWarningState } from "./InputWarning";
+import type { InputWarningController } from "./useInputWarning.hook";
+import type { ReactNode } from "react";
+import { InfoHover } from "@/shared/layout/InfoHover";
+import type { InfoHoverMessage } from "@/shared/layout/InfoHover";
+import type { Placement } from "@floating-ui/react";
 
 export function Field({
   label,
@@ -12,7 +12,7 @@ export function Field({
   warning,
   warningController,
   gap = 1,
-  warningPlacement ='atBottom',
+  warningPlacement = "atBottom",
   info,
   infoTriggerVariant,
   infoTriggerText,
@@ -24,28 +24,28 @@ export function Field({
   infoOffset,
   infoInteractive,
 }: {
-  label: string
-  children: ReactNode
-  required?: boolean
-  warning?: InputWarningState
-  warningController?: InputWarningController
-  gap?: number
-  warningPlacement?: 'atBottom' | 'besidesLabel'
-  info?: string | InfoHoverMessage | InfoHoverMessage[]
-  infoTriggerVariant?: 'icon' | 'text'
-  infoTriggerText?: string
-  infoTriggerClassName?: string
-  infoOverlayClassName?: string
-  infoIconClassName?: string
-  infoRenderInPortal?: boolean
-  infoPlacement?: Placement
-  infoOffset?: number
-  infoInteractive?: boolean
+  label: string;
+  children: ReactNode;
+  required?: boolean;
+  warning?: InputWarningState;
+  warningController?: InputWarningController;
+  gap?: number;
+  warningPlacement?: "atBottom" | "besidesLabel";
+  info?: string | InfoHoverMessage | InfoHoverMessage[];
+  infoTriggerVariant?: "icon" | "text";
+  infoTriggerText?: string;
+  infoTriggerClassName?: string;
+  infoOverlayClassName?: string;
+  infoIconClassName?: string;
+  infoRenderInPortal?: boolean;
+  infoPlacement?: Placement;
+  infoOffset?: number;
+  infoInteractive?: boolean;
 }) {
-  const resolvedWarning = warningController?.warning ?? warning
-  const resolvedInfo = typeof info === 'string' ? { content: info } : info
+  const resolvedWarning = warningController?.warning ?? warning;
+  const resolvedInfo = typeof info === "string" ? { content: info } : info;
   return (
-    <label className={`flex w-full flex-col  ${'gap-' + gap}`}>
+    <label className={`flex w-full flex-col py-1  ${"gap-" + gap}`}>
       <div className="flex justify-between">
         <div className="flex items-center gap-2">
           <span className="text-[10px] font-semibold text-[var(--color-muted)]">
@@ -67,16 +67,14 @@ export function Field({
             />
           ) : null}
         </div>
-        {warningPlacement == 'besidesLabel' && 
-          <div>
-              {resolvedWarning && <InputWarning {...resolvedWarning} />}
-          </div>
-        }
+        {warningPlacement == "besidesLabel" && (
+          <div>{resolvedWarning && <InputWarning {...resolvedWarning} />}</div>
+        )}
       </div>
       {children}
-      {warningPlacement == 'atBottom' && 
-        resolvedWarning && <InputWarning {...resolvedWarning} />
-      }
+      {warningPlacement == "atBottom" && resolvedWarning && (
+        <InputWarning {...resolvedWarning} />
+      )}
     </label>
-  )
+  );
 }

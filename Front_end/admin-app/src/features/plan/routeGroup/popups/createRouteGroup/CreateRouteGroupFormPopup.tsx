@@ -22,8 +22,7 @@ export const CreateRouteGroupFormPopup = ({
   });
 
   const headerSubtitle = useMemo(
-    () =>
-      "Create a zone-backed route group or leave the zone empty to create a no-zone group.",
+    () => "Create a route group and add a zone.",
     [],
   );
 

@@ -1,33 +1,33 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from "react";
 
-import { BasicButton } from '@/shared/buttons/BasicButton'
+import { BasicButton } from "@/shared/buttons/BasicButton";
 
-import { TimeColumn } from './components/TimeColumn'
-import { TimePickerPopover } from './components/TimePickerPopover'
+import { TimeColumn } from "./components/TimeColumn";
+import { TimePickerPopover } from "./components/TimePickerPopover";
 
 type CustomNumberPickerProps = {
-  selectedValue: number | null | undefined
-  onChange: (value: number) => void
-  min: number
-  max: number
-  label: string
-  disabled?: boolean
-  className?: string
-  containerClassName?: string
-  popoverWidth?: number
-  popoverHeight?: number
-}
+  selectedValue: number | null | undefined;
+  onChange: (value: number) => void;
+  min: number;
+  max: number;
+  label: string;
+  disabled?: boolean;
+  className?: string;
+  containerClassName?: string;
+  popoverWidth?: number;
+  popoverHeight?: number;
+};
 
 const clamp = (value: number, min: number, max: number) =>
-  Math.max(min, Math.min(max, value))
+  Math.max(min, Math.min(max, value));
 
 const sanitizeRange = (min: number, max: number) => {
-  const safeMin = Number.isFinite(min) ? Math.trunc(min) : 0
-  const safeMax = Number.isFinite(max) ? Math.trunc(max) : safeMin
+  const safeMin = Number.isFinite(min) ? Math.trunc(min) : 0;
+  const safeMax = Number.isFinite(max) ? Math.trunc(max) : safeMin;
   return safeMin <= safeMax
     ? { min: safeMin, max: safeMax }
-    : { min: safeMax, max: safeMin }
-}
+    : { min: safeMax, max: safeMin };
+};
 
 export const CustomNumberPicker = ({
   selectedValue,
@@ -37,61 +37,69 @@ export const CustomNumberPicker = ({
   label,
   disabled = false,
   className,
-  containerClassName,
+  containerClassName = "w-full h-10  rounded-xl border border-[var(--color-border)] bg-[var(--color-page)]  text-sm text-[var(--color-text)]",
   popoverWidth = 220,
   popoverHeight = 260,
 }: CustomNumberPickerProps) => {
-  const range = useMemo(() => sanitizeRange(min, max), [min, max])
+  const range = useMemo(() => sanitizeRange(min, max), [min, max]);
   const safeSelected = useMemo(
     () => clamp(Number(selectedValue ?? range.min), range.min, range.max),
     [selectedValue, range.max, range.min],
-  )
+  );
   const values = useMemo(
-    () => Array.from({ length: range.max - range.min + 1 }, (_, index) => range.min + index),
+    () =>
+      Array.from(
+        { length: range.max - range.min + 1 },
+        (_, index) => range.min + index,
+      ),
     [range.max, range.min],
-  )
+  );
 
-  const [open, setOpen] = useState(false)
-  const [draft, setDraft] = useState(safeSelected)
+  const [open, setOpen] = useState(false);
+  const [draft, setDraft] = useState(safeSelected);
 
   useEffect(() => {
     if (!open) {
-      setDraft(safeSelected)
+      setDraft(safeSelected);
     }
-  }, [open, safeSelected])
+  }, [open, safeSelected]);
 
   const openPicker = () => {
-    if (disabled) return
-    setDraft(safeSelected)
-    setOpen(true)
-  }
+    if (disabled) return;
+    setDraft(safeSelected);
+    setOpen(true);
+  };
 
   const closeWithCancel = (nextOpen: boolean) => {
-    if (disabled) return
+    if (disabled) return;
     if (nextOpen) {
-      openPicker()
-      return
+      openPicker();
+      return;
     }
-    setDraft(safeSelected)
-    setOpen(false)
-  }
+    setDraft(safeSelected);
+    setOpen(false);
+  };
 
   const handleDone = () => {
-    onChange(clamp(draft, range.min, range.max))
-    setOpen(false)
-  }
+    onChange(clamp(draft, range.min, range.max));
+    setOpen(false);
+  };
 
   const inputReference = (
     <div
-      className={`flex h-10 w-full cursor-pointer items-center rounded-xl border border-[var(--color-border)] bg-[var(--color-page)] px-3 text-sm text-[var(--color-text)] ${
-        disabled ? 'opacity-60' : ''
-      } ${containerClassName ?? className ?? ''}`}
+      className={`flex cursor-pointer items-center px-3   ${
+        disabled ? "opacity-60" : ""
+      } ${containerClassName ?? className ?? ""}`}
       onClick={openPicker}
       onKeyDown={(event) => {
-        if (disabled) return
-        if (event.key === 'Enter' || event.key === ' ' || event.key === 'ArrowDown') {
-          event.preventDefault()
-          openPicker()
+        if (disabled) return;
+        if (
+          event.key === "Enter" ||
+          event.key === " " ||
+          event.key === "ArrowDown"
+        ) {
+          event.preventDefault();
+          openPicker();
         }
       }}
       role="button"
@@ -101,7 +109,7 @@ export const CustomNumberPicker = ({
     >
       {safeSelected}
     </div>
-  )
+  );
 
   return (
     <TimePickerPopover
@@ -125,39 +133,39 @@ export const CustomNumberPicker = ({
       <div
         className="flex items-center justify-end gap-2 border-t border-white/[0.08] p-3"
         onPointerDown={(event) => {
-          event.stopPropagation()
+          event.stopPropagation();
         }}
         onMouseDown={(event) => {
-          event.stopPropagation()
+          event.stopPropagation();
         }}
         onClick={(event) => {
-          event.stopPropagation()
+          event.stopPropagation();
         }}
       >
         <BasicButton
           params={{
-            variant: 'ghost',
+            variant: "ghost",
             onClick: () => {
-              setDraft(safeSelected)
-              setOpen(false)
+              setDraft(safeSelected);
+              setOpen(false);
             },
-            className: 'px-3 py-1 text-xs text-[var(--color-muted)]',
-            ariaLabel: 'Cancel number selection',
+            className: "px-3 py-1 text-xs text-[var(--color-muted)]",
+            ariaLabel: "Cancel number selection",
           }}
         >
           Cancel
         </BasicButton>
         <BasicButton
           params={{
-            variant: 'secondary',
+            variant: "secondary",
             onClick: handleDone,
-            className: 'px-3 py-1 text-xs',
-            ariaLabel: 'Confirm number selection',
+            className: "px-3 py-1 text-xs",
+            ariaLabel: "Confirm number selection",
           }}
         >
           Done
         </BasicButton>
       </div>
     </TimePickerPopover>
-  )
-}
+  );
+};

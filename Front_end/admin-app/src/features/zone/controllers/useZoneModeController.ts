@@ -5,13 +5,16 @@ import { useMessageHandler } from "@shared-message-handler";
 import { sessionLocationService } from "@/app/services/sessionLocation.service";
 import { zoneApi } from "@/features/zone/api/zone.api";
 import {
+  selectWorkingZoneVersion,
+  selectWorkingZoneVersionId,
+  useZoneVersionStore,
+} from "@/features/zone/store/zoneVersion.store";
+import {
   selectIsLoadingZonesForVersion,
   selectZoneLoadErrorForVersion,
   selectZoneLoadStatusForVersion,
   selectZonePathEditSession,
   selectZonesByVersion,
-  selectWorkingZoneVersion,
-  selectWorkingZoneVersionId,
   useZoneStore,
 } from "@/features/zone/store/zone.store";
 import type { GeoJSONPolygon } from "@/features/zone/types";
@@ -26,15 +29,15 @@ export function useZoneModeController() {
   const { showMessage } = useMessageHandler();
 
   const isZoneMode = useZoneStore((state) => state.isZoneMode);
-  const versions = useZoneStore((state) => state.versions);
+  const versions = useZoneVersionStore((state) => state.versions);
   const drawnGeometry = useZoneStore((state) => state.drawnGeometry);
   const pathEditSession = useZoneStore(selectZonePathEditSession);
   const hoveredZoneId = useZoneStore((state) => state.hoveredZoneId);
-  const isLoadingVersions = useZoneStore((state) => state.isLoadingVersions);
-  const ensureFirstVersionStatus = useZoneStore(
+  const isLoadingVersions = useZoneVersionStore((state) => state.isLoadingVersions);
+  const ensureFirstVersionStatus = useZoneVersionStore(
     (state) => state.ensureFirstVersionStatus,
   );
-  const ensureFirstVersionError = useZoneStore(
+  const ensureFirstVersionError = useZoneVersionStore(
     (state) => state.ensureFirstVersionError,
   );
   const setIsZoneMode = useZoneStore((state) => state.setIsZoneMode);
@@ -49,20 +52,22 @@ export function useZoneModeController() {
   );
   const replaceZonesForVersion = useZoneStore((state) => state.replaceZonesForVersion);
   const setLoadingZones = useZoneStore((state) => state.setLoadingZones);
-  const setVersions = useZoneStore((state) => state.setVersions);
-  const setSelectedVersionId = useZoneStore((state) => state.setSelectedVersionId);
-  const setLoadingVersions = useZoneStore((state) => state.setLoadingVersions);
+  const setVersions = useZoneVersionStore((state) => state.setVersions);
+  const setSelectedVersionId = useZoneVersionStore(
+    (state) => state.setSelectedVersionId,
+  );
+  const setLoadingVersions = useZoneVersionStore((state) => state.setLoadingVersions);
   const setZoneLoadStatus = useZoneStore((state) => state.setZoneLoadStatus);
-  const setEnsureFirstVersionStatus = useZoneStore(
+  const setEnsureFirstVersionStatus = useZoneVersionStore(
     (state) => state.setEnsureFirstVersionStatus,
   );
-  const resetEnsureFirstVersionState = useZoneStore(
+  const resetEnsureFirstVersionState = useZoneVersionStore(
     (state) => state.resetEnsureFirstVersionState,
   );
   const upsertZone = useZoneStore((state) => state.upsertZone);
   const removeZoneOptimistic = useZoneStore((state) => state.removeZoneOptimistic);
-  const workingVersion = useZoneStore(selectWorkingZoneVersion);
-  const workingVersionId = useZoneStore(selectWorkingZoneVersionId);
+  const workingVersion = useZoneVersionStore(selectWorkingZoneVersion);
+  const workingVersionId = useZoneVersionStore(selectWorkingZoneVersionId);
   const isLoadingZones = useZoneStore((state) =>
     selectIsLoadingZonesForVersion(state, workingVersion?.id),
   );

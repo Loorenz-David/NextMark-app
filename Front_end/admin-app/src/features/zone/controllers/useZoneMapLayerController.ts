@@ -3,11 +3,11 @@ import { useEffect, useMemo, useState } from "react";
 import { useShallow } from "zustand/react/shallow";
 
 import { mapZoneStateToRenderableDefinition } from "@/features/zone/domain/zoneState.mapper";
+import { selectWorkingZoneVersionId, useZoneVersionStore } from "@/features/zone/store/zoneVersion.store";
 import {
   selectIsZoneMode,
   selectZonePathEditSession,
   selectVisibleZones,
-  selectWorkingZoneVersionId,
   useZoneStore,
 } from "@/features/zone/store/zone.store";
 import {
@@ -24,7 +24,7 @@ export const useZoneMapLayerController = () => {
 
   const isZoneMode = useZoneStore(selectIsZoneMode);
   const pathEditSession = useZoneStore(selectZonePathEditSession);
-  const workingVersionId = useZoneStore(selectWorkingZoneVersionId);
+  const workingVersionId = useZoneVersionStore(selectWorkingZoneVersionId);
   const closeZoneDetailsPopover = useZoneStore(
     (state) => state.closeZoneDetailsPopover,
   );

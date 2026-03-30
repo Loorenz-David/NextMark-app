@@ -1,7 +1,6 @@
-import { useState, useEffect, useMemo, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import type { ReactNode } from "react";
 import { hasFormChanges, makeInitialFormCopy } from "@shared-domain";
-import { useShallow } from "zustand/react/shallow";
 import { PlanFormContextProvider } from "./PlanForm.context";
 import { usePlanFormSetters } from "./planForm.setters";
 import { usePlanFormWarnings } from "./PlanForm.warnings";
@@ -11,13 +10,6 @@ import type { DeliveryPlan } from "../../types/plan";
 import { usePlanFormContextData } from "./PlanFormContextData";
 import { usePlanFormBootstrapFlow } from "./planFormBootstrap.flow";
 import type { PopupPayload } from "./PlanForm.types";
-import type { SelectableZone } from "./PlanForm.types";
-import {
-  selectIsLoadingZonesForVersion,
-  selectWorkingZoneVersionId,
-  selectZonesByVersion,
-  useZoneStore,
-} from "@/features/zone/store/zone.store";
 
 type PlanFormProvider = {
   children: ReactNode;
@@ -36,31 +28,6 @@ export const PlanFormProvider = ({
   const [planForm, setPlanForm] = useState<DeliveryPlan>(initialPlanForm);
   const [selectedZoneIds, setSelectedZoneIds] = useState<number[]>([]);
   const initialPlanFormRef = useRef<DeliveryPlan | null>(null);
-
-  const isLoadingZoneVersions = useZoneStore(
-    (state) => state.isLoadingVersions,
-  );
-  const workingZoneVersionId = useZoneStore(selectWorkingZoneVersionId);
-  const zonesForWorkingVersion = useZoneStore(
-    useShallow((state) => selectZonesByVersion(state, workingZoneVersionId)),
-  );
-  const isLoadingZonesForWorkingVersion = useZoneStore((state) =>
-    selectIsLoadingZonesForVersion(state, workingZoneVersionId),
-  );
-
-  const availableZones = useMemo<SelectableZone[]>(() => {
-    return zonesForWorkingVersion
-      .filter((zone) => typeof zone.id === "number")
-      .map((zone) => ({
-        id: zone.id,
-        name: zone.name?.trim() || `Zone ${zone.id}`,
-      }));
-  }, [zonesForWorkingVersion]);
-
-  const isZonesLoading =
-    isLoadingZoneVersions ||
-    (typeof workingZoneVersionId === "number" &&
-      isLoadingZonesForWorkingVersion);
 
   const planFormWarnings = usePlanFormWarnings();
   const planSetters = usePlanFormSetters({
@@ -105,16 +72,6 @@ export const PlanFormProvider = ({
   };
 
   useEffect(() => {
-    if (availableZones.length === 0) {
-      return;
-    }
-    const allowedZoneIds = new Set(availableZones.map((zone) => zone.id));
-    setSelectedZoneIds((prev) =>
-      prev.filter((zoneId) => allowedZoneIds.has(zoneId)),
-    );
-  }, [availableZones]);
-
-  useEffect(() => {
     if (!hasPlan) {
       makeInitialFormCopy(initialPlanFormRef, initialPlanForm);
       return;
@@ -138,8 +95,6 @@ export const PlanFormProvider = ({
   const value = {
     planForm,
     selectedZoneIds,
-    availableZones,
-    isZonesLoading,
     mode,
     planFormWarnings,
     planSetters,

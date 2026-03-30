@@ -4,7 +4,9 @@ import type { ObjectLinkSelectorItem, ObjectLinkSelectorMode } from './ObjectLin
 
 type UseObjectLinkSelectorProps = {
   mode: ObjectLinkSelectorMode
+  selectedItems: ObjectLinkSelectorItem[]
   onSelectItem: (item: ObjectLinkSelectorItem) => void
+  onRemoveSelectedItem?: (item: ObjectLinkSelectorItem) => void
   onQueryChange?: (value: string) => void
   queryValue?: string
   defaultQueryValue?: string
@@ -12,7 +14,9 @@ type UseObjectLinkSelectorProps = {
 
 export const useObjectLinkSelector = ({
   mode,
+  selectedItems,
   onSelectItem,
+  onRemoveSelectedItem,
   onQueryChange,
   queryValue,
   defaultQueryValue = '',
@@ -33,14 +37,28 @@ export const useObjectLinkSelector = ({
     [onQueryChange, queryValue],
   )
 
-  const displayValue = useMemo(() => query, [query])
+  const displayValue = useMemo(() => {
+    if (query.length > 0) {
+      return query
+    }
+
+    if (mode === 'single') {
+      return selectedItems[0]?.label ?? ''
+    }
+
+    return ''
+  }, [mode, query, selectedItems])
 
   const handleInputChange = useCallback(
     (value: string) => {
+      if (mode === 'single' && query.length === 0 && selectedItems[0] && onRemoveSelectedItem) {
+        onRemoveSelectedItem(selectedItems[0])
+      }
+
       setQuery(value)
       setIsOptionsOpen(true)
     },
-    [setQuery],
+    [mode, onRemoveSelectedItem, query.length, selectedItems, setQuery],
   )
 
   const handleSelectItem = useCallback(

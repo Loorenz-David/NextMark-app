@@ -2,6 +2,7 @@ import {
   buildZoneTemplatePayload,
   validateZoneTemplatePayload,
 } from "../zoneTemplateForm.domain";
+import type { ZoneVehicleCapability } from "../../types";
 
 const assert = (condition: unknown, message: string) => {
   if (!condition) {
@@ -36,7 +37,7 @@ export const runZoneTemplateFormDomainTests = () => {
 
   const invalidCapability = validateZoneTemplatePayload({
     name: "Invalid",
-    vehicle_capabilities_required: ["unknown_capability"],
+    vehicle_capabilities_required: ["unknown_capability" as ZoneVehicleCapability],
   });
   assert(!invalidCapability.valid, "unknown capability should be invalid");
 };

@@ -46,7 +46,10 @@ export const useZoneFormSubmit = ({
 
       setIsSubmitting(true)
       try {
-        const templatePayload = buildZoneTemplatePayload(formState)
+        const templatePayload = buildZoneTemplatePayload({
+          ...formState,
+          template_name: name,
+        })
         const validation = validateZoneTemplatePayload(templatePayload)
         if (!validation.valid) {
           showMessage({ status: 400, message: validation.issues[0] })

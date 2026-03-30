@@ -1,3 +1,4 @@
+import type { ObjectLinkSelectorItem } from "@/shared/inputs/ObjectLinkSelector";
 import type { ZoneDefinition, ZoneLite, ZoneState } from "@/features/zone/types";
 
 export type ZoneSelectorItem = (ZoneDefinition | ZoneLite | ZoneState) & {
@@ -61,6 +62,17 @@ export const buildZoneSubtitle = (zone: ZoneSelectorItem): string => {
 
   return details.filter(Boolean).join(" • ");
 };
+
+export const mapZoneToSelectorItem = (
+  zone: ZoneSelectorItem,
+): ObjectLinkSelectorItem => ({
+  id:
+    typeof zone.id === "number" || typeof zone.id === "string"
+      ? zone.id
+      : zone.client_id ?? zone.name,
+  label: zone.name,
+  details: buildZoneSubtitle(zone),
+});
 
 export const splitZoneSearchTerms = (searchValue: string): string[] =>
   searchValue

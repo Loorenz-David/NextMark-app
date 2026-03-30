@@ -1,3 +1,13 @@
+import type {
+  ZoneRouteEndStrategy,
+  ZoneVehicleCapability,
+} from "../domain/zoneEnums";
+
+export type {
+  ZoneRouteEndStrategy,
+  ZoneVehicleCapability,
+} from "../domain/zoneEnums";
+
 type GeoJSONPosition = [number, number];
 type GeoJSONLinearRing = GeoJSONPosition[];
 
@@ -13,14 +23,9 @@ export type ZoneTemplateConfig = {
   operating_window_start?: string | null;
   operating_window_end?: string | null;
   eta_tolerance_seconds?: number | null;
-  vehicle_capabilities_required?: string[] | null;
+  vehicle_capabilities_required?: ZoneVehicleCapability[] | null;
   preferred_vehicle_ids?: number[] | null;
-  default_route_end_strategy?:
-    | "round_trip"
-    | "custom_end_address"
-    | "end_at_last_stop"
-    | "last_stop"
-    | null;
+  default_route_end_strategy?: ZoneRouteEndStrategy | null;
   meta?: Record<string, unknown> | null;
 };
 
@@ -37,14 +42,9 @@ export type ZoneTemplate = {
   operating_window_start?: string | null;
   operating_window_end?: string | null;
   eta_tolerance_seconds?: number | null;
-  vehicle_capabilities_required?: string[] | null;
+  vehicle_capabilities_required?: ZoneVehicleCapability[] | null;
   preferred_vehicle_ids?: number[] | null;
-  default_route_end_strategy?:
-    | "round_trip"
-    | "custom_end_address"
-    | "end_at_last_stop"
-    | "last_stop"
-    | null;
+  default_route_end_strategy?: ZoneRouteEndStrategy | null;
   meta?: Record<string, unknown> | null;
   created_at?: string | null;
   updated_at?: string | null;

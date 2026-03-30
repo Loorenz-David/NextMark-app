@@ -1,28 +1,31 @@
-import type { UIEvent } from 'react'
-
-import { RouteGroupOrderList, RouteGroupsActionBar } from '../components'
-import { OptimizationLoading } from '../components/spinners/Optimization.spinner'
-import { MIN_LOADER_VISIBLE_MS } from '../constants/optimization.constants'
-import { useRouteGroupPageContext } from '../context/useRouteGroupPageContext'
-import { useRouteGroupActionBarVisibility } from '../hooks/useRouteGroupActionBarVisibility'
+import {
+  RouteGroupOrderList,
+  RouteGroupReadyFooter,
+  RouteGroupsActionBar,
+} from "../components";
+import { OptimizationLoading } from "../components/spinners/Optimization.spinner";
+import { MIN_LOADER_VISIBLE_MS } from "../constants/optimization.constants";
+import { useRouteGroupPageContext } from "../context/useRouteGroupPageContext";
+import { useRouteGroupActionBarVisibility } from "../hooks/useRouteGroupActionBarVisibility";
 
 type RouteGroupsPageContentProps = {
-  showOptimizeRow: boolean
-  hasActiveRouteGroup: boolean
-}
+  showOptimizeRow: boolean;
+  hasActiveRouteGroup: boolean;
+};
 
-const ACTION_BAR_HEIGHT_WITH_OPTIMIZE = 138
-const ACTION_BAR_HEIGHT_WITHOUT_OPTIMIZE = 82
-const ACTION_BAR_COLLAPSED_HEIGHT = 12
+const ACTION_BAR_HEIGHT_WITH_OPTIMIZE = 138;
+const ACTION_BAR_HEIGHT_WITHOUT_OPTIMIZE = 82;
+const ACTION_BAR_COLLAPSED_HEIGHT = 12;
 
 export const RouteGroupsPageContent = ({
   showOptimizeRow,
   hasActiveRouteGroup,
 }: RouteGroupsPageContentProps) => {
-  const { orderCount, routeGroup } = useRouteGroupPageContext()
+  const { orderCount, orders, planState, routeGroup, routeGroupPageActions } =
+    useRouteGroupPageContext();
 
-  const isLoading = routeGroup?.is_loading
-  const optimizationStartedAt = routeGroup?.optimization_started_at ?? null
+  const isLoading = routeGroup?.is_loading;
+  const optimizationStartedAt = routeGroup?.optimization_started_at ?? null;
   const {
     isActionBarVisible,
     actionBarReservedHeight,
@@ -34,8 +37,9 @@ export const RouteGroupsPageContent = ({
       ? ACTION_BAR_HEIGHT_WITH_OPTIMIZE
       : ACTION_BAR_HEIGHT_WITHOUT_OPTIMIZE,
     collapsedHeight: ACTION_BAR_COLLAPSED_HEIGHT,
-  })
-
+  });
+  console.log(planState, "planState");
+  console.log(orders.length, "orders.length");
   return (
     <div className="relative flex h-full w-full min-w-0 flex-col overflow-hidden bg-[var(--color-primary)]/5">
       {hasActiveRouteGroup ? (
@@ -57,15 +61,24 @@ export const RouteGroupsPageContent = ({
             </p>
           </div>
         </div>
-      ) : !isLoading 
-        ? (
+      ) : !isLoading ? (
+        <>
           <RouteGroupOrderList
             onScrollContainer={handleScroll}
-            topReservedOffset={isDesktopActionBarBehaviorEnabled ? actionBarReservedHeight : 0}
+            topReservedOffset={
+              isDesktopActionBarBehaviorEnabled ? actionBarReservedHeight : 0
+            }
           />
-        )
-        : isLoading == 'isOptimizing' 
-          ? <OptimizationLoading message={
+
+          {planState?.name.trim() === "Open" && orders.length > 0 ? (
+            <RouteGroupReadyFooter
+              onReadyForDelivery={routeGroupPageActions.routeReadyForDelivery}
+            />
+          ) : null}
+        </>
+      ) : isLoading == "isOptimizing" ? (
+        <OptimizationLoading
+          message={
             <>
               <p className="font-semibold text-[var(--color-muted)]">
                 Optimization in progress
@@ -74,10 +87,12 @@ export const RouteGroupsPageContent = ({
                 You can come back when it is ready.
               </p>
             </>
-          } startedAt={optimizationStartedAt} orderCount={orderCount} minDurationMs={MIN_LOADER_VISIBLE_MS} />
-          : null
-      }
-
+          }
+          startedAt={optimizationStartedAt}
+          orderCount={orderCount}
+          minDurationMs={MIN_LOADER_VISIBLE_MS}
+        />
+      ) : null}
     </div>
-  )
-}
+  );
+};

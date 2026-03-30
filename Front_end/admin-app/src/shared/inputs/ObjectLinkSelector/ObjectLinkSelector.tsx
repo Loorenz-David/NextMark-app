@@ -39,7 +39,9 @@ export const ObjectLinkSelector = ({
     handleCloseSelectedOverlay,
   } = useObjectLinkSelector({
     mode,
+    selectedItems,
     onSelectItem,
+    onRemoveSelectedItem,
     onQueryChange,
     queryValue,
     defaultQueryValue,
@@ -56,6 +58,7 @@ export const ObjectLinkSelector = ({
         renderInPortal
         reference={
           <ObjectLinkSelectorInput
+            mode={mode}
             open={isOptionsOpen}
             disabled={disabled}
             placeholder={placeholder}

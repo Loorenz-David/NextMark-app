@@ -1,3 +1,4 @@
+import type { CalendarRangeValue } from '@/shared/calendar'
 import { formatDateOnlyInTimeZone } from '@/shared/utils/formatIsoDate'
 import { getTeamTimeZone } from '@/shared/utils/teamTimeZone'
 
@@ -159,4 +160,12 @@ export const resolveEffectiveMinDate = ({
 export const formatCommittedInput = (date: Date | null): string => {
   if (!date) return ''
   return formatDateIso(date)
+}
+
+export const formatCommittedRangeInput = (range: CalendarRangeValue): string => {
+  if (!range.start && !range.end) return ''
+  if (range.start && !range.end) return formatDateIso(range.start)
+  if (!range.start && range.end) return formatDateIso(range.end)
+
+  return `${formatDateIso(range.start as Date)} → ${formatDateIso(range.end as Date)}`
 }

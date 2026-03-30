@@ -123,6 +123,10 @@ export function usePlanController() {
           planStartDate: normalizedPlanFields.start_date ?? null,
           getCurrentLocationAddress: resolveUserCurrentLocation,
         }).catch(() => undefined);
+        const routeGroupDefaults =
+          sanitizedZoneIds.length === 0
+            ? planTypeDefaults?.route_group_defaults
+            : undefined;
 
         const planPayloadApi: PlanCreatePayload = {
           client_id: planClientId,
@@ -139,7 +143,7 @@ export function usePlanController() {
           ...(sanitizedZoneIds.length > 0
             ? { zone_ids: sanitizedZoneIds }
             : {}),
-          ...(planTypeDefaults ? planTypeDefaults : {}),
+          ...(routeGroupDefaults ? { route_group_defaults: routeGroupDefaults } : {}),
         };
 
         const response = await planApi.createPlan(planPayloadApi);

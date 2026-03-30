@@ -1,41 +1,60 @@
-import { vehicleCapabilityOptions } from '@/features/infrastructure/domain/infrastructureEnums'
-import { FacilitySelector } from '@/features/infrastructure/facility/components'
-import { Field } from '@/shared/inputs/FieldContainer'
+import { FacilitySelector } from "@/features/infrastructure/facility/components";
+import { VehicleSelector } from "@/features/infrastructure/vehicle/components/VehicleSelector/VehicleSelector";
+import { CustomCounter } from "@/shared/inputs/CustomCounter";
+import { CustomNumberPicker } from "@/shared/inputs/CustomTimePicker/CustomNumberPicker";
+import { CustomTimePicker } from "@/shared/inputs/CustomTimePicker";
+import { Field } from "@/shared/inputs/FieldContainer";
 import {
   InputField,
   PLAIN_INPUT_CLASS,
   PLAIN_INPUT_CONTAINER_CLASS,
-} from '@/shared/inputs/InputField'
-import { OptionPopoverSelect } from '@/shared/inputs/OptionPopoverSelect'
-import { Cell, SplitRow } from '@/shared/layout/cells'
+} from "@/shared/inputs/InputField";
+import { OptionPopoverSelect } from "@/shared/inputs/OptionPopoverSelect";
+import { Cell, SplitRow } from "@/shared/layout/cells";
 
-import { ALLOWED_ZONE_ROUTE_END_STRATEGIES } from '../../../domain/zoneTemplateForm.domain'
-import { useZoneForm } from '../../../popups/ZoneForm/ZoneForm.context'
+import {
+  zoneRouteEndStrategyOptions,
+  zoneVehicleCapabilityOptions,
+} from "../../../domain/zoneEnums";
+import { useZoneForm } from "../../../popups/ZoneForm/ZoneForm.context";
 
 const SectionHeading = ({
   title,
   description,
 }: {
-  title: string
-  description: string
+  title: string;
+  description: string;
 }) => (
   <div className="flex flex-col gap-1 px-1">
     <h3 className="text-sm font-semibold text-[var(--color-text)]">{title}</h3>
     <p className="text-xs text-[var(--color-muted)]">{description}</p>
   </div>
-)
+);
 
-const routeEndStrategyOptions = ALLOWED_ZONE_ROUTE_END_STRATEGIES.map((value) => ({
-  value,
-  label: value,
-}))
+const routeEndStrategyOptions = [...zoneRouteEndStrategyOptions];
 
-const capabilityOptions = vehicleCapabilityOptions
-  .filter((option) => option.value === 'cold_chain' || option.value === 'fragile')
-  .map((option) => ({ label: option.label, value: option.value }))
+const parsePreferredVehicleIds = (value: string) =>
+  value
+    .split(",")
+    .map((entry) => Number(entry.trim()))
+    .filter((entry) => Number.isInteger(entry) && entry > 0);
+
+const parseCounterValue = (value: string) => {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : 0;
+};
+
+const secondsStringToMinutes = (value: string) => {
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed) || parsed <= 0) {
+    return 0;
+  }
+
+  return Math.trunc(parsed / 60);
+};
 
 export const ZoneFormFields = () => {
-  const { formState, setFormState } = useZoneForm()
+  const { formState, setFormState } = useZoneForm();
 
   return (
     <div className="flex flex-col gap-5">
@@ -47,14 +66,23 @@ export const ZoneFormFields = () => {
           />
         </div>
 
-        <SplitRow splitRowClass="grid grid-cols-2 divide-x divide-[var(--color-border-accent)]">
+        <SplitRow splitRowClass="grid grid-cols-1 divide-[var(--color-border-accent)]">
           <Cell>
-            <Field label="Zone name:" required gap={2} warningPlacement="besidesLabel">
+            <Field
+              label="Zone name:"
+              required
+              gap={2}
+              warningPlacement="besidesLabel"
+            >
               <InputField
                 required
                 value={formState.name}
                 onChange={(event) =>
-                  setFormState((current) => ({ ...current, name: event.target.value }))
+                  setFormState((current) => ({
+                    ...current,
+                    name: event.target.value,
+                    template_name: event.target.value,
+                  }))
                 }
                 fieldClassName={PLAIN_INPUT_CONTAINER_CLASS}
                 inputClassName={PLAIN_INPUT_CLASS}
@@ -62,37 +90,26 @@ export const ZoneFormFields = () => {
               />
             </Field>
           </Cell>
-
-          <Cell>
-            <Field label="Template name:" gap={2} warningPlacement="besidesLabel">
-              <InputField
-                value={formState.template_name}
-                onChange={(event) =>
-                  setFormState((current) => ({
-                    ...current,
-                    template_name: event.target.value,
-                  }))
-                }
-                fieldClassName={PLAIN_INPUT_CONTAINER_CLASS}
-                inputClassName={PLAIN_INPUT_CLASS}
-                placeholder="Chelsea Standard"
-              />
-            </Field>
-          </Cell>
         </SplitRow>
 
-        <SplitRow splitRowClass="grid grid-cols-1 divide-[var(--color-border-accent)] py-2 pr-2">
+        <SplitRow splitRowClass="grid grid-cols-1 divide-[var(--color-border-accent)]  pr-2">
           <Cell>
-            <Field label="Default facility:" gap={2} warningPlacement="besidesLabel">
+            <Field
+              label="Default facility:"
+              gap={2}
+              warningPlacement="besidesLabel"
+            >
               <FacilitySelector
                 mode="single"
                 selectedFacilityIds={
-                  formState.default_facility_id ? [formState.default_facility_id] : []
+                  formState.default_facility_id
+                    ? [formState.default_facility_id]
+                    : []
                 }
                 onSelectionChange={(nextIds) =>
                   setFormState((current) => ({
                     ...current,
-                    default_facility_id: String(nextIds[0] ?? ''),
+                    default_facility_id: String(nextIds[0] ?? ""),
                   }))
                 }
                 placeholder="Select a facility"
@@ -113,35 +130,43 @@ export const ZoneFormFields = () => {
 
         <SplitRow splitRowClass="grid grid-cols-2 divide-x divide-[var(--color-border-accent)]">
           <Cell>
-            <Field label="Max orders per route:" gap={2} warningPlacement="besidesLabel">
-              <InputField
-                type="number"
-                value={formState.max_orders_per_route}
-                onChange={(event) =>
+            <Field
+              label="Max orders per route:"
+              gap={2}
+              warningPlacement="besidesLabel"
+            >
+              <CustomCounter
+                value={parseCounterValue(formState.max_orders_per_route)}
+                onChange={(value) =>
                   setFormState((current) => ({
                     ...current,
-                    max_orders_per_route: event.target.value,
+                    max_orders_per_route: String(value),
                   }))
                 }
-                fieldClassName={PLAIN_INPUT_CONTAINER_CLASS}
-                inputClassName={PLAIN_INPUT_CLASS}
+                min={0}
+                step={1}
+                className={PLAIN_INPUT_CONTAINER_CLASS}
               />
             </Field>
           </Cell>
 
           <Cell>
-            <Field label="Max vehicles:" gap={2} warningPlacement="besidesLabel">
-              <InputField
-                type="number"
-                value={formState.max_vehicles}
-                onChange={(event) =>
+            <Field
+              label="Max vehicles:"
+              gap={2}
+              warningPlacement="besidesLabel"
+            >
+              <CustomCounter
+                value={parseCounterValue(formState.max_vehicles)}
+                onChange={(value) =>
                   setFormState((current) => ({
                     ...current,
-                    max_vehicles: event.target.value,
+                    max_vehicles: String(value),
                   }))
                 }
-                fieldClassName={PLAIN_INPUT_CONTAINER_CLASS}
-                inputClassName={PLAIN_INPUT_CLASS}
+                min={0}
+                step={1}
+                className={PLAIN_INPUT_CONTAINER_CLASS}
               />
             </Field>
           </Cell>
@@ -149,67 +174,78 @@ export const ZoneFormFields = () => {
 
         <SplitRow splitRowClass="grid grid-cols-2 divide-x divide-[var(--color-border-accent)]">
           <Cell>
-            <Field label="Window start:" gap={2} warningPlacement="besidesLabel">
-              <InputField
-                type="time"
-                value={formState.operating_window_start}
-                onChange={(event) =>
+            <Field
+              label="Window start:"
+              gap={2}
+              warningPlacement="besidesLabel"
+            >
+              <CustomTimePicker
+                selectedTime={formState.operating_window_start || null}
+                onChange={(value) =>
                   setFormState((current) => ({
                     ...current,
-                    operating_window_start: event.target.value,
+                    operating_window_start: value,
                   }))
                 }
-                fieldClassName={PLAIN_INPUT_CONTAINER_CLASS}
-                inputClassName={PLAIN_INPUT_CLASS}
+                className={PLAIN_INPUT_CONTAINER_CLASS}
               />
             </Field>
           </Cell>
 
           <Cell>
             <Field label="Window end:" gap={2} warningPlacement="besidesLabel">
-              <InputField
-                type="time"
-                value={formState.operating_window_end}
-                onChange={(event) =>
+              <CustomTimePicker
+                selectedTime={formState.operating_window_end || null}
+                onChange={(value) =>
                   setFormState((current) => ({
                     ...current,
-                    operating_window_end: event.target.value,
+                    operating_window_end: value,
                   }))
                 }
-                fieldClassName={PLAIN_INPUT_CONTAINER_CLASS}
-                inputClassName={PLAIN_INPUT_CLASS}
+                className={PLAIN_INPUT_CONTAINER_CLASS}
               />
             </Field>
           </Cell>
         </SplitRow>
 
-        <SplitRow splitRowClass="grid grid-cols-2 divide-x divide-[var(--color-border-accent)]">
+        <SplitRow splitRowClass="grid grid-cols-2  divide-x divide-[var(--color-border-accent)]">
           <Cell>
-            <Field label="ETA tolerance (seconds):" gap={2} warningPlacement="besidesLabel">
-              <InputField
-                type="number"
-                value={formState.eta_tolerance_seconds}
-                onChange={(event) =>
+            <Field
+              label="ETA tolerance (seconds):"
+              gap={2}
+              warningPlacement="besidesLabel"
+            >
+              <CustomNumberPicker
+                selectedValue={secondsStringToMinutes(
+                  formState.eta_tolerance_seconds,
+                )}
+                onChange={(value) =>
                   setFormState((current) => ({
                     ...current,
-                    eta_tolerance_seconds: event.target.value,
+                    eta_tolerance_seconds: String(value * 60),
                   }))
                 }
-                fieldClassName={PLAIN_INPUT_CONTAINER_CLASS}
-                inputClassName={PLAIN_INPUT_CLASS}
+                min={0}
+                max={120}
+                label="Minutes"
+                containerClassName={"w-full text-sm text-[var(--color-text)]"}
               />
             </Field>
           </Cell>
 
           <Cell>
-            <Field label="Route end strategy:" gap={2} warningPlacement="besidesLabel">
+            <Field
+              label="Route end strategy:"
+              gap={2}
+              warningPlacement="besidesLabel"
+            >
               <OptionPopoverSelect
                 options={routeEndStrategyOptions}
                 value={formState.default_route_end_strategy || null}
                 onChange={(value) =>
                   setFormState((current) => ({
                     ...current,
-                    default_route_end_strategy: String(value ?? ''),
+                    default_route_end_strategy: String(value ?? ""),
                   }))
                 }
                 placeholder="Select route end strategy"
@@ -231,14 +267,18 @@ export const ZoneFormFields = () => {
 
         <SplitRow splitRowClass="grid grid-cols-2 divide-x divide-[var(--color-border-accent)]">
           <Cell>
-            <Field label="Required capability:" gap={2} warningPlacement="besidesLabel">
+            <Field
+              label="Required capability:"
+              gap={2}
+              warningPlacement="besidesLabel"
+            >
               <OptionPopoverSelect
-                options={capabilityOptions}
+                options={[...zoneVehicleCapabilityOptions]}
                 value={formState.vehicle_capabilities_required || null}
                 onChange={(value) =>
                   setFormState((current) => ({
                     ...current,
-                    vehicle_capabilities_required: String(value ?? ''),
+                    vehicle_capabilities_required: String(value ?? ""),
                   }))
                 }
                 placeholder="Select capability"
@@ -249,23 +289,29 @@ export const ZoneFormFields = () => {
           </Cell>
 
           <Cell>
-            <Field label="Preferred vehicle IDs:" gap={2} warningPlacement="besidesLabel">
-              <InputField
-                value={formState.preferred_vehicle_ids}
-                onChange={(event) =>
+            <Field
+              label="Preferred vehicles:"
+              gap={2}
+              warningPlacement="besidesLabel"
+            >
+              <VehicleSelector
+                mode="multi"
+                selectedVehicleIds={parsePreferredVehicleIds(
+                  formState.preferred_vehicle_ids,
+                )}
+                onSelectionChange={(nextIds) =>
                   setFormState((current) => ({
                     ...current,
-                    preferred_vehicle_ids: event.target.value,
+                    preferred_vehicle_ids: nextIds.join(", "),
                   }))
                 }
-                fieldClassName={PLAIN_INPUT_CONTAINER_CLASS}
-                inputClassName={PLAIN_INPUT_CLASS}
-                placeholder="10, 11"
+                placeholder="Select preferred vehicles"
+                containerClassName={PLAIN_INPUT_CONTAINER_CLASS}
               />
             </Field>
           </Cell>
         </SplitRow>
       </section>
     </div>
-  )
-}
+  );
+};

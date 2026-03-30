@@ -24,6 +24,7 @@ export type CreateRouteGroupFormContextValue = {
   planId: number;
   formState: CreateRouteGroupFormState;
   formErrors: CreateRouteGroupFormErrors;
+  shouldShowErrors: boolean;
   hasUnsavedChanges: boolean;
   availableZones: CreateRouteGroupZoneOption[];
   isSubmitting: boolean;

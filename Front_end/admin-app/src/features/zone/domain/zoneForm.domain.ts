@@ -11,7 +11,13 @@ export type ZoneFormState = {
 
 export const buildInitialZoneFormState = (
   zone: ZoneState | null | undefined,
-): ZoneFormState => ({
-  name: zone?.name ?? '',
-  ...getInitialZoneTemplateFormFields(zone?.template_full),
-})
+): ZoneFormState => {
+  const templateFields = getInitialZoneTemplateFormFields(zone?.template_full)
+  const resolvedZoneName = zone?.name ?? ''
+
+  return {
+    name: resolvedZoneName,
+    ...templateFields,
+    template_name: resolvedZoneName || templateFields.template_name,
+  }
+}

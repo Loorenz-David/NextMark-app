@@ -31,6 +31,7 @@ import {
   useRouteSolutionStopStore,
 } from "@/features/plan/routeGroup/store/routeSolutionStop.store";
 import { syncRouteGroupSummaries } from "@/features/plan/routeGroup/flows/syncRouteGroupSummaries.flow";
+import { applyOrderBatchMoveStateSync } from "@/features/order/actions/applyOrderBatchMoveStateSync.action";
 
 const takeSnapshot = () => ({
   ...createOrderOptimisticSnapshot(),
@@ -74,7 +75,12 @@ const applyResponse = (
   const hasDrift =
     bundles.length === 0 ||
     (resolvedCount > 0 && bundles.length < updatedCount);
-  syncRouteGroupSummaries(affectedRouteGroupIds);
+
+  const syncResult = applyOrderBatchMoveStateSync(data);
+  if (!syncResult.hasRouteGroupStateChanges) {
+    syncRouteGroupSummaries(affectedRouteGroupIds);
+  }
+
   if (hasDrift) {
     onDrift();
   }

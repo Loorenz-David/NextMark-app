@@ -10,8 +10,13 @@ import type { CustomDatePickerProps } from './model/customDatePicker.types'
 import { CustomDatePickerDesktopView } from './views/CustomDatePickerDesktopView'
 
 export const CustomDatePicker = ({
+  selectionMode = 'single',
+  strategy,
   date,
+  rangeValue,
   onChange,
+  onRangeChange,
+  onStrategyChange,
   disabled,
   disablePast,
   minDate,
@@ -29,8 +34,13 @@ export const CustomDatePicker = ({
   )
 
   const controller = useCustomDatePickerController({
+    selectionMode,
+    strategy,
     date,
+    rangeValue,
     onChange,
+    onRangeChange,
+    onStrategyChange,
     disabled,
     minDate: effectiveMinDate,
     maxDate,
@@ -40,11 +50,12 @@ export const CustomDatePicker = ({
   })
 
   const showTodayLabel = useMemo(() => {
+    if (controller.strategy === 'range') return false
     if (!controller.committedDate) return false
     if (!isToday(controller.committedDate)) return false
 
     return controller.inputValue === formatDateIso(controller.committedDate)
-  }, [controller.committedDate, controller.inputValue])
+  }, [controller.committedDate, controller.inputValue, controller.strategy])
 
   useEffect(() => {
     if (!controller.isOpen) return
@@ -54,12 +65,16 @@ export const CustomDatePicker = ({
 
   return (
     <CustomDatePickerDesktopView
+      pickerMode={selectionMode}
+      strategy={controller.strategy}
       inputValue={controller.inputValue}
       showTodayLabel={showTodayLabel}
       committedDate={controller.committedDate}
+      committedRange={controller.committedRange}
       isOpen={controller.isOpen}
       visibleMonth={controller.visibleMonth}
       disabled={disabled}
+      readOnly={selectionMode !== 'single'}
       className={className}
       renderPopoverInPortal={renderPopoverInPortal}
       minDate={effectiveMinDate}
@@ -70,15 +85,16 @@ export const CustomDatePicker = ({
       onInputBlur={controller.handleInputBlur}
       onInputChange={controller.handleInputChange}
       onInputKeyDown={controller.handleInputKeyDown}
-      onCalendarSelect={(selectedDate) => {
-        controller.handleCalendarSelect(selectedDate)
+      onCalendarSelect={(selectedValue) => {
+        controller.handleCalendarSelect(selectedValue)
 
-        if (!disabled) {
+        if (!disabled && controller.strategy === 'single') {
           requestAnimationFrame(() => {
             inputRef.current?.focus()
           })
         }
       }}
+      onStrategyChange={controller.handleStrategyChange}
       onVisibleMonthChange={controller.handleVisibleMonthChange}
     />
   )

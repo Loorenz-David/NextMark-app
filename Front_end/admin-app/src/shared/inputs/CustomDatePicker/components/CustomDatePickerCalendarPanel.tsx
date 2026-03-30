@@ -8,41 +8,91 @@ import {
   addDays,
   getCalendarDayKey,
   useCalendarModel,
+  type CalendarRangeValue,
+  type CalendarSelectionMode,
+  type CalendarValue,
 } from '@/shared/calendar'
 
 import { isDateWithinRange, normalizeToDay } from '../model/customDatePicker.utils'
+import type { CustomDatePickerMode, CustomDatePickerStrategy } from '../model/customDatePicker.types'
 
 type CustomDatePickerCalendarPanelProps = {
   isOpen: boolean
-  value: Date | null
+  pickerMode?: CustomDatePickerMode
+  strategy?: CustomDatePickerStrategy
+  value: CalendarValue
   visibleMonth: Date
   minDate?: Date
   maxDate?: Date
   onVisibleMonthChange: (month: Date) => void
-  onSelect: (date: Date) => void
+  onSelect: (value: CalendarValue) => void
+  onStrategyChange?: (strategy: CustomDatePickerStrategy) => void
   onRequestClose: () => void
 }
 
 const WEEKDAY_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
 
+const isRangeValue = (value: CalendarValue): value is CalendarRangeValue =>
+  value != null && typeof value === 'object' && !Array.isArray(value) && 'start' in value
+
 export const CustomDatePickerCalendarPanel = ({
   isOpen,
+  pickerMode = 'single',
+  strategy = 'single',
   value,
   visibleMonth,
   minDate,
   maxDate,
   onVisibleMonthChange,
   onSelect,
+  onStrategyChange,
   onRequestClose,
 }: CustomDatePickerCalendarPanelProps) => {
   const panelRef = useRef<HTMLDivElement | null>(null)
   const today = useMemo(() => normalizeToDay(new Date()), [])
+  const calendarSelectionMode: CalendarSelectionMode =
+    pickerMode === 'range' || strategy === 'range' ? 'range' : 'single'
 
-  const normalizedValue = useMemo(() => (value ? normalizeToDay(value) : null), [value])
-  const isTodaySelected = useMemo(
-    () => Boolean(normalizedValue && normalizedValue.getTime() === today.getTime()),
-    [normalizedValue, today],
-  )
+  const normalizedValue = useMemo<CalendarValue>(() => {
+    if (calendarSelectionMode === 'range') {
+      return isRangeValue(value)
+        ? {
+            start: value.start ? normalizeToDay(value.start) : null,
+            end: value.end ? normalizeToDay(value.end) : null,
+          }
+        : { start: null, end: null }
+    }
+
+    return value instanceof Date ? normalizeToDay(value) : null
+  }, [calendarSelectionMode, value])
+
+  const model = useCalendarModel({
+    selectionMode: calendarSelectionMode,
+    value: normalizedValue,
+    visibleMonth,
+    onVisibleMonthChange,
+    onChange: onSelect,
+  })
+
+  const selectedSingleDate =
+    normalizedValue instanceof Date ? normalizedValue : null
+  const selectedRange = isRangeValue(normalizedValue)
+    ? normalizedValue
+    : { start: null, end: null }
+
+  const isTodaySelected = useMemo(() => {
+    if (calendarSelectionMode === 'range') {
+      return Boolean(
+        selectedRange.start &&
+          selectedRange.end &&
+          selectedRange.start.getTime() === today.getTime() &&
+          selectedRange.end.getTime() === today.getTime(),
+      )
+    }
+
+    return Boolean(selectedSingleDate && selectedSingleDate.getTime() === today.getTime())
+  }, [calendarSelectionMode, selectedRange.end, selectedRange.start, selectedSingleDate, today])
+
   const isTodayDisabled = useMemo(
     () =>
       !isDateWithinRange({
@@ -52,13 +102,6 @@ export const CustomDatePickerCalendarPanel = ({
       }),
     [maxDate, minDate, today],
   )
-
-  const model = useCalendarModel({
-    selectionMode: 'single',
-    value: normalizedValue,
-    visibleMonth,
-    onVisibleMonthChange,
-  })
 
   useEffect(() => {
     if (!isOpen || !panelRef.current) return
@@ -86,6 +129,33 @@ export const CustomDatePickerCalendarPanel = ({
         }
       }}
     >
+      {pickerMode === 'single_or_range' ? (
+        <div className='mb-3 flex items-center gap-2 rounded-lg border border-[var(--color-border-accent)] bg-[var(--color-page)]/60 p-1'>
+          <button
+            type='button'
+            className={`flex-1 rounded-md px-3 py-1.5 text-xs font-semibold ${
+              strategy === 'single'
+                ? 'bg-[var(--color-primary)] text-[var(--color-secondary)]'
+                : 'text-[var(--color-muted)] hover:bg-white/[0.06]'
+            }`}
+            onClick={() => onStrategyChange?.('single')}
+          >
+            Single
+          </button>
+          <button
+            type='button'
+            className={`flex-1 rounded-md px-3 py-1.5 text-xs font-semibold ${
+              strategy === 'range'
+                ? 'bg-[var(--color-primary)] text-[var(--color-secondary)]'
+                : 'text-[var(--color-muted)] hover:bg-white/[0.06]'
+            }`}
+            onClick={() => onStrategyChange?.('range')}
+          >
+            Range
+          </button>
+        </div>
+      ) : null}
+
       <CalendarRoot
         model={model}
         renderHeader={(calendarModel) => {
@@ -125,7 +195,7 @@ export const CustomDatePickerCalendarPanel = ({
             </div>
           )
         }}
-        renderDay={({ day, date, isSelected, tabIndex, ariaLabel, isToday }) => {
+        renderDay={({ day, date, isSelected, isInRange, tabIndex, ariaLabel, isToday, onMouseEnter, onMouseLeave }) => {
           const normalizedDate = normalizeToDay(date)
           const isDisabled = !isDateWithinRange({
             date: normalizedDate,
@@ -137,11 +207,13 @@ export const CustomDatePickerCalendarPanel = ({
             <CalendarDayCell
               day={day}
               isSelected={isSelected}
-              isInRange={false}
+              isInRange={isInRange}
               onSelect={() => {
                 if (isDisabled) return
-                onSelect(normalizedDate)
+                model.selectDate(normalizedDate)
               }}
+              onMouseEnter={onMouseEnter}
+              onMouseLeave={onMouseLeave}
               tabIndex={tabIndex}
               ariaLabel={ariaLabel}
               isToday={isToday}
@@ -175,8 +247,15 @@ export const CustomDatePickerCalendarPanel = ({
               className={[
                 'h-9 w-9 rounded-md text-xs font-medium transition-colors',
                 day.isCurrentMonth ? 'text-[var(--color-text)]' : 'text-[var(--color-muted)]/50',
-                isToday && !isSelected ? 'bg-blue-500/10 text-blue-600' : '',
-                isSelected ? 'bg-[var(--color-text)] text-white' : '',
+                isToday && !isSelected
+                  ? 'bg-[color-mix(in_srgb,var(--color-primary)_18%,transparent)] text-[var(--color-primary)]'
+                  : '',
+                isSelected
+                  ? 'bg-[var(--color-primary)] !text-[var(--color-secondary)]'
+                  : '',
+                isInRange && !isSelected
+                  ? 'bg-[color-mix(in_srgb,var(--color-primary)_16%,transparent)] text-[var(--color-text)]'
+                  : '',
                 !isSelected && !isDisabled ? 'hover:bg-white/[0.08]' : '',
                 isDisabled ? 'cursor-not-allowed opacity-35' : '',
               ].join(' ')}
@@ -187,11 +266,11 @@ export const CustomDatePickerCalendarPanel = ({
         }}
       />
 
-      {!isTodaySelected ? (
-          <div className='mt-2 border-t border-white/[0.08] pt-2'>
+      {calendarSelectionMode === 'single' && !isTodaySelected ? (
+        <div className='mt-2 border-t border-white/[0.08] pt-2'>
           <button
             type='button'
-            className='w-full rounded-md py-1.5 text-xs font-semibold text-blue-600 hover:bg-blue-500/10 disabled:cursor-not-allowed disabled:text-[var(--color-muted)]/70 disabled:hover:bg-transparent'
+            className='w-full rounded-md py-1.5 text-xs font-semibold text-[var(--color-primary)] hover:bg-[color-mix(in_srgb,var(--color-primary)_12%,transparent)] disabled:cursor-not-allowed disabled:text-[var(--color-muted)]/70 disabled:hover:bg-transparent'
             onClick={() => {
               if (isTodayDisabled) return
               onSelect(today)

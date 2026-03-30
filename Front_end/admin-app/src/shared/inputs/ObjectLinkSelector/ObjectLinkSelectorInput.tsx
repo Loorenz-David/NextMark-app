@@ -3,6 +3,7 @@ import { BoldArrowIcon, SearchIcon } from "@/assets/icons";
 import type { ObjectLinkSelectorInputProps } from "./ObjectLinkSelector.types";
 
 export const ObjectLinkSelectorInput = ({
+  mode,
   open,
   disabled,
   placeholder,
@@ -22,9 +23,11 @@ export const ObjectLinkSelectorInput = ({
         disabled ? "opacity-60" : ""
       }`}
   >
-    <div className="flex items-center gap-2  text-[var(--color-muted)]">
-      <SearchIcon className="h-4 w-4" />
-    </div>
+    {mode === "multi" ? (
+      <div className="flex items-center gap-2 text-[var(--color-muted)]">
+        <SearchIcon className="h-4 w-4" />
+      </div>
+    ) : null}
 
     <input
       value={displayValue}
@@ -35,7 +38,7 @@ export const ObjectLinkSelectorInput = ({
       className="form-plain-input w-full"
     />
 
-    {selectedCount > 0 ? (
+    {mode === "multi" && selectedCount > 0 ? (
       <button
         type="button"
         onClick={(event) => {

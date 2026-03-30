@@ -8,20 +8,53 @@ import { useVehicles } from '../../hooks/useVehicleSelectors'
 import { useVehicleSelectorQuery } from '../../hooks/useVehicleSelectorQuery'
 import type { VehicleSelectorProps } from './VehicleSelector.types'
 
+const isSelectionProps = (
+  props: VehicleSelectorProps,
+): props is Extract<
+  VehicleSelectorProps,
+  { onSelectionChange: (nextIds: Array<number | string>) => void }
+> => typeof (props as { onSelectionChange?: unknown }).onSelectionChange === 'function'
+
 export const VehicleSelector = ({
-  selectedVehicle,
-  onSelectVehicle,
   placeholder = 'Select a vehicle',
   containerClassName,
+  ...props
 }: VehicleSelectorProps) => {
   const [query, setQuery] = useState('')
   const vehicles = useVehicles()
+  const selectionProps = isSelectionProps(props) ? props : null
+  const legacyProps = selectionProps ? null : props
+  const mode = selectionProps?.mode ?? 'single'
   const selectedVehicleIds = useMemo(
-    () => (selectedVehicle != null ? [selectedVehicle] : []),
-    [selectedVehicle],
+    () =>
+      selectionProps
+        ? selectionProps.selectedVehicleIds
+        : legacyProps?.selectedVehicle != null
+          ? [legacyProps.selectedVehicle]
+          : [],
+    [legacyProps?.selectedVehicle, selectionProps],
   )
   useHydrateSelectedVehicles(selectedVehicleIds)
   const { items, isLoading } = useVehicleSelectorQuery({ query })
+
+  const handleSelectionChange = (nextIds: Array<number | string>) => {
+    if (selectionProps) {
+      selectionProps.onSelectionChange(nextIds)
+      return
+    }
+
+    const resolvedLegacyProps = legacyProps as Exclude<
+      VehicleSelectorProps,
+      Extract<
+        VehicleSelectorProps,
+        { onSelectionChange: (nextIds: Array<number | string>) => void }
+      >
+    >
+    const nextValue = nextIds[0]
+    resolvedLegacyProps.onSelectVehicle(
+      typeof nextValue === 'number' ? nextValue : nextValue ? Number(nextValue) : null,
+    )
+  }
 
   const selectedItems = useMemo(() => {
     const selectedIdSet = new Set(selectedVehicleIds.map(String))
@@ -42,7 +75,7 @@ export const VehicleSelector = ({
 
   return (
     <ObjectLinkSelector
-      mode="single"
+      mode={mode}
       options={options}
       selectedItems={selectedItems}
       queryValue={query}
@@ -52,15 +85,22 @@ export const VehicleSelector = ({
       containerClassName={containerClassName}
       emptyOptionsMessage="No vehicles found."
       emptySelectedMessage="No selected vehicles."
-      selectedOverlayTitle="Selected vehicles"
-      selectedButtonLabel="Vehicle"
+      selectedOverlayTitle={mode === 'single' ? 'Selected vehicle' : 'Selected vehicles'}
+      selectedButtonLabel={mode === 'single' ? 'Vehicle' : 'Vehicles'}
       onSelectItem={(item) => {
         setQuery('')
-        onSelectVehicle(typeof item.id === 'number' ? item.id : Number(item.id))
+
+        if (mode === 'single') {
+          handleSelectionChange([item.id])
+          return
+        }
+
+        const nextIds = Array.from(new Set([...selectedVehicleIds, item.id]))
+        handleSelectionChange(nextIds)
       }}
-      onRemoveSelectedItem={() => {
+      onRemoveSelectedItem={(item) => {
         setQuery('')
-        onSelectVehicle(null)
+        handleSelectionChange(selectedVehicleIds.filter((id) => String(id) !== String(item.id)))
       }}
     />
   )

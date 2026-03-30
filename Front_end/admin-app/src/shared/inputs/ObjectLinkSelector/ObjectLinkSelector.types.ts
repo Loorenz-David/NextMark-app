@@ -31,6 +31,7 @@ export type ObjectLinkSelectorProps = {
 }
 
 export type ObjectLinkSelectorInputProps = {
+  mode: ObjectLinkSelectorMode
   open: boolean
   disabled: boolean
   placeholder: string

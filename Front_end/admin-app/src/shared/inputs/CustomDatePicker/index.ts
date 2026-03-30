@@ -1,2 +1,7 @@
 export { CustomDatePicker } from './CustomDatePicker'
-export type { CustomDatePickerProps } from './model/customDatePicker.types'
+export type {
+  CustomDatePickerProps,
+  CustomDatePickerIsoRange,
+  CustomDatePickerMode,
+  CustomDatePickerStrategy,
+} from './model/customDatePicker.types'

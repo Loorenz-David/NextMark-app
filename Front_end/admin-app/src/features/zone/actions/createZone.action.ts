@@ -128,13 +128,15 @@ function computeBBox(geometry: GeoJSONPolygon) {
       ? [geometry.coordinates[0]]
       : geometry.coordinates.flat();
 
-  const points = rings.flat().filter(
-    (point): point is [number, number] =>
-      Array.isArray(point) &&
-      point.length >= 2 &&
-      Number.isFinite(point[0]) &&
-      Number.isFinite(point[1]),
-  );
+  const points = rings
+    .flat()
+    .filter(
+      (point): point is [number, number] =>
+        Array.isArray(point) &&
+        point.length >= 2 &&
+        Number.isFinite(point[0]) &&
+        Number.isFinite(point[1]),
+    );
 
   if (points.length === 0) {
     return null;

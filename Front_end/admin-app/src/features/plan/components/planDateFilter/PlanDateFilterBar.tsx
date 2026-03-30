@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 
 import { BackArrowIcon2, FilteredIcon } from '@/assets/icons'
 import { FloatingPopover } from '@/shared/popups/FloatingPopover/FloatingPopover'
@@ -23,13 +23,6 @@ export const PlanDateFilterBar = ({ onFiltersChange, onSelectionChange }: PlanDa
   const [singleVisibleMonth, setSingleVisibleMonth] = useState<Date>(controller.singleDate)
   const [rangeStartVisibleMonth, setRangeStartVisibleMonth] = useState<Date>(controller.rangeStart)
   const [rangeEndVisibleMonth, setRangeEndVisibleMonth] = useState<Date>(controller.rangeEnd)
-
-  const summaryLabel = useMemo(() => {
-    if (controller.mode === 'range') {
-      return `${controller.displayRangeLabel.start} - ${controller.displayRangeLabel.end}`
-    }
-    return controller.displayLabel
-  }, [controller.displayLabel, controller.displayRangeLabel.end, controller.displayRangeLabel.start, controller.mode])
 
   const openSinglePicker = () => {
     setSingleVisibleMonth(controller.singleDate)
@@ -85,7 +78,9 @@ export const PlanDateFilterBar = ({ onFiltersChange, onSelectionChange }: PlanDa
                 visibleMonth={singleVisibleMonth}
                 onVisibleMonthChange={setSingleVisibleMonth}
                 onSelect={(date) => {
-                  controller.setSingleDate(date)
+                  if (date instanceof Date) {
+                    controller.setSingleDate(date)
+                  }
                   setPickerTarget(null)
                 }}
                 onRequestClose={() => setPickerTarget(null)}
@@ -114,7 +109,9 @@ export const PlanDateFilterBar = ({ onFiltersChange, onSelectionChange }: PlanDa
                   visibleMonth={rangeStartVisibleMonth}
                   onVisibleMonthChange={setRangeStartVisibleMonth}
                   onSelect={(date) => {
-                    controller.setRangeStart(date)
+                    if (date instanceof Date) {
+                      controller.setRangeStart(date)
+                    }
                     setPickerTarget(null)
                   }}
                   onRequestClose={() => setPickerTarget(null)}
@@ -142,7 +139,9 @@ export const PlanDateFilterBar = ({ onFiltersChange, onSelectionChange }: PlanDa
                   visibleMonth={rangeEndVisibleMonth}
                   onVisibleMonthChange={setRangeEndVisibleMonth}
                   onSelect={(date) => {
-                    controller.setRangeEnd(date)
+                    if (date instanceof Date) {
+                      controller.setRangeEnd(date)
+                    }
                     setPickerTarget(null)
                   }}
                   onRequestClose={() => setPickerTarget(null)}

@@ -1,4 +1,3 @@
-import type { ChangeEvent, Dispatch, SetStateAction } from "react";
 import type { DeliveryPlan } from "../../types/plan";
 
 import type { RouteGroupInput } from "../../routeGroup/types/routeGroup";
@@ -18,16 +17,9 @@ export type PopupPayload = {
 
 export type PlanTypeState = RouteGroupInput;
 
-export type SelectableZone = {
-  id: number;
-  name: string;
-};
-
 export type PropsPlanFormContext = {
   planForm: DeliveryPlan;
   selectedZoneIds: number[];
-  availableZones: SelectableZone[];
-  isZonesLoading: boolean;
   mode: PlanFormMode;
   planSetters: ReturnType<typeof usePlanFormSetters>;
   planActions: ReturnType<typeof usePlanFormActions>;

@@ -42,6 +42,7 @@ export const CreateRouteGroupFormProvider = ({
   const [formState, setFormState] = useState<CreateRouteGroupFormState>(
     initialState(),
   );
+  const [shouldShowErrors, setShouldShowErrors] = useState(false);
   const formSetters = useMemo(
     () => createRouteGroupFormSetters({ setFormState }),
     [],
@@ -95,6 +96,7 @@ export const CreateRouteGroupFormProvider = ({
   const actions = useMemo(
     () => ({
       handleSubmit: async () => {
+        setShouldShowErrors(true);
         if (planId == null) {
           return false;
         }
@@ -112,6 +114,7 @@ export const CreateRouteGroupFormProvider = ({
       planId: planId ?? 0,
       formState,
       formErrors,
+      shouldShowErrors,
       hasUnsavedChanges,
       availableZones: zoneOptions,
       isSubmitting,
@@ -123,6 +126,7 @@ export const CreateRouteGroupFormProvider = ({
       formErrors,
       formSetters,
       formState,
+      shouldShowErrors,
       hasUnsavedChanges,
       isSubmitting,
       planId,

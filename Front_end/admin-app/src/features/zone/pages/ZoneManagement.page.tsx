@@ -8,34 +8,48 @@ import { zoneApi } from "@/features/zone/api/zone.api";
 import { ZoneMapLayer } from "@/features/zone/components/ZoneMapLayer";
 import { ZoneTemplateForm } from "@/features/zone/components/ZoneTemplateForm";
 import { mapZoneStateToRenderableDefinition } from "@/features/zone/domain/zoneState.mapper";
-import { validateZoneTemplatePayload } from "@/features/zone/domain/zoneTemplateForm.domain";
+import {
+  validateZoneTemplatePayload,
+  type ZoneTemplateUpsertPayload,
+} from "@/features/zone/domain/zoneTemplateForm.domain";
 import {
   selectIsLoadingZonesForVersion,
-  selectSelectedZone,
-  selectSelectedZoneId,
-  selectSelectedZoneVersion,
   selectZonesByVersion,
   useZoneStore,
 } from "@/features/zone/store/zone.store";
+import {
+  selectSelectedZoneVersion,
+  useZoneVersionStore,
+} from "@/features/zone/store/zoneVersion.store";
 import type { ZoneTemplate } from "@/features/zone/types";
 
 export const ZoneManagementPage = () => {
   const { showMessage } = useMessageHandler();
-  const versions = useZoneStore((state) => state.versions);
-  const isLoadingVersions = useZoneStore((state) => state.isLoadingVersions);
-  const setVersions = useZoneStore((state) => state.setVersions);
-  const setSelectedVersionId = useZoneStore((state) => state.setSelectedVersionId);
+  const versions = useZoneVersionStore((state) => state.versions);
+  const isLoadingVersions = useZoneVersionStore((state) => state.isLoadingVersions);
+  const setVersions = useZoneVersionStore((state) => state.setVersions);
+  const setSelectedVersionId = useZoneVersionStore(
+    (state) => state.setSelectedVersionId,
+  );
+  const selectedVersion = useZoneVersionStore(selectSelectedZoneVersion);
+  const selectedZoneId = useZoneStore(
+    (state) =>
+      (typeof selectedVersion?.id === "number"
+        ? state.selectedZoneIdByVersionId[selectedVersion.id]
+        : null) ?? null,
+  );
+  const selectedZone = useZoneStore((state) =>
+    typeof selectedVersion?.id === "number" && typeof selectedZoneId === "number"
+      ? state.zonesByVersionId[selectedVersion.id]?.[selectedZoneId] ?? null
+      : null,
+  );
   const replaceZonesForVersion = useZoneStore(
     (state) => state.replaceZonesForVersion,
   );
   const setSelectedZoneId = useZoneStore((state) => state.setSelectedZoneId);
-  const setLoadingVersions = useZoneStore((state) => state.setLoadingVersions);
+  const setLoadingVersions = useZoneVersionStore((state) => state.setLoadingVersions);
   const setLoadingZones = useZoneStore((state) => state.setLoadingZones);
   const setZoneTemplateFull = useZoneStore((state) => state.setZoneTemplateFull);
-
-  const selectedVersion = useZoneStore(selectSelectedZoneVersion);
-  const selectedZone = useZoneStore(selectSelectedZone);
-  const selectedZoneId = useZoneStore(selectSelectedZoneId);
   const zoneList = useZoneStore(
     useShallow((state) => selectZonesByVersion(state, selectedVersion?.id)),
   );
@@ -264,24 +278,7 @@ export const ZoneManagementPage = () => {
     }
   };
 
-  const handleSaveTemplate = async (payload: {
-    name: string;
-    default_facility_id?: number | null;
-    max_orders_per_route?: number | null;
-    max_vehicles?: number | null;
-    operating_window_start?: string | null;
-    operating_window_end?: string | null;
-    eta_tolerance_seconds?: number | null;
-    vehicle_capabilities_required?: string[] | null;
-    preferred_vehicle_ids?: number[] | null;
-    default_route_end_strategy?:
-      | "round_trip"
-      | "custom_end_address"
-      | "end_at_last_stop"
-      | "last_stop"
-      | null;
-    meta?: Record<string, unknown> | null;
-  }) => {
+  const handleSaveTemplate = async (payload: ZoneTemplateUpsertPayload) => {
     if (
       typeof selectedVersion?.id !== "number" ||
       typeof selectedZone?.id !== "number"

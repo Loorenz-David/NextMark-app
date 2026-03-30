@@ -5,9 +5,12 @@ import { useMessageHandler } from "@shared-message-handler";
 import { updateZoneGeometryAction } from "@/features/zone/actions/updateZoneGeometry.action";
 import { useEnsureZoneGeometry } from "@/features/zone/controllers/useEnsureZoneGeometry";
 import {
+  selectWorkingZoneVersion,
+  useZoneVersionStore,
+} from "@/features/zone/store/zoneVersion.store";
+import {
   selectZoneByVersionAndId,
   selectZonePathEditSession,
-  selectWorkingZoneVersion,
   useZoneStore,
 } from "@/features/zone/store/zone.store";
 
@@ -17,13 +20,15 @@ export const useZonePathEditController = (
 ) => {
   const { showMessage } = useMessageHandler();
   const { load: ensureZoneGeometry } = useEnsureZoneGeometry(versionId, zoneId);
-  const workingVersion = useZoneStore(selectWorkingZoneVersion);
+  const workingVersion = useZoneVersionStore(selectWorkingZoneVersion);
   const zone = useZoneStore((state) =>
     selectZoneByVersionAndId(state, versionId, zoneId),
   );
   const pathEditSession = useZoneStore(selectZonePathEditSession);
   const setIsZoneMode = useZoneStore((state) => state.setIsZoneMode);
-  const setSelectedVersionId = useZoneStore((state) => state.setSelectedVersionId);
+  const setSelectedVersionId = useZoneVersionStore(
+    (state) => state.setSelectedVersionId,
+  );
   const setSelectedZoneId = useZoneStore((state) => state.setSelectedZoneId);
   const setDrawnGeometry = useZoneStore((state) => state.setDrawnGeometry);
   const setHoveredZoneId = useZoneStore((state) => state.setHoveredZoneId);

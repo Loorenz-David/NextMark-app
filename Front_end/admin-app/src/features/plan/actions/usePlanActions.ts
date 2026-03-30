@@ -13,8 +13,8 @@ export const usePlanHeaderAction = () => {
 
   const onCreatePlan = () => {
     popupManager.open({
-      // key: "PlanForm",
-      key: "zone.form",
+      key: "PlanForm",
+      // key: "zone.form",
       payload: { mode: "create" },
     });
   };

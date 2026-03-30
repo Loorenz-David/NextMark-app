@@ -23,6 +23,7 @@ import { useOrderPlanPatchController } from './orderPlanPatch.controller'
 import { syncRouteGroupSummaries } from '@/features/plan/routeGroup/flows/syncRouteGroupSummaries.flow'
 import { selectOrderByServerId, useOrderStore } from '../store/order.store'
 import { markRouteGroupOverviewFreshAfter } from '@/features/plan/routeGroup/store/routeGroupOverviewFreshness.store'
+import { applyOrderBatchMoveStateSync } from '@/features/order/actions/applyOrderBatchMoveStateSync.action'
 
 type UpdateOrdersDeliveryPlanBatchParams = {
   planId: number
@@ -87,7 +88,11 @@ export const useOrderBatchDeliveryPlanController = () => {
             })
           })
 
-          syncRouteGroupSummaries(Array.from(affectedRouteGroupIds))
+          const syncResult = applyOrderBatchMoveStateSync(payload)
+
+          if (!syncResult.hasRouteGroupStateChanges) {
+            syncRouteGroupSummaries(Array.from(affectedRouteGroupIds))
+          }
           markRouteGroupOverviewFreshAfter([planId])
 
           if (resolvedCount > 0 && updatedCount < resolvedCount) {

@@ -8,6 +8,7 @@ import { DATE_PLACEHOLDER } from '../model/customDatePicker.utils'
 type CustomDatePickerInputProps = {
   value: string
   showTodayLabel: boolean
+  readOnly?: boolean
   disabled?: boolean
   className?: string
   onOpen: () => void
@@ -20,6 +21,7 @@ type CustomDatePickerInputProps = {
 export const CustomDatePickerInput = ({
   value,
   showTodayLabel,
+  readOnly,
   disabled,
   className = fieldContainer,
   onOpen,
@@ -53,11 +55,12 @@ export const CustomDatePickerInput = ({
           ref={inputRef}
           value={value}
           placeholder={DATE_PLACEHOLDER}
+          readOnly={readOnly}
           disabled={disabled}
           onChange={(event) => onChange(event.target.value)}
           onBlur={onBlur}
           onKeyDown={onKeyDown}
-          className={`${fieldInput} min-w-0 max-w-[90px] `}
+          className={`${fieldInput} min-w-0 ${readOnly ? "w-full" : "max-w-[90px]"}`}
         />
 
       {showTodayLabel ? (

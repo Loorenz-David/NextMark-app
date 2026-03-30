@@ -8,8 +8,6 @@ import { useRouteGroupPageContext } from '../context/useRouteGroupPageContext'
 import { useRouteGroupStopOrdering } from '../hooks/useRouteGroupStopOrdering'
 import { useRouteGroupDndProjectionFlow } from '../flows/routeGroupDndProjection.flow'
 import { formatRouteTime } from '@/features/plan/routeGroup/utils/formatRouteTime'
-import { BasicButton } from '@/shared/buttons'
-import { DeliveryReadyIcon } from '@/assets/icons'
 import { buildRouteGroupStopAddressGroups } from '../domain/routeGroupAddressGroup.flow'
 import { DraggableRouteGroupOrderGroupCard } from './cards/DraggableRouteGroupOrderGroupCard'
 import { useOrderGroupUIActions, useOrderGroupUIStore } from '@/features/order/store/orderGroupUI.store'
@@ -32,7 +30,6 @@ export const RouteGroupOrderList = ({
     const {
         orders,
         planStartDate,
-        planState,
         routeSolutionStops,
         stopByOrderId,
         ordersById,
@@ -84,14 +81,14 @@ export const RouteGroupOrderList = ({
     const endLocationLabel = `${strategyLabel} · ${boundaryLocations.end.label}`
    
     return ( 
-        <div className="flex h-full min-h-0 flex-col overflow-x-hidden">
+        <div className="flex min-h-0 flex-1 flex-col overflow-x-hidden">
             <div
                 className="flex-1 min-h-0 overflow-y-auto scroll-thin px-4"
                 onScroll={onScrollContainer}
             >
 
                 <div
-                    className="flex h-full flex-col gap-4"
+                    className="flex min-h-full flex-col gap-4"
                     style={{
                         paddingTop: topReservedOffset ? `${topReservedOffset}px` : undefined,
                         transition: 'padding-top 220ms cubic-bezier(0.22, 1, 0.36, 1)',
@@ -164,28 +161,6 @@ export const RouteGroupOrderList = ({
                             />
 
                          </div>
-                    }
-
-                    { planState && planState.name.trim() == 'Open' && sortedEntries.length > 0 && 
-                        <div className="pt-8 w-full flex mt-auto pb-10">
-                            <BasicButton params={{
-                                variant:'primary',
-                                className:"w-full py-3.5 rounded-[1.85rem] border border-[rgba(112,222,208,0.22)] shadow-[0_16px_34px_rgba(0,0,0,0.18)]",
-                                style:{
-                                    background:'linear-gradient(135deg, rgba(31, 175, 193, 0.96), rgba(59, 211, 205, 0.88))',
-                                    color:'rgb(13, 31, 34)'
-                                },
-                                onClick:routeGroupPageActions.routeReadyForDelivery
-                            }}>
-                                <div className="flex gap-4 items-center justify-center">
-                                    <DeliveryReadyIcon className="h-5 w-5 text-[rgb(13,31,34)] "/>
-                                    <span className="font-medium tracking-tight">
-                                        Ready for Delivery
-                                    </span>
-                                </div>
-                            </BasicButton>
-                        </div>
-                    
                     }
                 </div>
             </div>

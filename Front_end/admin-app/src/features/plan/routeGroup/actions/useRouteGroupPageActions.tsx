@@ -6,7 +6,6 @@ import { serializeRouteSolutionForTemplate } from "@/features/plan/routeGroup/do
 import { buildRouteOptimizationPayload } from "@/features/plan/routeGroup/domain/buildRouteOptimizationPayload";
 import {
   usePopupManager,
-  useSectionManager,
 } from "@/shared/resource-manager/useResourceManager";
 import { useRouteOptimizationMutations } from "../controllers/routeOptimization.controller";
 import { useRouteSolutionMutations } from "../controllers/routeSolution.controller";
@@ -47,7 +46,6 @@ export const useRouteGroupPageActions = ({
   loadingController,
 }: Props) => {
   const popupManager = usePopupManager();
-  const sectionManager = useSectionManager();
   const { openOrderForm } = useOrderActions();
   const {
     routeReadyForDelivery,

@@ -5,8 +5,11 @@ import { BasicButton } from "@/shared/buttons/BasicButton";
 import { useZonePathEditController } from "@/features/zone/controllers/useZonePathEditController";
 import { useEnsureZoneTemplate } from "@/features/zone/controllers/useEnsureZoneTemplate";
 import {
-  selectWorkingZoneVersionId,
   selectWorkingZoneVersion,
+  selectWorkingZoneVersionId,
+  useZoneVersionStore,
+} from "@/features/zone/store/zoneVersion.store";
+import {
   selectZoneByVersionAndId,
   useZoneStore,
 } from "@/features/zone/store/zone.store";
@@ -18,8 +21,8 @@ const VERTICAL_OFFSET = 10;
 
 export const ZoneDetailsPopover = () => {
   const popupManager = usePopupManager();
-  const workingVersionId = useZoneStore(selectWorkingZoneVersionId);
-  const workingVersion = useZoneStore(selectWorkingZoneVersion);
+  const workingVersionId = useZoneVersionStore(selectWorkingZoneVersionId);
+  const workingVersion = useZoneVersionStore(selectWorkingZoneVersion);
   const activePopover = useZoneStore((state) => state.activeZoneDetailsPopover);
   const closeZoneDetailsPopover = useZoneStore(
     (state) => state.closeZoneDetailsPopover,

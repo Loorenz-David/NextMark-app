@@ -1,23 +1,16 @@
-import type {
-  ZoneSelectorItem,
-  ZoneSelectorMode,
-} from "@/features/zone/domain/zoneSelector.domain";
+import type { ObjectLinkSelectorMode } from "@/shared/inputs/ObjectLinkSelector";
 import type {
   ZoneQueryExactFilters,
   ZoneQuerySearchColumn,
 } from "@/features/zone/domain/zoneSearch.domain";
 
-export type ZoneSelectorProps<TZone extends ZoneSelectorItem = ZoneSelectorItem> = {
+export type ZoneSelectorProps = {
   versionId?: number | null;
-  zones: TZone[];
-  selectedZones?: TZone[];
-  mode?: ZoneSelectorMode;
+  mode?: ObjectLinkSelectorMode;
+  selectedZoneIds: Array<number | string>;
+  onSelectionChange: (nextIds: Array<number | string>) => void;
   selectedColumns?: ZoneQuerySearchColumn[];
   filters?: ZoneQueryExactFilters;
-  onSelectZone: (zone: TZone) => void;
-  onDeselectZone?: (zone: TZone) => void;
-  visibleLimit?: number;
   placeholder?: string;
-  className?: string;
-  listClassName?: string;
+  containerClassName?: string;
 };

@@ -16,9 +16,7 @@ export type {
 export { zoneApi } from "./api/zone.api";
 export {
   useZoneStore,
-  selectActiveZoneVersion,
   selectIsZoneMode,
-  selectSelectedZoneVersion,
   selectSelectedZone,
   selectSelectedZoneId,
   selectZoneByVersionAndId,
@@ -27,8 +25,15 @@ export {
   selectRenderableZoneGeometry,
   selectZoneGeometryStatus,
   selectZoneTemplateStatus,
-  selectWorkingZoneVersionId,
 } from "./store/zone.store";
+export {
+  useZoneVersionStore,
+  selectActiveZoneVersion,
+  selectSelectedZoneVersion,
+  selectWorkingZoneVersion,
+  selectWorkingZoneVersionId,
+  selectActiveOrLatestZoneVersionId,
+} from "./store/zoneVersion.store";
 export {
   useZoneVisibilityStore,
   selectZoneVisibility,
@@ -46,13 +51,11 @@ export { useZoneMapLayerController } from "./controllers/useZoneMapLayerControll
 export { useEnsureZoneGeometry } from "./controllers/useEnsureZoneGeometry";
 export { useEnsureZoneTemplate } from "./controllers/useEnsureZoneTemplate";
 export { useZoneFullContext } from "./controllers/useZoneFullContext";
-export { useZoneSelectorController } from "./controllers/useZoneSelectorController";
 export { searchZonesQuery } from "./actions/searchZones.query";
 export { createZoneAction } from "./actions/createZone.action";
 export { updateZoneAction } from "./actions/updateZone.action";
 export { deleteZoneAction } from "./actions/deleteZone.action";
 export { loadZoneGeometryQuery } from "./actions/loadZoneGeometry.query";
 export { loadZoneTemplateQuery } from "./actions/loadZoneTemplate.query";
-export { useZoneSearchFlow } from "./flows/useZoneSearch.flow";
 export { insertZonesFromBootstrap } from "./flows/insertZonesFromBootstrap.flow";
 export { zonePopupRegistry } from "./registry/zone.popups.registry";

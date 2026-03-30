@@ -1,3 +1,10 @@
+import {
+  zoneRouteEndStrategyValueSet,
+  zoneVehicleCapabilityOptions,
+  zoneVehicleCapabilityValueSet,
+  type ZoneRouteEndStrategy,
+  type ZoneVehicleCapability,
+} from "./zoneEnums";
 import type { ZoneTemplate, ZoneTemplateConfig } from "@/features/zone/types";
 
 export type ZoneTemplateUpsertPayload = {
@@ -5,16 +12,15 @@ export type ZoneTemplateUpsertPayload = {
 } & ZoneTemplateConfig;
 
 export const ALLOWED_ZONE_TEMPLATE_CAPABILITIES = [
-  "cold_chain",
-  "fragile",
-] as const;
+  ...zoneVehicleCapabilityOptions.map((option) => option.value),
+] as const satisfies ReadonlyArray<ZoneVehicleCapability>;
 
 export const ALLOWED_ZONE_ROUTE_END_STRATEGIES = [
   "round_trip",
   "custom_end_address",
   "end_at_last_stop",
   "last_stop",
-] as const;
+] as const satisfies ReadonlyArray<ZoneRouteEndStrategy>;
 
 export type ZoneTemplateValidationResult = {
   valid: boolean;
@@ -44,11 +50,14 @@ const parseOptionalNumber = (value: string): number | null => {
   return Number.isFinite(parsed) ? parsed : null;
 };
 
-const parseStringList = (value: string): string[] | null => {
+const parseCapabilityList = (value: string): ZoneVehicleCapability[] | null => {
   const parsed = value
     .split(",")
     .map((entry) => entry.trim())
-    .filter(Boolean);
+    .filter(
+      (entry): entry is ZoneVehicleCapability =>
+        zoneVehicleCapabilityValueSet.has(entry as ZoneVehicleCapability),
+    );
 
   return parsed.length > 0 ? parsed : null;
 };
@@ -119,7 +128,7 @@ export const buildZoneTemplatePayload = (
     operating_window_start: fields.operating_window_start.trim() || null,
     operating_window_end: fields.operating_window_end.trim() || null,
     eta_tolerance_seconds: parseOptionalNumber(fields.eta_tolerance_seconds),
-    vehicle_capabilities_required: parseStringList(
+    vehicle_capabilities_required: parseCapabilityList(
       fields.vehicle_capabilities_required,
     ),
     preferred_vehicle_ids: parseNumberList(fields.preferred_vehicle_ids),
@@ -203,18 +212,14 @@ export const validateZoneTemplatePayload = (
 
   if (
     payload.default_route_end_strategy != null &&
-    !ALLOWED_ZONE_ROUTE_END_STRATEGIES.includes(
-      payload.default_route_end_strategy,
-    )
+    !zoneRouteEndStrategyValueSet.has(payload.default_route_end_strategy)
   ) {
     issues.push("Route end strategy is invalid.");
   }
 
   const invalidCapabilities = (payload.vehicle_capabilities_required ?? []).filter(
     (capability) =>
-      !ALLOWED_ZONE_TEMPLATE_CAPABILITIES.includes(
-        capability as (typeof ALLOWED_ZONE_TEMPLATE_CAPABILITIES)[number],
-      ),
+      !ALLOWED_ZONE_TEMPLATE_CAPABILITIES.includes(capability),
   );
 
   if (invalidCapabilities.length > 0) {

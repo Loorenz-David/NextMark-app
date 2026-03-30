@@ -1,73 +1,115 @@
-import { SearchFilterBar } from "@/shared/searchBars";
-import { cn } from "@/lib/utils/cn";
-import { useZoneSelectorController } from "@/features/zone/controllers/useZoneSelectorController";
-import type { ZoneSelectorItem } from "@/features/zone/domain/zoneSelector.domain";
+import { useMemo, useState } from "react";
 
-import { ZoneSelectorList } from "./ZoneSelectorList";
+import { ObjectLinkSelector } from "@/shared/inputs/ObjectLinkSelector";
+import {
+  getZoneSelectionKey,
+  mapZoneToSelectorItem,
+} from "@/features/zone/domain/zoneSelector.domain";
+import { useHydrateSelectedZones } from "@/features/zone/hooks/useHydrateSelectedZones";
+import { useZoneSelectorQuery } from "@/features/zone/hooks/useZoneSelectorQuery";
+import { useZonesByVersion } from "@/features/zone/hooks/useZoneSelectors";
+import {
+  selectWorkingZoneVersionId,
+  useZoneStore,
+} from "@/features/zone/store/zone.store";
+import type {
+  ZoneQueryExactFilters,
+  ZoneQuerySearchColumn,
+} from "@/features/zone/domain/zoneSearch.domain";
+
 import type { ZoneSelectorProps } from "./ZoneSelector.types";
 
-const DEFAULT_VISIBLE_LIMIT = 8;
+const EMPTY_SELECTED_COLUMNS: ZoneQuerySearchColumn[] = [];
+const EMPTY_FILTERS: ZoneQueryExactFilters = {};
 
-export const ZoneSelector = <TZone extends ZoneSelectorItem>({
+export const ZoneSelector = ({
   versionId,
-  zones,
-  selectedZones = [],
   mode = "single",
-  selectedColumns = [],
-  filters = {},
-  onSelectZone,
-  onDeselectZone,
-  visibleLimit = DEFAULT_VISIBLE_LIMIT,
-  placeholder = "Search zones...",
-  className,
-  listClassName,
-}: ZoneSelectorProps<TZone>) => {
-  const controller = useZoneSelectorController({
-    versionId,
-    zones,
-    selectedZones,
-    mode,
-    visibleLimit,
+  selectedZoneIds,
+  onSelectionChange,
+  selectedColumns = EMPTY_SELECTED_COLUMNS,
+  filters = EMPTY_FILTERS,
+  placeholder = "Select a zone",
+  containerClassName,
+}: ZoneSelectorProps) => {
+  const [query, setQuery] = useState("");
+  const fallbackVersionId = useZoneStore(selectWorkingZoneVersionId);
+  const resolvedVersionId = versionId ?? fallbackVersionId;
+  const zones = useZonesByVersion(resolvedVersionId);
+
+  useHydrateSelectedZones({
+    versionId: resolvedVersionId,
+    selectedZoneIds,
+  });
+  const { items, isLoading } = useZoneSelectorQuery({
+    versionId: resolvedVersionId,
+    query,
     selectedColumns,
     filters,
-    onSelectZone,
-    onDeselectZone,
   });
 
+  const selectedItems = useMemo(() => {
+    const selectedIdSet = new Set(selectedZoneIds.map(String));
+
+    return zones
+      .filter((zone) => {
+        const selectionKey = getZoneSelectionKey(zone);
+        return (
+          selectedIdSet.has(selectionKey) ||
+          selectedIdSet.has(String(zone.id ?? "")) ||
+          selectedIdSet.has(String(zone.client_id ?? ""))
+        );
+      })
+      .map(mapZoneToSelectorItem);
+  }, [selectedZoneIds, zones]);
+
+  const options = useMemo(() => items.map(mapZoneToSelectorItem), [items]);
+  const zoneByOptionId = useMemo(
+    () =>
+      new Map(
+        zones.map((zone) => [String(mapZoneToSelectorItem(zone).id), zone] as const),
+      ),
+    [zones],
+  );
+
   return (
-    <div className={cn("flex w-full flex-col gap-2", className)}>
-      <SearchFilterBar
-        placeholder={placeholder}
-        applySearch={controller.setSearchValue}
-        searchValue={controller.searchValue}
-        hideFilteredIcon
-      />
+    <ObjectLinkSelector
+      mode={mode}
+      options={options}
+      selectedItems={selectedItems}
+      queryValue={query}
+      onQueryChange={setQuery}
+      loading={isLoading}
+      placeholder={placeholder}
+      containerClassName={containerClassName}
+      emptyOptionsMessage="No zones found."
+      emptySelectedMessage="No selected zones."
+      selectedOverlayTitle={mode === "single" ? "Selected zone" : "Selected zones"}
+      selectedButtonLabel={mode === "single" ? "Zone" : "Zones"}
+      onSelectItem={(item) => {
+        setQuery("");
 
-      <div className="flex items-center justify-between gap-3 px-1 text-[11px] text-[var(--color-muted)]">
-        <span>
-          Showing {controller.visibleRows.length} of {controller.filteredCount} zone
-          {controller.filteredCount === 1 ? "" : "s"}
-        </span>
+        if (mode === "single") {
+          onSelectionChange([item.id]);
+          return;
+        }
 
-        {controller.showResultsLimitHint ? (
-          <span>
-            Refine search to see the remaining {controller.filteredCount - controller.visibleRows.length}.
-          </span>
-        ) : null}
-      </div>
+        const nextIds = Array.from(new Set([...selectedZoneIds, item.id]));
+        onSelectionChange(nextIds);
+      }}
+      onRemoveSelectedItem={(item) => {
+        setQuery("");
+        const matchedZone = zoneByOptionId.get(String(item.id));
+        const removableKeys = new Set([
+          String(item.id),
+          String(matchedZone?.id ?? ""),
+          String(matchedZone?.client_id ?? ""),
+        ]);
 
-      {controller.searchStatusMessage ? (
-        <div className="rounded-xl border border-[var(--color-border-accent)] bg-[var(--color-page)]/70 px-3 py-2 text-[11px] text-[var(--color-muted)]">
-          {controller.searchStatusMessage}
-        </div>
-      ) : null}
-
-      <ZoneSelectorList
-        rows={controller.visibleRows}
-        emptyStateMessage={controller.emptyStateMessage}
-        listClassName={listClassName}
-        onPressRow={controller.handleZonePress}
-      />
-    </div>
+        onSelectionChange(
+          selectedZoneIds.filter((id) => !removableKeys.has(String(id))),
+        );
+      }}
+    />
   );
 };

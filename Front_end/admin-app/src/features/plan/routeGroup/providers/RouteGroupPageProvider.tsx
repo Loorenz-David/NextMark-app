@@ -8,6 +8,11 @@ import { useRouteGroupPageCommandsController } from '../controllers/useRouteGrou
 import { useSyncActiveRouteGroupSelectionFlow } from '../flows/syncActiveRouteGroupSelection.flow'
 import { useSyncActiveRouteSolutionSelectionFlow } from '../flows/syncActiveRouteSolutionSelection.flow'
 import { useActiveRouteGroupDetailsHydrationFlow } from '../flows/activeRouteGroupDetailsHydration.flow'
+import { useSyncActiveRouteGroupZonePreviewFlow } from '../flows/syncActiveRouteGroupZonePreview.flow'
+import {
+  selectRouteGroupZonePreviewMode,
+  useRouteGroupZonePreviewStore,
+} from '../store/routeGroupZonePreview.store'
 
 import {
   RouteGroupPageCommandsContext,
@@ -60,6 +65,14 @@ export function RouteGroupPageProvider({
     loadingController,
     routeSolutionWarningRegistry,
   } = useRouteGroupPageResourcesController(planId)
+  const previewMode = useRouteGroupZonePreviewStore(
+    selectRouteGroupZonePreviewMode,
+  )
+  const hasActiveZonePreview = routeGroup?.zone_snapshot?.geometry != null
+  const hasAnyZonePreview = routeGroups.some(
+    (candidateRouteGroup) =>
+      candidateRouteGroup.zone_snapshot?.geometry != null,
+  )
 
   useSyncActiveRouteGroupSelectionFlow({
     planId,
@@ -77,6 +90,12 @@ export function RouteGroupPageProvider({
     routeGroup: routeGroup ?? null,
     selectedRouteSolution: selectedRouteSolution ?? null,
     routeSolutionStops,
+  })
+  useSyncActiveRouteGroupZonePreviewFlow({
+    planId,
+    previewMode,
+    hasActiveZonePreview,
+    hasAnyZonePreview,
   })
 
   const { routeGroupPageActions, loadingController: commandLoadingController } = useRouteGroupPageCommandsController({

@@ -1,5 +1,6 @@
 export type {
   GeoJSONPolygon,
+  ZoneVehicleCapability,
   ZoneTemplateConfig,
   ZoneTemplate,
   ZoneTemplateRef,
@@ -13,3 +14,4 @@ export type {
   ZonesContext,
   ZoneVersion,
 } from "./zone";
+export type { ZoneRouteEndStrategy } from "../domain/zoneEnums";

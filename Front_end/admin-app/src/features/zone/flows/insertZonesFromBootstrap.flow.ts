@@ -1,8 +1,10 @@
 import { useZoneStore } from "@/features/zone/store/zone.store";
+import { useZoneVersionStore } from "@/features/zone/store/zoneVersion.store";
 import type { ZoneLite, ZonesContext } from "@/features/zone/types";
 
 export const insertZonesFromBootstrap = (zonesContext: ZonesContext) => {
   const zoneStore = useZoneStore.getState();
+  const zoneVersionStore = useZoneVersionStore.getState();
   const versionId = zonesContext?.selected_version?.id;
   if (
     typeof versionId !== "number" ||
@@ -29,6 +31,15 @@ export const insertZonesFromBootstrap = (zonesContext: ZonesContext) => {
     is_active: zone.is_active ?? false,
   }));
 
+  zoneVersionStore.setVersions([
+    {
+      id: versionId,
+      city_key: zonesContext.city_key,
+      version_number: zonesContext.selected_version?.version_number,
+      is_active: zonesContext.selected_version?.is_active,
+    },
+  ]);
+  zoneVersionStore.setSelectedVersionId(versionId);
   zoneStore.setVersions([
     {
       id: versionId,

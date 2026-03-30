@@ -1,4 +1,5 @@
 export { RouteGroupOrderList } from './RouteGroupOrderList'
+export { RouteGroupReadyFooter } from './RouteGroupReadyFooter'
 export { RouteOptimizationDropdownButton } from './RouteOptimizationDropdownButton'
 export { RouteStopDragOverlay } from './overlays/RouteStopDragOverlay'
 export { RouteStopWarnings } from './warnings/RouteStopWarnings'

@@ -1,10 +1,9 @@
 import type { Dispatch, SetStateAction } from "react";
 import type { ChangeEvent } from "react";
 import type { DeliveryPlan, PlanDateStrategy } from "../../types/plan";
-import type { PlanTypeState } from "./PlanForm.types";
 import type { PlanWarningsControllers } from "./PlanForm.types";
+import type { CustomDatePickerIsoRange } from "@/shared/inputs/CustomDatePicker";
 type SetDeliveryPlanState = Dispatch<SetStateAction<DeliveryPlan>>;
-type SetPlanTypeState = Dispatch<SetStateAction<PlanTypeState | null>>;
 
 type PropsUsePlanFormSetters = {
   setPlanForm: SetDeliveryPlanState;
@@ -60,8 +59,59 @@ export const usePlanFormSetters = ({
     });
   };
 
+  const handleZoneSelectionChange = (nextZoneIds: Array<number | string>) => {
+    const normalizedIds = nextZoneIds
+      .map((zoneId) =>
+        typeof zoneId === "number" ? zoneId : Number.parseInt(String(zoneId), 10),
+      )
+      .filter((zoneId) => Number.isInteger(zoneId) && zoneId > 0);
+
+    setSelectedZoneIds(Array.from(new Set(normalizedIds)));
+  };
+
   const handleDateStrategy = (strategy: PlanDateStrategy) => {
-    setPlanForm((prev) => ({ ...prev, date_strategy: strategy }));
+    setPlanForm((prev) => {
+      const nextStartDate = prev.start_date ?? null;
+      const nextEndDate = strategy === "range" ? prev.end_date ?? null : null;
+
+      planFormWarnings.planStartDateWarning.validate({
+        start_date: nextStartDate,
+        end_date: strategy === "range" ? nextEndDate : null,
+      });
+
+      return {
+        ...prev,
+        date_strategy: strategy,
+        end_date: nextEndDate,
+      };
+    });
+  };
+
+  const handleCompositeDateStrategy = (strategy: PlanDateStrategy) => {
+    handleDateStrategy(strategy);
+  };
+
+  const handleCompositeSingleDate = (value: string | null) => {
+    handleStartDate(value ?? "");
+  };
+
+  const handleCompositeRange = (value: CustomDatePickerIsoRange) => {
+    setPlanForm((prev) => {
+      const nextStartDate = value.start ?? prev.start_date ?? null;
+      const nextEndDate = value.end ?? null;
+
+      planFormWarnings.planStartDateWarning.validate({
+        start_date: nextStartDate,
+        end_date: nextEndDate,
+      });
+
+      return {
+        ...prev,
+        date_strategy: "range",
+        start_date: nextStartDate,
+        end_date: nextEndDate,
+      };
+    });
   };
 
   return {
@@ -70,6 +120,10 @@ export const usePlanFormSetters = ({
     handleStartDate,
     handleEndDate,
     handleZoneSelectionToggle,
+    handleZoneSelectionChange,
     handleDateStrategy,
+    handleCompositeDateStrategy,
+    handleCompositeSingleDate,
+    handleCompositeRange,
   };
 };

@@ -2,6 +2,7 @@ import { apiClient } from "@/lib/api/ApiClient";
 import type { ApiResult } from "@/lib/api/types";
 import type {
   OrderBatchSelectionPayload,
+  OrderBatchMoveResponse,
   PlanTotalsEntry,
 } from "@shared-domain";
 
@@ -46,11 +47,9 @@ export type RouteGroupDetailsResponse = {
   route_solution_stops?: RouteSolutionStop[] | RouteSolutionStopMap | null;
 };
 
-export type MoveOrderToRouteGroupResponse = {
+export type MoveOrderToRouteGroupResponse = OrderBatchMoveResponse & {
+  // Legacy payload compatibility.
   updated?: OrderGroupMovedBundle[];
-  updated_bundles?: OrderGroupMovedBundle[];
-  resolved_count?: number;
-  updated_count?: number;
 };
 
 export const routeGroupApi = {
