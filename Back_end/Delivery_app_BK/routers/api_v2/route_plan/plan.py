@@ -76,6 +76,7 @@ def list_route_plans():
         incoming_data=incoming_data,
         identity=identity,
     )
+  
 
     outcome = run_service(lambda c: list_route_plans_service(c), ctx)
     response = Response()
@@ -305,7 +306,7 @@ def get_route_plan_route_group(route_plan_id: int, route_group_id: int):
         lambda c: get_route_group_service(route_plan_id, route_group_id, c), ctx
     )
     response = Response()
-
+    
     if outcome.error:
         return response.build_unsuccessful_response(outcome.error)
 

@@ -18,6 +18,7 @@ def list_orders(
     route_plan_id: int | None = None,
     route_group_id: int | None = None,
 ):
+    
     base_query = db.session.query(Order).options(
         selectinload(Order.delivery_windows),
         selectinload(Order.items),

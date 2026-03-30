@@ -32,7 +32,7 @@ from Delivery_app_BK.services.commands.order.delete_order import (
     delete_order as delete_order_service,
 )
 from Delivery_app_BK.services.commands.order.order_states.update_orders_state import (
-    update_orders_state as update_orders_state_service,
+    update_orders_state_payload as update_orders_state_service,
 )
 from Delivery_app_BK.services.queries.item.list_items import (
     list_items as list_items_service,
@@ -43,92 +43,9 @@ from Delivery_app_BK.services.commands.order.archive_order import (
 from Delivery_app_BK.services.commands.order.unarchive_order import (
     unarchive_order as unarchive_order_service
 )
-from Delivery_app_BK.models import RouteGroup, RoutePlan
 
 
 order_bp = Blueprint("api_v2_order_bp", __name__)
-
-
-def _load_route_groups_by_ids(route_group_ids: set[int]) -> list[RouteGroup]:
-    if not route_group_ids:
-        return []
-    return (
-        RouteGroup.query.filter(RouteGroup.id.in_(route_group_ids))
-        .order_by(RouteGroup.id.asc())
-        .all()
-    )
-
-
-def _load_route_plans_by_ids(route_plan_ids: set[int]) -> list[RoutePlan]:
-    if not route_plan_ids:
-        return []
-    return (
-        RoutePlan.query.filter(RoutePlan.id.in_(route_plan_ids))
-        .order_by(RoutePlan.id.asc())
-        .all()
-    )
-
-
-def _serialize_route_group_state(route_group: RouteGroup) -> dict:
-    return {
-        "id": route_group.id,
-        "client_id": route_group.client_id,
-        "route_plan_id": route_group.route_plan_id,
-        "state_id": route_group.state_id,
-        "total_orders": route_group.total_orders,
-        "order_state_counts": route_group.order_state_counts,
-    }
-
-
-def _serialize_route_plan_state(route_plan: RoutePlan) -> dict:
-    return {
-        "id": route_plan.id,
-        "client_id": route_plan.client_id,
-        "state_id": route_plan.state_id,
-        "total_orders": route_plan.total_orders,
-    }
-
-
-def _build_order_state_update_payload(changed_orders: list) -> dict:
-    changed = list(changed_orders or [])
-    route_group_ids: set[int] = set()
-    route_plan_ids: set[int] = set()
-    orders_payload: list[dict] = []
-
-    for order in changed:
-        route_group_id = getattr(order, "route_group_id", None)
-        if route_group_id is None:
-            route_group = getattr(order, "route_group", None)
-            route_group_id = getattr(route_group, "id", None)
-
-        route_plan_id = getattr(order, "route_plan_id", None)
-        if route_plan_id is None:
-            route_plan = getattr(order, "route_plan", None) or getattr(order, "delivery_plan", None)
-            route_plan_id = getattr(route_plan, "id", None)
-
-        if route_group_id is not None:
-            route_group_ids.add(route_group_id)
-        if route_plan_id is not None:
-            route_plan_ids.add(route_plan_id)
-
-        orders_payload.append(
-            {
-                "id": getattr(order, "id", None),
-                "client_id": getattr(order, "client_id", None),
-                "order_state_id": getattr(order, "order_state_id", None),
-                "route_group_id": route_group_id,
-                "route_plan_id": route_plan_id,
-            }
-        )
-
-    route_groups = _load_route_groups_by_ids(route_group_ids)
-    route_plans = _load_route_plans_by_ids(route_plan_ids)
-
-    return {
-        "orders": orders_payload,
-        "route_groups": [_serialize_route_group_state(group) for group in route_groups],
-        "route_plans": [_serialize_route_plan_state(plan) for plan in route_plans],
-    }
 
 
 @order_bp.route("/", methods=["GET"])
@@ -336,10 +253,8 @@ def update_orders_state(order_id: int, state_id: int):
     if outcome.error:
         return response.build_unsuccessful_response(outcome.error)
 
-    payload = _build_order_state_update_payload(outcome.data or [])
-
     return response.build_successful_response(
-        payload,
+        outcome.data,
         warnings=ctx.warnings,
     )
 

@@ -1,6 +1,6 @@
 from types import SimpleNamespace
 
-from Delivery_app_BK.routers.api_v2 import order as module
+from Delivery_app_BK.services.queries.order import serialize_state_update as module
 
 
 def test_build_order_state_update_payload_includes_orders_groups_and_plans(monkeypatch):
@@ -45,7 +45,7 @@ def test_build_order_state_update_payload_includes_orders_groups_and_plans(monke
         else [],
     )
 
-    payload = module._build_order_state_update_payload(changed_orders)
+    payload = module.build_order_state_update_payload(changed_orders)
 
     assert payload["orders"] == [
         {
@@ -95,7 +95,7 @@ def test_build_order_state_update_payload_resolves_ids_from_relationships(monkey
     monkeypatch.setattr(module, "_load_route_groups_by_ids", lambda ids: [] if ids != {21} else [])
     monkeypatch.setattr(module, "_load_route_plans_by_ids", lambda ids: [] if ids != {31} else [])
 
-    payload = module._build_order_state_update_payload(changed_orders)
+    payload = module.build_order_state_update_payload(changed_orders)
 
     assert payload["orders"][0]["route_group_id"] == 21
     assert payload["orders"][0]["route_plan_id"] == 31

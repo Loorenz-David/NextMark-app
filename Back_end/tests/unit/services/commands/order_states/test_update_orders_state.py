@@ -3,6 +3,9 @@ from types import SimpleNamespace
 from Delivery_app_BK.services.commands.order.order_states import (
     update_orders_state as module,
 )
+from Delivery_app_BK.services.queries.order.serialize_state_update import (
+    build_order_state_update_payload,
+)
 
 
 class _DummyTransaction:
@@ -149,3 +152,83 @@ def test_recompute_and_auto_complete_plans_resolves_group_from_plan_when_missing
     module._recompute_and_auto_complete_plans([order])
 
     assert group_synced == [9]
+
+
+def test_update_orders_state_payload_wraps_changed_orders(monkeypatch):
+    payload = {"orders": [{"id": 11}], "route_groups": [], "route_plans": []}
+
+    monkeypatch.setattr(module, "update_orders_state", lambda **_kwargs: [SimpleNamespace(id=11)])
+    monkeypatch.setattr(module, "build_order_state_update_payload", lambda changed: payload)
+
+    result = module.update_orders_state_payload(
+        ctx=SimpleNamespace(),
+        orders=11,
+        state_id=4,
+    )
+
+    assert result == payload
+
+
+def test_build_order_state_update_payload_serializes_orders_groups_and_plans(monkeypatch):
+    route_group = SimpleNamespace(
+        id=9,
+        client_id="rg_9",
+        route_plan_id=3,
+        state_id=4,
+        total_orders=1,
+        order_state_counts={"Ready": 1},
+    )
+    route_plan = SimpleNamespace(
+        id=3,
+        client_id="rp_3",
+        state_id=4,
+        total_orders=1,
+    )
+    order = SimpleNamespace(
+        id=11,
+        client_id="ord_11",
+        order_state_id=4,
+        route_group_id=9,
+        route_plan_id=3,
+    )
+
+    monkeypatch.setattr(
+        "Delivery_app_BK.services.queries.order.serialize_state_update._load_route_groups_by_ids",
+        lambda ids: [route_group] if ids == {9} else [],
+    )
+    monkeypatch.setattr(
+        "Delivery_app_BK.services.queries.order.serialize_state_update._load_route_plans_by_ids",
+        lambda ids: [route_plan] if ids == {3} else [],
+    )
+
+    result = build_order_state_update_payload([order])
+
+    assert result == {
+        "orders": [
+            {
+                "id": 11,
+                "client_id": "ord_11",
+                "order_state_id": 4,
+                "route_group_id": 9,
+                "route_plan_id": 3,
+            }
+        ],
+        "route_groups": [
+            {
+                "id": 9,
+                "client_id": "rg_9",
+                "route_plan_id": 3,
+                "state_id": 4,
+                "total_orders": 1,
+                "order_state_counts": {"Ready": 1},
+            }
+        ],
+        "route_plans": [
+            {
+                "id": 3,
+                "client_id": "rp_3",
+                "state_id": 4,
+                "total_orders": 1,
+            }
+        ],
+    }

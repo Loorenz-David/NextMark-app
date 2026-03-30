@@ -20,6 +20,9 @@ from Delivery_app_BK.services.infra.events.builders.order import (
     build_order_state_transition_events,
 )
 from Delivery_app_BK.services.infra.events.emiters.order import emit_order_events
+from Delivery_app_BK.services.queries.order.serialize_state_update import (
+    build_order_state_update_payload,
+)
 from Delivery_app_BK.services.utils import (
     ensure_instance_in_team,
     model_requires_team,
@@ -88,6 +91,19 @@ def update_orders_state(
         emit_order_events(ctx, pending_events)
 
     return changed_orders_result
+
+
+def update_orders_state_payload(
+    ctx: ServiceContext,
+    orders: int | List[int] | List[Order],
+    state_id: int,
+) -> dict:
+    changed_orders = update_orders_state(
+        ctx=ctx,
+        orders=orders,
+        state_id=state_id,
+    )
+    return build_order_state_update_payload(changed_orders)
 
 
 def _recompute_and_auto_complete_plans(changed_orders: list[Order]) -> None:
