@@ -121,6 +121,20 @@ class RouteSolution(
 
     start_leg_polyline = Column(JSONB, nullable=True)
     end_leg_polyline = Column(JSONB, nullable=True)
+
+    start_facility_id = Column(
+        Integer,
+        ForeignKey("facility.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
+
+    end_facility_id = Column(
+        Integer,
+        ForeignKey("facility.id", ondelete="SET NULL"),
+        nullable=True,
+    )
+
     stops = relationship(
         "RouteSolutionStop",
         back_populates = "route_solution",
@@ -136,6 +150,18 @@ class RouteSolution(
 
     vehicle = relationship(
         "Vehicle",
+        lazy="selectin",
+    )
+
+    start_facility = relationship(
+        "Facility",
+        foreign_keys=[start_facility_id],
+        lazy="selectin",
+    )
+
+    end_facility = relationship(
+        "Facility",
+        foreign_keys=[end_facility_id],
         lazy="selectin",
     )
 

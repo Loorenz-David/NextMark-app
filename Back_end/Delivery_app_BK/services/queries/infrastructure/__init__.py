@@ -4,11 +4,11 @@ from .vehicle import (
     list_vehicles,
     serialize_vehicles,
 )
-from .warehouse import (
-    find_warehouses,
-    get_warehouse,
-    list_warehouses,
-    serialize_warehouses,
+from .facility import (
+    find_facilities,
+    get_facility,
+    list_facilities,
+    serialize_facilities,
 )
 
 __all__ = [
@@ -16,8 +16,8 @@ __all__ = [
     "get_vehicle",
     "list_vehicles",
     "serialize_vehicles",
-    "find_warehouses",
-    "get_warehouse",
-    "list_warehouses",
-    "serialize_warehouses",
+    "find_facilities",
+    "get_facility",
+    "list_facilities",
+    "serialize_facilities",
 ]

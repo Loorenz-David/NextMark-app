@@ -31,20 +31,20 @@ from Delivery_app_BK.services.queries.infrastructure.vehicle.check_vehicle_avail
     check_vehicle_availability as check_vehicle_availability_service,
 )
 from Delivery_app_BK.errors import DomainError, ValidationFailed
-from Delivery_app_BK.services.queries.infrastructure.warehouse.list_warehouses import (
-    list_warehouses as list_warehouses_service,
+from Delivery_app_BK.services.queries.infrastructure.facility.list_facilities import (
+    list_facilities as list_facilities_service,
 )
-from Delivery_app_BK.services.queries.infrastructure.warehouse.get_warehouse import (
-    get_warehouse as get_warehouse_service,
+from Delivery_app_BK.services.queries.infrastructure.facility.get_facility import (
+    get_facility as get_facility_service,
 )
-from Delivery_app_BK.services.commands.infrastructure.create.create_warehouse import (
-    create_warehouse as create_warehouse_service,
+from Delivery_app_BK.services.commands.infrastructure.create.create_facility import (
+    create_facility as create_facility_service,
 )
-from Delivery_app_BK.services.commands.infrastructure.update.update_warehouse import (
-    update_warehouse as update_warehouse_service,
+from Delivery_app_BK.services.commands.infrastructure.update.update_facility import (
+    update_facility as update_facility_service,
 )
-from Delivery_app_BK.services.commands.infrastructure.delete.delete_warehouse import (
-    delete_warehouse as delete_warehouse_service,
+from Delivery_app_BK.services.commands.infrastructure.delete.delete_facility import (
+    delete_facility as delete_facility_service,
 )
 
 
@@ -200,16 +200,16 @@ def get_vehicle_availability(vehicle_id: int):
         return response.build_unsuccessful_response(DomainError(str(e)))
 
 
-@infrastructure_bp.route("/warehouses/", methods=["GET"])
+@infrastructure_bp.route("/facilities/", methods=["GET"])
 @jwt_required()
 @role_required([ADMIN, ASSISTANT])
-def list_warehouses():
+def list_facilities():
     identity = get_jwt()
     ctx = ServiceContext(
         query_params=request.args,
         identity=identity,
     )
-    outcome = run_service(lambda c: list_warehouses_service(c), ctx)
+    outcome = run_service(lambda c: list_facilities_service(c), ctx)
     response = Response()
 
     if outcome.error:
@@ -221,17 +221,17 @@ def list_warehouses():
     )
 
 
-@infrastructure_bp.route("/warehouses/", methods=["POST"])
+@infrastructure_bp.route("/facilities/", methods=["POST"])
 @jwt_required()
 @role_required([ADMIN, ASSISTANT])
-def create_warehouse():
+def create_facility():
     identity = get_jwt()
     incoming_data = request.get_json(silent=True) or {}
     ctx = ServiceContext(
         incoming_data=incoming_data,
         identity=identity,
     )
-    outcome = run_service(lambda c: create_warehouse_service(c), ctx)
+    outcome = run_service(lambda c: create_facility_service(c), ctx)
     response = Response()
 
     if outcome.error:
@@ -243,17 +243,17 @@ def create_warehouse():
     )
 
 
-@infrastructure_bp.route("/warehouses/", methods=["PATCH"])
+@infrastructure_bp.route("/facilities/", methods=["PATCH"])
 @jwt_required()
 @role_required([ADMIN, ASSISTANT])
-def update_warehouse():
+def update_facility():
     identity = get_jwt()
     incoming_data = request.get_json(silent=True) or {}
     ctx = ServiceContext(
         incoming_data=incoming_data,
         identity=identity,
     )
-    outcome = run_service(lambda c: update_warehouse_service(c), ctx)
+    outcome = run_service(lambda c: update_facility_service(c), ctx)
     response = Response()
 
     if outcome.error:
@@ -265,17 +265,17 @@ def update_warehouse():
     )
 
 
-@infrastructure_bp.route("/warehouses/", methods=["DELETE"])
+@infrastructure_bp.route("/facilities/", methods=["DELETE"])
 @jwt_required()
 @role_required([ADMIN, ASSISTANT])
-def delete_warehouse():
+def delete_facility():
     identity = get_jwt()
     incoming_data = request.get_json(silent=True) or {}
     ctx = ServiceContext(
         incoming_data=incoming_data,
         identity=identity,
     )
-    outcome = run_service(lambda c: delete_warehouse_service(c), ctx)
+    outcome = run_service(lambda c: delete_facility_service(c), ctx)
     response = Response()
 
     if outcome.error:
@@ -287,16 +287,16 @@ def delete_warehouse():
     )
 
 
-@infrastructure_bp.route("/warehouses/<int:warehouse_id>", methods=["GET"])
+@infrastructure_bp.route("/facilities/<int:facility_id>", methods=["GET"])
 @jwt_required()
 @role_required([ADMIN, ASSISTANT])
-def get_warehouse(warehouse_id: int):
+def get_facility(facility_id: int):
     identity = get_jwt()
     ctx = ServiceContext(
         query_params=request.args,
         identity=identity,
     )
-    outcome = run_service(lambda c: get_warehouse_service(warehouse_id, c), ctx)
+    outcome = run_service(lambda c: get_facility_service(facility_id, c), ctx)
     response = Response()
 
     if outcome.error:

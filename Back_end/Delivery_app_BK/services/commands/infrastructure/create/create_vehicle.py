@@ -1,4 +1,7 @@
 from Delivery_app_BK.models import db, Team, Vehicle
+from Delivery_app_BK.services.requests.infrastructure.vehicle.parse_vehicle_request import (
+    parse_create_vehicle_request,
+)
 from ....context import ServiceContext
 from ...base.create_instance import create_instance
 from ...utils import extract_fields, build_create_result
@@ -13,7 +16,8 @@ def create_vehicle(ctx: ServiceContext):
     instances = []
 
     for field_set in extract_fields(ctx):
-        instance = create_instance(ctx, Vehicle, dict(field_set))
+        request = parse_create_vehicle_request(dict(field_set))
+        instance = create_instance(ctx, Vehicle, request.to_fields_dict())
         instances.append(instance)
 
     db.session.add_all(instances)

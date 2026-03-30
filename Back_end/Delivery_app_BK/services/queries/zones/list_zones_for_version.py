@@ -6,6 +6,9 @@ from Delivery_app_BK.models.tables.zones.zone import Zone
 from Delivery_app_BK.models.tables.zones.zone_template import ZoneTemplate
 from Delivery_app_BK.models.tables.zones.zone_version import ZoneVersion
 from Delivery_app_BK.services.context import ServiceContext
+from Delivery_app_BK.services.queries.zones.serialize_zone_template import (
+    serialize_zone_template,
+)
 
 
 def list_zones_for_version(ctx: ServiceContext) -> list[dict]:
@@ -33,14 +36,7 @@ def list_zones_for_version(ctx: ServiceContext) -> list[dict]:
         for template in active_templates:
             if template.zone_id in templates_by_zone_id:
                 continue
-            templates_by_zone_id[template.zone_id] = {
-                "id": template.id,
-                "zone_id": template.zone_id,
-                "name": template.name,
-                "config_json": template.config_json,
-                "version": template.version,
-                "is_active": template.is_active,
-            }
+            templates_by_zone_id[template.zone_id] = serialize_zone_template(template)
 
     return [
         {

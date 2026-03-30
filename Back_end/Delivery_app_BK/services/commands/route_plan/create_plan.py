@@ -29,6 +29,7 @@ from Delivery_app_BK.services.domain.route_operations.plan.route_group_zone_snap
 from Delivery_app_BK.services.domain.route_operations.plan.recompute_route_group_totals import (
     recompute_route_group_totals,
 )
+from Delivery_app_BK.services.domain.vehicle import select_vehicle_for_route_solution
 from Delivery_app_BK.services.infra.events.emiters.order import emit_order_events
 from Delivery_app_BK.sockets.emitters.route_solution_events import emit_route_solution_created
 from Delivery_app_BK.sockets.notifications import notify_delivery_planning_event
@@ -37,6 +38,10 @@ from Delivery_app_BK.services.commands.order.update_order_route_plan import (
 )
 from Delivery_app_BK.services.requests.route_plan.plan.create_plan import (
     parse_create_plan_request,
+)
+from Delivery_app_BK.services.commands.route_plan.zone_template_defaults import (
+    build_zone_template_route_solution_defaults,
+    build_zone_template_snapshot,
 )
 from ...context import ServiceContext
 from ..base.create_instance import create_instance
@@ -256,8 +261,11 @@ def _build_zone_route_group_instances(
             zone_id=zone.id,
             is_active=True,
         ).first()
-        template_config = (
-            active_template.config_json if active_template and isinstance(active_template.config_json, dict) else {}
+        template_snapshot = build_zone_template_snapshot(active_template)
+        template_route_solution_defaults = build_zone_template_route_solution_defaults(
+            ctx,
+            route_plan_instance,
+            active_template,
         )
         route_group = create_instance(
             ctx,
@@ -272,7 +280,7 @@ def _build_zone_route_group_instances(
                     zone_name=zone.name,
                     geometry=zone.geometry,
                 ),
-                "template_snapshot": template_config,
+                "template_snapshot": template_snapshot,
                 "total_orders": 0,
             },
         )
@@ -280,8 +288,9 @@ def _build_zone_route_group_instances(
             ctx=ctx,
             route_plan_instance=route_plan_instance,
             route_group=route_group,
-            template_config=template_config,
+            template_route_solution_defaults=template_route_solution_defaults,
             route_group_defaults=defaults,
+            zone_template=active_template,
         )
         route_groups.append(route_group)
         route_solutions.append(route_solution)
@@ -312,19 +321,44 @@ def _build_route_solution_instance(
     ctx: ServiceContext,
     route_plan_instance: RoutePlan,
     route_group: RouteGroup,
-    template_config: dict,
+    template_route_solution_defaults: dict,
     route_group_defaults: dict,
+    zone_template: ZoneTemplate = None,
 ) -> RouteSolution:
     normalized_defaults = normalize_local_delivery_route_solution_defaults(
         ctx,
         route_plan_instance,
         {
             "route_solution": {
-                **template_config,
+                **template_route_solution_defaults,
                 **_extract_route_solution_defaults(route_group_defaults),
             }
         },
     )
+
+    # Assign vehicle from zone template preferences if vehicle not explicitly provided
+    vehicle_id = normalized_defaults.get("vehicle_id")
+    if (
+        not vehicle_id
+        and zone_template
+        and zone_template.preferred_vehicle_ids
+    ):
+        # Collect vehicle IDs already assigned to other solutions in this route group
+        assigned_vehicle_ids = {
+            sol.vehicle_id
+            for sol in route_group.route_solutions
+            if sol.vehicle_id
+        }
+        
+        # Select first available vehicle from preferences or general pool
+        vehicle_id = select_vehicle_for_route_solution(
+            team_id=ctx.team_id,
+            preferred_vehicle_ids=zone_template.preferred_vehicle_ids,
+            required_capabilities=zone_template.vehicle_capabilities_required,
+            excluded_vehicle_ids=assigned_vehicle_ids,
+        )
+        if vehicle_id:
+            normalized_defaults["vehicle_id"] = vehicle_id
 
     route_solution = RouteSolution(
         client_id=generate_client_id("route_solution"),
@@ -341,6 +375,8 @@ def _build_route_solution_instance(
         stops_service_time=normalized_defaults["stops_service_time"],
         route_end_strategy=normalized_defaults["route_end_strategy"],
         driver_id=normalized_defaults["driver_id"],
+        start_facility_id=normalized_defaults["start_facility_id"],
+        vehicle_id=normalized_defaults.get("vehicle_id"),
     )
     route_group.route_solutions.append(route_solution)
     return route_solution
@@ -382,7 +418,7 @@ def _build_no_zone_route_group_instance(
         ctx=ctx,
         route_plan_instance=route_plan_instance,
         route_group=route_group,
-        template_config={},
+        template_route_solution_defaults={},
         route_group_defaults=route_group_defaults if isinstance(route_group_defaults, dict) else {},
     )
     return route_group, route_solution

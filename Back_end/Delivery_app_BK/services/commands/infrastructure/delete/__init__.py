@@ -1,7 +1,7 @@
-from .delete_warehouse import delete_warehouse
+from .delete_facility import delete_facility
 from .delete_vehicle import delete_vehicle
 
 __all__ = [
-    "delete_warehouse",
+    "delete_facility",
     "delete_vehicle",
 ]

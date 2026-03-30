@@ -24,6 +24,13 @@ def serialize_vehicles(instances: List[Vehicle], ctx: ServiceContext):
             "travel_distance_limit_km": instance.travel_distance_limit_km,
             "travel_duration_limit_minutes": instance.travel_duration_limit_minutes,
             "is_system": instance.is_system,
+            "home_facility_id": instance.home_facility_id,
+            "status": instance.status,
+            "is_active": instance.is_active,
+            "capabilities": instance.capabilities,
+            "loading_time_per_stop_seconds": instance.loading_time_per_stop_seconds,
+            "unloading_time_per_stop_seconds": instance.unloading_time_per_stop_seconds,
+            "fixed_cost": instance.fixed_cost,
             "team_id": instance.team_id,
         }
         unpacked_instances.append(unpacked)

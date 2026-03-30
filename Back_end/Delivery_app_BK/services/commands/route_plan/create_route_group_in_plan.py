@@ -24,6 +24,10 @@ from Delivery_app_BK.services.queries.route_plan.plan_types.serialize_route_grou
 from Delivery_app_BK.services.requests.route_plan.plan.create_route_group import (
     parse_create_route_group_request,
 )
+from Delivery_app_BK.services.commands.route_plan.zone_template_defaults import (
+    build_zone_template_route_solution_defaults,
+    build_zone_template_snapshot,
+)
 
 
 def create_route_group_in_plan(ctx: ServiceContext) -> dict:
@@ -75,10 +79,11 @@ def _create_or_get_zone_route_group(
         zone_id=zone.id,
         is_active=True,
     ).first()
-    template_config = (
-        active_template.config_json
-        if active_template and isinstance(active_template.config_json, dict)
-        else {}
+    template_snapshot = build_zone_template_snapshot(active_template)
+    template_route_solution_defaults = build_zone_template_route_solution_defaults(
+        ctx,
+        route_plan,
+        active_template,
     )
 
     route_group = RouteGroup(
@@ -92,14 +97,14 @@ def _create_or_get_zone_route_group(
             zone_name=zone.name,
             geometry=zone.geometry,
         ),
-        template_snapshot=template_config,
+        template_snapshot=template_snapshot,
         total_orders=0,
     )
     route_solution = _build_route_solution_instance(
         ctx=ctx,
         route_plan_instance=route_plan,
         route_group=route_group,
-        template_config=template_config,
+        template_route_solution_defaults=template_route_solution_defaults,
         route_group_defaults=route_group_defaults,
     )
 
@@ -156,7 +161,7 @@ def _create_manual_no_zone_route_group(
         ctx=ctx,
         route_plan_instance=route_plan,
         route_group=route_group,
-        template_config={},
+        template_route_solution_defaults={},
         route_group_defaults=route_group_defaults,
     )
 
@@ -177,7 +182,7 @@ def _build_route_solution_instance(
     ctx: ServiceContext,
     route_plan_instance: RoutePlan,
     route_group: RouteGroup,
-    template_config: dict,
+    template_route_solution_defaults: dict,
     route_group_defaults: dict,
 ) -> RouteSolution:
     normalized_defaults = normalize_local_delivery_route_solution_defaults(
@@ -185,7 +190,7 @@ def _build_route_solution_instance(
         route_plan_instance,
         {
             "route_solution": {
-                **template_config,
+                **template_route_solution_defaults,
                 **_extract_route_solution_defaults(route_group_defaults),
             }
         },
@@ -207,6 +212,7 @@ def _build_route_solution_instance(
         stops_service_time=normalized_defaults["stops_service_time"],
         route_end_strategy=normalized_defaults["route_end_strategy"],
         driver_id=normalized_defaults["driver_id"],
+        start_facility_id=normalized_defaults["start_facility_id"],
     )
 
 

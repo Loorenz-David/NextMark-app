@@ -15,6 +15,9 @@ from Delivery_app_BK.services.domain.route_operations.plan.route_group_zone_snap
 from Delivery_app_BK.services.queries.route_plan.plan_types.serialize_route_group import (
     serialize_route_group,
 )
+from Delivery_app_BK.services.commands.route_plan.zone_template_defaults import (
+    build_zone_template_snapshot,
+)
 
 
 def _normalize_zone_ids(raw_zone_ids) -> list[int]:
@@ -91,7 +94,7 @@ def materialize_route_groups(ctx: ServiceContext) -> list[dict]:
                 zone_name=zone.name,
                 geometry=zone.geometry,
             ),
-            template_snapshot=(active_template.config_json if active_template else {}),
+            template_snapshot=build_zone_template_snapshot(active_template),
         )
         try:
             with db.session.begin_nested():

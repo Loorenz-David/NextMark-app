@@ -1,10 +1,17 @@
 # Third-party dependencies
-from sqlalchemy.orm import relationship
-from sqlalchemy import Column, Integer, String, Float, Boolean
+from sqlalchemy.orm import relationship, validates
+from sqlalchemy import Column, Integer, String, Float, Boolean, ForeignKey, JSON
+from sqlalchemy.dialects.postgresql import JSONB
 
 # Local application imports
 from Delivery_app_BK.models import db
 from Delivery_app_BK.models.mixins.team_mixings.team_id import TeamScopedMixin
+from Delivery_app_BK.services.domain.vehicle import (
+    validate_fuel_type,
+    validate_travel_mode,
+    validate_vehicle_capabilities,
+    validate_vehicle_status,
+)
 
 """
 
@@ -64,8 +71,8 @@ Usability:
 - Allows AI to assign vehicles correctly
 
 Implementation:
-    start_facility_id = Column(Integer, ForeignKey("warehouse.id"))
-    end_facility_id = Column(Integer, ForeignKey("warehouse.id"), nullable=True)
+    start_facility_id = Column(Integer, ForeignKey("facility.id"))
+    end_facility_id = Column(Integer, ForeignKey("facility.id"), nullable=True)
 
 ---
 
@@ -227,8 +234,59 @@ class Vehicle(db.Model, TeamScopedMixin):
 
     is_system = Column(Boolean, default=False, index=True)
 
+    # Home facility — where this vehicle is based
+    home_facility_id = Column(
+        Integer,
+        ForeignKey("facility.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
+
+    # Operational state — current state of the vehicle for UI and AI reasoning
+    # Values: "idle" | "in_route" | "loading" | "offline" | "maintenance"
+    status = Column(String, nullable=False, default="idle", index=True)
+
+    # Availability flag — hard off-switch; overrides scheduling
+    is_active = Column(Boolean, nullable=False, default=True, index=True)
+
+    # Capabilities — what this vehicle can carry; matched against order requirements
+    # Schema: ["cold_chain", "fragile", "heavy_load", "returns", "oversized"]
+    capabilities = Column(
+        JSONB().with_variant(JSON, "sqlite"),
+        nullable=True,
+    )
+
+    # Per-stop service time — improves ETA accuracy
+    loading_time_per_stop_seconds = Column(Integer, nullable=False, default=0)
+    unloading_time_per_stop_seconds = Column(Integer, nullable=False, default=0)
+
+    # Fixed routing cost — used by cost-aware optimizer scoring
+    fixed_cost = Column(Float, nullable=False, default=0.0)
+
     team = relationship(
         "Team",
         backref="vehicles",
         lazy=True,
     )
+
+    home_facility = relationship(
+        "Facility",
+        foreign_keys=[home_facility_id],
+        lazy="selectin",
+    )
+
+    @validates("fuel_type")
+    def validate_fuel_type_field(self, key, value):
+        return validate_fuel_type(value)
+
+    @validates("travel_mode")
+    def validate_travel_mode_field(self, key, value):
+        return validate_travel_mode(value)
+
+    @validates("status")
+    def validate_status_field(self, key, value):
+        return validate_vehicle_status(value)
+
+    @validates("capabilities")
+    def validate_capabilities_field(self, key, value):
+        return validate_vehicle_capabilities(value)

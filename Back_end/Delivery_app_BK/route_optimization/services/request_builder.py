@@ -25,7 +25,7 @@ from Delivery_app_BK.route_optimization.constants.route_end_strategy import ROUN
 from Delivery_app_BK.route_optimization.constants.skip_reasons import (
     OUTSIDE_OPTIMIZATION_WINDOW,
 )
-from Delivery_app_BK.domain.vehicle.travel_mode import map_to_google_travel_mode
+from Delivery_app_BK.services.domain.vehicle import map_to_google_travel_mode
 
 DEFAULT_ROUTE_MODIFIERS = {
     "avoid_tolls": False,

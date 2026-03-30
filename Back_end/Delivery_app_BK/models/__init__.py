@@ -16,7 +16,7 @@ from .tables.role.role_rules.order_state_transiton_rule import OrderStateTransit
 from .tables.team.team import Team
 from .tables.team.invitation import TeamInvites
 
-from .tables.infrastructure.warehouse import Warehouse
+from .tables.infrastructure.facility import Facility
 from .tables.infrastructure.vehicle import Vehicle
 from .tables.items.item import Item
 from .tables.items.item_type import ItemType

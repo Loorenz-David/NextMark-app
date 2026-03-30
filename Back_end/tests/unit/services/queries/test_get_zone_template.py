@@ -56,9 +56,18 @@ def test_get_zone_template_returns_serialized_active_template(monkeypatch, app_c
         team_id=1,
         zone_id=7,
         name="North Default",
-        config_json={"max_stops": 20},
         version=3,
         is_active=True,
+        default_facility_id=11,
+        max_orders_per_route=20,
+        max_vehicles=4,
+        operating_window_start="08:00",
+        operating_window_end="18:00",
+        eta_tolerance_seconds=300,
+        vehicle_capabilities_required=["cold_chain"],
+        preferred_vehicle_ids=[5, 6],
+        default_route_end_strategy="round_trip",
+        meta={"note": "test"},
         created_at=now,
         updated_at=now,
     )
@@ -81,5 +90,14 @@ def test_get_zone_template_returns_serialized_active_template(monkeypatch, app_c
     assert result is not None
     assert result["id"] == 99
     assert result["zone_id"] == 7
-    assert result["config_json"] == {"max_stops": 20}
+    assert result["default_facility_id"] == 11
+    assert result["max_orders_per_route"] == 20
+    assert result["max_vehicles"] == 4
+    assert result["operating_window_start"] == "08:00"
+    assert result["operating_window_end"] == "18:00"
+    assert result["eta_tolerance_seconds"] == 300
+    assert result["vehicle_capabilities_required"] == ["cold_chain"]
+    assert result["preferred_vehicle_ids"] == [5, 6]
+    assert result["default_route_end_strategy"] == "round_trip"
+    assert result["meta"] == {"note": "test"}
     assert result["is_active"] is True

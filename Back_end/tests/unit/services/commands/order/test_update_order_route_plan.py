@@ -83,3 +83,58 @@ def test_apply_move_state_heritage_recomputes_group_counts(monkeypatch):
         "group_sync": 1,
         "plan_sync": 1,
     }
+
+
+def test_build_state_changes_bundle_serializes_route_groups_and_plans():
+    route_groups = [
+        SimpleNamespace(
+            id=10,
+            state_id=4,
+            total_orders=3,
+            order_state_counts={"Ready": 3},
+            route_plan_id=1,
+            zone_id=7,
+        ),
+        SimpleNamespace(
+            id=11,
+            state_id=2,
+            total_orders=0,
+            order_state_counts=None,
+            route_plan_id=1,
+            zone_id=8,
+        ),
+    ]
+    route_plans = [
+        SimpleNamespace(id=1, state_id=4, total_orders=3),
+        SimpleNamespace(id=2, state_id=2, total_orders=0),
+    ]
+
+    result = module._build_state_changes_bundle(
+        route_groups=route_groups,
+        route_plans=route_plans,
+    )
+
+    assert result == {
+        "route_groups": [
+            {
+                "id": 10,
+                "state_id": 4,
+                "total_orders": 3,
+                "order_state_counts": {"Ready": 3},
+                "route_plan_id": 1,
+                "zone_id": 7,
+            },
+            {
+                "id": 11,
+                "state_id": 2,
+                "total_orders": 0,
+                "order_state_counts": None,
+                "route_plan_id": 1,
+                "zone_id": 8,
+            },
+        ],
+        "route_plans": [
+            {"id": 1, "state_id": 4, "total_orders": 3},
+            {"id": 2, "state_id": 2, "total_orders": 0},
+        ],
+    }

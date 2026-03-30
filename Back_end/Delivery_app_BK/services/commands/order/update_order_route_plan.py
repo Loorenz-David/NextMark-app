@@ -230,8 +230,13 @@ def apply_orders_route_plan_change(
         updated_route_solutions=old_local_delivery_batch["updated_route_solutions"],
         synced_route_solutions=old_local_delivery_batch["synced_route_solutions"],
     )
+    state_changes_bundle = _build_state_changes_bundle(
+        route_groups=affected_route_groups,
+        route_plans=list(_plans_to_recompute.values()),
+    )
     old_local_delivery_bundle_attached = False
     plan_totals_attached = False
+    state_changes_attached = False
 
     updated_bundles: list[dict] = []
     for target_id in normalized_order_ids:
@@ -261,6 +266,9 @@ def apply_orders_route_plan_change(
                 if plan.id is not None
             ]
             plan_totals_attached = True
+        if not state_changes_attached:
+            bundle["state_changes"] = state_changes_bundle
+            state_changes_attached = True
 
         updated_bundles.append(bundle)
 
@@ -392,6 +400,53 @@ def _serialize_old_local_delivery_batch_bundle(
             serialize_route_solution(route_solution) for route_solution in route_solutions
         ]
     return bundle
+
+
+def _build_state_changes_bundle(
+    *,
+    route_groups: list[RouteGroup],
+    route_plans: list[RoutePlan],
+) -> dict:
+    route_group_rows: list[dict] = []
+    seen_route_group_ids: set[int] = set()
+    for route_group in route_groups or []:
+        route_group_id = getattr(route_group, "id", None)
+        if route_group_id is None or route_group_id in seen_route_group_ids:
+            continue
+        seen_route_group_ids.add(route_group_id)
+        route_group_rows.append(
+            {
+                "id": route_group_id,
+                "state_id": route_group.state_id,
+                "total_orders": route_group.total_orders,
+                "order_state_counts": route_group.order_state_counts,
+                "route_plan_id": route_group.route_plan_id,
+                "zone_id": route_group.zone_id,
+            }
+        )
+
+    route_plan_rows: list[dict] = []
+    seen_route_plan_ids: set[int] = set()
+    for route_plan in route_plans or []:
+        route_plan_id = getattr(route_plan, "id", None)
+        if route_plan_id is None or route_plan_id in seen_route_plan_ids:
+            continue
+        seen_route_plan_ids.add(route_plan_id)
+        route_plan_rows.append(
+            {
+                "id": route_plan_id,
+                "state_id": route_plan.state_id,
+                "total_orders": route_plan.total_orders,
+            }
+        )
+
+    route_group_rows.sort(key=lambda row: row["id"])
+    route_plan_rows.sort(key=lambda row: row["id"])
+
+    return {
+        "route_groups": route_group_rows,
+        "route_plans": route_plan_rows,
+    }
 
 
 def _dedupe_stops_for_bundle(stops: list[RouteSolutionStop]) -> list[RouteSolutionStop]:
@@ -721,8 +776,17 @@ def apply_orders_route_plan_unassign(
         updated_route_solutions=old_local_delivery_batch["updated_route_solutions"],
         synced_route_solutions=old_local_delivery_batch["synced_route_solutions"],
     )
+    state_changes_bundle = _build_state_changes_bundle(
+        route_groups=[
+            route_group
+            for plan in old_plans_by_id.values()
+            for route_group in (plan.route_groups or [])
+        ],
+        route_plans=list(old_plans_by_id.values()),
+    )
     old_local_delivery_bundle_attached = False
     plan_totals_attached = False
+    state_changes_attached = False
 
     updated_bundles: list[dict] = []
     for target_id in normalized_order_ids:
@@ -752,6 +816,9 @@ def apply_orders_route_plan_unassign(
                 if plan.id is not None
             ]
             plan_totals_attached = True
+        if not state_changes_attached:
+            bundle["state_changes"] = state_changes_bundle
+            state_changes_attached = True
 
         updated_bundles.append(bundle)
 
