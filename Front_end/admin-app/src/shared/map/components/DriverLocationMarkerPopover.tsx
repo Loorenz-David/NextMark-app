@@ -34,21 +34,21 @@ export const DriverLocationMarkerPopover = ({
       onOpenChange={onOpenChange}
       className="z-50"
     >
-      <div className="min-w-[220px] rounded-xl border border-[var(--color-border)] bg-white px-3 py-3 shadow-xl">
-        <div className="text-xs font-semibold uppercase tracking-[0.08em] text-[var(--color-muted)]">
+      <div className="min-w-[240px] rounded-2xl border border-[var(--color-muted)]/20 bg-[var(--color-page)]/95 p-3 shadow-lg backdrop-blur-sm">
+        <div className="text-xs font-semibold uppercase tracking-[0.08em] text-[var(--color-muted)]/80">
           Driver Location
         </div>
-        <div className="mt-2 flex flex-col gap-2 text-sm text-[var(--color-text)]">
+        <div className="mt-3 flex flex-col gap-2 rounded-xl bg-[var(--color-muted)]/10 px-3 py-3 text-sm text-[var(--color-text)]">
           <div className="flex items-start justify-between gap-3">
-            <span className="text-[var(--color-muted)]">Recorded</span>
+            <span className="text-[var(--color-muted)]/70">Recorded</span>
             <span className="text-right font-medium">{formatRecordedAt(position.timestamp)}</span>
           </div>
           <div className="flex items-start justify-between gap-3">
-            <span className="text-[var(--color-muted)]">Lat</span>
+            <span className="text-[var(--color-muted)]/70">Lat</span>
             <span className="font-medium">{formatCoordinate(position.coords?.lat)}</span>
           </div>
           <div className="flex items-start justify-between gap-3">
-            <span className="text-[var(--color-muted)]">Lng</span>
+            <span className="text-[var(--color-muted)]/70">Lng</span>
             <span className="font-medium">{formatCoordinate(position.coords?.lng)}</span>
           </div>
         </div>

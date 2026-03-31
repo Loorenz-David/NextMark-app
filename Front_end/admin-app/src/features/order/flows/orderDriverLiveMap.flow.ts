@@ -3,15 +3,24 @@ import { useShallow } from 'zustand/react/shallow'
 
 import {
   buildOrderDriverLocationMarkers,
+  resolveActiveRouteContextByDriverId,
   selectDriverLivePositions,
   selectDriverLiveVisibility,
-  resolveActiveRoutePlanIdByDriverId,
   useDriverLiveMarkerOverlayStore,
   useDriverLiveStore,
   useDriverLiveVisibilityStore,
 } from '@/realtime/driverLive'
+import { usePlanQueries } from '@/features/plan/flows/planQueries.flow'
+import { useRouteGroupDetailsFlow } from '@/features/plan/routeGroup/flows/routeGroupDetails.flow'
+import { useRouteGroupOverviewFlow } from '@/features/plan/routeGroup/flows/routeGroupOverview.flow'
+import {
+  rememberRouteGroupForPlan,
+  setActiveRouteGroupId,
+} from '@/features/plan/routeGroup/store/activeRouteGroup.store'
+import { selectRouteGroupByServerId, useRouteGroupStore } from '@/features/plan/routeGroup/store/routeGroup.slice'
 import { useRouteGroups } from '@/features/plan/routeGroup/store/useRouteGroup.selector'
 import { useRouteSolutions } from '@/features/plan/routeGroup/store/useRouteSolution.selector'
+import { selectRoutePlanByServerId, useRoutePlanStore } from '@/features/plan/store/routePlan.slice'
 import type { PayloadBase } from '@/features/home-route-operations/types/types'
 import { MAP_MARKER_LAYERS } from '@/shared/map'
 import { useBaseControlls, useMapManager } from '@/shared/resource-manager/useResourceManager'
@@ -25,22 +34,48 @@ export const useOrderDriverLiveMapFlow = () => {
   const routeSolutions = useRouteSolutions()
   const routeGroups = useRouteGroups()
   const isDriverLiveVisible = useDriverLiveVisibilityStore(selectDriverLiveVisibility)
+  const { fetchPlanById } = usePlanQueries()
+  const { fetchRouteGroupOverview } = useRouteGroupOverviewFlow()
+  const { fetchRouteGroupDetails } = useRouteGroupDetailsFlow()
 
   useEffect(() => {
     const { openOverlay, closeOverlay } = useDriverLiveMarkerOverlayStore.getState()
 
     const markers = buildOrderDriverLocationMarkers({
       positions: liveDriverPositions,
-      resolvePlanIdByDriverId: (driverId) =>
-        resolveActiveRoutePlanIdByDriverId({
+      resolveRouteContextByDriverId: (driverId) =>
+        resolveActiveRouteContextByDriverId({
           driverId,
           routeSolutions,
           routeGroups,
         }),
-      onResolvedPlanClick: (planId) => {
+      onResolvedRouteContextClick: async (context) => {
+        const storedPlan = selectRoutePlanByServerId(context.planId)(useRoutePlanStore.getState())
+        if (!storedPlan) {
+          await fetchPlanById(context.planId)
+        }
+
+        const storedRouteGroup = selectRouteGroupByServerId(context.routeGroupId)(
+          useRouteGroupStore.getState(),
+        )
+
+        if (!storedRouteGroup) {
+          const overviewPayload = await fetchRouteGroupOverview(context.planId)
+          const resolvedRouteGroup = selectRouteGroupByServerId(context.routeGroupId)(
+            useRouteGroupStore.getState(),
+          )
+
+          if (!resolvedRouteGroup && overviewPayload) {
+            await fetchRouteGroupDetails(context.planId, context.routeGroupId)
+          }
+        }
+
+        setActiveRouteGroupId(context.routeGroupId)
+        rememberRouteGroupForPlan(context.planId, context.routeGroupId)
+
         openBase({
           payload: {
-            planId,
+            planId: context.planId,
           },
         })
       },
@@ -75,6 +110,9 @@ export const useOrderDriverLiveMapFlow = () => {
     routeGroups,
     mapManager,
     openBase,
+    fetchPlanById,
+    fetchRouteGroupDetails,
+    fetchRouteGroupOverview,
     routeSolutions,
   ])
 

@@ -8,6 +8,11 @@ export const DRIVER_LIVE_ACTIVE_MAX_AGE_MS = 5 * 60 * 1000
 
 export type DriverLocationMarkerActivity = 'active' | 'passive'
 export type DriverLocationMarkerScope = 'route-group' | 'orders'
+export type DriverActiveRouteContext = {
+  planId: number
+  routeGroupId: number
+  routeSolutionId: number | null
+}
 
 const parseTimestamp = (value?: string | null): number | null => {
   if (!value) return null
@@ -95,15 +100,15 @@ export const buildRouteGroupDriverLocationMarkers = ({
 
 export const buildOrderDriverLocationMarkers = ({
   positions,
-  resolvePlanIdByDriverId,
-  onResolvedPlanClick,
+  resolveRouteContextByDriverId,
+  onResolvedRouteContextClick,
   onMouseEnter,
   onMouseLeave,
   now = Date.now(),
 }: {
   positions: DriverLocationUpdatedPayload[]
-  resolvePlanIdByDriverId: (driverId: number) => number | null
-  onResolvedPlanClick: (planId: number) => void
+  resolveRouteContextByDriverId: (driverId: number) => DriverActiveRouteContext | null
+  onResolvedRouteContextClick: (context: DriverActiveRouteContext) => void | Promise<void>
   onMouseEnter?: (event: MouseEvent, position: DriverLocationUpdatedPayload) => void
   onMouseLeave?: (event: MouseEvent, position: DriverLocationUpdatedPayload) => void
   now?: number
@@ -113,9 +118,9 @@ export const buildOrderDriverLocationMarkers = ({
       scope: 'orders',
       position,
       onClick: () => {
-        const planId = resolvePlanIdByDriverId(position.driver_id)
-        if (planId != null) {
-          onResolvedPlanClick(planId)
+        const context = resolveRouteContextByDriverId(position.driver_id)
+        if (context) {
+          void onResolvedRouteContextClick(context)
         }
       },
       onMouseEnter,
@@ -135,10 +140,7 @@ export const resolveActiveRoutePlanIdByDriverId = ({
 }): number | null => {
   const bestMatch = routeSolutions
     .filter(
-      (solution) =>
-        solution.driver_id === driverId
-        && solution.actual_start_time != null
-        && solution.actual_end_time == null,
+      (solution) => solution.driver_id === driverId,
     )
     .sort((left, right) => {
       const leftTime = parseTimestamp(left.actual_start_time) ?? Number.NEGATIVE_INFINITY
@@ -155,4 +157,42 @@ export const resolveActiveRoutePlanIdByDriverId = ({
   )
 
   return routeGroup?.route_plan_id ?? null
+}
+
+export const resolveActiveRouteContextByDriverId = ({
+  driverId,
+  routeSolutions,
+  routeGroups,
+}: {
+  driverId: number
+  routeSolutions: RouteSolution[]
+  routeGroups: RouteGroup[]
+}): { planId: number; routeGroupId: number; routeSolutionId: number | null } | null => {
+  const bestMatch = routeSolutions
+    .filter(
+      (solution) => solution.driver_id === driverId,
+    )
+    .sort((left, right) => {
+      const leftTime = parseTimestamp(left.actual_start_time) ?? Number.NEGATIVE_INFINITY
+      const rightTime = parseTimestamp(right.actual_start_time) ?? Number.NEGATIVE_INFINITY
+      return rightTime - leftTime
+    })[0]
+
+  if (!bestMatch?.route_group_id) {
+    return null
+  }
+
+  const routeGroup = routeGroups.find(
+    (group) => group.id === bestMatch.route_group_id,
+  )
+
+  if (!routeGroup?.route_plan_id) {
+    return null
+  }
+
+  return {
+    planId: routeGroup.route_plan_id,
+    routeGroupId: bestMatch.route_group_id,
+    routeSolutionId: bestMatch.id ?? null,
+  }
 }

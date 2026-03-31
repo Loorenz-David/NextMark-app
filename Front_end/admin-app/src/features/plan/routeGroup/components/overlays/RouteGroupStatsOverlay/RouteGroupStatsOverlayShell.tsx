@@ -16,8 +16,8 @@ type RouteGroupStatsOverlayShellProps = {
 }
 
 const bodyClassByMode: Record<RouteGroupStatsLayoutMode, string> = {
-  wide: 'grid grid-cols-[minmax(300px,1.8fr)_minmax(320px,1.1fr)_minmax(160px,0.8fr)] items-start gap-4',
-  medium: 'grid grid-cols-[minmax(300px,1fr)_minmax(160px,0.42fr)] grid-rows-[auto_auto] items-start gap-4',
+  wide: 'grid grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)] items-start gap-4',
+  medium: 'grid grid-cols-1 items-start gap-4',
   narrow: 'flex flex-col gap-4',
 }
 
@@ -70,19 +70,16 @@ export const RouteGroupStatsOverlayShell = ({
               <RouteGroupDriverCard driver={data.driver} />
             </div>
 
-            <div className="pointer-events-auto max-h-[40vh] overflow-x-auto overflow-y-auto scroll-thin">
-              <div className="  min-w-full px-4">
+            <div className="pointer-events-auto max-h-[40vh] overflow-y-auto scroll-thin">
+              <div className="px-4">
                 <div className={bodyClassByMode[layoutMode]}>
-                  <div className={layoutMode === 'medium' ? 'col-start-1 row-start-1' : ''}>
+                  <div className="flex min-w-0 flex-col gap-4">
                     <RouteGroupStatsTopSummary routeSummary={data.routeSummary} routeScopeKey={data.routeScopeKey} />
-                  </div>
-
-                  <div className={layoutMode === 'medium' ? 'col-start-1 row-start-2' : ''}>
-                    <RouteGroupGaussianMetricsGrid cards={data.gaussianCards} routeScopeKey={data.routeScopeKey} />
-                  </div>
-
-                  <div className={layoutMode === 'medium' ? 'col-start-2 row-span-2' : ''}>
                     <RouteGroupConsumptionStatsColumn metrics={data.consumptionMetrics} routeScopeKey={data.routeScopeKey} />
+                  </div>
+
+                  <div className="min-w-0">
+                    <RouteGroupGaussianMetricsGrid cards={data.gaussianCards} routeScopeKey={data.routeScopeKey} />
                   </div>
                 </div>
               </div>

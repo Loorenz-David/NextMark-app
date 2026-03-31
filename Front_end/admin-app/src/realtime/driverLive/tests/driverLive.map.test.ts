@@ -4,6 +4,7 @@ import {
   buildRouteGroupDriverLocationMarkers,
   buildOrderDriverLocationMarkers,
   DRIVER_LIVE_ACTIVE_MAX_AGE_MS,
+  resolveActiveRouteContextByDriverId,
   resolveActiveRoutePlanIdByDriverId,
   resolveDriverLocationActivity,
 } from '../driverLive.map'
@@ -66,8 +67,8 @@ export const runDriverLiveMapTests = () => {
         buildPosition({ driver_id: 10 }),
         buildPosition({ driver_id: 11 }),
       ],
-      resolvePlanIdByDriverId: () => null,
-      onResolvedPlanClick: () => undefined,
+      resolveRouteContextByDriverId: () => null,
+      onResolvedRouteContextClick: () => undefined,
       now,
     })
 
@@ -107,6 +108,40 @@ export const runDriverLiveMapTests = () => {
   }
 
   {
+    const context = resolveActiveRouteContextByDriverId({
+      driverId: 7,
+      routeSolutions: [
+        {
+          id: 701,
+          client_id: 'solution-old',
+          driver_id: 7,
+          route_group_id: 21,
+          actual_start_time: '2026-03-18T09:00:00Z',
+          actual_end_time: null,
+          route_end_strategy: 'round_trip',
+        },
+        {
+          id: 702,
+          client_id: 'solution-new',
+          driver_id: 7,
+          route_group_id: 22,
+          actual_start_time: '2026-03-18T10:00:00Z',
+          actual_end_time: null,
+          route_end_strategy: 'round_trip',
+        },
+      ],
+      routeGroups: [
+        { client_id: 'plan-21', id: 21, route_plan_id: 101 },
+        { client_id: 'plan-22', id: 22, route_plan_id: 202 },
+      ],
+    })
+
+    assert(context?.planId === 202, 'context resolver should include the matching plan id')
+    assert(context?.routeGroupId === 22, 'context resolver should include the active route group id')
+    assert(context?.routeSolutionId === 702, 'context resolver should include the newest active route solution id')
+  }
+
+  {
     const planId = resolveActiveRoutePlanIdByDriverId({
       driverId: 8,
       routeSolutions: [
@@ -124,6 +159,6 @@ export const runDriverLiveMapTests = () => {
       ],
     })
 
-    assert(planId === null, 'resolver should ignore ended routes when choosing an active plan')
+    assert(planId === 300, 'resolver should still resolve the linked plan while active-time filtering is muted')
   }
 }

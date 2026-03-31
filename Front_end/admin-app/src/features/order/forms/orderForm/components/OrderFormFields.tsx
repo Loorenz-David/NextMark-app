@@ -191,7 +191,7 @@ export const OrderFormFields = ({ model, compact = false }: OrderFormFieldsProps
               </Field>
             </div>
 
-            {formState.route_plan_id == null ? (
+            {formState.delivery_plan_id == null ? (
               <div className={`border-t border-[var(--color-border-accent)] px-3 py-2`}>
                 <Field
                   warningPlacement ='besidesLabel'

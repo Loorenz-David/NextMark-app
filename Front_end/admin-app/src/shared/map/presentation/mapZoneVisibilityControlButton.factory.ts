@@ -1,3 +1,5 @@
+import { LayersIconSrc } from "@/assets/icons";
+
 const applySharedButtonStyles = (button: HTMLButtonElement) => {
   button.style.width = "42px";
   button.style.height = "42px";
@@ -25,23 +27,15 @@ export const createZoneVisibilityControlButton = ({
   button.className = "map-control-zone-visibility";
   applySharedButtonStyles(button);
 
-  const icon = document.createElement("span");
+  const icon = document.createElement("img");
+  icon.src = LayersIconSrc;
+  icon.alt = "Layers";
+  icon.width = 20;
+  icon.height = 20;
   icon.setAttribute("aria-hidden", "true");
-  icon.style.width = "18px";
-  icon.style.height = "18px";
-  icon.style.border = "2px solid currentColor";
-  icon.style.borderRadius = "4px";
-  icon.style.boxSizing = "border-box";
-  icon.style.display = "inline-flex";
-  icon.style.alignItems = "center";
-  icon.style.justifyContent = "center";
-
-  const inner = document.createElement("span");
-  inner.style.width = "8px";
-  inner.style.height = "8px";
-  inner.style.borderRadius = "2px";
-  inner.style.background = "currentColor";
-  icon.appendChild(inner);
+  icon.style.pointerEvents = "none";
+  icon.style.filter =
+    "brightness(0) saturate(100%) invert(93%) sepia(15%) saturate(530%) hue-rotate(110deg) brightness(101%) contrast(96%)";
   button.appendChild(icon);
 
   const syncState = (visible: boolean) => {
@@ -50,13 +44,14 @@ export const createZoneVisibilityControlButton = ({
     button.setAttribute("aria-pressed", visible ? "true" : "false");
     button.style.color = visible
       ? "rgb(184, 255, 242)"
-      : "rgba(248, 251, 252, 0.72)";
+      : "rgba(248, 251, 252, 0.4)";
     button.style.borderColor = visible
       ? "rgba(104, 214, 195, 0.28)"
       : "rgba(255, 255, 255, 0.12)";
     button.style.background = visible
       ? "rgba(24, 58, 60, 0.96)"
       : "rgba(14, 22, 23, 0.72)";
+    button.style.opacity = visible ? "1" : "0.6";
     button.style.outline = "none";
   };
 

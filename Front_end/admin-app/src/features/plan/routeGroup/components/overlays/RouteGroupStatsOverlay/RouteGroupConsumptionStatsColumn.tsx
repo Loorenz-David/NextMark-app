@@ -1,44 +1,50 @@
-import { motion, useReducedMotion } from 'framer-motion'
+import { motion, useReducedMotion } from "framer-motion";
 
-import type { RouteGroupConsumptionMetric } from './routeGroupStatsOverlay.types'
-import { formatAnimatedMetricValue, useAnimatedMetricValue } from './useAnimatedMetricValue'
+import type { RouteGroupConsumptionMetric } from "./routeGroupStatsOverlay.types";
+import {
+  formatAnimatedMetricValue,
+  useAnimatedMetricValue,
+} from "./useAnimatedMetricValue";
 
 type RouteGroupConsumptionStatsColumnProps = {
-  metrics: RouteGroupConsumptionMetric[]
-  routeScopeKey: string
-}
+  metrics: RouteGroupConsumptionMetric[];
+  routeScopeKey: string;
+};
 
 const ConsumptionMetricCard = ({
   metric,
   routeScopeKey,
 }: {
-  metric: RouteGroupConsumptionMetric
-  routeScopeKey: string
+  metric: RouteGroupConsumptionMetric;
+  routeScopeKey: string;
 }) => {
-  const prefersReducedMotion = useReducedMotion()
+  const prefersReducedMotion = useReducedMotion();
   const { value, changeTick, sourceType } = useAnimatedMetricValue({
     metric: metric.animation,
     routeScopeKey,
-  })
+  });
 
-  const isEstimated = sourceType === 'estimated'
-  const resolvedValue = value != null
-    ? formatAnimatedMetricValue(metric.animation, value)
-    : metric.displayValue
+  const isEstimated = sourceType === "estimated";
+  const resolvedValue =
+    value != null
+      ? formatAnimatedMetricValue(metric.animation, value)
+      : metric.displayValue;
 
   return (
     <div
       key={metric.id}
       className={`flex min-h-[78px] flex-col justify-between rounded-2xl border bg-black/28 px-4 py-3 text-sm text-white backdrop-blur-md ${
-        isEstimated ? 'border-white/30' : 'border-white/45'
+        isEstimated ? "border-white/30" : "border-white/45"
       }`}
     >
       <motion.div
         key={`${metric.id}-${changeTick}`}
         initial={prefersReducedMotion ? undefined : { scale: 1.06 }}
         animate={prefersReducedMotion ? undefined : { scale: 1 }}
-        transition={prefersReducedMotion ? undefined : { duration: 0.2, ease: 'easeOut' }}
-        className={`text-sm font-semibold ${isEstimated ? 'text-white/82' : 'text-white'}`}
+        transition={
+          prefersReducedMotion ? undefined : { duration: 0.2, ease: "easeOut" }
+        }
+        className={`text-sm font-semibold ${isEstimated ? "text-white/82" : "text-white"}`}
       >
         {resolvedValue}
       </motion.div>
@@ -51,14 +57,14 @@ const ConsumptionMetricCard = ({
         ) : null}
       </div>
     </div>
-  )
-}
+  );
+};
 
 export const RouteGroupConsumptionStatsColumn = ({
   metrics,
   routeScopeKey,
 }: RouteGroupConsumptionStatsColumnProps) => (
-  <div className="flex min-w-[160px] flex-col gap-3">
+  <div className="flex min-w-[160px]  gap-3">
     {metrics.map((metric) => (
       <ConsumptionMetricCard
         key={metric.id}
@@ -67,4 +73,4 @@ export const RouteGroupConsumptionStatsColumn = ({
       />
     ))}
   </div>
-)
+);

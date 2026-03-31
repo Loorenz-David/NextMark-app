@@ -1,5 +1,6 @@
 import { FacilitySelector } from "@/features/infrastructure/facility/components";
 import { VehicleSelector } from "@/features/infrastructure/vehicle/components/VehicleSelector/VehicleSelector";
+import { ZoneVehicleCapabilitySelector } from "@/features/zone/components/ZoneVehicleCapabilitySelector/ZoneVehicleCapabilitySelector";
 import { CustomCounter } from "@/shared/inputs/CustomCounter";
 import { CustomNumberPicker } from "@/shared/inputs/CustomTimePicker/CustomNumberPicker";
 import { CustomTimePicker } from "@/shared/inputs/CustomTimePicker";
@@ -12,10 +13,7 @@ import {
 import { OptionPopoverSelect } from "@/shared/inputs/OptionPopoverSelect";
 import { Cell, SplitRow } from "@/shared/layout/cells";
 
-import {
-  zoneRouteEndStrategyOptions,
-  zoneVehicleCapabilityOptions,
-} from "../../../domain/zoneEnums";
+import { zoneRouteEndStrategyOptions } from "../../../domain/zoneEnums";
 import { useZoneForm } from "../../../popups/ZoneForm/ZoneForm.context";
 
 const SectionHeading = ({
@@ -268,22 +266,20 @@ export const ZoneFormFields = () => {
         <SplitRow splitRowClass="grid grid-cols-2 divide-x divide-[var(--color-border-accent)]">
           <Cell>
             <Field
-              label="Required capability:"
+              label="Required capabilities:"
               gap={2}
               warningPlacement="besidesLabel"
             >
-              <OptionPopoverSelect
-                options={[...zoneVehicleCapabilityOptions]}
-                value={formState.vehicle_capabilities_required || null}
-                onChange={(value) =>
+              <ZoneVehicleCapabilitySelector
+                selectedValue={formState.vehicle_capabilities_required}
+                onSelectionChange={(value) =>
                   setFormState((current) => ({
                     ...current,
-                    vehicle_capabilities_required: String(value ?? ""),
+                    vehicle_capabilities_required: value,
                   }))
                 }
-                placeholder="Select capability"
-                emptyLabel="None"
-                inputFieldClassName={`${PLAIN_INPUT_CONTAINER_CLASS} flex w-full items-center justify-between gap-2`}
+                placeholder="Select capabilities"
+                containerClassName={PLAIN_INPUT_CONTAINER_CLASS}
               />
             </Field>
           </Cell>

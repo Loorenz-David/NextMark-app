@@ -42,7 +42,7 @@ const buildBaseFormState = (): OrderFormState => ({
     coordinates: { lat: 25.7617, lng: -80.1918 },
   },
   delivery_windows: [],
-  route_plan_id: 10,
+  delivery_plan_id: 10,
   order_note: '',
 })
 

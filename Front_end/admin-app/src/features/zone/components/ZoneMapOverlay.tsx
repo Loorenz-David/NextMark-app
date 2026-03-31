@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-import { CloseIcon } from "@/assets/icons";
+import { CloseIcon, LayersIcon } from "@/assets/icons";
 import { BasicButton } from "@/shared/buttons/BasicButton";
 import { MapDrawingSideControls } from "@/shared/map/components/MapDrawingSideControls";
 import {
@@ -70,7 +70,10 @@ export const ZoneMapOverlay = () => {
               ariaLabel: "Enter zone creation mode",
             }}
           >
-            Zones
+            <div className="flex items-center gap-2">
+              <LayersIcon className="h-4 w-4 app-icon" />
+              <span>Zones</span>
+            </div>
           </BasicButton>
         </div>
         <ZonePolygonLayer />
