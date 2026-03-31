@@ -1,12 +1,9 @@
 from datetime import datetime
 
-from Delivery_app_BK.models import RoutePlan, Order
+from Delivery_app_BK.models import DeliveryPlan, Order
 from Delivery_app_BK.services.domain.order.order_events import OrderEvent
 from Delivery_app_BK.services.domain.order.order_states import (
     OrderState as OrderStateDomain,
-)
-from Delivery_app_BK.services.domain.order.plan_objective_labels import (
-    resolve_order_plan_workspace,
 )
 
 
@@ -26,12 +23,9 @@ def build_order_created_event(order_instance: Order) -> dict:
     payload = {
         "order_state_id": order_instance.order_state_id,
         "order_plan_objective": order_instance.order_plan_objective,
-        "order_plan_workspace": resolve_order_plan_workspace(
-            order_instance.order_plan_objective,
-        ),
     }
-    if order_instance.route_plan_id:
-        payload["route_plan_id"] = order_instance.route_plan_id
+    if order_instance.delivery_plan_id:
+        payload["delivery_plan_id"] = order_instance.delivery_plan_id
 
     return {
         "order_id": order_instance.id,
@@ -84,32 +78,21 @@ def build_delivery_window_rescheduled_by_user_event(
     }
 
 
-def build_route_plan_changed_event(
+def build_delivery_plan_changed_event(
     order_instance: Order,
     old_plan_id: int | None,
-    new_plan: RoutePlan,
+    new_plan: DeliveryPlan,
 ) -> dict:
-    # RoutePlan.plan_type was removed; date_strategy is the canonical field.
-    plan_strategy = getattr(new_plan, "date_strategy", None)
     return {
         "order_id": order_instance.id,
         "team_id": order_instance.team_id,
         "event_name": OrderEvent.DELIVERY_PLAN_CHANGED.value,
         "payload": {
-            "old_route_plan_id": old_plan_id,
-            "new_route_plan_id": new_plan.id,
-            "new_plan_type": plan_strategy,
-            "new_date_strategy": plan_strategy,
+            "old_delivery_plan_id": old_plan_id,
+            "new_delivery_plan_id": new_plan.id,
+            "new_plan_type": new_plan.plan_type,
         },
     }
-
-
-def build_delivery_plan_changed_event(
-    order_instance: Order,
-    old_plan_id: int | None,
-    new_plan: RoutePlan,
-) -> dict:
-    return build_route_plan_changed_event(order_instance, old_plan_id, new_plan)
 
 
 def build_order_status_changed_event(

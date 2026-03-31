@@ -10,14 +10,13 @@ from Delivery_app_BK.services.infra.events.builders.order import (
 )
 from Delivery_app_BK.models import (
     db,
+    DeliveryPlan,
     Item,
     ItemPosition,
     ItemState,
     Order,
     OrderDeliveryWindow,
     OrderState,
-    RouteGroup,
-    RoutePlan,
     Team,
 )
 
@@ -31,9 +30,7 @@ from .create_serializers import (
     serialize_created_order,
 )
 from Delivery_app_BK.services.infra.events.emiters.order import emit_order_events
-from Delivery_app_BK.services.domain.route_operations.plan.route_freshness import (
-    touch_route_freshness,
-)
+from Delivery_app_BK.services.domain.plan.route_freshness import touch_route_freshness
 from .plan_objectives import PlanObjectiveCreateResult, apply_order_plan_objective
 from ...domain.order.delivery_windows import (
     resolve_order_delivery_windows_timezone,
@@ -43,21 +40,7 @@ from ...domain.order.delivery_windows import (
 from ...domain.order.order_scalar_id import reserve_order_scalar_ids
 from .tracking.generate_tracking_identifiers import generate_tracking_identifiers
 from Delivery_app_BK.services.domain.order.recompute_order_totals import recompute_order_totals
-from Delivery_app_BK.services.domain.route_operations.plan.recompute_plan_totals import (
-    recompute_plan_totals,
-)
-from Delivery_app_BK.services.domain.route_operations.plan.recompute_route_group_totals import (
-    recompute_route_group_totals,
-)
-from Delivery_app_BK.services.domain.state_transitions.order_count_engine import (
-    recompute_route_group_order_counts,
-)
-from Delivery_app_BK.services.domain.state_transitions.plan_state_engine import (
-    maybe_sync_plan_state_from_groups,
-)
-from Delivery_app_BK.services.domain.state_transitions.route_group_state_engine import (
-    maybe_sync_route_group_state,
-)
+from Delivery_app_BK.services.domain.plan.recompute_plan_totals import recompute_plan_totals
 
 
 def create_order(ctx: ServiceContext):
@@ -65,8 +48,7 @@ def create_order(ctx: ServiceContext):
         {
             "team_id": Team,
             "order_state_id": OrderState,
-            "route_plan_id": RoutePlan,
-            "route_group_id": RouteGroup,
+            "delivery_plan_id": DeliveryPlan,
             "item_state_id": ItemState,
             "item_position_id": ItemPosition,
         }
@@ -78,9 +60,6 @@ def create_order(ctx: ServiceContext):
 
     pending_events: list[dict] = []
     created_bundles: list[dict] = []
-    touched_route_plans: dict[int, RoutePlan] = {}
-    touched_route_groups: dict[int, RouteGroup] = {}
-
     def _apply() -> None:
         team_timezone = resolve_order_delivery_windows_timezone(ctx)
         resolved_costumers = resolve_or_create_costumers(
@@ -120,26 +99,19 @@ def create_order(ctx: ServiceContext):
         )
         if len(resolved_costumers) != len(order_requests):
             raise ValidationFailed("Failed to resolve costumers for all orders.")
-        route_plans_by_id = _load_delivery_plans_by_id(
+        delivery_plans_by_id = _load_delivery_plans_by_id(
             ctx,
             [
-                request.route_plan_id
+                request.delivery_plan_id
                 for request in order_requests
-                if request.route_plan_id is not None
-            ],
-        )
-        route_groups_by_id = _load_route_groups_by_id(
-            ctx,
-            [
-                request.route_group_id
-                for request in order_requests
-                if request.route_group_id is not None
+                if request.delivery_plan_id is not None
             ],
         )
         order_instances: list[Order] = []
         item_instances: list[Item] = []
         extra_instances: list[object] = []
         post_flush_actions: list[Callable[[], None]] = []
+        touched_delivery_plans: dict[int, DeliveryPlan] = {}
         items_by_order_client_id: dict[str, list[Item]] = defaultdict(list)
         plan_objective_results_by_order_client_id: dict[str, PlanObjectiveCreateResult] = {}
         allocated_scalar_ids = reserve_order_scalar_ids(ctx, len(order_requests))
@@ -160,48 +132,27 @@ def create_order(ctx: ServiceContext):
                     normalized_windows,
                     team_timezone=team_timezone,
                 )
-            route_plan = (
-                route_plans_by_id.get(order_request.route_plan_id)
-                if order_request.route_plan_id is not None
+            delivery_plan = (
+                delivery_plans_by_id.get(order_request.delivery_plan_id)
+                if order_request.delivery_plan_id is not None
                 else None
             )
-            route_group = (
-                route_groups_by_id.get(order_request.route_group_id)
-                if order_request.route_group_id is not None
-                else None
-            )
-            resolved_route_plan_id = None
-            resolved_route_group_id = None
-            if route_plan:
-                resolved_route_plan_id = route_plan.id
-                route_plan_type = getattr(route_plan, "plan_type", "local_delivery")
+            resolved_delivery_plan_id = None
+            if delivery_plan:
+                resolved_delivery_plan_id = delivery_plan.id
                 if not order_fields.get("order_plan_objective"):
-                    order_fields["order_plan_objective"] = route_plan_type
-                if route_group is None:
-                    raise ValidationFailed(
-                        "route_group_id is required for orders assigned to a route plan."
-                    )
-                if route_group.route_plan_id != route_plan.id:
-                    raise ValidationFailed(
-                        "route_group_id must belong to the selected route_plan_id."
-                    )
-                resolved_route_group_id = route_group.id
-            order_fields.pop("route_plan_id", None)
-            order_fields.pop("route_group_id", None)
+                    order_fields["order_plan_objective"] = delivery_plan.plan_type
+            order_fields.pop("delivery_plan_id", None)
 
             order_instance: Order = create_instance(ctx, Order, order_fields)
             order_instance.costumer_id = resolved_costumer.id
             if order_instance.costumer_id is None:
                 raise ValidationFailed("Order must belong to a costumer.")
-            if resolved_route_plan_id is not None:
-                order_instance.route_plan_id = resolved_route_plan_id
-                order_instance.route_plan = route_plan
-                order_instance.route_group_id = resolved_route_group_id
-                order_instance.route_group = route_group
-                if route_plan is not None:
-                    touched_route_plans[route_plan.id] = route_plan
-                if route_group is not None:
-                    touched_route_groups[route_group.id] = route_group
+            if resolved_delivery_plan_id is not None:
+                order_instance.delivery_plan_id = resolved_delivery_plan_id
+                order_instance.delivery_plan = delivery_plan
+                if delivery_plan is not None:
+                    touched_delivery_plans[delivery_plan.id] = delivery_plan
             order_instances.append(order_instance)
 
             # Auto-generate public tracking identifiers (once, on creation).
@@ -230,16 +181,15 @@ def create_order(ctx: ServiceContext):
                 order_instance.items_updated_at = datetime.now(timezone.utc)
                 recompute_order_totals(order_instance)
 
-            if route_plan is not None:
-                recompute_plan_totals(route_plan)
+            if delivery_plan is not None:
+                recompute_plan_totals(delivery_plan)
 
-            if route_plan:
+            if delivery_plan:
                 objective_result = apply_order_plan_objective(
                     ctx=ctx,
                     order_instance=order_instance,
-                    route_plan_id=route_plan.id,
-                    route_plan=route_plan,
-                    plan_objective=route_plan_type,
+                    delivery_plan=delivery_plan,
+                    plan_objective=delivery_plan.plan_type,
                 )
                 extra_instances.extend(objective_result.instances)
                 post_flush_actions.extend(objective_result.post_flush_actions)
@@ -261,18 +211,9 @@ def create_order(ctx: ServiceContext):
         if post_flush_actions:
             db.session.flush()
 
-        for route_plan in touched_route_plans.values():
-            touch_route_freshness(route_plan)
-            recompute_route_group_totals(route_plan)
-
-        for route_group in touched_route_groups.values():
-            recompute_route_group_order_counts(route_group)
-            maybe_sync_route_group_state(route_group)
-
-        for route_plan in touched_route_plans.values():
-            maybe_sync_plan_state_from_groups(route_plan)
-
-        if touched_route_plans:
+        for delivery_plan in touched_delivery_plans.values():
+            touch_route_freshness(delivery_plan)
+        if touched_delivery_plans:
             db.session.flush()
 
         for order_instance in order_instances:
@@ -310,7 +251,7 @@ def create_order(ctx: ServiceContext):
             "total_items": plan.total_item_count,
             "total_orders": plan.total_orders,
         }
-        for plan in touched_route_plans.values()
+        for plan in touched_delivery_plans.values()
         if plan.id is not None
     ]
     return {"created": created_bundles, "plan_totals": plan_totals}
@@ -319,14 +260,14 @@ def create_order(ctx: ServiceContext):
 def _load_delivery_plans_by_id(
     ctx: ServiceContext,
     plan_ids: list[int],
-) -> dict[int, RoutePlan]:
+) -> dict[int, DeliveryPlan]:
     deduped_plan_ids = list(dict.fromkeys(plan_ids))
     if not deduped_plan_ids:
         return {}
 
-    query = db.session.query(RoutePlan).filter(RoutePlan.id.in_(deduped_plan_ids))
+    query = db.session.query(DeliveryPlan).filter(DeliveryPlan.id.in_(deduped_plan_ids))
     if ctx.team_id:
-        query = query.filter(RoutePlan.team_id == ctx.team_id)
+        query = query.filter(DeliveryPlan.team_id == ctx.team_id)
     plans = query.all()
 
     plans_by_id = {plan.id: plan for plan in plans}
@@ -335,28 +276,3 @@ def _load_delivery_plans_by_id(
         raise NotFound(f"Delivery plans not found: {missing_ids}")
 
     return plans_by_id
-
-
-def _load_route_groups_by_id(
-    ctx: ServiceContext,
-    route_group_ids: list[int],
-) -> dict[int, RouteGroup]:
-    deduped_route_group_ids = list(dict.fromkeys(route_group_ids))
-    if not deduped_route_group_ids:
-        return {}
-
-    query = db.session.query(RouteGroup).filter(RouteGroup.id.in_(deduped_route_group_ids))
-    if ctx.team_id:
-        query = query.filter(RouteGroup.team_id == ctx.team_id)
-    route_groups = query.all()
-
-    route_groups_by_id = {route_group.id: route_group for route_group in route_groups}
-    missing_ids = [
-        route_group_id
-        for route_group_id in deduped_route_group_ids
-        if route_group_id not in route_groups_by_id
-    ]
-    if missing_ids:
-        raise NotFound(f"Route groups not found: {missing_ids}")
-
-    return route_groups_by_id

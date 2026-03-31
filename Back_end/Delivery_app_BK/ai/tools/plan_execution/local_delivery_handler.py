@@ -2,14 +2,15 @@ from __future__ import annotations
 
 from sqlalchemy.orm import selectinload
 
-from Delivery_app_BK.models import db, RoutePlan, RouteSolution
+from Delivery_app_BK.models import db, RouteSolution
+from Delivery_app_BK.models.tables.delivery_plan.delivery_plan import DeliveryPlan
 from Delivery_app_BK.services.context import ServiceContext
 from Delivery_app_BK.services.queries.route_solutions.serialize_route_solution_stops import (
     serialize_route_solution_stops,
 )
 
 
-def get_execution_status(ctx: ServiceContext, plan: RoutePlan) -> dict:
+def get_execution_status(ctx: ServiceContext, plan: DeliveryPlan) -> dict:
     """
     Return the active route and driver info for a local_delivery plan.
     Queries the is_selected=True RouteSolution for the given plan,
@@ -19,10 +20,10 @@ def get_execution_status(ctx: ServiceContext, plan: RoutePlan) -> dict:
         db.session.query(RouteSolution)
         .options(
             selectinload(RouteSolution.driver),
-            selectinload(RouteSolution.route_group),
+            selectinload(RouteSolution.local_delivery_plan),
         )
         .filter(
-            RouteSolution.route_group_id == plan.id,
+            RouteSolution.local_delivery_plan_id == plan.id,
             RouteSolution.is_selected.is_(True),
         )
         .first()
@@ -46,7 +47,7 @@ def get_execution_status(ctx: ServiceContext, plan: RoutePlan) -> dict:
         "label": route.label,
         "driver_id": route.driver_id,
         "driver_name": route.driver.username if route.driver else None,
-        "plan_label": route.route_group.label if route.route_group else plan.label,
+        "plan_label": route.local_delivery_plan.label if route.local_delivery_plan else plan.label,
         "vehicle_id": route.vehicle_id,
         "is_optimized": route.is_optimized,
         "total_distance_meters": route.total_distance_meters,

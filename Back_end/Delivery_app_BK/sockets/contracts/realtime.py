@@ -55,13 +55,14 @@ BUSINESS_EVENT_ORDER_CASE_UPDATED = "order_case.updated"
 BUSINESS_EVENT_ORDER_CASE_STATE_CHANGED = "order_case.state_changed"
 BUSINESS_EVENT_ORDER_CHAT_MESSAGE_CREATED = "order_chat.message_created"
 
-# Canonical Route Plan Events
-BUSINESS_EVENT_ROUTE_PLAN_CREATED = "route_plan.created"
-BUSINESS_EVENT_ROUTE_PLAN_UPDATED = "route_plan.updated"
-BUSINESS_EVENT_ROUTE_PLAN_DELETED = "route_plan.deleted"
+# Delivery Plan Events
+BUSINESS_EVENT_DELIVERY_PLAN_CREATED = "delivery_plan.created"
+BUSINESS_EVENT_DELIVERY_PLAN_UPDATED = "delivery_plan.updated"
+BUSINESS_EVENT_DELIVERY_PLAN_DELETED = "delivery_plan.deleted"
 
-# Route Group Events
-BUSINESS_EVENT_ROUTE_GROUP_UPDATED = "route_group.updated"
+# Local Delivery Plan Events
+BUSINESS_EVENT_LOCAL_DELIVERY_PLAN_UPDATED = "local_delivery_plan.updated"
+BUSINESS_EVENT_ROUTE_GROUP_UPDATED = BUSINESS_EVENT_LOCAL_DELIVERY_PLAN_UPDATED
 
 # Route Solution Events
 BUSINESS_EVENT_ROUTE_SOLUTION_CREATED = "route_solution.created"

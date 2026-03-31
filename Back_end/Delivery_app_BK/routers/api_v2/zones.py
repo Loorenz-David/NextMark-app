@@ -92,7 +92,7 @@ def list_zones(version_id: int):
         query_params={**request.args.to_dict(), "version_id": version_id},
         identity=identity,
     )
-    print(f"ctx.query_params: {ctx.query_params}")
+
     from Delivery_app_BK.services.queries.zones.list_zones_for_version import list_zones_for_version
     outcome = run_service(lambda c: list_zones_for_version(c), ctx)
     response = Response()

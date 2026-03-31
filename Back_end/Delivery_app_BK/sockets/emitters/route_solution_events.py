@@ -1,7 +1,7 @@
 from flask import current_app
 
 from Delivery_app_BK.models import RouteSolution, RouteGroup, db
-from Delivery_app_BK.services.domain.route_operations.plan.route_freshness import get_route_freshness_updated_at
+from Delivery_app_BK.services.domain.delivery_plan.plan.route_freshness import get_route_freshness_updated_at
 from Delivery_app_BK.sockets.contracts.realtime import (
     BUSINESS_EVENT_ROUTE_SOLUTION_CREATED,
     BUSINESS_EVENT_ROUTE_SOLUTION_UPDATED,
@@ -15,6 +15,8 @@ from Delivery_app_BK.sockets.rooms.names import build_team_admin_room, build_tea
 def emit_route_solution_created(route_solution: RouteSolution, *, payload: dict | None = None) -> None:
     """Emit RouteSolution created event. Broadcast to team_orders (admin visibility) and team_members (driver notification)."""
     route_group_id = getattr(route_solution, "route_group_id", None)
+    if route_group_id is None:
+        route_group_id = getattr(route_solution, "local_delivery_plan_id", None)
     if not route_solution or not route_group_id:
         current_app.logger.warning("Cannot emit route_solution.created: missing route_solution or route_group_id")
         return
@@ -41,7 +43,7 @@ def emit_route_solution_created(route_solution: RouteSolution, *, payload: dict 
             **_plan_id_aliases(route_group_id=route_group_id, route_plan_id=route_plan_id),
             "label": route_solution.label,
             "plan_label": route_group.route_plan.label if route_group.route_plan else None,
-            # "plan_type": route_group.route_plan.plan_type if route_group.route_plan else None,
+            "plan_type": route_group.route_plan.plan_type if route_group.route_plan else None,
             "route_freshness_updated_at": get_route_freshness_updated_at(route_group.route_plan),
             "is_selected": route_solution.is_selected,
             "driver_id": route_solution.driver_id,
@@ -76,6 +78,8 @@ def emit_route_solution_created(route_solution: RouteSolution, *, payload: dict 
 def emit_route_solution_updated(route_solution: RouteSolution, *, payload: dict | None = None) -> None:
     """Emit RouteSolution updated event. Broadcast to team_orders (admin visibility) and team_members (driver notification)."""
     route_group_id = getattr(route_solution, "route_group_id", None)
+    if route_group_id is None:
+        route_group_id = getattr(route_solution, "local_delivery_plan_id", None)
     if not route_solution or not route_group_id:
         current_app.logger.warning("Cannot emit route_solution.updated: missing route_solution or route_group_id")
         return
@@ -102,6 +106,7 @@ def emit_route_solution_updated(route_solution: RouteSolution, *, payload: dict 
             **_plan_id_aliases(route_group_id=route_group_id, route_plan_id=route_plan_id),
             "label": route_solution.label,
             "plan_label": route_group.route_plan.label if route_group.route_plan else None,
+            "plan_type": route_group.route_plan.plan_type if route_group.route_plan else None,
             "route_freshness_updated_at": get_route_freshness_updated_at(route_group.route_plan),
             "is_selected": route_solution.is_selected,
             "driver_id": route_solution.driver_id,
@@ -183,8 +188,21 @@ def emit_route_solution_deleted_for_route_group(
     current_app.logger.info("Emitted route_solution.deleted: solution_id=%d, team_id=%d", route_solution_id, team_id)
 
 
+def emit_route_solution_deleted(team_id: int, local_delivery_plan_id: int, route_solution_id: int, *, payload: dict | None = None) -> None:
+    """Backward-compatible wrapper for legacy callsites passing local_delivery_plan_id."""
+    emit_route_solution_deleted_for_route_group(
+        team_id=team_id,
+        route_group_id=local_delivery_plan_id,
+        route_solution_id=route_solution_id,
+        payload=payload,
+    )
+
+
 def _plan_id_aliases(*, route_group_id: int, route_plan_id: int) -> dict:
     return {
         "route_group_id": route_group_id,
         "route_plan_id": route_plan_id,
+        # Backward-compatible payload keys while route naming migration is active.
+        "local_delivery_plan_id": route_group_id,
+        "delivery_plan_id": route_plan_id,
     }

@@ -17,10 +17,6 @@ from Delivery_app_BK.models.mixins.validation_mixins.phone_number_validation imp
 from Delivery_app_BK.models.mixins.validation_mixins.address_validation import (
     AddressJSONValidationMixin
 )
-from Delivery_app_BK.services.domain.order.plan_objective_labels import (
-    ORDER_PLAN_OBJECTIVES,
-    normalize_order_plan_objective,
-)
 
 
 # model definition of an order
@@ -87,16 +83,9 @@ class Order(
         ForeignKey("order_state.id", ondelete="SET NULL")
     )
     
-    route_plan_id = Column(
-        "route_plan_id",
+    delivery_plan_id = Column(
         Integer, 
-        ForeignKey("route_plan.id", ondelete="SET NULL"), 
-    )
-    route_group_id = Column(
-        Integer,
-        ForeignKey("route_group.id", ondelete="SET NULL"),
-        nullable=True,
-        index=True,
+        ForeignKey("delivery_plan.id", ondelete="SET NULL"), 
     )
     costumer_id = Column(
         Integer,
@@ -154,15 +143,9 @@ class Order(
         passive_deletes=True
     )
 
-    route_plan = relationship(
-        "RoutePlan",
-        back_populates="orders"
-    )
-
-    route_group = relationship(
-        "RouteGroup",
-        back_populates="orders",
-        lazy="selectin",
+    delivery_plan = relationship(
+        "DeliveryPlan",
+        back_populates = "orders" 
     )
 
     costumer = relationship(
@@ -201,7 +184,11 @@ class Order(
     )
 
 
-    ORDER_PLAN_INTENTIONS = ORDER_PLAN_OBJECTIVES
+    ORDER_PLAN_INTENTIONS = {
+        "local_delivery",
+        "international_shipping",
+        "store_pickup",
+    }
 
     ORDER_OPERATION_TYPE = {
         "pickup",
@@ -213,8 +200,6 @@ class Order(
     def validate_order_plan_intention(self, key, value):
         if value is None:
             return value  # allow unset orders
-
-        value = normalize_order_plan_objective(value)
 
         if value not in self.ORDER_PLAN_INTENTIONS:
             raise ValueError(

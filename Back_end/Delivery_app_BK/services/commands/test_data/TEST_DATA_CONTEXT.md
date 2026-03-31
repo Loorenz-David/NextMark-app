@@ -1,250 +1,552 @@
 # Test Data Context
 
 ## Purpose
-This folder contains the test-data generation pipeline used to seed realistic data for:
-- Item property and item type catalogs (frontend fast-fill options)
-- Route plans
-- Orders linked to those plans
 
-The system is designed to be configurable, repeatable, and safe for environments that already contain non-test data.
+This folder contains the JSON-driven test data creation system for:
 
-Additionally, all created rows now receive a `client_id` automatically (when the model has a `client_id` column) via the shared instance-creation utility.
+- item property and item type catalogs
+- facilities and vehicles
+- zone versions, zones, and zone templates
+- route plans and their auto-created route groups
+- orders, inline items, delivery windows, and optional zone assignments
 
-## High-Level Flow
-Main orchestrator entry point:
-- `generate_plan_and_order_test_data` in `orchestrator.py`
+The system is centered on:
 
-Execution order:
-1. Generate item properties and item types
-2. Generate plans
-3. Update route solution settings for each route group-backed plan
-4. Generate orders linked to those plans
-
-This order ensures orders can generate random items using available item types.
-
-## Folder Structure
-- `orchestrator.py`: Runs item types -> plans -> orders.
-- `item_types_data_creators.py`: Creates item properties and item types, then links them.
-- `plan_data_creators.py`: Creates local delivery, store pickup, and international shipping plans.
-- `order_data_creators.py`: Creates orders, links them to plans, generates random items, and assigns delivery windows.
-- `item_generator.py`: Builds random order items based on available item types and property definitions.
-- `config/plan_defaults.py`: Default plan payloads and test labels used for filtering.
-- `config/order_defaults.py`: Default order templates by plan type.
-- `config/item_types_defaults.py`: Default item properties and item types.
-- `config/item_generation_defaults.py`: Quantity, weight, and dimension ranges by item type.
-- `config/route_solution_update_defaults.py`: Default route solution settings (shift times, depot address, service times, ETA tolerance).
-- `route_solution_settings_updater.py`: Applies default (or overridden) settings to all route solutions created in step 3.
-- `cleanup.py`: Removes test-data rows for a team (orders/plans/item types/item properties) using test markers.
-
-## Data Isolation Strategy
-To avoid mixing with production-like records:
-- Plan loading is filtered by known test labels (`TEST_PLAN_LABELS`).
-- Order references include `test-` prefix.
-- Item type and property names include `test-` prefix.
-
-## Default Parameters
-This section explains the default runtime behavior when no overrides are provided.
-
-### Item Types and Properties
-Source:
-- `config/item_types_defaults.py`
-
-Defaults:
-- 10 item properties
-- 5 item types
-- Each item type linked to at least 2 properties
-
-Override keys in incoming payload:
-- `item_properties`: list of additional property objects
-- `item_types`: list of additional type objects
-
-### Plans
-Source:
-- `config/plan_defaults.py`
-
-Defaults:
-- 3 local_delivery route plans
-- 1 store_pickup plan
-- 1 international_shipping plan
-- Labels are pre-defined and used later for filtering
-
-Override keys:
-- `plan_data.plans` (nested)
-- `plans` (top-level compatibility key)
-
-### Orders
-Source:
-- `config/order_defaults.py`
-
-Defaults:
-- Local-delivery defaults create 10-20 orders per local-delivery route plan
-- Store-pickup defaults use 5 order templates
-- International-shipping defaults use 5 order templates
-- Plan types: `local_delivery`, `store_pickup`, `international_shipping`
-- Local-delivery orders are generated per plan; store-pickup and international-shipping use round-robin matching
-
-Override keys:
-- `order_data.orders_by_plan_type` (nested)
-- `orders_by_plan_type` (top-level compatibility key)
-
-### Route Solution Settings
-Source:
-- `route_solution_settings_updater.py` + `config/route_solution_update_defaults.py`
-
-Default behavior:
-- Applied automatically to all route solutions belonging to `local_delivery` plans
-- Driver is set to the current user (`ctx.user_id`); overrideable with `driver_id`
-- Shift window: `09:00` – `16:00`
-- Depot start location: Sibeliusgången 2A, 164 73 Kista, Stockholm
-- Service time per order: 3 minutes (stored as seconds in `stops_service_time.time`)
-- Service time per item: 1 minute (stored as seconds in `stops_service_time.per_item`)
-- ETA tolerance: 30 minutes (stored as seconds in `eta_tolerance_seconds`)
-
-Payload key:
-- `route_solution_settings_data`
-
-Overrideable fields inside `route_solution_settings_data`:
-```json
-{
-  "driver_id": null,
-  "set_start_time": "09:00",
-  "set_end_time": "16:00",
-  "start_location": {
-    "city": "Stockholms län",
-    "coordinates": { "lat": 59.41324450245052, "lng": 17.92244581469024 },
-    "country": "Sweden",
-    "postal_code": "164 73",
-    "street_address": "Sibeliusgången 2A, 164 73 Kista, Sweden"
-  },
-  "service_time_per_order_minutes": 3,
-  "service_time_per_item_minutes": 1,
-  "eta_tolerance_minutes": 30
-}
+```python
+create_test_data(identity: dict, payload: dict) -> dict
 ```
 
-### Random Items per Order
-Source:
-- `order_data_creators.py` + `item_generator.py` + `config/item_generation_defaults.py`
+The caller describes exactly what to create in JSON. There are no config defaults and no orchestration presets anymore.
 
-Default behavior:
-- Random item generation enabled
-- Min items per order: 1
-- Max items per order: 10
-- Quantity, weight, and dimensions are generated with item-type-aware ranges
+The system also applies a test-data client-id namespace so cleanup can target created rows across repeated runs and server restarts.
 
-Payload key:
-- `order_item_generation`
+---
 
-Default `order_item_generation` values:
-```json
-{
-  "enabled": true,
-  "min_items": 1,
-  "max_items": 10,
-  "ranges_map": null
-}
+## Public API
+
+Exports from `Delivery_app_BK/services/commands/test_data/__init__.py`:
+
+- `create_test_data`
+- `clear_generated_test_data`
+
+The seed router calls:
+
+```python
+create_test_data(ctx.identity, ctx.incoming_data)
 ```
 
-### Delivery Windows per Order
-Source:
-- `order_data_creators.py`
+Current seed route:
 
-Default behavior:
-- Delivery-window generation enabled
-- For each plan, 2 orders receive delivery windows
-- Single-date plans: multiple windows on the same date, different times
-- Date-range plans: multiple windows distributed across dates inside plan range
+- `POST /api_v2/seed/test-data`
 
-Payload key:
-- `order_delivery_window_generation`
+Cleanup routes:
 
-Default `order_delivery_window_generation` values:
-```json
-{
-  "enabled": true,
-  "orders_with_windows_per_plan": 2,
-  "single_date_min_windows": 2,
-  "single_date_max_windows": 3,
-  "range_date_min_windows": 2,
-  "range_date_max_windows": 4
-}
+- `POST /api_v2/seed/test-data/cleanup`
+- `DELETE /api_v2/seed/test-data`
+
+---
+
+## Architecture
+
+### Entry point
+
+- `creator.py`
+
+Responsibilities:
+
+- enforce fixed topological processing order
+- validate each top-level payload key is a list
+- reject unknown top-level payload keys except `_meta`
+- resolve symbolic `$ref` values before processor execution
+- inject internal metadata needed by specific processors
+- collect created DB ids per entity type
+
+### Core infrastructure
+
+- `registry.py`
+  - stores symbolic `$id` to DB id mappings
+  - supports reverse lookup when needed
+- `ref_map.py`
+  - declarative mapping from `$key` to destination field name
+- `resolver.py`
+  - strips `$id`
+  - strips `_...` internal metadata keys
+  - resolves `$ref` keys to DB integer ids
+- `context_builder.py`
+  - creates `ServiceContext` instances for processors
+
+### Processors
+
+Processors live in `processors/` and each implements:
+
+```python
+def process(item: dict, identity: dict, registry: Registry) -> int:
+    ...
 ```
 
-## Full Payload Example
+Implemented processors:
+
+- `item_property.py`
+- `item_type.py`
+- `facility.py`
+- `vehicle.py`
+- `zone_version.py`
+- `zone.py`
+- `zone_template.py`
+- `route_plan.py`
+- `order.py`
+- `order_delivery_window.py`
+- `order_zone_assignment.py`
+
+Each processor adapts the resolved payload to an existing live service or `create_instance(...)`.
+
+### Cleanup
+
+- `cleanup.py`
+
+Cleanup remains prefix/label based and no longer depends on deleted config modules. `TEST_PLAN_LABELS` is intentionally empty by default.
+Cleanup now also supports client-id-prefix deletion for entities that carry `client_id`.
+
+---
+
+## Processing Order
+
+Processing order is fixed in `creator.py`:
+
+1. `item_property`
+2. `item_type`
+3. `facility`
+4. `vehicle`
+5. `zone_version`
+6. `zone`
+7. `zone_template`
+8. `route_plan`
+9. `order`
+10. `order_delivery_window`
+11. `order_zone_assignment`
+
+This means JSON key order does not matter as long as referenced entities exist somewhere in the payload and are handled earlier in the internal order.
+
+---
+
+## Payload Model
+
+`payload` is a flat object whose top-level keys are entity types.
+
+Example shape:
+
 ```json
 {
-  "item_types_data": {
-    "item_properties": [],
-    "item_types": []
-  },
-  "plan_data": {
-    "plans": []
-  },
-  "order_data": {
-    "orders_by_plan_type": {
-      "local_delivery": [],
-      "store_pickup": [],
-      "international_shipping": []
+  "facility": [
+    {
+      "$id": "f1",
+      "name": "Kista Depot",
+      "facility_type": "warehouse",
+      "can_dispatch": true,
+      "property_location": {
+        "lat": 59.403,
+        "lng": 17.927,
+        "address": "Kista, Stockholm"
+      }
     }
-  },
-  "order_item_generation": {
-    "enabled": true,
-    "min_items": 1,
-    "max_items": 10,
-    "ranges_map": null
-  },
-  "route_solution_settings_data": {
-    "driver_id": null,
-    "set_start_time": "09:00",
-    "set_end_time": "16:00",
-    "start_location": {
-      "city": "Stockholms län",
-      "coordinates": { "lat": 59.41324450245052, "lng": 17.92244581469024 },
-      "country": "Sweden",
-      "postal_code": "164 73",
-      "street_address": "Sibeliusgången 2A, 164 73 Kista, Sweden"
-    },
-    "service_time_per_order_minutes": 3,
-    "service_time_per_item_minutes": 1,
-    "eta_tolerance_minutes": 30
-  },
-  "order_delivery_window_generation": {
-    "enabled": true,
-    "orders_with_windows_per_plan": 2,
-    "single_date_min_windows": 2,
-    "single_date_max_windows": 3,
-    "range_date_min_windows": 2,
-    "range_date_max_windows": 4
+  ],
+  "vehicle": [
+    {
+      "$id": "v1",
+      "$facility": "f1",
+      "label": "Van 1",
+      "registration_number": "ABC-001"
+    }
+  ]
+}
+```
+
+Rules:
+
+- each top-level entity key maps to a list
+- each list item must be an object
+- `$id` is a symbolic alias used only inside the payload
+- `$something` means a symbolic reference that is resolved to a DB id before processor execution
+- unknown top-level entity keys raise `ValueError`
+- unknown `$ref` keys raise `RefResolutionError`
+- missing referenced `$id`s raise `RefResolutionError`
+
+Optional top-level meta:
+
+```json
+{
+  "_meta": {
+    "client_id_prefix": "td:"
   }
 }
 ```
 
-## Cleanup API (Seed Router)
-Route:
-- `POST /api_v2/seed/test-data/cleanup`
-- `DELETE /api_v2/seed/test-data` (REST-style alias)
+`client_id_prefix` defaults to `td:` when omitted.
 
-Required body fields:
-- `key`
-- `team_id`
+---
 
-Optional body fields:
-- identity claims: `user_id`, `active_team_id`, `role_id`, `base_role_id`, `time_zone`, `default_country_code`
-- cleanup knobs:
-  - `order_reference_prefix` (default: `test-`)
-  - `item_name_prefix` (default: `test-`)
-  - `additional_plan_labels` (list of extra labels to treat as test plans)
+## Reference Rules
 
-Cleanup behavior:
-- Deletes team orders matching either:
-  - orders linked to known test plan labels
-  - order references starting with configured prefix (`test-` by default)
-- Deletes matched route plans (cascades to local/store/international plan rows, route solutions, route stops, and plan events)
-- Deletes team item types and item properties whose names start with configured prefix (`test-` by default)
-- Idempotent: calling the cleanup route multiple times is safe.
+### Scalar refs
 
-## Notes for Developers
-- Keep defaults in `config/` modules.
-- Keep parser validation in creator modules close to runtime use.
-- When adding new knobs, update this file and unit tests in `tests/unit/services/commands/test_data/`.
-- Prefer additive, backward-compatible payload keys where possible.
+Examples:
+
+- `vehicle.$facility` -> `home_facility_id`
+- `zone.$zone_version` -> `version_id`
+- `zone_template.$zone` -> `zone_id`
+- `zone_template.$facility` -> `default_facility_id`
+- `order.$route_plan` -> `route_plan_id`
+- `order.$route_group` -> `route_group_id`
+
+### List refs
+
+Implemented list refs:
+
+- `item_type.$properties` -> `properties`
+- `route_plan.$zones` -> `zone_ids`
+
+Example:
+
+```json
+{
+  "item_property": [
+    { "$id": "ip_color", "name": "test-Color", "field_type": "text", "required": false }
+  ],
+  "item_type": [
+    {
+      "$id": "it_chair",
+      "name": "test-Chair",
+      "$properties": ["ip_color"]
+    }
+  ]
+}
+```
+
+---
+
+## Route Plan and Route Group Refs
+
+`route_plan.py` creates the plan by calling the live `create_plan(...)` service.
+
+That live service auto-creates route groups in this order:
+
+1. default no-zone bucket
+2. one route group per `zone_id`, in the same order as `zone_ids`
+
+The processor registers stable symbolic route-group refs:
+
+- `{plan_sid}.rg.default`
+- `{plan_sid}.rg.{zone_sid}`
+
+Example:
+
+```json
+{
+  "zone": [
+    { "$id": "z1", "$zone_version": "zv1", "name": "North", "zone_type": "user" }
+  ],
+  "route_plan": [
+    {
+      "$id": "p1",
+      "$zones": ["z1"],
+      "label": "Monday Plan",
+      "start_date": "2026-04-01T00:00:00Z",
+      "end_date": "2026-04-01T23:59:59Z"
+    }
+  ],
+  "order": [
+    {
+      "$id": "o1",
+      "$route_plan": "p1",
+      "$route_group": "p1.rg.z1",
+      "reference_number": "test-001",
+      "operation_type": "dropoff",
+      "order_plan_objective": "local_delivery"
+    }
+  ]
+}
+```
+
+---
+
+## Order Item Model
+
+Order items are denormalized snapshots.
+
+Important:
+
+- `Item.item_type` is a string column, not a foreign key to `ItemType`
+- `Item.properties` is JSON, not a relational link
+- `items[].article_number` is required by the live order parser
+
+So inline order items must use plain values:
+
+```json
+{
+  "order": [
+    {
+      "reference_number": "test-001",
+      "operation_type": "dropoff",
+      "order_plan_objective": "local_delivery",
+      "items": [
+        {
+          "article_number": "CHAIR-001",
+          "item_type": "test-Chair",
+          "quantity": 2,
+          "weight": 12000,
+          "properties": [
+            { "name": "test-Color", "value": "Oak Brown" }
+          ]
+        }
+      ]
+    }
+  ]
+}
+```
+
+There is no `$ref` expansion inside `items`.
+
+Inline order items and inline delivery windows receive generated `client_id` values automatically inside the test-data namespace.
+
+---
+
+## Delivery Windows
+
+Preferred approach: pass delivery windows inline on the order.
+
+Example:
+
+```json
+{
+  "order": [
+    {
+      "reference_number": "test-001",
+      "operation_type": "dropoff",
+      "order_plan_objective": "local_delivery",
+      "delivery_windows": [
+        {
+          "start_at": "2026-04-01T09:00:00Z",
+          "end_at": "2026-04-01T17:00:00Z",
+          "window_type": "TIME_RANGE"
+        }
+      ]
+    }
+  ]
+}
+```
+
+`order_delivery_window` exists only for post-creation cases where a window is created separately.
+
+---
+
+## Identity Requirements
+
+`identity` should contain at minimum:
+
+```python
+{
+    "team_id": 5,
+    "user_id": 1,
+}
+```
+
+Also supported:
+
+```python
+{
+    "active_team_id": 5,
+    "time_zone": "Europe/Stockholm",
+    "default_country_code": "SE",
+    "default_city_key": "stockholm",
+}
+```
+
+`ServiceContext.team_id` resolves from `active_team_id` first, then `team_id`.
+
+---
+
+## Minimal End-to-End Example
+
+```json
+{
+  "item_property": [
+    { "$id": "ip_color", "name": "test-Color", "field_type": "text", "required": false }
+  ],
+  "item_type": [
+    { "$id": "it_chair", "name": "test-Chair", "$properties": ["ip_color"] }
+  ],
+  "facility": [
+    {
+      "$id": "f1",
+      "name": "Kista Depot",
+      "facility_type": "warehouse",
+      "can_dispatch": true,
+      "property_location": {
+        "lat": 59.403,
+        "lng": 17.927,
+        "address": "Kista, Stockholm"
+      }
+    }
+  ],
+  "vehicle": [
+    {
+      "$id": "v1",
+      "$facility": "f1",
+      "label": "Van 1",
+      "registration_number": "ABC-001"
+    }
+  ],
+  "zone_version": [
+    { "$id": "zv1", "city_key": "stockholm" }
+  ],
+  "zone": [
+    { "$id": "z1", "$zone_version": "zv1", "name": "North Zone", "zone_type": "user" }
+  ],
+  "zone_template": [
+    {
+      "$zone": "z1",
+      "$facility": "f1",
+      "name": "North Zone Template",
+      "default_route_end_strategy": "round_trip"
+    }
+  ],
+  "route_plan": [
+    {
+      "$id": "p1",
+      "$zones": ["z1"],
+      "label": "Monday Plan",
+      "start_date": "2026-04-01T00:00:00Z",
+      "end_date": "2026-04-01T23:59:59Z"
+    }
+  ],
+  "order": [
+    {
+      "$id": "o1",
+      "$route_plan": "p1",
+      "$route_group": "p1.rg.z1",
+      "reference_number": "test-001",
+      "client_first_name": "Erik",
+      "client_last_name": "Svensson",
+      "client_address": {
+        "lat": 59.41,
+        "lng": 17.93,
+        "address": "Kista 1, Stockholm"
+      },
+      "operation_type": "dropoff",
+      "order_plan_objective": "local_delivery",
+      "items": [
+        {
+          "article_number": "CHAIR-001",
+          "item_type": "test-Chair",
+          "quantity": 2,
+          "weight": 12000,
+          "properties": [
+            { "name": "test-Color", "value": "Oak Brown" }
+          ]
+        }
+      ],
+      "delivery_windows": [
+        {
+          "start_at": "2026-04-01T09:00:00Z",
+          "end_at": "2026-04-01T17:00:00Z",
+          "window_type": "TIME_RANGE"
+        }
+      ]
+    }
+  ]
+}
+```
+
+---
+
+## Result Shape
+
+`create_test_data(...)` returns:
+
+```python
+{
+    "facility": {"count": 1, "ids": [101]},
+    "vehicle": {"count": 1, "ids": [201]},
+    "route_plan": {"count": 1, "ids": [301]},
+    "order": {"count": 1, "ids": [401]},
+}
+```
+
+Only entity types present in the payload appear in the result.
+
+---
+
+## Client ID Namespace
+
+For entities that support `client_id`, the test-data system assigns namespaced values so cleanup can remove them later.
+
+Default namespace:
+
+```text
+td:
+```
+
+Examples:
+
+- `td:facility:f1:<uuid>`
+- `td:vehicle:v1:<uuid>`
+- `td:route_plan:p1:<uuid>`
+- `td:order:o1:<uuid>`
+- `td:item:item_0:<uuid>`
+
+This applies both to explicit payload rows and to nested rows created inside live services when those services generate `client_id` values through the shared generator.
+
+---
+
+## Cleanup API
+
+Cleanup removes seeded test data for a team.
+
+Accepted cleanup knobs:
+
+- `order_reference_prefix`
+- `item_name_prefix`
+- `additional_plan_labels`
+- `client_id_prefix`
+
+Defaults:
+
+- `order_reference_prefix = "test-"`
+- `item_name_prefix = "test-"`
+- `client_id_prefix = "td:"`
+- `TEST_PLAN_LABELS = {}`
+
+Cleanup now deletes by client-id prefix for supported entities and still uses the older name/reference prefixes as fallback where `client_id` is not available.
+
+Cleanup is idempotent.
+
+---
+
+## Transaction Boundary Limitation
+
+This system does not wrap the full payload in one global transaction.
+
+Reason:
+
+- some underlying live services commit internally
+- some use their own `db.session.begin()` blocks
+- some only flush
+
+Consequence:
+
+- earlier entities may remain committed if a later entity fails
+- callers should pair creation with cleanup in test teardown when repeatability matters
+
+---
+
+## Guidance for Developers and AI Agents
+
+- Do not reintroduce config-based defaults into this package.
+- Add new entity types by updating:
+  - `processors/`
+  - `ref_map.py`
+  - `creator.py`
+  - unit tests under `tests/unit/services/commands/test_data/`
+- If a service requires `{"fields": [...]}`, keep that wrapping inside the processor, not in the caller contract.
+- Keep payload customization in JSON, not in function signatures.
+- Preserve the distinction between symbolic refs in payload and actual DB ids used by services.

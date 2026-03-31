@@ -1,7 +1,7 @@
 from typing import Dict, Any
 from sqlalchemy.orm import Query
 
-from Delivery_app_BK.models import db, Order, Item, RoutePlan, OrderDeliveryWindow
+from Delivery_app_BK.models import db, Order, Item, DeliveryPlan, OrderDeliveryWindow
 from Delivery_app_BK.services.utils import inject_team_id, model_requires_team
 from Delivery_app_BK.services.queries.utils  import parsed_string_to_list
 from sqlalchemy import func, String, or_
@@ -86,10 +86,13 @@ def find_orders (
         },
         # ---------------- DELIVERY PLAN ----------------
         "plan_label": {
-            "column": RoutePlan.label,
-            "join": Order.route_plan,
+            "column": DeliveryPlan.label,
+            "join": Order.delivery_plan,
         },
-        
+        "plan_type": {
+            "column": DeliveryPlan.plan_type,
+            "join": Order.delivery_plan,
+        },
     }
 
     trimmed_query = str(params.get("q") or "").strip()
@@ -150,9 +153,9 @@ def find_orders (
 
 
     if "schedule_order" in params:
-        query = query.filter(Order.route_plan_id.isnot(None))
+        query = query.filter(Order.delivery_plan_id.isnot(None))
     if "unschedule_order" in params:
-        query = query.filter(Order.route_plan_id.is_(None))
+        query = query.filter(Order.delivery_plan_id.is_(None))
             
 
     if "earliest_delivery_date" in params:

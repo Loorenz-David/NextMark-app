@@ -2,15 +2,14 @@ from __future__ import annotations
 import logging
 from datetime import datetime, timezone
 
-from Delivery_app_BK.models import db, RoutePlan, RouteSolution
-from Delivery_app_BK.errors import NotFound, ValidationFailed
-from Delivery_app_BK.route_optimization.orchestrator import optimize_route_plan
+from Delivery_app_BK.models import db, RouteSolution
+from Delivery_app_BK.models.tables.delivery_plan.delivery_plan import DeliveryPlan
+from Delivery_app_BK.errors import NotFound
+from Delivery_app_BK.route_optimization.orchestrator import optimize_local_delivery_plan
 from Delivery_app_BK.services.context import ServiceContext
-from Delivery_app_BK.services.queries.route_plan.get_route_plan import (
-    get_route_plan as get_plan_service,
-)
-from Delivery_app_BK.services.queries.route_plan.list_route_plans import (
-    list_route_plans as list_route_plans_service,
+from Delivery_app_BK.services.queries.plan.get_plan import get_plan as get_plan_service
+from Delivery_app_BK.services.queries.plan.list_delivery_plans import (
+    list_delivery_plans as list_delivery_plans_service,
 )
 from Delivery_app_BK.services.commands.plan.create_plan import (
     create_plan as create_plan_service,
@@ -24,27 +23,17 @@ from Delivery_app_BK.ai.tools.plan_execution import get_handler
 logger = logging.getLogger(__name__)
 
 
-def optimize_plan_tool(ctx: ServiceContext, route_plan_id: int) -> dict:
-    """Run route optimization for a route plan."""
-    route_plan = db.session.get(RoutePlan, route_plan_id)
-    if not route_plan:
-        raise NotFound(f"Plan {route_plan_id} not found.")
-
-    route_groups = list(route_plan.route_groups or [])
-    route_group = route_groups[0] if route_groups else None
-    if route_group is None:
-        raise ValidationFailed(f"Plan {route_plan_id} has no route group to optimize.")
-
-    ctx.incoming_data["route_plan_id"] = route_plan_id
-    ctx.incoming_data["route_group_id"] = route_group.id
-    outcome = optimize_route_plan(ctx)
+def optimize_plan_tool(ctx: ServiceContext, local_delivery_plan_id: int) -> dict:
+    """Run route optimization for a local delivery plan."""
+    ctx.incoming_data["local_delivery_plan_id"] = local_delivery_plan_id
+    outcome = optimize_local_delivery_plan(ctx)
     if outcome.error:
         raise outcome.error
     return outcome.data or {"status": "optimized"}
 
 
 def get_plan_summary_tool(ctx: ServiceContext, plan_id: int) -> dict:
-    """Get details of a route plan by ID."""
+    """Get details of a delivery plan by ID."""
     return get_plan_service(plan_id, ctx)
 
 
@@ -61,7 +50,7 @@ def list_plans_tool(
     min_orders: int | None = None,
     limit: int | None = None,
 ) -> dict:
-    """List route plans with optional filters."""
+    """List delivery plans with optional filters."""
     filters = {}
     if label is not None:
         filters["label"] = label
@@ -84,7 +73,7 @@ def list_plans_tool(
     if limit is not None:
         filters["limit"] = limit
     ctx.query_params = {**ctx.query_params, **filters}
-    return list_route_plans_service(ctx)
+    return list_delivery_plans_service(ctx)
 
 
 def create_plan_tool(
@@ -95,7 +84,7 @@ def create_plan_tool(
     plan_type: str = "local_delivery",
 ) -> dict:
     """
-    Create a new route plan.
+    Create a new delivery plan.
     Returns the created plan with its ID — use the ID immediately to assign orders.
     """
     ctx.incoming_data = {
@@ -111,7 +100,7 @@ def create_plan_tool(
     bundles = result.get("created", []) if isinstance(result, dict) else result
     if isinstance(bundles, list) and bundles:
         bundle = bundles[0]
-        plan = bundle.get("route_plan") or {}
+        plan = bundle.get("delivery_plan") or {}
         return {
             "plan_id": plan.get("id"),
             "label": plan.get("label"),
@@ -128,11 +117,11 @@ def create_plan_tool(
 
 def get_plan_execution_status_tool(ctx: ServiceContext, plan_id: int) -> dict:
     """
-    Return the execution status for any route plan.
+    Return the execution status for any delivery plan.
     Delegates to a plan-type-specific handler via the strategy registry.
     Adding support for a new plan type = add one handler file + one registry entry.
     """
-    plan = db.session.query(RoutePlan).filter(RoutePlan.id == plan_id).first()
+    plan = db.session.query(DeliveryPlan).filter(DeliveryPlan.id == plan_id).first()
     if not plan:
         raise NotFound(f"Plan {plan_id} not found.")
 
@@ -185,7 +174,7 @@ def list_routes_tool(
             query = query.filter(RouteSolution.team_id == params["team_id"])
 
     if plan_id is not None:
-        query = query.filter(RouteSolution.route_group_id == plan_id)
+        query = query.filter(RouteSolution.local_delivery_plan_id == plan_id)
 
     if driver_id is not None:
         query = query.filter(RouteSolution.driver_id == driver_id)

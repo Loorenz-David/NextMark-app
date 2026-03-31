@@ -6,7 +6,7 @@ from typing import Any, Dict, List, Optional, Tuple
 
 from Delivery_app_BK.errors import ValidationFailed
 from Delivery_app_BK.models import Order, RouteSolution, RouteSolutionStop
-from Delivery_app_BK.services.domain.route_operations.local_delivery import (
+from Delivery_app_BK.services.domain.delivery_plan.local_delivery import (
     calculate_service_time_seconds,
     combine_plan_date_and_local_hhmm_to_utc,
     ensure_utc_datetime,
@@ -357,8 +357,12 @@ def _resolve_departure_time(
     plan_start = None
     timezone_plan = None
     route_group = getattr(route_solution, "route_group", None)
+    if route_group is None:
+        route_group = getattr(route_solution, "local_delivery_plan", None)
     if route_group is not None:
         plan = getattr(route_group, "route_plan", None)
+        if plan is None:
+            plan = getattr(route_group, "delivery_plan", None)
         timezone_plan = route_group
         if plan is not None and getattr(plan, "start_date", None):
             plan_start = _coerce_datetime(plan.start_date)

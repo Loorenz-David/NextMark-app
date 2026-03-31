@@ -9,9 +9,9 @@ from sqlalchemy.orm.exc import NoResultFound
 
 from Delivery_app_BK.errors import ValidationFailed
 from Delivery_app_BK.models import (
+    DeliveryPlan,
     Order,
     OrderDeliveryWindow,
-    RoutePlan,
     db,
 )
 from Delivery_app_BK.services.commands.order.create_serializers import (
@@ -28,9 +28,7 @@ from Delivery_app_BK.services.infra.events.builders.order import (
     build_order_edited_event,
 )
 from Delivery_app_BK.services.infra.events.emiters.order import emit_order_events
-from Delivery_app_BK.services.domain.route_operations.plan.route_freshness import (
-    touch_route_freshness,
-)
+from Delivery_app_BK.services.domain.plan.route_freshness import touch_route_freshness
 from Delivery_app_BK.services.utils import model_requires_team, require_team_id
 from Delivery_app_BK.services.domain.order.delivery_windows import (
     resolve_order_delivery_windows_timezone,
@@ -45,14 +43,14 @@ from ..utils.inject_fields import inject_fields
 
 FORBIDDEN_FIELD_KEYS = {
     "order_state_id",
-    "route_plan_id",
+    "delivery_plan_id",
 }
 
 FORBIDDEN_RELATIONSHIP_KEYS = {
     "state",
     "order_state",
     "state_history",
-    "route_plan",
+    "delivery_plan",
 }
 
 MUTABLE_FIELDS = {
@@ -90,10 +88,10 @@ def update_order(ctx: ServiceContext):
     pending_events: list[dict[str, Any]] = []
     order_deltas: list[OrderUpdateDelta] = []
     extension_result = None
-    route_plans_to_touch: list[RoutePlan] = []
+    delivery_plans_to_touch: list[DeliveryPlan] = []
 
     def _apply() -> None:
-        nonlocal updated_orders, pending_events, order_deltas, extension_result, route_plans_to_touch
+        nonlocal updated_orders, pending_events, order_deltas, extension_result, delivery_plans_to_touch
         updated_orders, pending_events, order_deltas = apply_order_updates(ctx, targets)
         extension_context = build_order_update_extension_context(ctx, order_deltas)
         extension_result = apply_order_update_extensions(ctx, order_deltas, extension_context)
@@ -105,7 +103,7 @@ def update_order(ctx: ServiceContext):
         if extension_result.instances:
             db.session.add_all(extension_result.instances)
 
-        route_plans_to_touch = [
+        delivery_plans_to_touch = [
             delta.delivery_plan
             for delta in order_deltas
             if (
@@ -114,9 +112,9 @@ def update_order(ctx: ServiceContext):
                 and bool(delta.changed_sections)
             )
         ]
-        for route_plan in route_plans_to_touch:
-            touch_route_freshness(route_plan)
-        if route_plans_to_touch:
+        for delivery_plan in delivery_plans_to_touch:
+            touch_route_freshness(delivery_plan)
+        if delivery_plans_to_touch:
             db.session.flush()
 
     try:
@@ -225,7 +223,7 @@ def apply_order_updates(
                 new_values=new_values,
                 flags=flags,
                 changed_sections=changed_sections,
-                delivery_plan=_resolve_route_plan_for_order(existing),
+                delivery_plan=_resolve_delivery_plan_for_order(existing),
             )
         )
         updated_orders.append(existing)
@@ -306,16 +304,16 @@ def _resolve_changed_sections(
     return tuple(changed_sections)
 
 
-def _resolve_route_plan_for_order(order: Order) -> RoutePlan | None:
-    existing_route_plan = getattr(order, "route_plan", None)
-    if existing_route_plan is not None:
-        return existing_route_plan
+def _resolve_delivery_plan_for_order(order: Order) -> DeliveryPlan | None:
+    existing_delivery_plan = getattr(order, "delivery_plan", None)
+    if existing_delivery_plan is not None:
+        return existing_delivery_plan
 
-    route_plan_id = getattr(order, "route_plan_id", None)
-    if not route_plan_id:
+    delivery_plan_id = getattr(order, "delivery_plan_id", None)
+    if not delivery_plan_id:
         return None
 
-    return db.session.get(RoutePlan, route_plan_id)
+    return db.session.get(DeliveryPlan, delivery_plan_id)
 
 
 def _validate_targets_update_fields(targets: list[dict[str, Any]]) -> None:
@@ -402,7 +400,7 @@ def _resolve_orders_by_targets(
     if int_ids:
         query = (
             db.session.query(Order)
-            .options(joinedload(Order.route_plan), selectinload(Order.delivery_windows))
+            .options(joinedload(Order.delivery_plan), selectinload(Order.delivery_windows))
             .filter(Order.id.in_(int_ids))
         )
         if team_id is not None:
@@ -413,7 +411,7 @@ def _resolve_orders_by_targets(
     if client_ids:
         query = (
             db.session.query(Order)
-            .options(joinedload(Order.route_plan), selectinload(Order.delivery_windows))
+            .options(joinedload(Order.delivery_plan), selectinload(Order.delivery_windows))
             .filter(Order.client_id.in_(client_ids))
         )
         if team_id is not None:

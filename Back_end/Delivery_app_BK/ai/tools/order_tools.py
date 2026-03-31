@@ -1,6 +1,5 @@
 from __future__ import annotations
 import logging
-import re
 
 from Delivery_app_BK.errors import ValidationFailed
 from Delivery_app_BK.services.context import ServiceContext
@@ -8,8 +7,8 @@ from Delivery_app_BK.services.commands.order.create_order import create_order as
 from Delivery_app_BK.services.commands.order.update_order import update_order as update_order_service
 from Delivery_app_BK.services.commands.order.update_order import MUTABLE_FIELDS as ORDER_MUTABLE_FIELDS
 from Delivery_app_BK.services.commands.order.order_states.update_orders_state import update_orders_state
-from Delivery_app_BK.services.commands.order.update_order_route_plan import (
-    update_orders_route_plan,
+from Delivery_app_BK.services.commands.order.update_order_delivery_plan import (
+    update_orders_delivery_plan,
 )
 from Delivery_app_BK.services.queries.order.list_orders import (
     list_orders as list_orders_service,
@@ -18,66 +17,6 @@ from Delivery_app_BK.services.domain.order.order_states import OrderStateId
 from Delivery_app_BK.ai.tools.item_tools import _generate_article_number
 
 logger = logging.getLogger(__name__)
-
-_WEIGHT_RE = re.compile(r"\bweight\s*(<=|>=|=)\s*([0-9]*\.?[0-9]+)\s*(kg|g)\b", re.IGNORECASE)
-_VOLUME_RE = re.compile(r"\bvolume\s*(<=|>=|=)\s*([0-9]*\.?[0-9]+)\s*(l|ml|cm3)\b", re.IGNORECASE)
-
-
-def _convert_weight_to_grams(value: float, unit: str) -> float:
-    return value * 1000.0 if unit.lower() == "kg" else value
-
-
-def _convert_volume_to_cm3(value: float, unit: str) -> float:
-    normalized = unit.lower()
-    if normalized == "l":
-        return value * 1000.0
-    if normalized == "ml":
-        return value
-    return value
-
-
-def _apply_numeric_filter(filters: dict, key_map: dict[str, str], operator: str, value: float) -> None:
-    key = key_map.get(operator)
-    if key:
-        filters[key] = value
-
-
-def _extract_numeric_filters_from_q(q: str) -> tuple[str, dict]:
-    derived: dict = {}
-    remaining = q or ""
-
-    for match in list(_WEIGHT_RE.finditer(remaining)):
-        operator, raw_value, unit = match.groups()
-        grams = _convert_weight_to_grams(float(raw_value), unit)
-        _apply_numeric_filter(
-            derived,
-            {
-                "=": "total_weight_eq_g",
-                ">=": "total_weight_min_g",
-                "<=": "total_weight_max_g",
-            },
-            operator,
-            grams,
-        )
-    remaining = _WEIGHT_RE.sub(" ", remaining)
-
-    for match in list(_VOLUME_RE.finditer(remaining)):
-        operator, raw_value, unit = match.groups()
-        cm3 = _convert_volume_to_cm3(float(raw_value), unit)
-        _apply_numeric_filter(
-            derived,
-            {
-                "=": "total_volume_eq_cm3",
-                ">=": "total_volume_min_cm3",
-                "<=": "total_volume_max_cm3",
-            },
-            operator,
-            cm3,
-        )
-    remaining = _VOLUME_RE.sub(" ", remaining)
-
-    cleaned = " ".join(remaining.split())
-    return cleaned, derived
 
 
 def list_orders_tool(
@@ -94,12 +33,6 @@ def list_orders_tool(
     # date filters
     creation_date_from: str | None = None,
     creation_date_to: str | None = None,
-    total_weight_min_g: float | None = None,
-    total_weight_max_g: float | None = None,
-    total_weight_eq_g: float | None = None,
-    total_volume_min_cm3: float | None = None,
-    total_volume_max_cm3: float | None = None,
-    total_volume_eq_cm3: float | None = None,
     # pagination
     limit: int | None = None,
     sort: str | None = None,
@@ -108,10 +41,7 @@ def list_orders_tool(
     filters: dict = {}
 
     if q is not None:
-        cleaned_q, derived_filters = _extract_numeric_filters_from_q(q)
-        filters.update(derived_filters)
-        if cleaned_q:
-            filters["q"] = cleaned_q
+        filters["q"] = q
     if s is not None:
         filters["s"] = s
     if scheduled is True:
@@ -126,18 +56,6 @@ def list_orders_tool(
         filters["creation_date_from"] = creation_date_from
     if creation_date_to is not None:
         filters["creation_date_to"] = creation_date_to
-    if total_weight_min_g is not None:
-        filters["total_weight_min_g"] = total_weight_min_g
-    if total_weight_max_g is not None:
-        filters["total_weight_max_g"] = total_weight_max_g
-    if total_weight_eq_g is not None:
-        filters["total_weight_eq_g"] = total_weight_eq_g
-    if total_volume_min_cm3 is not None:
-        filters["total_volume_min_cm3"] = total_volume_min_cm3
-    if total_volume_max_cm3 is not None:
-        filters["total_volume_max_cm3"] = total_volume_max_cm3
-    if total_volume_eq_cm3 is not None:
-        filters["total_volume_eq_cm3"] = total_volume_eq_cm3
     if limit is not None:
         filters["limit"] = limit
     if sort is not None:
@@ -160,7 +78,7 @@ def assign_orders_to_plan_tool(
     if not order_ids:
         return {"status": "no_orders", "assigned": 0}
 
-    result = update_orders_route_plan(ctx, order_ids, plan_id)
+    result = update_orders_delivery_plan(ctx, order_ids, plan_id)
     updated = result.get("updated") or []
 
     logger.info(
@@ -175,6 +93,11 @@ def assign_orders_to_plan_tool(
         "requested": len(order_ids),
         "assigned": len(updated),
     }
+
+
+def assign_orders_tool(ctx: ServiceContext, plan_id: int, order_ids: list) -> dict:
+    """Alias kept for compatibility. Use assign_orders_to_plan instead."""
+    return assign_orders_to_plan_tool(ctx, order_ids=order_ids, plan_id=plan_id)
 
 
 # ---------------------------------------------------------------------------
@@ -295,7 +218,7 @@ def create_order_tool(
     order_plan_objective: str | None = None,
     operation_type: str | None = None,
     # ── scheduling ───────────────────────────────────────────────────────
-    route_plan_id: int | None = None,
+    delivery_plan_id: int | None = None,
     delivery_windows: list[dict] | None = None,
     # ── items ────────────────────────────────────────────────────────────
     items: list[dict] | None = None,
@@ -356,8 +279,8 @@ def create_order_tool(
         fields["order_plan_objective"] = order_plan_objective
     if operation_type is not None:
         fields["operation_type"] = operation_type
-    if route_plan_id is not None:
-        fields["route_plan_id"] = route_plan_id
+    if delivery_plan_id is not None:
+        fields["delivery_plan_id"] = delivery_plan_id
     if delivery_windows is not None:
         fields["delivery_windows"] = delivery_windows
 

@@ -9,7 +9,7 @@ from Delivery_app_BK.services.run_service import run_service
 from Delivery_app_BK.services.commands.seed import seed_initial_data as seed_initial_data_service
 from Delivery_app_BK.services.commands.test_data import (
     clear_generated_test_data,
-    generate_plan_and_order_test_data,
+    create_test_data,
 )
 
 
@@ -150,7 +150,7 @@ def seed_test_data():
         prevent_event_bus=True,
     )
 
-    outcome = run_service(lambda c: generate_plan_and_order_test_data(c), ctx)
+    outcome = run_service(lambda c: create_test_data(c.identity, c.incoming_data), ctx)
 
     if outcome.error:
         return response.build_unsuccessful_response(outcome.error)
@@ -270,4 +270,3 @@ def _run_cleanup_test_data(data: dict, response: Response):
         outcome.data or {},
         warnings=ctx.warnings,
     )
-

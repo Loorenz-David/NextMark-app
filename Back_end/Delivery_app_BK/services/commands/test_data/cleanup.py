@@ -6,10 +6,19 @@ from sqlalchemy import or_
 from sqlalchemy.exc import InvalidRequestError
 
 from Delivery_app_BK.errors import ValidationFailed
-from Delivery_app_BK.models import RoutePlan, ItemProperty, ItemType, Order, db
+from Delivery_app_BK.models import (
+    Costumer,
+    Facility,
+    ItemProperty,
+    ItemType,
+    Order,
+    RoutePlan,
+    Vehicle,
+    db,
+)
 from Delivery_app_BK.services.context import ServiceContext
 
-from .config import TEST_PLAN_LABELS
+TEST_PLAN_LABELS: dict[str, set[str]] = {}
 
 
 def clear_generated_test_data(ctx: ServiceContext) -> dict[str, Any]:
@@ -33,6 +42,11 @@ def clear_generated_test_data(ctx: ServiceContext) -> dict[str, Any]:
         incoming_data.get("additional_plan_labels"),
         field_name="additional_plan_labels",
     )
+    client_id_prefix = _resolve_prefix(
+        incoming_data.get("client_id_prefix"),
+        default="td:",
+        field_name="client_id_prefix",
+    )
 
     plan_labels = set(extra_plan_labels)
     for labels in TEST_PLAN_LABELS.values():
@@ -46,12 +60,16 @@ def clear_generated_test_data(ctx: ServiceContext) -> dict[str, Any]:
             team_id=team_id,
             plan_ids=plan_ids,
             reference_prefix=reference_prefix,
+            client_id_prefix=client_id_prefix,
         )
 
-        deleted_orders = _delete_orders(team_id, plan_ids, reference_prefix)
-        deleted_plans = _delete_delivery_plans(team_id, plan_ids)
-        deleted_item_types = _delete_item_types(team_id, name_prefix)
-        deleted_item_properties = _delete_item_properties(team_id, name_prefix)
+        deleted_orders = _delete_orders(team_id, plan_ids, reference_prefix, client_id_prefix)
+        deleted_plans = _delete_delivery_plans(team_id, plan_ids, client_id_prefix)
+        deleted_facilities = _delete_facilities(team_id, client_id_prefix)
+        deleted_vehicles = _delete_vehicles(team_id, client_id_prefix)
+        deleted_item_types = _delete_item_types(team_id, name_prefix, client_id_prefix)
+        deleted_item_properties = _delete_item_properties(team_id, name_prefix, client_id_prefix)
+        deleted_costumers = _delete_costumers(team_id, client_id_prefix)
 
         result.update(
             {
@@ -60,11 +78,15 @@ def clear_generated_test_data(ctx: ServiceContext) -> dict[str, Any]:
                 "matched_order_count": len(order_ids),
                 "deleted_orders": deleted_orders,
                 "deleted_delivery_plans": deleted_plans,
+                "deleted_facilities": deleted_facilities,
+                "deleted_vehicles": deleted_vehicles,
                 "deleted_item_types": deleted_item_types,
                 "deleted_item_properties": deleted_item_properties,
+                "deleted_costumers": deleted_costumers,
                 "reference_prefix": reference_prefix,
                 "item_name_prefix": name_prefix,
                 "additional_plan_labels": extra_plan_labels,
+                "client_id_prefix": client_id_prefix,
             }
         )
 
@@ -96,6 +118,7 @@ def _load_test_order_ids(
     team_id: int,
     plan_ids: list[int],
     reference_prefix: str,
+    client_id_prefix: str,
 ) -> list[int]:
     query = db.session.query(Order.id).filter(Order.team_id == team_id)
     conditions = []
@@ -103,6 +126,8 @@ def _load_test_order_ids(
         conditions.append(Order.route_plan_id.in_(plan_ids))
     if reference_prefix:
         conditions.append(Order.reference_number.like(f"{reference_prefix}%"))
+    if client_id_prefix:
+        conditions.append(Order.client_id.like(f"{client_id_prefix}%"))
     if not conditions:
         return []
 
@@ -110,47 +135,94 @@ def _load_test_order_ids(
     return [row[0] for row in rows]
 
 
-def _delete_orders(team_id: int, plan_ids: list[int], reference_prefix: str) -> int:
+def _delete_orders(
+    team_id: int,
+    plan_ids: list[int],
+    reference_prefix: str,
+    client_id_prefix: str,
+) -> int:
     query = db.session.query(Order).filter(Order.team_id == team_id)
     conditions = []
     if plan_ids:
         conditions.append(Order.route_plan_id.in_(plan_ids))
     if reference_prefix:
         conditions.append(Order.reference_number.like(f"{reference_prefix}%"))
+    if client_id_prefix:
+        conditions.append(Order.client_id.like(f"{client_id_prefix}%"))
     if not conditions:
         return 0
     return query.filter(or_(*conditions)).delete(synchronize_session=False)
 
 
-def _delete_delivery_plans(team_id: int, plan_ids: list[int]) -> int:
-    if not plan_ids:
+def _delete_delivery_plans(team_id: int, plan_ids: list[int], client_id_prefix: str) -> int:
+    conditions = []
+    if plan_ids:
+        conditions.append(RoutePlan.id.in_(plan_ids))
+    if client_id_prefix:
+        conditions.append(RoutePlan.client_id.like(f"{client_id_prefix}%"))
+    if not conditions:
+        return 0
+
+    return db.session.query(RoutePlan).filter(RoutePlan.team_id == team_id).filter(
+        or_(*conditions)
+    ).delete(synchronize_session=False)
+
+
+def _delete_facilities(team_id: int, client_id_prefix: str) -> int:
+    if not client_id_prefix:
         return 0
     return (
-        db.session.query(RoutePlan)
-        .filter(RoutePlan.team_id == team_id)
-        .filter(RoutePlan.id.in_(plan_ids))
+        db.session.query(Facility)
+        .filter(Facility.team_id == team_id)
+        .filter(Facility.client_id.like(f"{client_id_prefix}%"))
         .delete(synchronize_session=False)
     )
 
 
-def _delete_item_types(team_id: int, name_prefix: str) -> int:
-    if not name_prefix:
+def _delete_vehicles(team_id: int, client_id_prefix: str) -> int:
+    if not client_id_prefix:
         return 0
     return (
-        db.session.query(ItemType)
-        .filter(ItemType.team_id == team_id)
-        .filter(ItemType.name.like(f"{name_prefix}%"))
+        db.session.query(Vehicle)
+        .filter(Vehicle.team_id == team_id)
+        .filter(Vehicle.client_id.like(f"{client_id_prefix}%"))
         .delete(synchronize_session=False)
     )
 
 
-def _delete_item_properties(team_id: int, name_prefix: str) -> int:
-    if not name_prefix:
+def _delete_item_types(team_id: int, name_prefix: str, client_id_prefix: str) -> int:
+    conditions = []
+    if name_prefix:
+        conditions.append(ItemType.name.like(f"{name_prefix}%"))
+    if client_id_prefix:
+        conditions.append(ItemType.client_id.like(f"{client_id_prefix}%"))
+    if not conditions:
+        return 0
+    return db.session.query(ItemType).filter(ItemType.team_id == team_id).filter(
+        or_(*conditions)
+    ).delete(synchronize_session=False)
+
+
+def _delete_item_properties(team_id: int, name_prefix: str, client_id_prefix: str) -> int:
+    conditions = []
+    if name_prefix:
+        conditions.append(ItemProperty.name.like(f"{name_prefix}%"))
+    if client_id_prefix:
+        conditions.append(ItemProperty.client_id.like(f"{client_id_prefix}%"))
+    if not conditions:
+        return 0
+    return db.session.query(ItemProperty).filter(ItemProperty.team_id == team_id).filter(
+        or_(*conditions)
+    ).delete(synchronize_session=False)
+
+
+def _delete_costumers(team_id: int, client_id_prefix: str) -> int:
+    if not client_id_prefix:
         return 0
     return (
-        db.session.query(ItemProperty)
-        .filter(ItemProperty.team_id == team_id)
-        .filter(ItemProperty.name.like(f"{name_prefix}%"))
+        db.session.query(Costumer)
+        .filter(Costumer.team_id == team_id)
+        .filter(Costumer.client_id.like(f"{client_id_prefix}%"))
         .delete(synchronize_session=False)
     )
 
