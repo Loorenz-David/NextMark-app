@@ -206,3 +206,7 @@ Back_end/.elasticbeanstalk/*.zip
 # backend credentials folder
 credentials/
 
+
+
+
+beyo-data-transfer/

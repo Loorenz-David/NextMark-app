@@ -204,7 +204,7 @@ export type NotificationItem = {
     | 'route_solution_stop'
   entity_id: number | null
   plan_id?: number
-  route_group_id?: number
+  local_delivery_plan_id?: number
   route_solution_id?: number
   route_solution_stop_id?: number
   route_freshness_updated_at?: string
