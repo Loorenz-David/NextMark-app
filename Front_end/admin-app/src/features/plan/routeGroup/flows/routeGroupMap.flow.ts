@@ -37,6 +37,8 @@ type RouteGroupMapParams = {
 }
 
 const LOCAL_DELIVERY_GROUP_MARKER_PREFIX = 'route_stop_group_marker:'
+const ROUTE_GROUP_CLUSTER_RADIUS_PX = 60
+const ROUTE_GROUP_CLUSTER_MAX_ZOOM = 16
 
 const hasValidCoordinates = (order: Order): boolean => {
   const coordinates = order.client_address?.coordinates
@@ -231,7 +233,10 @@ export const useRouteGroupMapFlow = ({
       setMarkerLookup(lookup)
     }
 
-    mapManager.setMarkerLayer(MAP_MARKER_LAYERS.routeGroup, mapOrders)
+    mapManager.setClusteredMarkerLayer(MAP_MARKER_LAYERS.routeGroup, mapOrders, {
+      radius: ROUTE_GROUP_CLUSTER_RADIUS_PX,
+      maxZoom: ROUTE_GROUP_CLUSTER_MAX_ZOOM,
+    })
     mapManager.setMarkerLayerVisibility(MAP_MARKER_LAYERS.routeGroup, isActive)
 
     const routeSegments = buildRouteSegments(orders, stopByOrderId, selectedRouteSolution)
@@ -308,7 +313,7 @@ export const useRouteGroupMapFlow = ({
     previousIsActiveRef.current = isActive
 
     if (isActive) return
-    mapManager.clearMarkerLayer(MAP_MARKER_LAYERS.routeGroup)
+    mapManager.clearClusteredMarkerLayer(MAP_MARKER_LAYERS.routeGroup)
     mapManager.clearMarkerLayer(MAP_MARKER_LAYERS.driverLiveRouteGroup)
     mapManager.showRoute(null)
     if (wasActive) {
@@ -322,7 +327,7 @@ export const useRouteGroupMapFlow = ({
 
   useEffect(() => {
     return () => {
-      mapManager.clearMarkerLayer(MAP_MARKER_LAYERS.routeGroup)
+      mapManager.clearClusteredMarkerLayer(MAP_MARKER_LAYERS.routeGroup)
       mapManager.clearMarkerLayer(MAP_MARKER_LAYERS.driverLiveRouteGroup)
       mapManager.showRoute(null)
       closeGroupOverlay()

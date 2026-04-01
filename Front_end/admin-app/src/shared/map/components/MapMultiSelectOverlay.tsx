@@ -1,23 +1,25 @@
-import { useState, type ReactNode } from 'react'
+import { useState, type ReactNode } from "react";
+import { formatMetric } from "@shared-utils";
 
-import { CloseIcon } from '@/assets/icons'
-import { BasicButton } from '@/shared/buttons/BasicButton'
+import { CloseIcon } from "@/assets/icons";
+import { BasicButton } from "@/shared/buttons/BasicButton";
 
 type MapMultiSelectOverlayProps = {
-  isSelectionMode: boolean
-  enableSelectionMode: () => void
-  disableSelectionMode: () => void
-  enableSelectionAriaLabel: string
-  disableSelectionAriaLabel: string
-  enableLabel: ReactNode
-  title: string
-  count: number
-  totalItems: number
-  totalVolume: number
-  totalWeight: number
-  actions: ReactNode
-  sideControls?: ReactNode
-}
+  isSelectionMode: boolean;
+  enableSelectionMode: () => void;
+  disableSelectionMode: () => void;
+  enableSelectionAriaLabel: string;
+  disableSelectionAriaLabel: string;
+  enableLabel: ReactNode;
+  title: string;
+  count: number;
+  totalItems: number;
+  totalVolume: number;
+  totalWeight: number;
+  itemTypeCounts?: Record<string, number>;
+  actions: ReactNode;
+  sideControls?: ReactNode;
+};
 
 export const MapMultiSelectOverlay = ({
   isSelectionMode,
@@ -31,17 +33,26 @@ export const MapMultiSelectOverlay = ({
   totalItems,
   totalVolume,
   totalWeight,
+  itemTypeCounts,
   actions,
   sideControls,
 }: MapMultiSelectOverlayProps) => {
-  const [showStats, setShowStats] = useState(true)
+  const [showStats, setShowStats] = useState(true);
+  const itemTypeCountEntries = Object.entries(itemTypeCounts ?? {})
+    .filter(([itemType, count]) => itemType.trim().length > 0 && count > 0)
+    .sort((leftEntry, rightEntry) => {
+      const [leftType, leftCount] = leftEntry;
+      const [rightType, rightCount] = rightEntry;
+      if (rightCount !== leftCount) return rightCount - leftCount;
+      return leftType.localeCompare(rightType);
+    });
 
   if (!isSelectionMode) {
     return (
       <div className="pointer-events-auto absolute left-4 top-4 z-0">
         <BasicButton
           params={{
-            variant: 'secondaryInvers',
+            variant: "secondaryInvers",
             onClick: enableSelectionMode,
             ariaLabel: enableSelectionAriaLabel,
           }}
@@ -49,7 +60,7 @@ export const MapMultiSelectOverlay = ({
           {enableLabel}
         </BasicButton>
       </div>
-    )
+    );
   }
 
   return (
@@ -75,7 +86,7 @@ export const MapMultiSelectOverlay = ({
             onClick={() => setShowStats((prev) => !prev)}
             type="button"
           >
-            {showStats ? 'Hide stats' : 'Show stats'}
+            {showStats ? "Hide stats" : "Show stats"}
           </button>
         </div>
 
@@ -87,19 +98,32 @@ export const MapMultiSelectOverlay = ({
             </div>
             <div className="flex w-full justify-between">
               <p>Total Volume:</p>
-              <p>{totalVolume.toFixed(2)} ㎥</p>
+              <p>{formatMetric(totalVolume, "㎥")}</p>
             </div>
             <div className="flex w-full justify-between">
               <p>Total Weight:</p>
-              <p>{totalWeight.toFixed(2)} kg</p>
+              <p>{formatMetric(totalWeight, "kg")}</p>
             </div>
+            {itemTypeCountEntries.length > 0 ? (
+              <div className="mt-2 border-t border-[var(--color-muted)]/15 pt-2">
+                <p className="mb-1 text-[10px] uppercase tracking-[0.12em] text-[var(--color-muted)]/85">
+                  Item Types
+                </p>
+                <div className="space-y-1">
+                  {itemTypeCountEntries.map(([itemType, count]) => (
+                    <div key={itemType} className="flex w-full justify-between">
+                      <p className="truncate pr-2">{itemType}</p>
+                      <p>{count}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : null}
           </div>
         )}
 
-        <div className="flex items-center gap-2">
-          {actions}
-        </div>
+        <div className="flex items-center gap-2">{actions}</div>
       </div>
     </div>
-  )
-}
+  );
+};

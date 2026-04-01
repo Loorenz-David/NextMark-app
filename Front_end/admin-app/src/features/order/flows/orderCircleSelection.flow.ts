@@ -78,7 +78,14 @@ export const useOrderCircleSelectionFlow = () => {
       callback: (markerIds) => {
         const byClientId = useOrderStore.getState().byClientId
         const markerLookup = useOrderMapInteractionStore.getState().markerLookup
-        const expandedClientIds = expandOrderClientIdsFromMarkerSelection(markerIds, markerLookup)
+        const expandedMarkerIds = mapManager.expandClusterIds(
+          MAP_MARKER_LAYERS.orders,
+          markerIds,
+        )
+        const expandedClientIds = expandOrderClientIdsFromMarkerSelection(
+          expandedMarkerIds,
+          markerLookup,
+        )
         const {
           clientIds: resolvedClientIds,
           serverIds,

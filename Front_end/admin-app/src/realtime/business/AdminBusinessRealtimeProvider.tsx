@@ -109,11 +109,12 @@ export function AdminBusinessRealtimeProvider({ children }: PropsWithChildren) {
     const refreshPlanById = async (planId: number) => {
       const response = await planApi.getPlan(planId)
       const payload = response.data
-      if (!payload?.delivery_plan) {
+      const routePlanPayload = payload?.route_plan
+      if (!routePlanPayload) {
         return
       }
 
-      const normalized = normalizeEntityMap<DeliveryPlan>(payload.delivery_plan as EntityMap<DeliveryPlan> | DeliveryPlan)
+      const normalized = normalizeEntityMap<DeliveryPlan>(routePlanPayload as EntityMap<DeliveryPlan> | DeliveryPlan)
       if (!normalized) {
         return
       }
@@ -243,6 +244,7 @@ export function AdminBusinessRealtimeProvider({ children }: PropsWithChildren) {
         total_weight: payload.total_weight as number | null,
         total_volume: payload.total_volume as number | null,
         total_items: payload.total_items as number | null,
+        item_type_counts: (payload.item_type_counts as Record<string, number> | null | undefined) ?? null,
         total_orders: payload.total_orders as number | null,
       })
     }

@@ -24,7 +24,7 @@ import { ZonePolygonOverlay } from "./ZonePolygonOverlay";
 export const RouteGroupMapOverlay = () => {
   const { isMobile } = useMobile();
   const isSelectionMode = useRouteGroupSelectionMode();
-  const { count, totalWeight, totalItems, totalVolume } =
+  const { count, totalWeight, totalItems, totalVolume, itemTypeCounts } =
     useSelectedRouteGroupOrdersSummary();
   const { enableSelectionMode, disableSelectionMode } =
     useRouteGroupSelectionActions();
@@ -81,6 +81,7 @@ export const RouteGroupMapOverlay = () => {
         totalItems={totalItems}
         totalVolume={totalVolume}
         totalWeight={totalWeight}
+        itemTypeCounts={itemTypeCounts}
         sideControls={
           <MapDrawingSideControls
             selectedShape={selectedShape}

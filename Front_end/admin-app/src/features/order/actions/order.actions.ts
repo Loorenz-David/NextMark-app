@@ -30,6 +30,8 @@ type openOrderDetailProps = {
   mode?: "view" | "edit";
   freshAfter?: string | null;
   openSource?: "card" | "marker";
+  routeGroupId?: number | null;
+  planStartDate?: string | null;
 };
 type parentParamsProps = {
   borderLeft?: string;

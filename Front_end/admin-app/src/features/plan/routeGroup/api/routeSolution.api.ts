@@ -11,6 +11,9 @@ import type {
   RouteSolutionStop,
   RouteSolutionStopMap,
 } from "@/features/plan/routeGroup/types/routeSolutionStop";
+import type { DeliveryPlan } from "@/features/plan/types/plan";
+import type { RouteGroup } from "@/features/plan/routeGroup/types/routeGroup";
+import type { Order } from "@/features/order/types/order";
 
 export type RouteSolutionUpdateResponse = {
   route_solution?: RouteSolution | RouteSolutionMap;
@@ -57,7 +60,10 @@ export type RouteStopGroupPositionPayload = {
 };
 
 export type RouteSolutionReadyResponse = {
-  failed_order_state_updates: Record<number, string>;
+  failed_order_state_updates?: Record<number, string>;
+  orders?: Order[];
+  route_groups?: RouteGroup[];
+  route_plans?: DeliveryPlan[];
 };
 
 export const routeSolutionApi = {

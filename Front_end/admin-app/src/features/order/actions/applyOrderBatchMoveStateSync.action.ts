@@ -18,6 +18,7 @@ type BatchStateChanges = {
     state_id: number | null;
     total_orders: number | null;
     order_state_counts?: Record<string, number> | null;
+    item_type_counts?: Record<string, number> | null;
     route_plan_id?: number | null;
     zone_id?: number | null;
   }>;
@@ -25,6 +26,7 @@ type BatchStateChanges = {
     id: number;
     state_id: number | null;
     total_orders: number | null;
+    item_type_counts?: Record<string, number> | null;
   }>;
 };
 
@@ -80,6 +82,7 @@ export const applyOrderBatchMoveStateSync = (
       total_weight: totals.total_weight,
       total_volume: totals.total_volume,
       total_items: totals.total_items,
+      item_type_counts: totals.item_type_counts,
       total_orders: totals.total_orders,
     });
   });
@@ -100,6 +103,7 @@ export const applyOrderBatchMoveStateSync = (
       ...existing,
       state_id: planChange.state_id,
       total_orders: planChange.total_orders,
+      item_type_counts: planChange.item_type_counts ?? null,
     }));
   });
 
@@ -118,6 +122,7 @@ export const applyOrderBatchMoveStateSync = (
       state_id: groupChange.state_id,
       total_orders: groupChange.total_orders,
       order_state_counts: groupChange.order_state_counts ?? null,
+      item_type_counts: groupChange.item_type_counts ?? null,
       route_plan_id:
         groupChange.route_plan_id ?? existing.route_plan_id ?? null,
       zone_id: groupChange.zone_id ?? existing.zone_id ?? null,

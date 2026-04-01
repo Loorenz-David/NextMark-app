@@ -64,7 +64,39 @@ export const useOrderMutations = () => {
         total_weight: number | null
         total_volume: number | null
         total_items: number | null
+        item_type_counts: Record<string, number> | null
         total_orders: number | null
+      }
+
+      const subtractItemTypeCounts = (
+        source: Record<string, number> | null | undefined,
+        subtractBy: Record<string, number> | null | undefined,
+      ): Record<string, number> | null => {
+        const next: Record<string, number> = { ...(source ?? {}) }
+        Object.entries(subtractBy ?? {}).forEach(([itemType, count]) => {
+          const safeCount = Number.isFinite(count) ? count : 0
+          if (safeCount <= 0) return
+          const updated = (next[itemType] ?? 0) - safeCount
+          if (updated > 0) {
+            next[itemType] = updated
+            return
+          }
+          delete next[itemType]
+        })
+        return Object.keys(next).length > 0 ? next : null
+      }
+
+      const addItemTypeCounts = (
+        source: Record<string, number> | null | undefined,
+        addBy: Record<string, number> | null | undefined,
+      ): Record<string, number> | null => {
+        const next: Record<string, number> = { ...(source ?? {}) }
+        Object.entries(addBy ?? {}).forEach(([itemType, count]) => {
+          const safeCount = Number.isFinite(count) ? count : 0
+          if (safeCount <= 0) return
+          next[itemType] = (next[itemType] ?? 0) + safeCount
+        })
+        return Object.keys(next).length > 0 ? next : null
       }
       const planStoreState = useRoutePlanStore.getState()
       const oldPlanId = order.route_plan_id ?? null
@@ -77,6 +109,7 @@ export const useOrderMutations = () => {
               total_weight: oldPlan.total_weight ?? null,
               total_volume: oldPlan.total_volume ?? null,
               total_items: oldPlan.total_items ?? null,
+              item_type_counts: oldPlan.item_type_counts ?? null,
               total_orders: oldPlan.total_orders ?? null,
             }
           : null
@@ -87,6 +120,7 @@ export const useOrderMutations = () => {
               total_weight: newPlan.total_weight ?? null,
               total_volume: newPlan.total_volume ?? null,
               total_items: newPlan.total_items ?? null,
+              item_type_counts: newPlan.item_type_counts ?? null,
               total_orders: newPlan.total_orders ?? null,
             }
           : null
@@ -121,6 +155,10 @@ export const useOrderMutations = () => {
                 0,
                 (oldPlanTotalSnapshot.total_items ?? 0) - (order.total_items ?? 0),
               ),
+              item_type_counts: subtractItemTypeCounts(
+                oldPlanTotalSnapshot.item_type_counts,
+                order.item_type_counts,
+              ),
               total_orders: Math.max(0, (oldPlanTotalSnapshot.total_orders ?? 1) - 1),
             })
           }
@@ -134,6 +172,10 @@ export const useOrderMutations = () => {
                 (newPlanTotalSnapshot?.total_volume ?? 0) + (order.total_volume ?? 0),
               total_items:
                 (newPlanTotalSnapshot?.total_items ?? 0) + (order.total_items ?? 0),
+              item_type_counts: addItemTypeCounts(
+                newPlanTotalSnapshot?.item_type_counts,
+                order.item_type_counts,
+              ),
               total_orders: (newPlanTotalSnapshot?.total_orders ?? 0) + 1,
             })
           }
@@ -178,6 +220,7 @@ export const useOrderMutations = () => {
               total_weight: p.total_weight,
               total_volume: p.total_volume,
               total_items: p.total_items,
+              item_type_counts: p.item_type_counts,
               total_orders: p.total_orders,
             })
           })

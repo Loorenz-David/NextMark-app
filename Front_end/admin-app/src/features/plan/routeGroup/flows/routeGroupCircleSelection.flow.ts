@@ -96,7 +96,14 @@ export const useRouteGroupCircleSelectionFlow = (isActive: boolean) => {
       callback: (markerIds) => {
         const byClientId = useOrderStore.getState().byClientId
         const markerLookup = useRouteGroupMapInteractionStore.getState().markerLookup
-        const expandedClientIds = expandRouteGroupClientIdsFromMarkerSelection(markerIds, markerLookup)
+        const expandedMarkerIds = mapManager.expandClusterIds(
+          MAP_MARKER_LAYERS.routeGroup,
+          markerIds,
+        )
+        const expandedClientIds = expandRouteGroupClientIdsFromMarkerSelection(
+          expandedMarkerIds,
+          markerLookup,
+        )
         const {
           clientIds: resolvedClientIds,
           serverIds,

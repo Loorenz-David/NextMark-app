@@ -1,5 +1,6 @@
 import { buildClientId } from "@/lib/utils/clientId";
 import type { DeliveryPlan } from "@/features/plan/types/plan";
+import { normalizeByClientIdArray } from "@/features/plan/routeGroup/api/mappers/routeSolutionPayload.mapper";
 import { buildRouteGroupPlanTypeDefaults } from "@/features/plan/routeGroup/domain/planTypeDefaults/routeGroupDefaults.generator";
 import { createRouteGroupAction } from "@/features/plan/routeGroup/actions/createRouteGroup.action";
 import type { CreateRouteGroupFormState } from "@/features/plan/routeGroup/forms/createRouteGroupForm/CreateRouteGroupForm.types";
@@ -16,6 +17,10 @@ import {
   rememberRouteGroupForPlan,
   setActiveRouteGroupId,
 } from "@/features/plan/routeGroup/store/activeRouteGroup.store";
+import {
+  setSelectedRouteSolution,
+  upsertRouteSolution,
+} from "@/features/plan/routeGroup/store/routeSolution.store";
 import {
   selectRenderableZoneGeometry,
   selectWorkingZoneVersionId,
@@ -74,7 +79,7 @@ const createOptimisticRouteGroup = ({
     },
     template_snapshot: null,
     total_orders: 0,
-    state_id: null,
+    state_id: 1,
     route_solutions_ids: [],
   };
 };
@@ -108,7 +113,7 @@ export const runCreateRouteGroupFlow = async ({
         })
       : null;
 
-    const routeGroup = await createRouteGroupAction(planId, {
+    const payload = await createRouteGroupAction(planId, {
       zone_id: formState.zone_id,
       name: !isZoneBacked ? trimmedName : undefined,
       route_group_defaults: {
@@ -123,7 +128,12 @@ export const runCreateRouteGroupFlow = async ({
       },
     });
 
-    if (!routeGroup) {
+    const createdRouteGroupClientId = payload?.route_group?.allIds?.[0] ?? clientId;
+    const createdRouteGroup = createdRouteGroupClientId
+      ? payload?.route_group?.byClientId?.[createdRouteGroupClientId] ?? null
+      : null;
+
+    if (!createdRouteGroup) {
       removeRouteGroup(clientId);
       setActiveRouteGroupId(null);
       return {
@@ -133,20 +143,50 @@ export const runCreateRouteGroupFlow = async ({
     }
 
     upsertRouteGroup({
-      ...routeGroup,
-      client_id: routeGroup.client_id || clientId,
+      ...createdRouteGroup,
+      client_id: createdRouteGroup.client_id || clientId,
+      state_id: createdRouteGroup.state_id ?? 1,
     });
 
-    if (typeof routeGroup.id === "number") {
-      setActiveRouteGroupId(routeGroup.id);
-      rememberRouteGroupForPlan(planId, routeGroup.id);
+    if (createdRouteGroup.client_id && createdRouteGroup.client_id !== clientId) {
+      removeRouteGroup(clientId);
+    }
+
+    const createdRouteSolutions = normalizeByClientIdArray(payload?.route_solution);
+    if (createdRouteSolutions.length > 0) {
+      const selectedRouteSolution =
+        createdRouteSolutions.find((solution) => solution?.is_selected) ??
+        createdRouteSolutions.find(Boolean) ??
+        null;
+
+      createdRouteSolutions.forEach((routeSolution) => {
+        if (routeSolution) {
+          upsertRouteSolution(routeSolution);
+        }
+      });
+
+      if (
+        typeof selectedRouteSolution?.id === "number" &&
+        typeof selectedRouteSolution.route_group_id === "number"
+      ) {
+        setSelectedRouteSolution(
+          selectedRouteSolution.id,
+          selectedRouteSolution.route_group_id,
+        );
+      }
+    }
+
+    if (typeof createdRouteGroup.id === "number") {
+      setActiveRouteGroupId(createdRouteGroup.id);
+      rememberRouteGroupForPlan(planId, createdRouteGroup.id);
     }
 
     return {
       ok: true,
       routeGroup: {
-        ...routeGroup,
-        client_id: routeGroup.client_id || clientId,
+        ...createdRouteGroup,
+        client_id: createdRouteGroup.client_id || clientId,
+        state_id: createdRouteGroup.state_id ?? 1,
       },
     };
   } catch (error) {

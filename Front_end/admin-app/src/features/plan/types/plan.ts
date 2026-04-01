@@ -22,6 +22,7 @@ export type DeliveryPlan = {
   state_id?: number | null;
   total_orders?: number | null;
   total_items?: number | null;
+  item_type_counts?: Record<string, number> | null;
   total_volume?: number | null;
   total_weight?: number | null;
   route_groups_count?: number | null;
@@ -41,6 +42,7 @@ export type DeliveryPlanFields = {
   state_id?: number | null;
   total_orders?: number | null;
   total_items?: number | null;
+  item_type_counts?: Record<string, number> | null;
   total_volume?: number | null;
   total_weight?: number | null;
 };

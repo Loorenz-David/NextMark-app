@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import type { DraggableAttributes } from '@dnd-kit/core'
+import type { DraggableAttributes, SyntheticListenerMap } from '@dnd-kit/core'
 
 import { BoldArrowIcon, TriangleWarningIcon } from '@/assets/icons'
 import { FloatingPopover } from '@/shared/popups/FloatingPopover/FloatingPopover'
@@ -13,9 +13,10 @@ type RouteGroupOrderGroupCardProps = {
   expanded: boolean
   onToggleExpanded: () => void
   planStartDate?: string | null
+  routeGroupId?: number | null
   projectedStopOrderByClientId?: Map<string, number> | null
   dragAttributes?: DraggableAttributes
-  dragListeners?: any
+  dragListeners?: SyntheticListenerMap
 }
 
 const formatRange = (
@@ -34,6 +35,7 @@ export const RouteGroupOrderGroupCard = ({
   expanded,
   onToggleExpanded,
   planStartDate,
+  routeGroupId,
   projectedStopOrderByClientId,
   dragAttributes,
   dragListeners,
@@ -108,6 +110,7 @@ export const RouteGroupOrderGroupCard = ({
           <RouteGroupOrderGroupChildren
             entries={group.entries}
             planStartDate={planStartDate}
+            routeGroupId={routeGroupId}
             projectedStopOrderByClientId={projectedStopOrderByClientId}
           />
         ) : null}

@@ -7,6 +7,7 @@ import type {
   MapConfig,
   MapViewportInsets,
   SetMarkerLayerOptions,
+  SetClusteredMarkerLayerOptions,
   ZonePathEditOptions,
 } from "../domain/types";
 import type { MapOrder } from "../domain/entities/MapOrder";
@@ -68,6 +69,13 @@ export const useMap = (options?: MapConfig): MapBridge => {
     [controller],
   );
 
+  const setMultiSelectedMarkerIds = useCallback(
+    (layerId: string, ids: string[]) => {
+      controller.setMultiSelectedMarkerIds(layerId, ids);
+    },
+    [controller],
+  );
+
   const showOrders = useCallback(
     (orders: MapOrder[]) => {
       controller.showOrders(orders);
@@ -78,6 +86,17 @@ export const useMap = (options?: MapConfig): MapBridge => {
   const setMarkerLayer = useCallback(
     (layerId: string, orders: MapOrder[], options?: SetMarkerLayerOptions) => {
       controller.setMarkerLayer(layerId, orders, options);
+    },
+    [controller],
+  );
+
+  const setClusteredMarkerLayer = useCallback(
+    (
+      layerId: string,
+      orders: MapOrder[],
+      options?: SetClusteredMarkerLayerOptions,
+    ) => {
+      controller.setClusteredMarkerLayer(layerId, orders, options);
     },
     [controller],
   );
@@ -93,6 +112,19 @@ export const useMap = (options?: MapConfig): MapBridge => {
     (layerId: string) => {
       controller.clearMarkerLayer(layerId);
     },
+    [controller],
+  );
+
+  const clearClusteredMarkerLayer = useCallback(
+    (layerId: string) => {
+      controller.clearClusteredMarkerLayer(layerId);
+    },
+    [controller],
+  );
+
+  const expandClusterIds = useCallback(
+    (layerId: string, markerIds: string[]) =>
+      controller.expandClusterIds(layerId, markerIds),
     [controller],
   );
 
@@ -224,8 +256,11 @@ export const useMap = (options?: MapConfig): MapBridge => {
       initialize,
       showOrders,
       setMarkerLayer,
+      setClusteredMarkerLayer,
       setMarkerLayerVisibility,
       clearMarkerLayer,
+      clearClusteredMarkerLayer,
+      expandClusterIds,
       enableCircleSelection,
       disableCircleSelection,
       enableZoneCapture,
@@ -236,6 +271,7 @@ export const useMap = (options?: MapConfig): MapBridge => {
       selectOrder,
       setSelectedMarker,
       setHoveredMarker,
+      setMultiSelectedMarkerIds,
       setViewportInsets,
       reframeToVisibleArea,
       setZonePolygonOverlay,
@@ -248,6 +284,7 @@ export const useMap = (options?: MapConfig): MapBridge => {
     }),
     [
       clearMarkerLayer,
+      clearClusteredMarkerLayer,
       clearZoneLayer,
       clearZonePolygonOverlay,
       disableCircleSelection,
@@ -256,12 +293,15 @@ export const useMap = (options?: MapConfig): MapBridge => {
       enableZoneCapture,
       enableZonePathEdit,
       enableCircleSelection,
+      expandClusterIds,
       initialize,
       reframeToVisibleArea,
       resize,
       selectOrder,
       setHoveredMarker,
+      setMultiSelectedMarkerIds,
       setMarkerLayer,
+      setClusteredMarkerLayer,
       setMarkerLayerVisibility,
       setSelectedMarker,
       setZoneLayer,

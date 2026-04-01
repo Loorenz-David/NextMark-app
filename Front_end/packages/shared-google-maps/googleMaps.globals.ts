@@ -76,6 +76,10 @@ declare global {
         setOptions(options: Partial<MapOptions>): void
         addListener(eventName: string, handler: (...args: any[]) => void): MapsEventListener
         getZoom(): number | undefined
+        getBounds(): {
+          getNorthEast(): LatLng
+          getSouthWest(): LatLng
+        } | null
         fitBounds(
           bounds: LatLngBounds,
           padding?: {
@@ -87,8 +91,14 @@ declare global {
         ): void
         setZoom?(zoom: number): void
         getCenter(): google.maps.LatLng | null
+        panTo(latLng: google.maps.LatLng | google.maps.LatLngLiteral): void
         setCenter(latLng: google.maps.LatLng | google.maps.LatLngLiteral): void
         controls: Record<ControlPosition, MVCArray<HTMLElement>>
+      }
+
+      class Polygon {
+        constructor(options: any)
+        setMap(map: Map | null): void
       }
 
       class Polyline {
@@ -127,6 +137,7 @@ declare global {
           position: LatLngLiteral | LatLng
           map: Map | null
           content: HTMLElement
+          zIndex?: number
           addListener(eventName: string, handler: (...args: any[]) => void): MapsEventListener
         }
       }
@@ -134,6 +145,7 @@ declare global {
       namespace event {
         function addListener(instance: any, eventName: string, handler: (...args: any[]) => void): MapsEventListener
         function addListenerOnce(instance: any, eventName: string, handler: (...args: any[]) => void): MapsEventListener
+        function clearInstanceListeners(instance: any): void
         function removeListener(listener: MapsEventListener): void
         function trigger(instance: any, eventName: string, ...args: any[]): void
       }

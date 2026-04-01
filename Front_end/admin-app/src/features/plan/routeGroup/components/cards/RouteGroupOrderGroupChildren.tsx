@@ -11,12 +11,14 @@ type RouteGroupStopEntry = {
 type RouteGroupOrderGroupChildrenProps = {
   entries: RouteGroupStopEntry[]
   planStartDate?: string | null
+  routeGroupId?: number | null
   projectedStopOrderByClientId?: Map<string, number> | null
 }
 
 export const RouteGroupOrderGroupChildren = ({
   entries,
   planStartDate,
+  routeGroupId,
   projectedStopOrderByClientId,
 }: RouteGroupOrderGroupChildrenProps) => (
   <div className="relative ml-6 pl-6 mt-4 mb-4 ">
@@ -35,6 +37,7 @@ export const RouteGroupOrderGroupChildren = ({
             stop={entry.stop}
             displayStopOrder={projectedStopOrderByClientId?.get(entry.stop.client_id) ?? entry.stop.stop_order ?? null}
             planStartDate={planStartDate}
+            routeGroupId={routeGroupId}
           />
         </div>
       ))}

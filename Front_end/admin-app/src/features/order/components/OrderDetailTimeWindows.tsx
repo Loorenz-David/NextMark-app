@@ -1,12 +1,15 @@
+import type { ReactNode } from 'react'
+
 import type { Order } from '../types/order'
 import { formatIsoDateFriendly, formatIsoTime } from '@/shared/utils/formatIsoDate'
 import { TimeRangeCard } from './cards/TimeRangeCard'
 
 type OrderDetailTimeWindowsProps = {
   order: Order | null
+  headerRight?: ReactNode
 }
 
-export const OrderDetailTimeWindows = ({ order }: OrderDetailTimeWindowsProps) => {
+export const OrderDetailTimeWindows = ({ order, headerRight }: OrderDetailTimeWindowsProps) => {
   const timeWindows: Record<string, Record<'start_at' | 'end_at', string>[]> = {}
 
   order?.delivery_windows?.forEach((t) => {
@@ -28,10 +31,15 @@ export const OrderDetailTimeWindows = ({ order }: OrderDetailTimeWindowsProps) =
       className="admin-glass-panel flex h-[420px] flex-col overflow-hidden rounded-[26px] border-white/10"
       style={{ boxShadow: 'none' }}
     >
-      <div className="admin-glass-divider border-b px-5 py-4">
+      <div className="admin-glass-divider flex items-center justify-between gap-3 border-b px-5 py-4">
         <p className="text-[10px] font-medium uppercase tracking-[0.22em] text-[var(--color-muted)]">
           Delivery Windows
         </p>
+        {headerRight ? (
+          <div className="flex flex-none items-center justify-end">
+            {headerRight}
+          </div>
+        ) : null}
       </div>
 
       <div className="flex h-full flex-col gap-4 overflow-y-auto px-5 py-4.5 scroll-thin">

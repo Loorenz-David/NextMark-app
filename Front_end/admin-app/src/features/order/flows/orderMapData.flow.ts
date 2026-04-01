@@ -35,9 +35,11 @@ type UseOrderMapDataFlowParams = {
   onMarkerMouseLeave?: (event: MouseEvent, order: Order) => void
 }
 
-const DEBOUNCE_MS = 300
+const DEBOUNCE_MS = 180
 const UNSCHEDULED_COLOR = '#8b8b8b'
 const GOLDEN_ANGLE = 137.508
+const ORDER_CLUSTER_RADIUS_PX = 80
+const ORDER_CLUSTER_MAX_ZOOM = 16
 const planColorCache = new Map<number, string>()
 let lastSuccessfulOrderMarkerRequestKey: string | null = null
 
@@ -57,6 +59,20 @@ const buildMarkerRequestKey = (query: Record<string, unknown>, bounds: ReturnTyp
     query,
     bounds,
   })
+
+const boundsContainBounds = (
+  outer: ReturnType<typeof bucketBounds>,
+  inner: ReturnType<typeof bucketBounds>,
+) => {
+  if (!outer || !inner) return false
+
+  return (
+    outer.north >= inner.north
+    && outer.south <= inner.south
+    && outer.east >= inner.east
+    && outer.west <= inner.west
+  )
+}
 
 const getPlanColor = (planId: number): string => {
   if (planColorCache.has(planId)) {
@@ -196,6 +212,8 @@ export const useOrderMapDataFlow = ({
   const debounceRef = useRef<number | null>(null)
   const requestVersionRef = useRef(0)
   const hasBootstrappedRef = useRef(false)
+  const fetchedBoundsRef = useRef<ReturnType<typeof bucketBounds>>(null)
+  const fetchedQueryKeyRef = useRef<string | null>(null)
 
   const normalizedQuery = useMemo(() => normalizeQuery({
     q: query.q,
@@ -243,6 +261,16 @@ export const useOrderMapDataFlow = ({
     }
 
     const requestKey = buildMarkerRequestKey(normalizedQueryRef.current, boundsRef.current)
+    const currentQueryKey = JSON.stringify(normalizedQueryRef.current)
+    const currentBounds = boundsRef.current
+
+    if (
+      fetchedQueryKeyRef.current === currentQueryKey
+      && boundsContainBounds(fetchedBoundsRef.current, currentBounds)
+    ) {
+      return
+    }
+
     if (requestKey === lastSuccessfulOrderMarkerRequestKey) {
       return
     }
@@ -276,26 +304,36 @@ export const useOrderMapDataFlow = ({
       })
 
       setMarkerLookup(lookup)
-      mapManager.setMarkerLayer(MAP_MARKER_LAYERS.orders, markers)
+      mapManager.setClusteredMarkerLayer(MAP_MARKER_LAYERS.orders, markers, {
+        radius: ORDER_CLUSTER_RADIUS_PX,
+        maxZoom: ORDER_CLUSTER_MAX_ZOOM,
+      })
       mapManager.setMarkerLayerVisibility(MAP_MARKER_LAYERS.orders, visibleRef.current)
+      fetchedBoundsRef.current = currentBounds
+      fetchedQueryKeyRef.current = currentQueryKey
       lastSuccessfulOrderMarkerRequestKey = requestKey
     } catch {
       if (requestVersion === requestVersionRef.current) {
-        mapManager.setMarkerLayer(MAP_MARKER_LAYERS.orders, [])
-        clearMarkerLookup()
+        fetchedBoundsRef.current = null
       }
     }
-  }, [clearMarkerLookup, mapManager, setMarkerLookup])
+  }, [mapManager, setMarkerLookup])
+
+  const scheduleRefresh = useCallback(() => {
+    if (debounceRef.current != null) {
+      return
+    }
+
+    debounceRef.current = window.setTimeout(() => {
+      debounceRef.current = null
+      void refreshMarkers()
+    }, DEBOUNCE_MS)
+  }, [refreshMarkers])
 
   useEffect(() => {
     const unsubscribe = mapManager.subscribeBoundsChanged((bounds) => {
       boundsRef.current = bucketBounds(bounds)
-      if (debounceRef.current != null) {
-        window.clearTimeout(debounceRef.current)
-      }
-      debounceRef.current = window.setTimeout(() => {
-        void refreshMarkers()
-      }, DEBOUNCE_MS)
+      scheduleRefresh()
     })
 
     return () => {
@@ -307,22 +345,26 @@ export const useOrderMapDataFlow = ({
   }, [
     mapManager,
     refreshMarkers,
+    scheduleRefresh,
   ])
 
   useEffect(() => {
+    fetchedBoundsRef.current = null
+    fetchedQueryKeyRef.current = null
+    lastSuccessfulOrderMarkerRequestKey = null
+
     if (debounceRef.current != null) {
       window.clearTimeout(debounceRef.current)
     }
-    debounceRef.current = window.setTimeout(() => {
-      void refreshMarkers()
-    }, DEBOUNCE_MS)
+    debounceRef.current = null
+    scheduleRefresh()
 
     return () => {
       if (debounceRef.current != null) {
         window.clearTimeout(debounceRef.current)
       }
     }
-  }, [normalizedQuery, refreshMarkers])
+  }, [normalizedQuery, refreshMarkers, scheduleRefresh])
 
   useEffect(() => {
     if (refreshEnabled) {
@@ -335,7 +377,7 @@ export const useOrderMapDataFlow = ({
     }
 
     if (bootstrapOrders.length === 0) {
-      mapManager.setMarkerLayer(MAP_MARKER_LAYERS.orders, [])
+      mapManager.clearClusteredMarkerLayer(MAP_MARKER_LAYERS.orders)
       clearMarkerLookup()
       hasBootstrappedRef.current = false
       return
@@ -351,7 +393,10 @@ export const useOrderMapDataFlow = ({
     })
 
     setMarkerLookup(lookup)
-    mapManager.setMarkerLayer(MAP_MARKER_LAYERS.orders, markers)
+    mapManager.setClusteredMarkerLayer(MAP_MARKER_LAYERS.orders, markers, {
+      radius: ORDER_CLUSTER_RADIUS_PX,
+      maxZoom: ORDER_CLUSTER_MAX_ZOOM,
+    })
     mapManager.setMarkerLayerVisibility(MAP_MARKER_LAYERS.orders, true)
 
     if (!hasBootstrappedRef.current) {

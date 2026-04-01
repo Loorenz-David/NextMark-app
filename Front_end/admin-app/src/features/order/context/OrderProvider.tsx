@@ -17,7 +17,12 @@ import {
 } from '../store/orderMapInteractionHooks.store'
 import { useStackActionEntries } from '@/shared/stack-manager/useStackActionEntries'
 import type { Order } from '../types/order'
-import { useOrderSelectionActions, useOrderSelectionMode } from '../store/orderSelectionHooks.store'
+import {
+  useOrderSelectionActions,
+  useOrderSelectionMode,
+  useSelectedOrderClientIds,
+} from '../store/orderSelectionHooks.store'
+import { MAP_MARKER_LAYERS } from '@/shared/map'
 import { useOrderSelectionStore } from '../store/orderSelection.store'
 import { useAuthSession } from '@/features/auth/login/hooks/useAuthSelectors'
 import { useOrderGroupUIStore } from '../store/orderGroupUI.store'
@@ -46,6 +51,7 @@ export const OrderProvider = ({ children, scrollContainerRef }: OrderProviderPro
   const sectionManager = useSectionManager()
   const sectionEntries = useStackActionEntries(sectionManager)
   const hoveredClientId = useHoveredOrderClientId()
+  const selectedOrderClientIds = useSelectedOrderClientIds()
   const markerLookup = useOrderMarkerLookup()
   const { setHovered, clearHovered, openGroupOverlay, closeGroupOverlay } = useOrderMapInteractionActions()
   const handleScrollToTop = useCallback(() => {
@@ -146,6 +152,28 @@ export const OrderProvider = ({ children, scrollContainerRef }: OrderProviderPro
       : null
     mapManager.setHoveredMarker(markerId)
   }, [hoveredClientId, mapManager, markerLookup.markerIdByOrderClientId])
+
+  useEffect(() => {
+    if (!isSelectionMode) {
+      mapManager.setMultiSelectedMarkerIds(MAP_MARKER_LAYERS.orders, [])
+      return
+    }
+
+    const markerIds = Array.from(
+      new Set(
+        selectedOrderClientIds
+          .map((clientId) => markerLookup.markerIdByOrderClientId[clientId] ?? null)
+          .filter((markerId): markerId is string => typeof markerId === 'string' && markerId.length > 0),
+      ),
+    )
+
+    mapManager.setMultiSelectedMarkerIds(MAP_MARKER_LAYERS.orders, markerIds)
+  }, [
+    isSelectionMode,
+    mapManager,
+    markerLookup.markerIdByOrderClientId,
+    selectedOrderClientIds,
+  ])
 
   useEffect(() => {
     void loadFirstPage()

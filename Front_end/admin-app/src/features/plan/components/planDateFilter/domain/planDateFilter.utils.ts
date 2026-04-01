@@ -10,9 +10,10 @@ const addDays = (date: Date, step: number) => {
 }
 
 const addMonths = (date: Date, step: number) => {
-  const next = new Date(date)
-  next.setMonth(next.getMonth() + step)
-  return normalizeToDay(next)
+  const normalized = normalizeToDay(date)
+  return normalizeToDay(
+    new Date(normalized.getFullYear(), normalized.getMonth() + step, 1),
+  )
 }
 
 const getMonthBounds = (date: Date) => {

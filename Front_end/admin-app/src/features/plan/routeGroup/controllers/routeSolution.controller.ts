@@ -28,6 +28,7 @@ import {
   replaceRouteSolutionStopsForSolution,
   useRouteSolutionStopStore,
 } from '@/features/plan/routeGroup/store/routeSolutionStop.store'
+import { applyOrderStateUpdatePayload } from '@/features/order/actions/applyOrderStateUpdatePayload.action'
 import { useOrderStateBatch } from '@/features/order/controllers/orderStateBatch.controller'
 import { usePlanStateChanges } from '@/features/plan/controllers/planState.controller'
 import {
@@ -290,6 +291,7 @@ export function useRouteSolutionMutations() {
       try{
         
         const response = await routeSolutionApi.routeReadyForDelivery(deliveryPlanId)
+        applyOrderStateUpdatePayload(response.data)
 
         const failed_order_state_updates = response.data?.failed_order_state_updates ?? {}
 

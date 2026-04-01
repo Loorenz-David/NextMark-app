@@ -8,6 +8,7 @@ import type {
   MapConfig,
   MapViewportInsets,
   SetMarkerLayerOptions,
+  SetClusteredMarkerLayerOptions,
 } from "../types";
 import type { MapOrder } from "../entities/MapOrder";
 import type { Route } from "../entities/Route";
@@ -36,6 +37,11 @@ export class MapController {
   setHoveredMarker(id: string | null) {
     this.adapter.setHoveredMarker(id);
   }
+
+  setMultiSelectedMarkerIds(layerId: string, ids: string[]) {
+    this.adapter.setMultiSelectedMarkerIds(layerId, ids);
+  }
+
   showOrders(orders: MapOrder[]) {
     this.adapter.setLayerMarkers(MAP_MARKER_LAYERS.default, orders, {
       fitBounds: true,
@@ -50,12 +56,28 @@ export class MapController {
     this.adapter.setLayerMarkers(layerId, orders, options);
   }
 
+  setClusteredMarkerLayer(
+    layerId: string,
+    orders: MapOrder[],
+    options?: SetClusteredMarkerLayerOptions,
+  ) {
+    this.adapter.setClusteredLayerMarkers(layerId, orders, options);
+  }
+
   setMarkerLayerVisibility(layerId: string, visible: boolean) {
     this.adapter.setLayerVisibility(layerId, visible);
   }
 
   clearMarkerLayer(layerId: string) {
     this.adapter.clearLayer(layerId);
+  }
+
+  clearClusteredMarkerLayer(layerId: string) {
+    this.adapter.clearClusteredLayer(layerId);
+  }
+
+  expandClusterIds(layerId: string, markerIds: string[]) {
+    return this.adapter.expandClusterIds(layerId, markerIds);
   }
 
   enableCircleSelection(params: {

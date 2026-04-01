@@ -4,7 +4,7 @@ import {
   selectZoneVisibility,
   useZoneVisibilityStore,
 } from "@/features/zone/store/zoneVisibility.store";
-import type { ZoneDefinition } from "@/features/zone/types";
+import type { GeoJSONPolygon, ZoneDefinition } from "@/features/zone/types";
 import { useMapManager } from "@/shared/resource-manager/useResourceManager";
 import {
   useActiveRouteGroupActions,
@@ -72,7 +72,14 @@ export const ZonePolygonOverlay = () => {
             geometry: routeGroup.zone_snapshot.geometry,
           } satisfies ZoneDefinition;
         })
-        .filter((zone): zone is ZoneDefinition => zone != null),
+        .filter(
+          (
+            zone,
+          ): zone is ZoneDefinition & { id: number; geometry: GeoJSONPolygon } =>
+            zone != null &&
+            typeof zone.id === "number" &&
+            zone.geometry != null,
+        ),
     [routeGroups],
   );
 
@@ -93,11 +100,15 @@ export const ZonePolygonOverlay = () => {
       mapManager.setZoneLayer(routeGroupZones, {
         onClick: (routeGroupId) => {
           setActiveRouteGroupId(routeGroupId);
-          rememberRouteGroupForPlan(routePlanId ?? null, routeGroupId);
+          if (routePlanId != null) {
+            rememberRouteGroupForPlan(routePlanId, routeGroupId);
+          }
         },
         onLabelClick: (routeGroupId) => {
           setActiveRouteGroupId(routeGroupId);
-          rememberRouteGroupForPlan(routePlanId ?? null, routeGroupId);
+          if (routePlanId != null) {
+            rememberRouteGroupForPlan(routePlanId, routeGroupId);
+          }
         },
       });
       mapManager.clearZonePolygonOverlay();

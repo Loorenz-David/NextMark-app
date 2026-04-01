@@ -72,7 +72,7 @@ export const SectionPanel = ({
           </header>
         )}
         <div
-          className={`scroll-thin h-full w-full flex overflow-y-scroll overflow-x-hidden ${parentParams?.pageClass ?? ""}`}
+          className={`scroll-thin flex min-h-0 flex-1 overflow-hidden ${parentParams?.pageClass ?? ""}`}
         >
           {children}
         </div>

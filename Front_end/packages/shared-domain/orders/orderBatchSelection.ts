@@ -34,6 +34,7 @@ export type OrderBatchMoveResponse = {
       state_id: number | null;
       total_orders: number | null;
       order_state_counts?: Record<string, number> | null;
+      item_type_counts?: Record<string, number> | null;
       route_plan_id?: number | null;
       zone_id?: number | null;
     }>;
@@ -41,6 +42,7 @@ export type OrderBatchMoveResponse = {
       id: number;
       state_id: number | null;
       total_orders: number | null;
+      item_type_counts?: Record<string, number> | null;
     }>;
   };
 };

@@ -183,6 +183,7 @@ export const executeOrderFormSubmit = async (
             total_weight: p.total_weight,
             total_volume: p.total_volume,
             total_items: p.total_items,
+            item_type_counts: p.item_type_counts,
             total_orders: p.total_orders,
           })
         })
@@ -216,6 +217,7 @@ export const executeOrderFormSubmit = async (
             total_weight: p.total_weight,
             total_volume: p.total_volume,
             total_items: p.total_items,
+            item_type_counts: p.item_type_counts,
             total_orders: p.total_orders,
           })
         })
@@ -239,6 +241,7 @@ export const executeOrderFormSubmit = async (
             total_weight: p.total_weight,
             total_volume: p.total_volume,
             total_items: p.total_items,
+            item_type_counts: p.item_type_counts,
             total_orders: p.total_orders,
           })
         })

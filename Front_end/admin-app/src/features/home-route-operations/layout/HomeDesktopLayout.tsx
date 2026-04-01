@@ -55,7 +55,7 @@ export function HomeDesktopLayout({
 
   return (
     <main
-      className="grid flex-1 overflow-hidden layout-animate"
+      className="grid h-full min-h-0 flex-1 overflow-hidden layout-animate"
       style={{
         gridTemplateColumns: `minmax(0, 1fr) ${planColumnGridWidth}px ${railColumnWidth}px`,
         willChange: 'grid-template-columns',
@@ -66,7 +66,7 @@ export function HomeDesktopLayout({
         onRailTransitionEnd?.()
       }}
     >
-      <div className="flex h-full min-w-0 flex-col">
+      <div className="flex h-full min-h-0 min-w-0 flex-col overflow-hidden">
         <div
           className={splitMode ? 'relative min-h-0 shrink-0 layout-animate' : 'relative min-h-0 flex-1'}
           style={

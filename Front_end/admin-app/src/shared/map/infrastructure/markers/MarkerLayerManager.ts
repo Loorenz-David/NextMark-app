@@ -1,5 +1,10 @@
 import type { MapOrder } from '../../domain/entities/MapOrder'
+import type { ClusterRecord } from '../../domain/entities/ClusterRecord'
 import type { Coordinates, SetMarkerLayerOptions } from '../../domain/types'
+import {
+  applyClusterMarkerAppearance,
+  createClusterMarkerElement,
+} from '../../presentation/clusterMarkerElement.factory'
 import {
   applyMarkerContent,
   applyOperationBadges,
@@ -8,15 +13,21 @@ import {
 import type { MapInstanceManager } from '../core/MapInstanceManager'
 
 export type LayerMarkerRecord = {
-  marker: any
+  marker: google.maps.marker.AdvancedMarkerElement
   el: HTMLElement
   order: MapOrder
+}
+
+type ClusterableMapOrder = MapOrder & {
+  _clusterRecord?: ClusterRecord
 }
 
 export type MarkerLayer = {
   visible: boolean
   markers: Map<string, LayerMarkerRecord>
 }
+
+const MARKER_EXIT_DURATION_MS = 140
 
 const markerZIndex = (status?: string) => {
   if (status === 'start' || status === 'end') {
@@ -26,6 +37,8 @@ const markerZIndex = (status?: string) => {
   return 10
 }
 
+const clusterMarkerZIndex = () => 20
+
 const getInteractionVariant = (order: MapOrder) => order.interactionVariant ?? 'default'
 
 const addClassTokens = (el: HTMLElement, className?: string | null) => {
@@ -33,6 +46,55 @@ const addClassTokens = (el: HTMLElement, className?: string | null) => {
   const tokens = className.split(/\s+/).filter(Boolean)
   if (!tokens.length) return
   el.classList.add(...tokens)
+}
+
+const applyMarkerEnterTransition = (
+  el: HTMLElement,
+  variant: 'default' | 'cluster',
+) => {
+  const exitClass =
+    variant === 'cluster'
+      ? 'map-cluster-marker--exit'
+      : 'map-marker--exit'
+
+  el.classList.remove(exitClass)
+
+  if (typeof el.animate !== 'function') {
+    return
+  }
+
+  el.animate(
+    [
+      {
+        opacity: 0,
+        transform: variant === 'cluster'
+          ? 'scale(0.92)'
+          : 'translateY(-50%) scale(0.92)',
+      },
+      {
+        opacity: 1,
+        transform: variant === 'cluster'
+          ? 'scale(1)'
+          : 'translateY(-50%) scale(1)',
+      },
+    ],
+    {
+      duration: 170,
+      easing: 'ease-out',
+    },
+  )
+}
+
+const applyMarkerExitTransition = (
+  el: HTMLElement,
+  variant: 'default' | 'cluster',
+) => {
+  const exitClass =
+    variant === 'cluster'
+      ? 'map-cluster-marker--exit'
+      : 'map-marker--exit'
+
+  el.classList.add(exitClass)
 }
 
 const applyBaseMarkerAppearance = (el: HTMLElement, order: MapOrder) => {
@@ -85,10 +147,14 @@ export class MarkerLayerManager {
 
     Array.from(layer.markers.entries()).forEach(([id, entry]) => {
       if (!nextIds.has(id)) {
-        entry.marker.map = null
+        const isCluster = (entry.order as ClusterableMapOrder)._clusterRecord != null
+        applyMarkerExitTransition(entry.el, isCluster ? 'cluster' : 'default')
         entry.el.onclick = null
         entry.el.onmouseenter = null
         entry.el.onmouseleave = null
+        window.setTimeout(() => {
+          entry.marker.map = null
+        }, MARKER_EXIT_DURATION_MS)
         layer.markers.delete(id)
         removedIds.push(id)
       }
@@ -97,26 +163,44 @@ export class MarkerLayerManager {
     orders.forEach((order) => {
       const id = String(order.id)
       const existing = layer.markers.get(id)
+      const clusterOrder = order as ClusterableMapOrder
+      const clusterRecord = clusterOrder._clusterRecord
+      const isCluster = clusterRecord != null
 
       if (existing) {
+        const wasVisible = existing.marker.map != null
         existing.order = order
         existing.marker.position = order.coordinates
-        existing.marker.zIndex = markerZIndex(order.status)
-        applyBaseMarkerAppearance(existing.el, order)
-        existing.el.onclick = (event: MouseEvent) => {
+        existing.marker.zIndex = isCluster
+          ? clusterMarkerZIndex()
+          : markerZIndex(order.status)
+
+        let contentEl = existing.el
+        if (isCluster) {
+          applyClusterMarkerAppearance(contentEl, clusterRecord)
+        } else {
+          applyBaseMarkerAppearance(contentEl, order)
+        }
+
+        contentEl.onclick = (event: MouseEvent) => {
           order.onClick?.(event)
         }
-        existing.el.onmouseenter = (event: MouseEvent) => {
+        contentEl.onmouseenter = (event: MouseEvent) => {
           order.onMouseEnter?.(event)
         }
-        existing.el.onmouseleave = (event: MouseEvent) => {
+        contentEl.onmouseleave = (event: MouseEvent) => {
           order.onMouseLeave?.(event)
         }
         existing.marker.map = layer.visible ? map : null
+        if (!wasVisible && layer.visible) {
+          applyMarkerEnterTransition(contentEl, isCluster ? 'cluster' : 'default')
+        }
         return
       }
 
-      const content = createMarkerElement(order)
+      const content = isCluster
+        ? createClusterMarkerElement(clusterRecord)
+        : createMarkerElement(order)
       content.onclick = (event: MouseEvent) => {
         order.onClick?.(event)
       }
@@ -131,8 +215,10 @@ export class MarkerLayerManager {
         map: layer.visible ? map : null,
         position: order.coordinates,
         content,
-        zIndex: markerZIndex(order.status),
+        zIndex: isCluster ? clusterMarkerZIndex() : markerZIndex(order.status),
       })
+
+      applyMarkerEnterTransition(content, isCluster ? 'cluster' : 'default')
 
       layer.markers.set(id, { marker, el: content, order })
     })
@@ -161,11 +247,15 @@ export class MarkerLayerManager {
     }
 
     const removedIds: string[] = []
-    layer.markers.forEach(({ marker, el }, id) => {
-      marker.map = null
+    layer.markers.forEach(({ marker, el, order }, id) => {
+      const isCluster = (order as ClusterableMapOrder)._clusterRecord != null
+      applyMarkerExitTransition(el, isCluster ? 'cluster' : 'default')
       el.onclick = null
       el.onmouseenter = null
       el.onmouseleave = null
+      window.setTimeout(() => {
+        marker.map = null
+      }, MARKER_EXIT_DURATION_MS)
       removedIds.push(id)
     })
     layer.markers.clear()
@@ -242,10 +332,10 @@ export class MarkerLayerManager {
         const position = marker.position
         if (!position) return
 
-        if (typeof (position as any).lat === 'function') {
+        if (position instanceof google.maps.LatLng) {
           points.push({
-            lat: (position as any).lat(),
-            lng: (position as any).lng(),
+            lat: position.lat(),
+            lng: position.lng(),
           })
           return
         }

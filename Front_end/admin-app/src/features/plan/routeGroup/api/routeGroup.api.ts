@@ -13,6 +13,7 @@ import type { RouteSolution } from "../types/routeSolution";
 import type { RouteSolutionStop } from "../types/routeSolutionStop";
 import type { RouteSolutionMap } from "../types/routeSolution";
 import type { RouteSolutionStopMap } from "../types/routeSolutionStop";
+import type { RouteGroupMap } from "../types/routeGroup";
 
 export type MaterializeRouteGroupsPayload = {
   zone_ids: number[];
@@ -47,6 +48,12 @@ export type RouteGroupDetailsResponse = {
   route_solution_stops?: RouteSolutionStop[] | RouteSolutionStopMap | null;
 };
 
+export type CreateRouteGroupResponse = {
+  created?: boolean;
+  route_group?: RouteGroupMap | null;
+  route_solution?: RouteSolution | RouteSolutionMap | null;
+};
+
 export type MoveOrderToRouteGroupResponse = OrderBatchMoveResponse & {
   // Legacy payload compatibility.
   updated?: OrderGroupMovedBundle[];
@@ -64,8 +71,8 @@ export const routeGroupApi = {
   createRouteGroup: (
     planId: number,
     payload: CreateRouteGroupPayload,
-  ): Promise<ApiResult<RouteGroup>> =>
-    apiClient.request<RouteGroup>({
+  ): Promise<ApiResult<CreateRouteGroupResponse>> =>
+    apiClient.request<CreateRouteGroupResponse>({
       path: `/route_plans/${planId}/route-groups`,
       method: "POST",
       data: payload,

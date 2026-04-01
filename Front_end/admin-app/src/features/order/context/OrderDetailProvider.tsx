@@ -18,6 +18,8 @@ type OrderDetailPayload = {
   serverId?: number
   mode?: 'view' | 'edit'
   freshAfter?: string | null
+  routeGroupId?: number | null
+  planStartDate?: string | null
 }
 
 type OrderDetailProviderProps = PropsWithChildren<{

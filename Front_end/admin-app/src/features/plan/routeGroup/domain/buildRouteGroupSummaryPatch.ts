@@ -18,6 +18,7 @@ export const buildRouteGroupSummaryPatch = ({
   RouteGroup,
   | "total_orders"
   | "total_item_count"
+  | "item_type_counts"
   | "total_volume_cm3"
   | "total_weight_grams"
   | "order_state_counts"
@@ -40,12 +41,23 @@ export const buildRouteGroupSummaryPatch = ({
     }
   });
 
+  const itemTypeCounts = orders.reduce<Record<string, number>>((acc, order) => {
+    Object.entries(order.item_type_counts ?? {}).forEach(([itemType, count]) => {
+      if (itemType.trim().length === 0) return;
+      const safeCount = Number.isFinite(count) ? count : 0;
+      if (safeCount <= 0) return;
+      acc[itemType] = (acc[itemType] ?? 0) + safeCount;
+    });
+    return acc;
+  }, {});
+
   return {
     total_orders: orders.length,
     total_item_count: orders.reduce(
       (total, order) => total + Math.max(0, order.total_items ?? 0),
       0,
     ),
+    item_type_counts: Object.keys(itemTypeCounts).length > 0 ? itemTypeCounts : null,
     total_weight_grams: orders.reduce(
       (total, order) => total + toGrams(order.total_weight),
       0,

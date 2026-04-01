@@ -6,6 +6,7 @@ export type {
   MapAdapter,
   MapBridge,
   MapViewportInsets,
+  SetClusteredMarkerLayerOptions,
 } from "./domain/types";
 export type {
   MapMarkerOperationDirection,

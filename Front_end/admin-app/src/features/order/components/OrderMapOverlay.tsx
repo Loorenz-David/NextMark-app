@@ -26,8 +26,9 @@ export const OrderMapOverlay = () => {
   const popupManager = usePopupManager();
   const isSelectionMode = useOrderSelectionMode();
   const selectedOrderServerIds = useSelectedOrderServerIds();
-  const { count, totalWeight, totalItems, totalVolume } =
+  const { count, totalWeight, totalItems, totalVolume, itemTypeCounts } =
     useSelectedOrdersSummary();
+
   const { enableSelectionMode, disableSelectionMode } =
     useOrderSelectionActions();
   const [selectedShape, setSelectedShape] =
@@ -83,6 +84,7 @@ export const OrderMapOverlay = () => {
         totalItems={totalItems}
         totalVolume={totalVolume}
         totalWeight={totalWeight}
+        itemTypeCounts={itemTypeCounts}
         sideControls={
           <MapDrawingSideControls
             selectedShape={selectedShape}

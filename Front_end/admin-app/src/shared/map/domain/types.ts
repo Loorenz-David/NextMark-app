@@ -23,6 +23,12 @@ export type SetMarkerLayerOptions = {
   fitBounds?: boolean;
 };
 
+export type SetClusteredMarkerLayerOptions = {
+  radius?: number;
+  minZoom?: number;
+  maxZoom?: number;
+};
+
 export type MapBounds = {
   north: number;
   south: number;
@@ -65,8 +71,15 @@ export type MapBridge = {
     orders: MapOrder[],
     options?: SetMarkerLayerOptions,
   ) => void;
+  setClusteredMarkerLayer: (
+    layerId: string,
+    orders: MapOrder[],
+    options?: SetClusteredMarkerLayerOptions,
+  ) => void;
   setMarkerLayerVisibility: (layerId: string, visible: boolean) => void;
   clearMarkerLayer: (layerId: string) => void;
+  clearClusteredMarkerLayer: (layerId: string) => void;
+  expandClusterIds: (layerId: string, markerIds: string[]) => string[];
   enableCircleSelection: (params: {
     layerId: string;
     callback: (ids: string[]) => void;
@@ -83,6 +96,7 @@ export type MapBridge = {
   selectOrder: (id: number | string) => void;
   setSelectedMarker: (id: string | null) => void;
   setHoveredMarker: (id: string | null) => void;
+  setMultiSelectedMarkerIds: (layerId: string, ids: string[]) => void;
   setViewportInsets: (insets: MapViewportInsets) => void;
   reframeToVisibleArea: () => void;
   setZonePolygonOverlay: (
@@ -107,8 +121,15 @@ export interface MapAdapter {
     orders: MapOrder[],
     options?: SetMarkerLayerOptions,
   ) => void;
+  setClusteredLayerMarkers: (
+    layerId: string,
+    orders: MapOrder[],
+    options?: SetClusteredMarkerLayerOptions,
+  ) => void;
   setLayerVisibility: (layerId: string, visible: boolean) => void;
   clearLayer: (layerId: string) => void;
+  clearClusteredLayer: (layerId: string) => void;
+  expandClusterIds: (layerId: string, markerIds: string[]) => string[];
   enableCircleSelection: (params: {
     layerId: string;
     callback: (ids: string[]) => void;
@@ -127,6 +148,7 @@ export interface MapAdapter {
   selectMarker: (id: string) => void;
   setSelectedMarker: (id: string | null) => void;
   setHoveredMarker: (id: string | null) => void;
+  setMultiSelectedMarkerIds: (layerId: string, ids: string[]) => void;
   setViewportInsets: (insets: MapViewportInsets) => void;
   reframeToVisibleArea: () => void;
   setZonePolygonOverlay: (

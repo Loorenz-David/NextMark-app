@@ -26,7 +26,7 @@ export function OverlayRail({
 }: OverlayRailProps) {
   return (
     <div
-      className="relative z-30 h-full shrink-0 layout-animate"
+      className="relative z-30 h-full min-h-0 shrink-0 overflow-hidden layout-animate"
       style={{
         width: `${isOrderOverlayOpen ? orderOverlayWidth : baseWidth}px`,
         willChange: 'width',
@@ -42,7 +42,7 @@ export function OverlayRail({
       <AnimatePresence mode="sync">
         {orderOverlay && (
           <motion.div
-            className="absolute inset-y-0 left-0 z-39 h-full"
+            className="absolute inset-y-0 left-0 z-39 h-full min-h-0 overflow-hidden"
             key="for overlay"
             initial={{ x: 450 }}
             animate={{ x: 0 }}
@@ -58,7 +58,7 @@ export function OverlayRail({
       <AnimatePresence mode="sync">
         {hasOverlay && (
           <motion.div
-            className="absolute inset-0 z-40 h-full w-full"
+            className="absolute inset-0 z-40 h-full min-h-0 w-full overflow-hidden"
             key="with-order"
             initial={{ x: overlayWidth }}
             animate={{ x: 0 }}

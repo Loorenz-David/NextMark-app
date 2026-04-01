@@ -89,7 +89,12 @@ export const RouteGroupMarkerGroupOverlay = () => {
                   onClick={() => {
                     mapManager.selectOrder(order.client_id)
                     openOrderDetail(
-                      { mode: 'edit', clientId: order.client_id, openSource: 'marker' },
+                      {
+                        mode: 'edit',
+                        clientId: order.client_id,
+                        openSource: 'marker',
+                        routeGroupId: order.route_group_id ?? null,
+                      },
                       { borderLeft: 'rgb(var(--color-light-blue-r),0.7)' },
                     )
                     closeGroupOverlay()

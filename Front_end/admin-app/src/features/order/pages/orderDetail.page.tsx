@@ -9,6 +9,7 @@ import { OrderDetailHeader } from '../components/pageHeaders/OrderDetailHeader'
 import { OrderDetailProvider } from '../context/OrderDetailProvider'
 import { useOrderDetailContext } from '../context/OrderDetailContext'
 import { OrderDetailTimeWindows } from '../components/OrderDetailTimeWindows'
+import { useOrderDetailStopWarningController } from '../controllers/useOrderDetailStopWarning.controller'
 
 export type OrderDetailPayload = {
   clientId?: string
@@ -16,9 +17,11 @@ export type OrderDetailPayload = {
   mode?: 'view' | 'edit'
   freshAfter?: string | null
   openSource?: 'card' | 'marker'
+  routeGroupId?: number | null
+  planStartDate?: string | null
 }
 
-const OrderDetailContent = () => {
+const OrderDetailContent = ({ payload }: { payload?: OrderDetailPayload }) => {
   const {
     order,
     orderState,
@@ -29,6 +32,14 @@ const OrderDetailContent = () => {
     closeOrderDetail,
     advanceDetailOrderState,
   } = useOrderDetailContext()
+  const {
+    initialCarouselIndex,
+    timeWindowHeaderAddon,
+  } = useOrderDetailStopWarningController({
+    order,
+    routeGroupId: payload?.routeGroupId ?? null,
+    planStartDate: payload?.planStartDate ?? null,
+  })
 
   return (
     <div className="relative flex h-full min-h-0 w-full flex-1 flex-col overflow-hidden bg-[var(--color-page)]">
@@ -47,7 +58,10 @@ const OrderDetailContent = () => {
 
     <div className="flex w-full flex-col gap-6 bg-[var(--color-page)] pb-6 pt-3">
         <div className="flex flex-col gap-4 px-5 ">
-          <SlideCarousel>
+          <SlideCarousel
+            key={`${order?.client_id ?? 'empty'}:${initialCarouselIndex}`}
+            initialIndex={initialCarouselIndex}
+          >
             {isRefreshing && !order ? (
               <div className="admin-glass-panel rounded-[22px] p-4 text-sm text-[var(--color-muted)]">
                 Loading order details...
@@ -65,7 +79,10 @@ const OrderDetailContent = () => {
             ) : null}
 
             {order ? (
-              <OrderDetailTimeWindows order={order} />
+              <OrderDetailTimeWindows
+                order={order}
+                headerRight={timeWindowHeaderAddon}
+              />
             ) : null}
           </SlideCarousel>
         </div>
@@ -101,6 +118,6 @@ const OrderDetailContent = () => {
 
 export const OrderDetailPage = ({ payload, onClose }: StackComponentProps<OrderDetailPayload>) => (
   <OrderDetailProvider payload={payload} onClose={onClose}>
-    <OrderDetailContent />
+    <OrderDetailContent payload={payload} />
   </OrderDetailProvider>
 )

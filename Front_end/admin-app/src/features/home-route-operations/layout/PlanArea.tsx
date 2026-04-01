@@ -56,7 +56,7 @@ export function PlanArea({
           <AnimatePresence>
             {isPlanVisible && (
               <motion.div
-                className="h-full"
+                className="h-full min-h-0"
                 initial={{ y: 64 }}
                 animate={{ y: 0 }}
                 exit={{ y: 64 }}
@@ -73,7 +73,7 @@ export function PlanArea({
   }
 
   return (
-    <div className="relative z-20 flex h-full shrink-0">
+    <div className="relative z-20 flex h-full min-h-0 shrink-0 overflow-visible">
       {!isPlanVisible && buttonTogglePlan ? (
         <motion.div
           className="absolute left-0 top-0 z-20 -translate-x-full"
@@ -87,7 +87,7 @@ export function PlanArea({
       ) : null}
 
       <div
-        className="relative z-10 h-full shrink-0 overflow-hidden layout-animate"
+        className="relative z-10 flex h-full min-h-0 shrink-0 overflow-hidden layout-animate"
         style={{
           width: planColumnWidth,
           willChange: 'width',
@@ -101,7 +101,7 @@ export function PlanArea({
         <AnimatePresence>
           {isPlanVisible && (
             <motion.div
-              className="h-full"
+              className="flex h-full min-h-0 w-full flex-col"
               initial={{ x: 64 }}
               animate={{ x: 0 }}
               exit={{ x: 64 }}

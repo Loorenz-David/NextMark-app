@@ -41,6 +41,29 @@ const buildDevSeedDriverPositions = (
   ];
 };
 
+const withDevSeedDriverPositions = (
+  positions: DriverLocationUpdatedPayload[],
+  teamId: number | null,
+): DriverLocationUpdatedPayload[] => {
+  if (!import.meta.env.DEV || teamId == null) {
+    return positions;
+  }
+
+  const mergedByDriverId = new Map<number, DriverLocationUpdatedPayload>();
+
+  positions.forEach((position) => {
+    mergedByDriverId.set(position.driver_id, position);
+  });
+
+  buildDevSeedDriverPositions(teamId).forEach((position) => {
+    if (!mergedByDriverId.has(position.driver_id)) {
+      mergedByDriverId.set(position.driver_id, position);
+    }
+  });
+
+  return Array.from(mergedByDriverId.values());
+};
+
 export function DriverLiveRealtimeProvider({ children }: PropsWithChildren) {
   const session = useSyncExternalStore(
     sessionStorage.subscribe.bind(sessionStorage),
@@ -64,10 +87,20 @@ export function DriverLiveRealtimeProvider({ children }: PropsWithChildren) {
 
     const release = driverLiveChannel.subscribeTeamDriverLive({
       onSnapshot: (payload) => {
-        useDriverLiveStore.getState().setSnapshot(payload.positions ?? []);
+        useDriverLiveStore.getState().setSnapshot(
+          withDevSeedDriverPositions(payload.positions ?? [], teamId),
+        );
       },
       onUpdated: (payload) => {
-        useDriverLiveStore.getState().upsertPosition(payload);
+        useDriverLiveStore.getState().setSnapshot(
+          withDevSeedDriverPositions(
+            [
+              ...Object.values(useDriverLiveStore.getState().positionsByDriverId),
+              payload,
+            ],
+            teamId,
+          ),
+        );
       },
     });
 

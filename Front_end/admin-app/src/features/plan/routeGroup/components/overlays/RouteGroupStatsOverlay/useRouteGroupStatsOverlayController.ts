@@ -356,7 +356,6 @@ const buildStatsData = ({
   vehicleFuelType?: string | null
   vehicleRegistrationNumber?: string | null
 }): RouteGroupStatsOverlayData => {
-  const seed = routeId ?? 0
   const distanceKm = Math.max(0, (distanceMeters ?? 0) / 1000)
   const roundedDistanceKm = Math.round(distanceKm)
   const avgDistanceKm = totalStops > 0 ? distanceKm / Math.max(1, totalStops) : 0
@@ -594,7 +593,6 @@ export const useRouteGroupStatsOverlayController = () => {
   const baseControlls = useBaseControlls<PayloadBase>()
   const planId = baseControlls.payload?.planId ?? null
   const {
-    routeGroup,
     selectedRouteSolution,
     routeSolutionStops,
     orders,
@@ -700,11 +698,15 @@ export const useRouteGroupStatsOverlayController = () => {
   }, [
     driver?.email,
     driver?.username,
-    routeGroup,
     orderStateRegistry,
     ordersById,
     routeSolutionStops,
     selectedRouteSolution,
+    vehicle?.cost_per_km,
+    vehicle?.fuel_type,
+    vehicle?.max_volume_load_cm3,
+    vehicle?.max_weight_load_g,
+    vehicle?.registration_number,
   ])
 
   return {

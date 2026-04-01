@@ -36,6 +36,8 @@ type UseOrderMapMarkersFlowParams = BuildOrderMarkersParams & {
 const UNSCHEDULED_COLOR = '#8b8b8b'
 const GOLDEN_ANGLE = 137.508
 const ORDER_GROUP_MARKER_PREFIX = 'order_group_marker:'
+const ORDER_CLUSTER_RADIUS_PX = 80
+const ORDER_CLUSTER_MAX_ZOOM = 16
 const planColorCache = new Map<number, string>()
 
 const getPlanColor = (planId: number): string => {
@@ -180,7 +182,10 @@ export const useOrderMapMarkersFlow = ({
     })
     setMarkerLookup(lookup)
 
-    mapManager.setMarkerLayer(MAP_MARKER_LAYERS.orders, markers)
+    mapManager.setClusteredMarkerLayer(MAP_MARKER_LAYERS.orders, markers, {
+      radius: ORDER_CLUSTER_RADIUS_PX,
+      maxZoom: ORDER_CLUSTER_MAX_ZOOM,
+    })
     mapManager.setMarkerLayerVisibility(MAP_MARKER_LAYERS.orders, visible)
 
     if (visible) {

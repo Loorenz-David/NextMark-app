@@ -21,6 +21,7 @@ export type RouteGroup = {
   client_id: string;
   total_orders?: number | null;
   total_item_count?: number | null;
+  item_type_counts?: Record<string, number> | null;
   total_volume_cm3?: number | null;
   total_weight_grams?: number | null;
   order_state_counts?: Record<string, number> | null;

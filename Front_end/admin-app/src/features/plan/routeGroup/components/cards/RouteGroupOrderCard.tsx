@@ -16,6 +16,7 @@ type RouteGroupOrderCardProps = {
   stop?: RouteSolutionStop | null;
   displayStopOrder?: number | null;
   planStartDate?: string | null;
+  routeGroupId?: number | null;
 };
 
 export const RouteGroupOrderCard = ({
@@ -23,6 +24,7 @@ export const RouteGroupOrderCard = ({
   stop,
   displayStopOrder,
   planStartDate,
+  routeGroupId,
 }: RouteGroupOrderCardProps) => {
   const { openOrderDetail } = useOrderActions();
   const mapManager = useMapManager();
@@ -45,7 +47,12 @@ export const RouteGroupOrderCard = ({
   const openOrder = () => {
     mapManager.selectOrder(order.client_id);
     openOrderDetail(
-      { mode: "edit", clientId: order.client_id },
+      {
+        mode: "edit",
+        clientId: order.client_id,
+        routeGroupId: routeGroupId ?? order.route_group_id ?? null,
+        planStartDate: planStartDate ?? null,
+      },
       { borderLeft: "rgb(var(--color-light-blue-r),0.7)" },
     );
   };

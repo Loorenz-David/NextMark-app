@@ -74,7 +74,6 @@ const OrderMainContent = ({
   } = useScrollHideActionBar({
     enabled: true,
     expandedHeight: actionStackHeight,
-    collapsedHeight: 0,
   });
 
   const handleOpenOrder = (order: Order) => {

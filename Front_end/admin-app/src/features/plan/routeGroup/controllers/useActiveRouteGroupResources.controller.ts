@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
 import { useShallow } from 'zustand/react/shallow'
 
-import { useOrdersByPlanId } from '@/features/order/store/orderHooks.store'
+import { useOrders } from '@/features/order/store/orderHooks.store'
 import { useRoutePlanByServerId } from '@/features/plan/store/useRoutePlan.selector'
 
 import { useRouteGroupDerivedResources } from '../flows/routeGroupDerivedResources.flow'
@@ -24,7 +24,7 @@ export const useActiveRouteGroupResourcesController = (planId: number | null) =>
   const routeGroup = routeGroups.find((candidateRouteGroup) => candidateRouteGroup.id === activeRouteGroupId)
     ?? null
   const routeGroupId = routeGroup?.id ?? null
-  const planOrders = useOrdersByPlanId(planId)
+  const allOrders = useOrders()
   const routeSolutions = useRouteSolutionsByRouteGroupId(routeGroupId)
   const previewedSolutionId = useRouteSolutionPreviewStore(
     (state) => state.previewedIdByGroupId[routeGroupId ?? -1] ?? null,
@@ -56,11 +56,11 @@ export const useActiveRouteGroupResourcesController = (planId: number | null) =>
   }, [routeSolutionStops])
   const orders = useMemo(
     () =>
-      planOrders.filter(
+      allOrders.filter(
         (order) =>
           typeof order.id === 'number' && activeOrderIds.has(order.id),
       ),
-    [activeOrderIds, planOrders],
+    [activeOrderIds, allOrders],
   )
   const planStartDate = plan?.start_date ?? null
 

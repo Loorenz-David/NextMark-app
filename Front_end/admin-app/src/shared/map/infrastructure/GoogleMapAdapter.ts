@@ -11,6 +11,7 @@ import type {
   MapConfig,
   MapViewportInsets,
   SetMarkerLayerOptions,
+  SetClusteredMarkerLayerOptions,
   ZoneLayerOptions,
   ZonePathEditOptions,
   ZonePolygonOverlayOptions,
@@ -23,6 +24,7 @@ import { MapInstanceManager } from "./core/MapInstanceManager";
 import { ViewportManager } from "./core/ViewportManager";
 import { UserLocationManager } from "./location/UserLocationManager";
 import { MarkerLayerManager } from "./markers/MarkerLayerManager";
+import { ClusterLayerManager } from "./markers/ClusterLayerManager";
 import { MarkerMultiSelectionManager } from "./markers/MarkerMultiSelectionManager";
 import { MarkerSelectionManager } from "./markers/MarkerSelectionManager";
 import { RouteRenderer } from "./route/RouteRenderer";
@@ -30,6 +32,7 @@ import { RouteRenderer } from "./route/RouteRenderer";
 export class GoogleMapAdapter implements MapAdapter {
   private readonly mapInstanceManager: MapInstanceManager;
   private readonly markerLayerManager: MarkerLayerManager;
+  private readonly clusterLayerManager: ClusterLayerManager;
   private readonly markerSelectionManager: MarkerSelectionManager;
   private readonly markerMultiSelectionManager: MarkerMultiSelectionManager;
   private readonly shapeSelectionService: ShapeSelectionService;
@@ -42,11 +45,13 @@ export class GoogleMapAdapter implements MapAdapter {
     (bounds: MapBounds | null) => void
   >();
   private readyListeners = new Set<() => void>();
-  private idleListener: any = null;
-  private zoneOverlayPolygons: any[] = [];
-  private zoneOverlayLabelMarkers: any[] = [];
-  private zoneLayerPolygons: any[] = [];
-  private zoneLabelMarkers: any[] = [];
+  private boundsSubscription: google.maps.MapsEventListener | null = null;
+  private boundsEmitRafHandle: number | null = null;
+  private zoneOverlayPolygons: google.maps.Polygon[] = [];
+  private zoneOverlayLabelMarkers: google.maps.marker.AdvancedMarkerElement[] =
+    [];
+  private zoneLayerPolygons: google.maps.Polygon[] = [];
+  private zoneLabelMarkers: google.maps.marker.AdvancedMarkerElement[] = [];
 
   constructor() {
     let routeFitBoundsCallback: (points: Coordinates[]) => void = () =>
@@ -54,6 +59,14 @@ export class GoogleMapAdapter implements MapAdapter {
 
     this.mapInstanceManager = new MapInstanceManager(loadGoogleMaps);
     this.markerLayerManager = new MarkerLayerManager(this.mapInstanceManager);
+    this.clusterLayerManager = new ClusterLayerManager(
+      this.markerLayerManager,
+      (layerId) => {
+        this.markerSelectionManager.reconcileSelectionState();
+        this.markerSelectionManager.reapplySelectionStyles();
+        this.markerMultiSelectionManager.syncLayerStyles(layerId);
+      },
+    );
     this.markerSelectionManager = new MarkerSelectionManager(
       this.markerLayerManager,
     );
@@ -90,6 +103,10 @@ export class GoogleMapAdapter implements MapAdapter {
 
   async initialize(container: HTMLElement, options?: MapConfig) {
     await this.mapInstanceManager.initialize(container, options);
+    const map = this.mapInstanceManager.getMap();
+    if (map) {
+      this.clusterLayerManager.attachMap(map);
+    }
     this.bindBoundsChangedListener();
 
     this.userLocationManager.clearUserLocationMarker();
@@ -126,6 +143,10 @@ export class GoogleMapAdapter implements MapAdapter {
     orders: MapOrder[],
     options?: SetMarkerLayerOptions,
   ) {
+    if (this.clusterLayerManager.hasLayer(layerId)) {
+      this.clusterLayerManager.clearLayer(layerId);
+    }
+
     const { shouldFitBounds, removedIds } =
       this.markerLayerManager.setLayerMarkers(layerId, orders, options);
 
@@ -142,13 +163,26 @@ export class GoogleMapAdapter implements MapAdapter {
     }
   }
 
+  setClusteredLayerMarkers(
+    layerId: string,
+    orders: MapOrder[],
+    options?: SetClusteredMarkerLayerOptions,
+  ) {
+    this.clusterLayerManager.setLayer(layerId, orders, options);
+    this.markerSelectionManager.reconcileSelectionState();
+    this.markerSelectionManager.reapplySelectionStyles();
+    this.markerMultiSelectionManager.syncLayerStyles(layerId);
+  }
+
   setLayerVisibility(layerId: string, visible: boolean) {
     this.markerLayerManager.setLayerVisibility(layerId, visible);
     this.markerMultiSelectionManager.syncLayerStyles(layerId);
   }
 
   clearLayer(layerId: string) {
-    const removedIds = this.markerLayerManager.clearLayer(layerId);
+    const removedIds = this.clusterLayerManager.hasLayer(layerId)
+      ? this.clusterLayerManager.clearLayer(layerId)
+      : this.markerLayerManager.clearLayer(layerId);
 
     if (removedIds.length) {
       this.markerMultiSelectionManager.removeIds(removedIds);
@@ -159,8 +193,27 @@ export class GoogleMapAdapter implements MapAdapter {
     this.markerSelectionManager.reapplySelectionStyles();
   }
 
+  clearClusteredLayer(layerId: string) {
+    const removedIds = this.clusterLayerManager.clearLayer(layerId);
+
+    if (removedIds.length) {
+      this.markerMultiSelectionManager.removeIds(removedIds);
+    }
+
+    this.drawingManagerService.handleLayerCleared(layerId);
+    this.markerSelectionManager.reconcileSelectionState();
+    this.markerSelectionManager.reapplySelectionStyles();
+  }
+
+  expandClusterIds(layerId: string, markerIds: string[]) {
+    return this.clusterLayerManager.expandToLeafIds(layerId, markerIds);
+  }
+
   clearMarkers() {
-    const removedIds = this.markerLayerManager.clearMarkers();
+    const removedIds = [
+      ...this.clusterLayerManager.clearLayers(),
+      ...this.markerLayerManager.clearMarkers(),
+    ];
 
     if (removedIds.length) {
       this.markerMultiSelectionManager.removeIds(removedIds);
@@ -212,6 +265,13 @@ export class GoogleMapAdapter implements MapAdapter {
     this.markerSelectionManager.setHoveredMarker(id);
   }
 
+  setMultiSelectedMarkerIds(layerId: string, ids: string[]) {
+    const resolvedIds = this.resolveVisibleMultiSelectedMarkerIds(layerId, ids)
+    this.markerMultiSelectionManager.setActiveLayer(layerId);
+    this.markerMultiSelectionManager.applyMultiSelection(layerId, resolvedIds);
+    this.markerMultiSelectionManager.syncLayerStyles(layerId);
+  }
+
   drawRoute(route: Route | null) {
     this.routeRenderer.drawRoute(route);
   }
@@ -222,6 +282,39 @@ export class GoogleMapAdapter implements MapAdapter {
 
   setViewportInsets(insets: MapViewportInsets) {
     this.viewportManager.setViewportInsets(insets);
+  }
+
+  private resolveVisibleMultiSelectedMarkerIds(layerId: string, ids: string[]) {
+    const selectedLeafIds = new Set(ids)
+    const layer = this.markerLayerManager.getLayer(layerId)
+
+    if (!layer || selectedLeafIds.size === 0) {
+      return ids
+    }
+
+    const resolvedIds: string[] = []
+
+    layer.markers.forEach((_entry, markerId) => {
+      if (selectedLeafIds.has(markerId)) {
+        resolvedIds.push(markerId)
+        return
+      }
+
+      if (!markerId.startsWith('cluster_')) {
+        return
+      }
+
+      const leafIds = this.clusterLayerManager.expandToLeafIds(layerId, [markerId])
+      if (leafIds.length === 0) {
+        return
+      }
+
+      if (leafIds.every((leafId) => selectedLeafIds.has(leafId))) {
+        resolvedIds.push(markerId)
+      }
+    })
+
+    return resolvedIds
   }
 
   reframeToVisibleArea() {
@@ -235,7 +328,7 @@ export class GoogleMapAdapter implements MapAdapter {
     this.clearZonePolygonOverlay();
 
     const map = this.mapInstanceManager.getMap();
-    const googleMaps = (globalThis as any)?.google?.maps;
+    const googleMaps = globalThis.google?.maps;
     const PolygonCtor = googleMaps?.Polygon;
     const MarkerCtor = googleMaps?.marker?.AdvancedMarkerElement;
 
@@ -303,7 +396,7 @@ export class GoogleMapAdapter implements MapAdapter {
     this.clearZoneLayer();
 
     const map = this.mapInstanceManager.getMap();
-    const googleMaps = (globalThis as any)?.google?.maps;
+    const googleMaps = globalThis.google?.maps;
     const PolygonCtor = googleMaps?.Polygon;
     const MarkerCtor = googleMaps?.marker?.AdvancedMarkerElement;
 
@@ -389,7 +482,7 @@ export class GoogleMapAdapter implements MapAdapter {
   }
 
   clearZoneLayer() {
-    const googleMaps = (globalThis as any)?.google?.maps;
+    const googleMaps = globalThis.google?.maps;
     const mapEvents = googleMaps?.event;
     this.zoneLayerPolygons.forEach((polygon) => {
       mapEvents?.clearInstanceListeners?.(polygon);
@@ -429,10 +522,15 @@ export class GoogleMapAdapter implements MapAdapter {
   }
 
   destroy() {
-    this.idleListener?.remove?.();
-    this.idleListener = null;
+    this.boundsSubscription?.remove?.();
+    this.boundsSubscription = null;
+    if (this.boundsEmitRafHandle !== null) {
+      cancelAnimationFrame(this.boundsEmitRafHandle);
+      this.boundsEmitRafHandle = null;
+    }
     this.boundsChangedListeners.clear();
     this.readyListeners.clear();
+    this.clusterLayerManager.detachMap();
     this.clearMarkers();
     this.userLocationManager.clearUserLocationMarker();
     this.locateControlManager.unmountLocateControl();
@@ -556,15 +654,26 @@ export class GoogleMapAdapter implements MapAdapter {
   }
 
   private bindBoundsChangedListener() {
-    this.idleListener?.remove?.();
+    this.boundsSubscription?.remove?.();
     const map = this.mapInstanceManager.getMap();
     if (!map || !google?.maps?.event?.addListener) {
       return;
     }
 
-    this.idleListener = google.maps.event.addListener(map, "idle", () => {
-      this.emitBoundsChanged();
-    });
+    this.boundsSubscription = google.maps.event.addListener(
+      map,
+      "bounds_changed",
+      () => {
+        if (this.boundsEmitRafHandle !== null) {
+          cancelAnimationFrame(this.boundsEmitRafHandle);
+        }
+
+        this.boundsEmitRafHandle = requestAnimationFrame(() => {
+          this.boundsEmitRafHandle = null;
+          this.emitBoundsChanged();
+        });
+      },
+    );
   }
 
   private emitBoundsChanged() {

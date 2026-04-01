@@ -94,6 +94,7 @@ export const RouteGroupOrderList = ({
   const strategyLabel = getRouteStrategyLabel(
     selectedRouteSolution?.route_end_strategy,
   );
+  const activeRouteGroupId = selectedRouteSolution?.route_group_id ?? null
   const startLocationLabel = `${strategyLabel} · ${boundaryLocations.start.label}`;
   const endLocationLabel = `${strategyLabel} · ${boundaryLocations.end.label}`;
 
@@ -145,6 +146,7 @@ export const RouteGroupOrderList = ({
                       null
                     }
                     planStartDate={planStartDate}
+                    routeGroupId={activeRouteGroupId}
                     allOrderedStopClientIds={allOrderedStopClientIds}
                   />
                 );
@@ -160,6 +162,7 @@ export const RouteGroupOrderList = ({
                   expanded={expanded}
                   onToggleExpanded={() => toggleGroup(uiKey)}
                   planStartDate={planStartDate}
+                  routeGroupId={activeRouteGroupId}
                   projectedStopOrderByClientId={projectedStopOrderByClientId}
                   allOrderedStopClientIds={allOrderedStopClientIds}
                 />
@@ -172,6 +175,7 @@ export const RouteGroupOrderList = ({
               order={order}
               stop={null}
               planStartDate={planStartDate}
+              routeGroupId={activeRouteGroupId}
             />
           ))}
           {boundaryLocations.end.location && groupedStops.length > 0 && (

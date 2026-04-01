@@ -18,12 +18,29 @@
 
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
   transform: translateY(-50%);
+  opacity: 1;
   white-space: nowrap;
   transition:
+    opacity ease 0.16s,
     transform ease 0.15s,
     filter ease 0.15s,
     box-shadow ease 0.15s;
   z-index: 2;
+}
+
+.map-marker--enter {
+  opacity: 0;
+  transform: translateY(-50%) scale(0.92);
+}
+
+.map-marker--enter.map-marker--enter-active {
+  opacity: 1;
+  transform: translateY(-50%) scale(1);
+}
+
+.map-marker--exit {
+  opacity: 0;
+  transform: translateY(-50%) scale(0.9);
 }
 
 .map-marker__content {
@@ -220,4 +237,103 @@
   color: #64748b;
   border-color: #64748b;
   box-shadow: 0 0 0 4px rgba(100, 116, 139, 0.12);
+}
+
+.map-cluster-marker {
+  width: var(--cluster-size, 44px);
+  height: var(--cluster-size, 44px);
+  cursor: pointer;
+  opacity: 1;
+  transform: scale(1);
+  transition:
+    opacity 0.16s ease,
+    transform 0.16s ease;
+  z-index: 20;
+}
+
+.map-cluster-marker.map-marker--selected-default,
+.map-cluster-marker.map-marker--selected-order,
+.map-cluster-marker.map-marker--multi-selected {
+  background: transparent;
+  border: none;
+  outline: none;
+  box-shadow: none;
+  color: inherit;
+}
+
+.map-cluster-marker.map-marker--selected-default::before,
+.map-cluster-marker.map-marker--selected-default::after,
+.map-cluster-marker.map-marker--selected-order::before,
+.map-cluster-marker.map-marker--selected-order::after,
+.map-cluster-marker.map-marker--multi-selected::before,
+.map-cluster-marker.map-marker--multi-selected::after {
+  display: none;
+}
+
+.map-cluster-marker--enter {
+  opacity: 0;
+  transform: scale(0.92);
+}
+
+.map-cluster-marker--enter.map-cluster-marker--enter-active {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.map-cluster-marker--exit {
+  opacity: 0;
+  transform: scale(0.9);
+}
+
+.map-cluster-marker__inner {
+  width: 100%;
+  height: 100%;
+  border-radius: 9999px;
+  background: radial-gradient(
+    circle at 35% 35%,
+    rgba(86, 201, 181, 0.95),
+    rgba(60, 140, 200, 0.9)
+  );
+  border: 2.5px solid rgba(255, 255, 255, 0.3);
+  box-shadow:
+    0 4px 16px rgba(0, 0, 0, 0.32),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 120ms ease, box-shadow 120ms ease;
+}
+
+.map-cluster-marker:hover .map-cluster-marker__inner {
+  transform: scale(1.08);
+  box-shadow:
+    0 6px 20px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.25);
+}
+
+.map-cluster-marker.map-marker--hovered .map-cluster-marker__inner,
+.map-cluster-marker.map-marker--selected-default .map-cluster-marker__inner,
+.map-cluster-marker.map-marker--selected-order .map-cluster-marker__inner,
+.map-cluster-marker.map-marker--multi-selected .map-cluster-marker__inner {
+  background: #eff6ff;
+  border-color: #1d4ed8;
+  box-shadow:
+    0 4px 10px rgba(29, 78, 216, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.55);
+}
+
+.map-cluster-marker.map-marker--hovered .map-cluster-marker__label,
+.map-cluster-marker.map-marker--selected-default .map-cluster-marker__label,
+.map-cluster-marker.map-marker--selected-order .map-cluster-marker__label,
+.map-cluster-marker.map-marker--multi-selected .map-cluster-marker__label {
+  color: #1d4ed8;
+}
+
+.map-cluster-marker__label {
+  font-size: 12px;
+  font-weight: 700;
+  color: #ffffff;
+  letter-spacing: -0.3px;
+  user-select: none;
+  pointer-events: none;
 }
