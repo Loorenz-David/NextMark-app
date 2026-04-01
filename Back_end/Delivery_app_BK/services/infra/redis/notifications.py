@@ -30,6 +30,12 @@ def add_unread_notification(*, user_id: int, app_scope: str, notification: dict)
     ttl_seconds = _ttl_seconds()
     occurred_at = notification.get("occurred_at")
     score = _to_timestamp(occurred_at)
+    _prune_expired_unread_entries(
+        redis=redis,
+        user_id=user_id,
+        app_scope=app_scope,
+        ttl_seconds=ttl_seconds,
+    )
     already_exists = redis.zscore(unread_key, notification_id) is not None
     unread_count = int(redis.zcard(unread_key) or 0) + (0 if already_exists else 1)
 
@@ -45,6 +51,13 @@ def add_unread_notification(*, user_id: int, app_scope: str, notification: dict)
 def list_unread_notifications(*, user_id: int, app_scope: str, limit: int = 50) -> list[dict]:
     redis = get_current_redis_connection()
     unread_key = build_notification_unread_key(user_id, app_scope)
+    ttl_seconds = _ttl_seconds()
+    _prune_expired_unread_entries(
+        redis=redis,
+        user_id=user_id,
+        app_scope=app_scope,
+        ttl_seconds=ttl_seconds,
+    )
     notification_ids = redis.zrevrange(unread_key, 0, max(0, limit - 1))
     payloads: list[dict] = []
     stale_ids: list[str] = []
@@ -62,7 +75,7 @@ def list_unread_notifications(*, user_id: int, app_scope: str, limit: int = 50) 
             for notification_id in stale_ids:
                 pipe.zrem(unread_key, notification_id)
             pipe.set(build_notification_count_key(user_id, app_scope), remaining)
-            pipe.expire(build_notification_count_key(user_id, app_scope), _ttl_seconds())
+            pipe.expire(build_notification_count_key(user_id, app_scope), ttl_seconds)
             pipe.execute()
 
     payloads.sort(key=lambda item: str(item.get("occurred_at", "")), reverse=True)
@@ -77,9 +90,15 @@ def mark_notifications_read(*, user_id: int, app_scope: str, notification_ids: I
     if not normalized_ids:
         return 0
 
+    ttl_seconds = _ttl_seconds()
+    _prune_expired_unread_entries(
+        redis=redis,
+        user_id=user_id,
+        app_scope=app_scope,
+        ttl_seconds=ttl_seconds,
+    )
     removed = int(redis.zrem(unread_key, *normalized_ids) or 0)
     remaining = int(redis.zcard(unread_key) or 0)
-    ttl_seconds = _ttl_seconds()
     with redis.pipeline() as pipe:
         pipe.set(count_key, remaining)
         pipe.expire(count_key, ttl_seconds)
@@ -90,11 +109,44 @@ def mark_notifications_read(*, user_id: int, app_scope: str, notification_ids: I
 
 def get_unread_count(*, user_id: int, app_scope: str) -> int:
     redis = get_current_redis_connection()
+    ttl_seconds = _ttl_seconds()
+    remaining = _prune_expired_unread_entries(
+        redis=redis,
+        user_id=user_id,
+        app_scope=app_scope,
+        ttl_seconds=ttl_seconds,
+    )
     raw = redis.get(build_notification_count_key(user_id, app_scope))
+    if raw is None:
+        return remaining
     try:
         return int(raw or 0)
     except (TypeError, ValueError):
-        return 0
+        return remaining
+
+
+def _prune_expired_unread_entries(
+    *,
+    redis,
+    user_id: int,
+    app_scope: str,
+    ttl_seconds: int,
+) -> int:
+    unread_key = build_notification_unread_key(user_id, app_scope)
+    count_key = build_notification_count_key(user_id, app_scope)
+    cutoff_score = datetime.now(timezone.utc).timestamp() - ttl_seconds
+    removed = int(redis.zremrangebyscore(unread_key, "-inf", cutoff_score) or 0)
+    remaining = int(redis.zcard(unread_key) or 0)
+
+    if removed > 0 or redis.get(count_key) is None:
+        with redis.pipeline() as pipe:
+            pipe.set(count_key, remaining)
+            pipe.expire(count_key, ttl_seconds)
+            if remaining > 0:
+                pipe.expire(unread_key, ttl_seconds)
+            pipe.execute()
+
+    return remaining
 
 
 def _to_timestamp(value: object) -> float:
