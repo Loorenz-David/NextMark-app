@@ -100,6 +100,51 @@ def _summarize_get_zone_snapshot(params: dict, result: dict) -> str:
     return f"Zone '{name}': {orders} assigned orders{util_str}."
 
 
+def _summarize_assign_orders_to_plan(params: dict, result: dict) -> str:
+    if "error" in result:
+        return f"assign_orders_to_plan failed: {result['error']}"
+    return (
+        f"Assigned {result.get('updated_count', 0)} order(s) to plan {result.get('plan_id')}."
+    )
+
+
+def _summarize_assign_orders_to_route_group(params: dict, result: dict) -> str:
+    if "error" in result:
+        return f"assign_orders_to_route_group failed: {result['error']}"
+    return (
+        f"Assigned {result.get('updated_count', 0)} order(s) to route group "
+        f"{result.get('route_group_id')} (plan {result.get('plan_id')})."
+    )
+
+
+def _summarize_update_order_state(params: dict, result: dict) -> str:
+    if "error" in result:
+        return f"update_order_state failed: {result['error']}"
+    return (
+        f"Updated {result.get('updated_count', 0)} order(s) to state "
+        f"\"{result.get('target_state')}\"."
+    )
+
+
+def _summarize_create_plan(params: dict, result: dict) -> str:
+    if "error" in result:
+        return f"create_plan failed: {result['error']}"
+    return (
+        f"Created plan \"{result.get('label')}\" (id={result.get('id')}) "
+        f"for {result.get('start_date')} with "
+        f"{result.get('route_groups_created', 0)} route group(s)."
+    )
+
+
+def _summarize_materialize_route_groups(params: dict, result: dict) -> str:
+    if "error" in result:
+        return f"materialize_route_groups failed: {result['error']}"
+    return (
+        f"Materialized {result.get('created_or_existing_count', 0)} route group(s) "
+        f"for plan {result.get('plan_id')}."
+    )
+
+
 # ── Action functions ──────────────────────────────────────────────────────────
 
 def _actions_for_get_plan_snapshot(result: dict) -> list:
@@ -203,6 +248,60 @@ def _actions_for_get_zone_snapshot(result: dict) -> list:
     return []
 
 
+def _actions_for_assign_orders_to_plan(result: dict) -> list:
+    plan_id = result.get("plan_id")
+    if "error" in result or not plan_id:
+        return []
+    return [{
+        "id": f"navigate_plan_{plan_id}",
+        "type": "navigate",
+        "label": "View Plan",
+        "payload": {"path": f"/plans/{plan_id}"},
+    }]
+
+
+def _actions_for_assign_orders_to_route_group(result: dict) -> list:
+    plan_id = result.get("plan_id")
+    route_group_id = result.get("route_group_id")
+    if "error" in result or not plan_id:
+        return []
+    path = f"/plans/{plan_id}" if not route_group_id else f"/plans/{plan_id}?group={route_group_id}"
+    return [{
+        "id": f"navigate_plan_{plan_id}",
+        "type": "navigate",
+        "label": "View Route Group",
+        "payload": {"path": path},
+    }]
+
+
+def _actions_for_update_order_state(result: dict) -> list:
+    return []
+
+
+def _actions_for_create_plan(result: dict) -> list:
+    plan_id = result.get("id")
+    if "error" in result or not plan_id:
+        return []
+    return [{
+        "id": f"navigate_plan_{plan_id}",
+        "type": "navigate",
+        "label": "Open Plan",
+        "payload": {"path": f"/plans/{plan_id}"},
+    }]
+
+
+def _actions_for_materialize_route_groups(result: dict) -> list:
+    plan_id = result.get("plan_id")
+    if "error" in result or not plan_id:
+        return []
+    return [{
+        "id": f"navigate_plan_{plan_id}",
+        "type": "navigate",
+        "label": "View Plan",
+        "payload": {"path": f"/plans/{plan_id}"},
+    }]
+
+
 # ── Registries ────────────────────────────────────────────────────────────────
 
 # Registry 1: tool name -> summary function.
@@ -218,6 +317,11 @@ _SUMMARY_REGISTRY: dict[str, Callable[[dict, dict], str]] = {
     "list_route_groups":         _summarize_list_route_groups,
     "list_zones":                _summarize_list_zones,
     "get_zone_snapshot":         _summarize_get_zone_snapshot,
+    "assign_orders_to_plan":        _summarize_assign_orders_to_plan,
+    "assign_orders_to_route_group": _summarize_assign_orders_to_route_group,
+    "update_order_state":           _summarize_update_order_state,
+    "create_plan":                  _summarize_create_plan,
+    "materialize_route_groups":     _summarize_materialize_route_groups,
 }
 
 # Registry 2: tool name -> action generator.
@@ -233,6 +337,11 @@ _ACTION_REGISTRY: dict[str, Callable[[dict], list[AIAction]]] = {
     "list_route_groups":         _actions_for_list_route_groups,
     "list_zones":                _actions_for_list_zones,
     "get_zone_snapshot":         _actions_for_get_zone_snapshot,
+    "assign_orders_to_plan":        _actions_for_assign_orders_to_plan,
+    "assign_orders_to_route_group": _actions_for_assign_orders_to_route_group,
+    "update_order_state":           _actions_for_update_order_state,
+    "create_plan":                  _actions_for_create_plan,
+    "materialize_route_groups":     _actions_for_materialize_route_groups,
 }
 
 

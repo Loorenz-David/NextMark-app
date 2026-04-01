@@ -123,7 +123,7 @@ Narrative behavior requirements:
 
 ---
 
-## Registered Tools (Phase 3)
+## Registered Tools (Phase 4)
 
 | Tool name | File | Domain service |
 |---|---|---|
@@ -137,6 +137,11 @@ Narrative behavior requirements:
 | `list_route_groups` | `tools/plan_tools.py` | `queries/route_plan/route_groups/list_route_groups.py` |
 | `list_zones` | `tools/zone_tools.py` | `queries/zones/find_zones.py` + `ZoneTemplate` query |
 | `get_zone_snapshot` | `tools/zone_tools.py` | `Zone` + `OrderZoneAssignment` + `RouteGroup` query |
+| `assign_orders_to_plan` | `tools/order_tools.py` | `commands/order/update_order_route_plan.py` -> `apply_orders_route_plan_change` |
+| `assign_orders_to_route_group` | `tools/order_tools.py` | same command, with `destination_route_group_id` |
+| `update_order_state` | `tools/order_tools.py` | `commands/order/order_states/update_orders_state.py` -> `update_orders_state_payload` |
+| `create_plan` | `tools/plan_tools.py` | `commands/route_plan/create_plan.py` -> `create_plan` |
+| `materialize_route_groups` | `tools/plan_tools.py` | `commands/route_plan/materialize_route_groups.py` -> `materialize_route_groups` |
 
 ---
 
@@ -215,15 +220,15 @@ Handlers status:
 
 ---
 
-## Tool File Status (Phase 3)
+## Tool File Status (Phase 4)
 
 Implemented:
 - tools/narrative_tools.py  (get_plan_snapshot, get_route_group_snapshot, get_operations_dashboard)
 - tools/zone_tools.py       (evaluate_order_route_fit, list_zones, get_zone_snapshot)
 - tools/geocode_tools.py    (geocode_address — pre-existing, registered in Phase 2)
 - tools/geometry_utils.py   (NEW — pure-Python spatial helpers: haversine, centroid, corridor, cheapest_insertion)
-- tools/order_tools.py      (list_orders implemented; mutation tools remain stubs)
-- tools/plan_tools.py       (list_plans, list_route_groups implemented; mutation and execution tools remain stubs)
+- tools/order_tools.py      (list_orders, assign_orders_to_plan, assign_orders_to_route_group, update_order_state)
+- tools/plan_tools.py       (list_plans, list_route_groups, create_plan, materialize_route_groups)
 
 Skeleton (NotImplemented - later phases):
 - tools/item_tools.py
@@ -260,18 +265,11 @@ Provider files remain the same:
 
 ## Next Phases
 
-### Phase 3 — Core Query Tools
-- list_orders — with filters (route_group_id, operation_type, order_plan_objective, zone_id)
-- list_plans — updated for RoutePlan with zone/group awareness
-- list_route_groups — exposes groups as a navigable resource for the AI
-- list_zones — lists active zones for the team
-- get_zone_snapshot — zone-level health view (order density, capacity vs. template limits)
+### Phase 4 — Mutation Tools ✅ (complete)
 
-### Phase 4 — Mutation Tools
-- create_order, update_order, update_order_state
-- assign_orders_to_plan, assign_orders_to_route_group
-- create_plan, optimize_plan
-- search_item_types, add_items_to_order
+### Phase 5 — Item Domain Tools
+- search_item_types — full-text search over item type catalog
+- add_items_to_order — attach items to an order with quantity + weight + volume
 
 ---
 

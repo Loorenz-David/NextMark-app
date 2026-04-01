@@ -318,6 +318,68 @@ get_zone_snapshot
     utilization_pct, route_group_count, has_template, blocks[]
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+MUTATION TOOLS (Phase 4)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+SAFETY RULE: Before calling any mutation tool you MUST:
+1. Confirm the target IDs exist (use a query tool first).
+2. State your intent clearly to the user before executing.
+3. Never mutate on guesswork. Never invent IDs.
+
+create_plan
+  Creates a new route plan.
+  Required params:
+    label: str          - human-readable name
+    start_date: str     - ISO date (YYYY-MM-DD)
+  Optional params:
+    end_date: str       - ISO date, defaults to start_date
+    date_strategy: str  - "single" | "range" (default "single")
+    zone_ids: list[int] - pre-materialize route groups for these zones
+    order_ids: list[int]- immediately assign these orders to the plan
+  Returns:
+    id, label, date_strategy, start_date, end_date, state_id,
+    route_groups_created, route_solutions_created
+  Note: New plans always start as OPEN state.
+
+materialize_route_groups
+  Create one route group per zone for an existing plan.
+  Idempotent - if a group already exists for a zone it is returned unchanged.
+  Params:
+    plan_id: int        - target plan
+    zone_ids: list[int] - zones to materialize
+  Returns:
+    plan_id, created_or_existing_count, route_groups[{{id, name, zone_id}}]
+
+assign_orders_to_plan
+  Move a list of orders to a plan. Orders land in the default (no-zone) bucket.
+  Use assign_orders_to_route_group instead if a specific zone group is needed.
+  Params:
+    order_ids: list[int] - orders to move
+    plan_id: int         - destination plan
+  Returns:
+    updated_count, plan_id, order_ids
+
+assign_orders_to_route_group
+  Move a list of orders into a specific route group.
+  The tool resolves the parent plan_id from the route group automatically.
+  PREREQUISITE: call list_route_groups first to confirm the group exists.
+  Params:
+    order_ids: list[int]  - orders to move
+    route_group_id: int   - destination route group
+  Returns:
+    updated_count, plan_id, route_group_id, order_ids
+
+update_order_state
+  Transition a list of orders to a new state.
+  Valid state names: see ORDER STATES section above.
+  Only valid state transitions are applied (invalid transitions are silently skipped).
+  Params:
+    order_ids: list[int] - orders to update
+    state: str           - target state name
+  Returns:
+    updated_count, target_state, order_ids
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 """.strip()
 
 

@@ -8,6 +8,10 @@ Status: SKELETON - implementations added in Phase 2.
 from __future__ import annotations
 
 from Delivery_app_BK.ai.prompts.system_prompt import PLAN_STATE_MAP
+from Delivery_app_BK.services.commands.route_plan.create_plan import create_plan
+from Delivery_app_BK.services.commands.route_plan.materialize_route_groups import (
+    materialize_route_groups,
+)
 from Delivery_app_BK.errors import NotFound
 from Delivery_app_BK.models import RouteGroup, RoutePlan
 from Delivery_app_BK.services.context import ServiceContext
@@ -143,8 +147,55 @@ def get_plan_summary_tool(ctx: ServiceContext, plan_id: int) -> dict:
 
 
 # -- create_plan -----------------------------------------------------------------
-def create_plan_tool(ctx: ServiceContext, **kwargs) -> dict:
-    raise NotImplementedError("create_plan_tool - Phase 2")
+def create_plan_tool(
+    ctx: ServiceContext,
+    label: str,
+    start_date: str,
+    end_date: str | None = None,
+    date_strategy: str = "single",
+    zone_ids: list[int] | None = None,
+    order_ids: list[int] | None = None,
+) -> dict:
+    """Create a new route plan."""
+    if not label or not isinstance(label, str):
+        return {"error": "label is required and must be a non-empty string"}
+    if not start_date or not isinstance(start_date, str):
+        return {"error": "start_date is required (ISO date string YYYY-MM-DD)"}
+
+    fields: dict = {
+        "label": label.strip(),
+        "start_date": start_date,
+        "date_strategy": date_strategy,
+    }
+    if end_date:
+        fields["end_date"] = end_date
+    if zone_ids:
+        fields["zone_ids"] = zone_ids
+    if order_ids:
+        fields["order_ids"] = order_ids
+
+    tool_ctx = ServiceContext(
+        incoming_data={"fields": [fields]},
+        identity=ctx.identity,
+        on_query_return="list",
+    )
+    result = create_plan(tool_ctx)
+    created = result.get("created") or []
+    if not created:
+        return {"error": "Plan creation returned no result"}
+
+    bundle = created[0]
+    plan_data = bundle.get("delivery_plan") or {}
+    return {
+        "id": plan_data.get("id"),
+        "label": plan_data.get("label"),
+        "date_strategy": plan_data.get("date_strategy"),
+        "start_date": plan_data.get("start_date"),
+        "end_date": plan_data.get("end_date"),
+        "state_id": plan_data.get("state_id"),
+        "route_groups_created": len(bundle.get("route_groups") or []),
+        "route_solutions_created": len(bundle.get("route_solutions") or []),
+    }
 
 
 # -- optimize_plan ----------------------------------------------------------------
@@ -188,5 +239,30 @@ def list_route_groups_tool(ctx: ServiceContext, plan_id: int) -> dict:
 
 
 # -- materialize_route_groups -----------------------------------------------------
-def materialize_route_groups_tool(ctx: ServiceContext, plan_id: int) -> dict:
-    raise NotImplementedError("materialize_route_groups_tool - Phase 2")
+def materialize_route_groups_tool(
+    ctx: ServiceContext, plan_id: int, zone_ids: list[int]
+) -> dict:
+    """Create one route group per zone for an existing plan."""
+    if not isinstance(plan_id, int) or plan_id <= 0:
+        return {"error": "plan_id must be a positive integer"}
+    if not zone_ids or not isinstance(zone_ids, list):
+        return {"error": "zone_ids must be a non-empty list of integers"}
+
+    tool_ctx = ServiceContext(
+        incoming_data={"route_plan_id": plan_id, "zone_ids": zone_ids},
+        identity=ctx.identity,
+        on_query_return="list",
+    )
+    result = materialize_route_groups(tool_ctx)
+    return {
+        "plan_id": plan_id,
+        "created_or_existing_count": len(result),
+        "route_groups": [
+            {
+                "id": g.get("id"),
+                "name": g.get("zone_snapshot", {}).get("name"),
+                "zone_id": g.get("zone_id"),
+            }
+            for g in result
+        ],
+    }

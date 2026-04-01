@@ -8,7 +8,16 @@ Status: SKELETON - implementations added in Phase 2.
 from __future__ import annotations
 
 from Delivery_app_BK.ai.prompts.system_prompt import ORDER_STATE_MAP
+from Delivery_app_BK.errors import NotFound
+from Delivery_app_BK.models import RouteGroup
+from Delivery_app_BK.services.commands.order.order_states.update_orders_state import (
+    update_orders_state_payload,
+)
+from Delivery_app_BK.services.commands.order.update_order_route_plan import (
+    apply_orders_route_plan_change,
+)
 from Delivery_app_BK.services.context import ServiceContext
+from Delivery_app_BK.services.queries.get_instance import get_instance
 from Delivery_app_BK.services.queries.order.list_orders import list_orders
 
 _ORDER_STATE_NAME_TO_ID: dict[str, int] = ORDER_STATE_MAP
@@ -70,7 +79,7 @@ def list_orders_tool(
     if zone_id is not None:
         params["zone_id"] = zone_id
 
-    tool_ctx = ServiceContext(query_params=params, identity=ctx.identity)
+    tool_ctx = ServiceContext(query_params=params, identity=ctx.identity, on_query_return="list")
 
     result = list_orders(
         ctx=tool_ctx,
@@ -136,14 +145,64 @@ def update_order_tool(ctx: ServiceContext, order_id: int, **kwargs) -> dict:
 
 
 def update_order_state_tool(ctx: ServiceContext, order_ids: list[int], state: str) -> dict:
-    raise NotImplementedError("update_order_state_tool - Phase 2")
+    """Transition a list of orders to the given state name."""
+    if not order_ids:
+        return {"error": "order_ids must be a non-empty list"}
+
+    state_id = _ORDER_STATE_NAME_TO_ID.get(state)
+    if state_id is None:
+        return {
+            "error": f"Unknown order state: {state!r}. "
+            f"Valid states: {list(_ORDER_STATE_NAME_TO_ID.keys())}"
+        }
+
+    payload = update_orders_state_payload(ctx, order_ids, state_id)
+    changed_orders = payload.get("order") or []
+    return {
+        "updated_count": len(changed_orders),
+        "target_state": state,
+        "order_ids": order_ids,
+    }
 
 
 def assign_orders_to_plan_tool(ctx: ServiceContext, order_ids: list[int], plan_id: int) -> dict:
-    raise NotImplementedError("assign_orders_to_plan_tool - Phase 2")
+    """Move a list of orders to the given plan."""
+    if not order_ids:
+        return {"error": "order_ids must be a non-empty list"}
+    if not isinstance(plan_id, int) or plan_id <= 0:
+        return {"error": "plan_id must be a positive integer"}
+
+    result = apply_orders_route_plan_change(ctx, order_ids, plan_id)
+    updated = result.get("updated") or []
+    return {
+        "updated_count": len(updated),
+        "plan_id": plan_id,
+        "order_ids": order_ids,
+    }
 
 
 def assign_orders_to_route_group_tool(
     ctx: ServiceContext, order_ids: list[int], route_group_id: int
 ) -> dict:
-    raise NotImplementedError("assign_orders_to_route_group_tool - Phase 2")
+    """Move a list of orders into a specific route group."""
+    if not order_ids:
+        return {"error": "order_ids must be a non-empty list"}
+    if not isinstance(route_group_id, int) or route_group_id <= 0:
+        return {"error": "route_group_id must be a positive integer"}
+
+    try:
+        route_group = get_instance(ctx, RouteGroup, route_group_id)
+    except NotFound:
+        return {"error": f"route_group {route_group_id} not found"}
+
+    plan_id = route_group.route_plan_id
+    result = apply_orders_route_plan_change(
+        ctx, order_ids, plan_id, destination_route_group_id=route_group_id
+    )
+    updated = result.get("updated") or []
+    return {
+        "updated_count": len(updated),
+        "plan_id": plan_id,
+        "route_group_id": route_group_id,
+        "order_ids": order_ids,
+    }

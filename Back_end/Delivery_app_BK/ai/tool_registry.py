@@ -6,8 +6,18 @@ from Delivery_app_BK.ai.tools.narrative_tools import (
     get_plan_snapshot_tool,
     get_route_group_snapshot_tool,
 )
-from Delivery_app_BK.ai.tools.order_tools import list_orders_tool
-from Delivery_app_BK.ai.tools.plan_tools import list_plans_tool, list_route_groups_tool
+from Delivery_app_BK.ai.tools.order_tools import (
+    assign_orders_to_plan_tool,
+    assign_orders_to_route_group_tool,
+    list_orders_tool,
+    update_order_state_tool,
+)
+from Delivery_app_BK.ai.tools.plan_tools import (
+    create_plan_tool,
+    list_plans_tool,
+    list_route_groups_tool,
+    materialize_route_groups_tool,
+)
 from Delivery_app_BK.ai.tools.zone_tools import (
     evaluate_order_route_fit_tool,
     get_zone_snapshot_tool,
@@ -29,6 +39,13 @@ TOOLS: dict[str, object] = {
     "list_route_groups":         list_route_groups_tool,
     "list_zones":                list_zones_tool,
     "get_zone_snapshot":         get_zone_snapshot_tool,
+
+    # Phase 4: mutation tools
+    "assign_orders_to_plan":        assign_orders_to_plan_tool,
+    "assign_orders_to_route_group": assign_orders_to_route_group_tool,
+    "update_order_state":           update_order_state_tool,
+    "create_plan":                  create_plan_tool,
+    "materialize_route_groups":     materialize_route_groups_tool,
 
     # order domain - later phases
     # "create_order":         create_order_tool,
