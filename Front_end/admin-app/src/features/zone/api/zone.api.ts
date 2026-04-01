@@ -19,6 +19,7 @@ type EnsureFirstZoneVersionPayload = {
 
 type CreateZonePayload = {
   name: string;
+  zone_color?: string | null;
   zone_type?: "bootstrap" | "system" | "user" | null;
   geometry?: GeoJSONPolygon | null;
   centroid_lat?: number | null;
@@ -31,6 +32,7 @@ type CreateZonePayload = {
 
 type UpdateZonePayload = {
   name?: string;
+  zone_color?: string | null;
 };
 
 type UpdateZoneGeometryPayload = {

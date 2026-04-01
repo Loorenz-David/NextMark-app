@@ -85,6 +85,7 @@ export type ZoneDefinition = {
   version_id?: number;
   city_key?: string | null;
   name: string;
+  zone_color?: string | null;
   zone_type?: "bootstrap" | "system" | "user" | null;
   centroid_lat?: number | null;
   centroid_lng?: number | null;
@@ -104,6 +105,7 @@ export type ZoneLite = {
   team_id?: number;
   city_key?: string | null;
   name: string;
+  zone_color?: string | null;
   zone_type?: "bootstrap" | "system" | "user" | null;
   centroid: ZoneCentroid | null;
   bbox: ZoneBBox;
@@ -120,6 +122,7 @@ export type ZoneState = {
   team_id?: number;
   city_key?: string | null;
   name: string;
+  zone_color?: string | null;
   zone_type?: "bootstrap" | "system" | "user" | null;
   is_active: boolean;
   centroid: ZoneCentroid | null;
@@ -148,6 +151,7 @@ export type ZonesContext = {
     client_id?: string | null;
     city_key?: string | null;
     name: string;
+    zone_color?: string | null;
     zone_type?: "bootstrap" | "system" | "user" | null;
     centroid: ZoneCentroid | null;
     bbox: ZoneBootstrapBBox;

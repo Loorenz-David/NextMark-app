@@ -5,6 +5,7 @@ import { useMessageHandler } from '@shared-message-handler'
 import { createZoneAction } from '@/features/zone/actions/createZone.action'
 import { deleteZoneAction } from '@/features/zone/actions/deleteZone.action'
 import { updateZoneAction } from '@/features/zone/actions/updateZone.action'
+import { normalizeZoneHexColor } from '@/features/zone/domain/zoneColor.domain'
 import type { ZoneFormState } from '@/features/zone/domain/zoneForm.domain'
 import {
   buildZoneTemplatePayload,
@@ -39,6 +40,7 @@ export const useZoneFormSubmit = ({
   const handleSave = useCallback(
     async (formState: ZoneFormState) => {
       const name = formState.name.trim()
+      const zoneColor = normalizeZoneHexColor(formState.zone_color) ?? '#111111'
       if (!name) {
         showMessage({ status: 400, message: 'Zone name is required.' })
         return
@@ -61,6 +63,7 @@ export const useZoneFormSubmit = ({
             {
               versionId: payload.versionId,
               name,
+              zoneColor,
               geometry: payload.geometry,
               templatePayload,
             },
@@ -94,6 +97,7 @@ export const useZoneFormSubmit = ({
             versionId: payload.versionId,
             zone,
             name,
+            zoneColor,
             templatePayload,
           },
           {

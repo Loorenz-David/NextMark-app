@@ -15,6 +15,7 @@ import { Cell, SplitRow } from "@/shared/layout/cells";
 
 import { zoneRouteEndStrategyOptions } from "../../../domain/zoneEnums";
 import { useZoneForm } from "../../../popups/ZoneForm/ZoneForm.context";
+import { ZoneColorField } from "./ZoneColorField";
 
 const SectionHeading = ({
   title,
@@ -64,7 +65,7 @@ export const ZoneFormFields = () => {
           />
         </div>
 
-        <SplitRow splitRowClass="grid grid-cols-1 divide-[var(--color-border-accent)]">
+        <SplitRow splitRowClass="grid grid-cols-2 divide-x divide-[var(--color-border-accent)]">
           <Cell>
             <Field
               label="Zone name:"
@@ -85,6 +86,20 @@ export const ZoneFormFields = () => {
                 fieldClassName={PLAIN_INPUT_CONTAINER_CLASS}
                 inputClassName={PLAIN_INPUT_CLASS}
                 placeholder="Downtown Core"
+              />
+            </Field>
+          </Cell>
+          <Cell>
+            <Field label="Zone color:" gap={2} warningPlacement="besidesLabel">
+              <ZoneColorField
+                value={formState.zone_color}
+                onChange={(value) =>
+                  setFormState((current) => ({
+                    ...current,
+                    zone_color: value,
+                  }))
+                }
+                inputContainerClassName={PLAIN_INPUT_CONTAINER_CLASS}
               />
             </Field>
           </Cell>
@@ -209,7 +224,7 @@ export const ZoneFormFields = () => {
         <SplitRow splitRowClass="grid grid-cols-2  divide-x divide-[var(--color-border-accent)]">
           <Cell>
             <Field
-              label="ETA tolerance (seconds):"
+              label="ETA tolerance:"
               gap={2}
               warningPlacement="besidesLabel"
             >

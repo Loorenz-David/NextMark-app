@@ -11,6 +11,9 @@ import type { MarkerMultiSelectionManager } from "../markers/MarkerMultiSelectio
 import type { ShapeSelectionService } from "./ShapeSelectionService";
 import { ZoneGeometryExtractor } from "./ZoneGeometryExtractor";
 
+const DEFAULT_ZONE_STROKE_COLOR = "#111111";
+const DEFAULT_ZONE_FILL_COLOR = "#111111";
+
 export class DrawingManagerService {
   private drawingManager: any = null;
   private activeShape: any = null;
@@ -214,9 +217,9 @@ export class DrawingManagerService {
     if (!this.drawingManager) {
       const sharedOverlayStyle = {
         editable: true,
-        fillColor: "#2563eb",
+        fillColor: DEFAULT_ZONE_FILL_COLOR,
         fillOpacity: 0.12,
-        strokeColor: "#1d4ed8",
+        strokeColor: DEFAULT_ZONE_STROKE_COLOR,
         strokeOpacity: 0.9,
         strokeWeight: 2,
       };
@@ -507,10 +510,10 @@ export class DrawingManagerService {
       paths,
       editable: true,
       clickable: false,
-      strokeColor: "#1d4ed8",
+      strokeColor: DEFAULT_ZONE_STROKE_COLOR,
       strokeOpacity: 0.9,
       strokeWeight: 2,
-      fillColor: "#2563eb",
+      fillColor: DEFAULT_ZONE_FILL_COLOR,
       fillOpacity: 0.12,
       zIndex: 3,
     });

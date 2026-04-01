@@ -7,6 +7,7 @@ import {
 
 export type ZoneFormState = {
   name: string
+  zone_color: string
 } & ZoneTemplateFormFields
 
 export const buildInitialZoneFormState = (
@@ -17,6 +18,7 @@ export const buildInitialZoneFormState = (
 
   return {
     name: resolvedZoneName,
+    zone_color: zone?.zone_color ?? '#111111',
     ...templateFields,
     template_name: resolvedZoneName || templateFields.template_name,
   }

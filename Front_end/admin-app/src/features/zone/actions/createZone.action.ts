@@ -9,6 +9,7 @@ import type {
 export type CreateZoneCommand = {
   versionId: number;
   name: string;
+  zoneColor?: string | null;
   geometry: GeoJSONPolygon;
   templatePayload: ({ name: string } & ZoneTemplateConfig) | null;
 };
@@ -32,6 +33,7 @@ export async function createZoneAction(
     id: optimisticId,
     version_id: command.versionId,
     name: command.name,
+    zone_color: command.zoneColor ?? null,
     geometry: command.geometry,
     zone_type: "user",
     centroid_lat: centroid?.lat ?? null,
@@ -47,6 +49,7 @@ export async function createZoneAction(
   try {
     const response = await zoneApi.createZone(command.versionId, {
       name: command.name,
+      zone_color: command.zoneColor ?? null,
       zone_type: "user",
       geometry: command.geometry,
       centroid_lat: centroid?.lat ?? null,

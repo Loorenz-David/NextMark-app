@@ -11,6 +11,7 @@ export type UpdateZoneCommand = {
   versionId: number;
   zone: ZoneState & { id: number };
   name: string;
+  zoneColor?: string | null;
   templatePayload: ({ name: string } & ZoneTemplateConfig) | null;
 };
 
@@ -28,6 +29,7 @@ export async function updateZoneAction(
     version_id: command.zone.version_id,
     team_id: command.zone.team_id,
     name: command.name,
+    zone_color: command.zoneColor ?? null,
     zone_type: command.zone.zone_type,
     centroid_lat: command.zone.centroid?.lat ?? null,
     centroid_lng: command.zone.centroid?.lng ?? null,
@@ -49,11 +51,14 @@ export async function updateZoneAction(
   deps.upsertZone(optimisticZone);
 
   try {
-    if (command.name !== command.zone.name) {
+    if (command.name !== command.zone.name || command.zoneColor !== (command.zone.zone_color ?? null)) {
       const patchResponse = await zoneApi.updateZoneName(
         command.versionId,
         command.zone.id,
-        { name: command.name },
+        {
+          name: command.name,
+          zone_color: command.zoneColor ?? null,
+        },
       );
       if (patchResponse.data) {
         deps.upsertZone({ ...optimisticZone, ...patchResponse.data });

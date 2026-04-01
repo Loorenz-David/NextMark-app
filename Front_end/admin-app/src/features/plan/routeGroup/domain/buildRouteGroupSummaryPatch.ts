@@ -33,8 +33,9 @@ export const buildRouteGroupSummaryPatch = ({
 
   orders.forEach((order) => {
     const matchedState =
-      orderStates.find((state) => state.id === (order.order_state_id ?? null)) ??
-      null;
+      orderStates.find(
+        (state) => state.id === (order.order_state_id ?? null),
+      ) ?? null;
     if (matchedState) {
       orderStateCounts[matchedState.name] =
         (orderStateCounts[matchedState.name] ?? 0) + 1;
@@ -42,12 +43,14 @@ export const buildRouteGroupSummaryPatch = ({
   });
 
   const itemTypeCounts = orders.reduce<Record<string, number>>((acc, order) => {
-    Object.entries(order.item_type_counts ?? {}).forEach(([itemType, count]) => {
-      if (itemType.trim().length === 0) return;
-      const safeCount = Number.isFinite(count) ? count : 0;
-      if (safeCount <= 0) return;
-      acc[itemType] = (acc[itemType] ?? 0) + safeCount;
-    });
+    Object.entries(order.item_type_counts ?? {}).forEach(
+      ([itemType, count]) => {
+        if (itemType.trim().length === 0) return;
+        const safeCount = Number.isFinite(count) ? count : 0;
+        if (safeCount <= 0) return;
+        acc[itemType] = (acc[itemType] ?? 0) + safeCount;
+      },
+    );
     return acc;
   }, {});
 
@@ -57,7 +60,8 @@ export const buildRouteGroupSummaryPatch = ({
       (total, order) => total + Math.max(0, order.total_items ?? 0),
       0,
     ),
-    item_type_counts: Object.keys(itemTypeCounts).length > 0 ? itemTypeCounts : null,
+    item_type_counts:
+      Object.keys(itemTypeCounts).length > 0 ? itemTypeCounts : null,
     total_weight_grams: orders.reduce(
       (total, order) => total + toGrams(order.total_weight),
       0,

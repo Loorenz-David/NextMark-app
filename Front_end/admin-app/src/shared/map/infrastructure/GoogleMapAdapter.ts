@@ -29,6 +29,46 @@ import { MarkerMultiSelectionManager } from "./markers/MarkerMultiSelectionManag
 import { MarkerSelectionManager } from "./markers/MarkerSelectionManager";
 import { RouteRenderer } from "./route/RouteRenderer";
 
+const DEFAULT_ZONE_STROKE_COLOR = "#111111";
+const DEFAULT_ZONE_FILL_COLOR = "#111111";
+const DEFAULT_ZONE_FILL_OPACITY = 0.12;
+const DEFAULT_ZONE_STROKE_OPACITY = 0.72;
+const ZONE_HEX_COLOR_PATTERN = /^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/;
+const resolveZoneColor = (zoneColor?: string | null) =>
+  typeof zoneColor === "string" && ZONE_HEX_COLOR_PATTERN.test(zoneColor.trim())
+    ? zoneColor
+    : DEFAULT_ZONE_FILL_COLOR;
+const normalizeHexColor = (zoneColor?: string | null) =>
+  typeof zoneColor === "string" && ZONE_HEX_COLOR_PATTERN.test(zoneColor.trim())
+    ? zoneColor.trim()
+    : DEFAULT_ZONE_FILL_COLOR;
+
+const darkenHexColor = (hexColor: string, factor = 0.45) => {
+  const normalized = normalizeHexColor(hexColor).slice(1);
+  const expanded =
+    normalized.length === 3
+      ? normalized
+          .split("")
+          .map((char) => `${char}${char}`)
+          .join("")
+      : normalized;
+
+  const red = Math.max(
+    0,
+    Math.min(255, Math.round(parseInt(expanded.slice(0, 2), 16) * factor)),
+  );
+  const green = Math.max(
+    0,
+    Math.min(255, Math.round(parseInt(expanded.slice(2, 4), 16) * factor)),
+  );
+  const blue = Math.max(
+    0,
+    Math.min(255, Math.round(parseInt(expanded.slice(4, 6), 16) * factor)),
+  );
+
+  return `rgb(${red}, ${green}, ${blue})`;
+};
+
 export class GoogleMapAdapter implements MapAdapter {
   private readonly mapInstanceManager: MapInstanceManager;
   private readonly markerLayerManager: MarkerLayerManager;
@@ -50,8 +90,8 @@ export class GoogleMapAdapter implements MapAdapter {
   private zoneOverlayPolygons: google.maps.Polygon[] = [];
   private zoneOverlayLabelMarkers: google.maps.marker.AdvancedMarkerElement[] =
     [];
-  private zoneLayerPolygons: google.maps.Polygon[] = [];
-  private zoneLabelMarkers: google.maps.marker.AdvancedMarkerElement[] = [];
+  private zoneLayerPolygons = new Map<number, google.maps.Polygon>();
+  private zoneLabelMarkers = new Map<number, google.maps.marker.AdvancedMarkerElement>();
 
   constructor() {
     let routeFitBoundsCallback: (points: Coordinates[]) => void = () =>
@@ -350,11 +390,11 @@ export class GoogleMapAdapter implements MapAdapter {
         map,
         paths,
         clickable: false,
-        strokeColor: "#1f8ef1",
-        strokeOpacity: 0.72,
+        strokeColor: DEFAULT_ZONE_STROKE_COLOR,
+        strokeOpacity: DEFAULT_ZONE_STROKE_OPACITY,
         strokeWeight: 2,
-        fillColor: "#4fb3ff",
-        fillOpacity: 0.12,
+        fillColor: DEFAULT_ZONE_FILL_COLOR,
+        fillOpacity: DEFAULT_ZONE_FILL_OPACITY,
         zIndex: 1,
       });
 
@@ -393,8 +433,6 @@ export class GoogleMapAdapter implements MapAdapter {
   }
 
   setZoneLayer(zones: ZoneDefinition[], options: ZoneLayerOptions) {
-    this.clearZoneLayer();
-
     const map = this.mapInstanceManager.getMap();
     const googleMaps = globalThis.google?.maps;
     const PolygonCtor = googleMaps?.Polygon;
@@ -404,6 +442,8 @@ export class GoogleMapAdapter implements MapAdapter {
       return;
     }
 
+    const nextZoneIds = new Set<number>();
+
     zones.forEach((zone) => {
       const zoneId = typeof zone.id === "number" ? zone.id : null;
       const geometry = zone.geometry;
@@ -411,6 +451,7 @@ export class GoogleMapAdapter implements MapAdapter {
       if (!zoneId || !geometry || !Array.isArray(geometry.coordinates)) {
         return;
       }
+      nextZoneIds.add(zoneId);
 
       const exteriorRing = this.resolveExteriorRing(geometry);
       const paths = exteriorRing
@@ -429,33 +470,54 @@ export class GoogleMapAdapter implements MapAdapter {
         return;
       }
 
-      const polygon = new PolygonCtor({
+      const resolvedZoneColor = resolveZoneColor(zone.zone_color);
+      const existingPolygon = this.zoneLayerPolygons.get(zoneId);
+      const polygon =
+        existingPolygon ??
+        new PolygonCtor({
+          paths,
+          map,
+          fillColor: resolvedZoneColor,
+          fillOpacity: 0.08,
+          strokeColor: resolvedZoneColor,
+          strokeOpacity: 0.7,
+          strokeWeight: 2,
+        });
+
+      polygon.setOptions({
         paths,
         map,
-        fillColor: "#2563eb",
+        fillColor: resolvedZoneColor,
         fillOpacity: 0.08,
-        strokeColor: "#3b82f6",
+        strokeColor: resolvedZoneColor,
         strokeOpacity: 0.7,
         strokeWeight: 2,
       });
 
       const addListener = googleMaps?.event?.addListener;
+      googleMaps?.event?.clearInstanceListeners?.(polygon);
       if (addListener) {
         addListener(polygon, "click", () => options.onClick(zoneId));
       }
 
-      this.zoneLayerPolygons.push(polygon);
+      this.zoneLayerPolygons.set(zoneId, polygon);
 
       if (
         MarkerCtor &&
         Number.isFinite(zone.centroid_lat) &&
         Number.isFinite(zone.centroid_lng)
       ) {
-        const label = document.createElement("div");
+        const zoneColor = normalizeHexColor(zone.zone_color);
+        const existingMarker = this.zoneLabelMarkers.get(zoneId);
+        const label =
+          (existingMarker?.content as HTMLDivElement | null) ??
+          document.createElement("div");
         label.className =
-          "rounded-md border border-white/25 bg-black/50 px-2 py-1 text-xs font-semibold text-white";
+          "rounded-md border px-2 py-1 text-xs font-semibold text-white shadow-[0_8px_22px_rgba(0,0,0,0.24)] backdrop-blur-sm";
         label.textContent = zone.name || `Zone ${zoneId}`;
         label.style.cursor = "pointer";
+        label.style.backgroundColor = darkenHexColor(zoneColor, 0.8);
+        label.style.borderColor = darkenHexColor(zoneColor, 0.65);
         label.onclick = (event: MouseEvent) => {
           event.stopPropagation();
           const rect = label.getBoundingClientRect();
@@ -467,17 +529,59 @@ export class GoogleMapAdapter implements MapAdapter {
           });
         };
 
-        const marker = new MarkerCtor({
-          map,
-          position: {
-            lat: Number(zone.centroid_lat),
-            lng: Number(zone.centroid_lng),
-          },
-          content: label,
-        });
+        const marker =
+          existingMarker ??
+          new MarkerCtor({
+            map,
+            position: {
+              lat: Number(zone.centroid_lat),
+              lng: Number(zone.centroid_lng),
+            },
+            content: label,
+          });
 
-        this.zoneLabelMarkers.push(marker);
+        marker.position = {
+          lat: Number(zone.centroid_lat),
+          lng: Number(zone.centroid_lng),
+        };
+        marker.content = label;
+        marker.map = map;
+
+        this.zoneLabelMarkers.set(zoneId, marker);
+      } else {
+        const existingMarker = this.zoneLabelMarkers.get(zoneId);
+        const content = existingMarker?.content as HTMLElement | undefined;
+        if (content) {
+          content.onclick = null;
+        }
+        if (existingMarker) {
+          existingMarker.map = null;
+          this.zoneLabelMarkers.delete(zoneId);
+        }
       }
+    });
+
+    Array.from(this.zoneLayerPolygons.entries()).forEach(([zoneId, polygon]) => {
+      if (nextZoneIds.has(zoneId)) {
+        return;
+      }
+
+      googleMaps?.event?.clearInstanceListeners?.(polygon);
+      polygon.setMap(null);
+      this.zoneLayerPolygons.delete(zoneId);
+    });
+
+    Array.from(this.zoneLabelMarkers.entries()).forEach(([zoneId, marker]) => {
+      if (nextZoneIds.has(zoneId)) {
+        return;
+      }
+
+      const content = marker.content as HTMLElement | undefined;
+      if (content) {
+        content.onclick = null;
+      }
+      marker.map = null;
+      this.zoneLabelMarkers.delete(zoneId);
     });
   }
 
@@ -488,7 +592,7 @@ export class GoogleMapAdapter implements MapAdapter {
       mapEvents?.clearInstanceListeners?.(polygon);
       polygon?.setMap?.(null);
     });
-    this.zoneLayerPolygons = [];
+    this.zoneLayerPolygons.clear();
 
     this.zoneLabelMarkers.forEach((marker) => {
       const content = marker?.content as HTMLElement | undefined;
@@ -497,7 +601,7 @@ export class GoogleMapAdapter implements MapAdapter {
       }
       marker.map = null;
     });
-    this.zoneLabelMarkers = [];
+    this.zoneLabelMarkers.clear();
   }
 
   subscribeBoundsChanged(callback: (bounds: MapBounds | null) => void) {
