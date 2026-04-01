@@ -37,6 +37,7 @@ Delivery_app_BK/ai/
 - tools/item_tools.py
 - tools/zone_tools.py
 - tools/narrative_tools.py
+- tools/geometry_utils.py
 - tools/plan_execution/__init__.py
 - tools/plan_execution/local_delivery_handler.py
 - tools/plan_execution/international_shipping_handler.py
@@ -122,12 +123,20 @@ Narrative behavior requirements:
 
 ---
 
-## Tool Registry Status (Phase 1)
+## Registered Tools (Phase 3)
 
-tool_registry.py is intentionally empty (commented placeholders only).
-No tool functions are actively registered in this phase.
-
-Tool groups are added back in subsequent phases with explicit registration and prompt documentation.
+| Tool name | File | Domain service |
+|---|---|---|
+| `get_plan_snapshot` | `tools/narrative_tools.py` | `queries/route_plan/get_plan.py` + `route_groups/list_route_groups.py` |
+| `get_route_group_snapshot` | `tools/narrative_tools.py` | `queries/route_plan/route_groups/get_route_group.py` |
+| `get_operations_dashboard` | `tools/narrative_tools.py` | `queries/route_plan/find_plans.py` |
+| `evaluate_order_route_fit` | `tools/zone_tools.py` | direct `RouteSolution` + `Order` query + `tools/geometry_utils.py` |
+| `geocode_address` | `tools/geocode_tools.py` | `geocoding/orchestrator.py` |
+| `list_orders` | `tools/order_tools.py` | `queries/order/list_orders.py` |
+| `list_plans` | `tools/plan_tools.py` | `queries/route_plan/find_plans.py` + `serialize_plan.py` |
+| `list_route_groups` | `tools/plan_tools.py` | `queries/route_plan/route_groups/list_route_groups.py` |
+| `list_zones` | `tools/zone_tools.py` | `queries/zones/find_zones.py` + `ZoneTemplate` query |
+| `get_zone_snapshot` | `tools/zone_tools.py` | `Zone` + `OrderZoneAssignment` + `RouteGroup` query |
 
 ---
 
@@ -140,8 +149,8 @@ prompts/system_prompt.py contains:
 - PLANNER_SYSTEM_PROMPT fallback constant
 
 Current prompt policy:
-- Domain knowledge only
-- No live tool docs until tools are implemented and registered
+- Domain knowledge + registered tool documentation
+- Tool docs added as tools are implemented and registered in Phase 2+
 
 ---
 
@@ -206,14 +215,18 @@ Handlers status:
 
 ---
 
-## Tool File Status (Phase 1)
+## Tool File Status (Phase 3)
 
-Skeleton (NotImplemented):
-- tools/plan_tools.py
-- tools/order_tools.py
+Implemented:
+- tools/narrative_tools.py  (get_plan_snapshot, get_route_group_snapshot, get_operations_dashboard)
+- tools/zone_tools.py       (evaluate_order_route_fit, list_zones, get_zone_snapshot)
+- tools/geocode_tools.py    (geocode_address — pre-existing, registered in Phase 2)
+- tools/geometry_utils.py   (NEW — pure-Python spatial helpers: haversine, centroid, corridor, cheapest_insertion)
+- tools/order_tools.py      (list_orders implemented; mutation tools remain stubs)
+- tools/plan_tools.py       (list_plans, list_route_groups implemented; mutation and execution tools remain stubs)
+
+Skeleton (NotImplemented - later phases):
 - tools/item_tools.py
-- tools/zone_tools.py
-- tools/narrative_tools.py
 - tools/plan_execution/local_delivery_handler.py
 
 Stub (returns not_implemented):
@@ -247,16 +260,18 @@ Provider files remain the same:
 
 ## Next Phases
 
-### Phase 2+
-- Reintroduce tool groups incrementally
-- Register each tool explicitly in tool_registry.py
-- Add matching prompt tool docs and formatter registry entries
+### Phase 3 — Core Query Tools
+- list_orders — with filters (route_group_id, operation_type, order_plan_objective, zone_id)
+- list_plans — updated for RoutePlan with zone/group awareness
+- list_route_groups — exposes groups as a navigable resource for the AI
+- list_zones — lists active zones for the team
+- get_zone_snapshot — zone-level health view (order density, capacity vs. template limits)
 
-### Phase 3
-- Implement narrative snapshot tools:
-  - get_plan_snapshot_tool
-  - get_operations_dashboard_tool
-  - get_route_group_snapshot_tool
+### Phase 4 — Mutation Tools
+- create_order, update_order, update_order_state
+- assign_orders_to_plan, assign_orders_to_route_group
+- create_plan, optimize_plan
+- search_item_types, add_items_to_order
 
 ---
 

@@ -1,7 +1,7 @@
 from typing import Dict, Any
 from sqlalchemy.orm import Query
 
-from Delivery_app_BK.models import db, Order, Item, RoutePlan, OrderDeliveryWindow
+from Delivery_app_BK.models import db, Order, Item, RoutePlan, OrderDeliveryWindow, OrderZoneAssignment
 from Delivery_app_BK.services.utils import inject_team_id, model_requires_team
 from Delivery_app_BK.services.queries.utils  import parsed_string_to_list
 from sqlalchemy import func, String, or_
@@ -198,6 +198,27 @@ def find_orders (
             order_state_ids = [ order_state_ids ] 
             
         query = query.filter( Order.order_state_id.in_( order_state_ids ) )
+
+    # NEW: operation_type filter
+    if "operation_type" in params:
+        query = query.filter(Order.operation_type == params["operation_type"])
+
+    # NEW: order_plan_objective filter
+    if "order_plan_objective" in params:
+        query = query.filter(Order.order_plan_objective == params["order_plan_objective"])
+
+    # NEW: zone_id filter (via OrderZoneAssignment join)
+    if "zone_id" in params:
+        if OrderZoneAssignment not in joined_relations:
+            query = query.join(
+                OrderZoneAssignment,
+                OrderZoneAssignment.order_id == Order.id,
+            )
+            joined_relations.add(OrderZoneAssignment)
+        query = query.filter(
+            OrderZoneAssignment.zone_id == int(params["zone_id"]),
+            OrderZoneAssignment.is_unassigned.is_(False),
+        )
 
 
     #----------------------------------------------------

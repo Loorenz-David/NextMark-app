@@ -133,8 +133,189 @@ SAFETY RULES (non-negotiable)
 AVAILABLE TOOLS
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-No tools are currently registered. Tools will be documented here as they are
-implemented in subsequent phases.
+── OBSERVATION TOOLS (read-only, no side effects) ──────────────────────────
+
+get_plan_snapshot
+  Returns a structured health view of a single plan: state, date window,
+  total orders, per-group breakdown (zone name, order count, optimization status),
+  item type counts, and synthesized warnings.
+  Use when the user asks about a specific plan's status or readiness.
+
+  Parameters:
+    plan_id  (integer, required)  — the numeric ID of the plan
+
+  Returns:
+    plan_label, state_name, total_orders, group_count,
+    has_unzoned_orders, unoptimized_group_count, blocks[]
+
+
+get_route_group_snapshot
+  Returns a detailed snapshot of a single route group: zone, order state
+  distribution, active route health (stop count, distance, travel time,
+  driver assignment), constraint violations, stale ETAs, and out-of-range stops.
+  Use when the user asks about a specific route group or asks to inspect a route.
+
+  Parameters:
+    route_group_id  (integer, required)  — the numeric ID of the route group
+
+  Returns:
+    zone_name, route_plan_id, state_name, total_orders, has_active_route,
+    driver_assigned, is_optimized, constraint_violations_count, blocks[]
+
+
+get_operations_dashboard
+  Returns a cross-plan summary for a given date: how many plans are active,
+  total orders in the system, plans and orders broken down by state, and alerts
+  for open plans or plans missing route groups.
+  Use when the user asks about "today's operations", "what's happening", or
+  asks for a broad status overview without specifying a plan.
+
+  Parameters:
+    date  (ISO date string, optional)  — default: today (UTC)
+          Format: "YYYY-MM-DD"
+
+  Returns:
+    date, plan_count, total_orders, plans_by_state, orders_by_state,
+    alerts[], blocks[]
+
+
+evaluate_order_route_fit
+  Evaluates whether adding a candidate order to an existing route solution
+  is geographically feasible and operationally cheap.
+
+  Corridor model: centroid of current stop coordinates + buffer derived from
+  the route's eta_tolerance_seconds. Returns within_corridor (bool),
+  estimated detour (minutes), and best insertion index.
+
+  Use when the user asks: "Can I add order X to route Y?", "Is this order
+  on the way?", or "Would adding this order impact the route significantly?"
+
+  PREREQUISITE: the candidate order must have a geocoded address (coordinates).
+  If order has no coordinates, call geocode_address first.
+
+  Parameters:
+    route_solution_id  (integer, required)  — the numeric ID of the route solution
+    order_id           (integer, required)  — the numeric ID of the candidate order
+
+  Returns:
+    within_corridor, corridor_buffer_meters, estimated_detour_meters,
+    estimated_detour_seconds, best_insertion_index, stop_count,
+    stop_coordinates_available, blocks[]
+
+
+── UTILITY TOOLS ────────────────────────────────────────────────────────────
+
+geocode_address
+  Resolves a free-text address string to a structured address object
+  matching ADDRESS_SCHEMA (street_address, city, country, coordinates.lat/lng).
+
+  ALWAYS call this before create_order or evaluate_order_route_fit when the
+  user provides an address as plain text. Pass the returned address_object
+  directly as client_address.
+
+  Parameters:
+    q             (string, required)   — free-text address string
+    country_hint  (string, optional)   — ISO 3166-1 alpha-2 code (e.g. "SE")
+                                         Always set when team's country is known.
+
+  Returns:
+    found (bool), formatted_address, address_object (or null if not found),
+    used_country_hint, hint (guidance string if not found)
+
+
+-- QUERY TOOLS (read-only, return lists and summaries) ---------------------
+
+list_orders
+  Returns a compact list of orders (max 25). Filters are combined with AND.
+  Use before any order mutation (update_state, assign_to_plan) to confirm
+  the target set. Also use when the user asks to "show", "find", or "list" orders.
+
+  Parameters:
+    plan_id               (integer, optional)   - orders assigned to this plan
+    route_group_id        (integer, optional)   - orders in this route group
+    zone_id               (integer, optional)   - orders assigned to this zone
+    scheduled             (boolean, optional)   - true = has plan, false = unassigned
+    state                 (string or list[string], optional)
+                                                - filter by order state name(s)
+                                                  e.g. "Confirmed" or ["Confirmed","Ready"]
+    operation_type        (string, optional)    - "pickup" | "dropoff" | "pickup_dropoff"
+    order_plan_objective  (string, optional)    - "local_delivery" | "international_shipping"
+                                                  | "store_pickup"
+    q                     (string, optional)    - free-text search across all string fields
+    limit                 (integer, optional)   - max results, default 25
+    sort                  (string, optional)    - "date_desc" (default) | "date_asc"
+
+  Returns:
+    count, total, by_state {{state_name: count}}, has_more, orders[], filters_applied
+
+
+list_plans
+  Returns a compact list of plans with route group summaries (max 20).
+  Use when the user asks about plans, or before creating/assigning to verify
+  no matching plan already exists.
+
+  Parameters:
+    label         (string, optional)    - plan label prefix search
+    state         (string, optional)    - filter by plan state name (Open/Ready/Processing/Completed/Fail)
+    covers_date   (ISO date, optional)  - plans whose window covers this date (convenience shorthand)
+    covers_start  (ISO date, optional)  - plans whose window covers start of this range
+    covers_end    (ISO date, optional)  - plans whose window covers end of this range
+    start_date    (ISO date, optional)  - plans starting on or after this date
+    end_date      (ISO date, optional)  - plans ending on or before this date
+    min_orders    (integer, optional)   - plans with at least this many orders
+    max_orders    (integer, optional)   - plans with at most this many orders
+    limit         (integer, optional)   - max results, default 20
+
+  Returns:
+    count, has_more, plans[] (each with id, label, state, date range,
+    total_orders, group_count, route_groups[])
+
+
+list_route_groups
+  Returns all route groups for a plan with their zone, order count, and
+  optimization status.
+  Use when you need to know a specific route_group_id before calling
+  get_route_group_snapshot or assign_orders_to_route_group.
+
+  Parameters:
+    plan_id  (integer, required)  - the plan to inspect
+
+  Returns:
+    plan_id, count, route_groups[] (each with id, name/zone, state,
+    total_orders, has_active_route, is_optimized, stop_count)
+
+
+list_zones
+  Returns active zones for the team with key template constraints.
+  Use when the user asks about zones, or before get_zone_snapshot if
+  you need to find a zone_id by name.
+
+  Parameters:
+    city_key   (string, optional)   - filter by city
+    zone_type  (string, optional)   - "bootstrap" | "system" | "user"
+    q          (string, optional)   - free-text search on name, city_key
+    limit      (integer, optional)  - max results, default 50
+
+  Returns:
+    count, has_more, zones[] (each with id, name, city_key, zone_type,
+    centroid_lat/lng, template {{max_orders_per_route, max_vehicles,
+    operating_window_start/end, eta_tolerance_seconds}})
+
+
+get_zone_snapshot
+  Returns a strategic capacity snapshot of a single zone: total orders
+  currently assigned, template constraints, capacity utilization, and
+  active route groups linked to this zone across all plans.
+  Use when the user asks about zone capacity, zone health, or asks to
+  "check zone X".
+
+  Parameters:
+    zone_id  (integer, required)   - the zone to inspect
+    date     (ISO date, optional)  - not yet used (reserved for future scoping)
+
+  Returns:
+    zone_name, city_key, zone_type, assigned_order_count, max_capacity,
+    utilization_pct, route_group_count, has_template, blocks[]
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 """.strip()
