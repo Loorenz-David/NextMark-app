@@ -19,6 +19,7 @@ def _plan(route_groups):
         total_weight_g=0.0,
         total_volume_cm3=0.0,
         total_item_count=0,
+        item_type_counts={"Sofa": 1},
         orders=[],
         route_groups=route_groups,
     )
@@ -45,6 +46,7 @@ def test_serialize_plans_includes_detail_route_groups_summary_when_requested():
             zone_geometry_snapshot={"name": "Zone South", "geometry": None},
             zone_id=7,
             total_orders=5,
+            item_type_counts={"Lamp": 2},
             state=SimpleNamespace(id=2, name="OPEN"),
         ),
         SimpleNamespace(
@@ -52,6 +54,7 @@ def test_serialize_plans_includes_detail_route_groups_summary_when_requested():
             zone_geometry_snapshot={"name": "Zone North", "geometry": None},
             zone_id=3,
             total_orders=1,
+            item_type_counts=None,
             state=None,
         ),
     ]
@@ -67,5 +70,8 @@ def test_serialize_plans_includes_detail_route_groups_summary_when_requested():
         "Zone North",
         "Zone South",
     ]
+    assert serialized[0]["item_type_counts"] == {"Sofa": 1}
+    assert serialized[0]["route_groups"][0]["item_type_counts"] is None
+    assert serialized[0]["route_groups"][1]["item_type_counts"] == {"Lamp": 2}
     assert serialized[0]["route_groups"][0]["state"] is None
     assert serialized[0]["route_groups"][1]["state"] == {"id": 2, "name": "OPEN"}

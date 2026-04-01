@@ -28,6 +28,21 @@ def recompute_plan_totals(plan: "RoutePlan") -> None:
     plan.total_item_count = int(result[2] or 0)
     plan.total_orders     = int(result[3] or 0)
 
+    type_counts_rows = (
+        db.session.query(Order.item_type_counts)
+        .filter(
+            Order.route_plan_id == plan.id,
+            Order.item_type_counts.isnot(None),
+        )
+        .all()
+    )
+    merged: dict[str, int] = {}
+    for (counts,) in type_counts_rows:
+        if counts:
+            for k, v in counts.items():
+                merged[k] = merged.get(k, 0) + v
+    plan.item_type_counts = {k: v for k, v in merged.items() if v >= 1} or None
+
     logger.debug(
         "recompute_plan_totals plan_id=%s weight=%s volume=%s items=%s orders=%s",
         plan.id,

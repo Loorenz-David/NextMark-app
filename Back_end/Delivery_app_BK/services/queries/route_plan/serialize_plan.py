@@ -19,6 +19,7 @@ def _serialize_route_group_summary(route_group) -> dict:
         "name": snapshot_name,
         "zone_id": getattr(route_group, "zone_id", None),
         "total_orders": getattr(route_group, "total_orders", None),
+        "item_type_counts": getattr(route_group, "item_type_counts", None),
         "state": (
             {
                 "id": state.id,
@@ -70,6 +71,7 @@ def serialize_plans(
                 "total_volume": instance.total_volume_cm3,
                 "total_items": instance.total_item_count,
                 "total_orders": instance.total_orders,
+                "item_type_counts": instance.item_type_counts,
             })
         if include_route_groups_summary:
             unpacked["route_groups"] = [

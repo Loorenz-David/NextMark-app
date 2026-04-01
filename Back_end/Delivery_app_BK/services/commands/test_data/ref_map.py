@@ -19,7 +19,7 @@ REF_FIELD_MAP: dict[str, dict[str, str | tuple[str, str]]] = {
         "$zones": ("zone_ids", "list"),
     },
     "order": {
-        "$route_plan": "route_plan_id",
+        "$route_plan": "delivery_plan_id",
         "$route_group": "route_group_id",
     },
     "order_delivery_window": {

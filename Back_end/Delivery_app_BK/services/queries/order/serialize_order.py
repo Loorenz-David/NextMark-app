@@ -59,6 +59,7 @@ def _serialize_order_instance(instance: Order, ctx: ServiceContext, include_item
         "open_order_cases": _count_open_order_cases(instance),
         "client_form_submitted_at": instance.client_form_submitted_at.isoformat() if instance.client_form_submitted_at else None,
         "order_notes": list(instance.order_notes) if instance.order_notes else [],
+        "item_type_counts": getattr(instance, "item_type_counts", None),
     }
     if instance.archive_at is not None:
         unpacked['archive_at'] = instance.archive_at

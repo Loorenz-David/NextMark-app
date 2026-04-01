@@ -39,6 +39,7 @@ def _build_order_instance():
         total_weight_g=None,
         total_volume_cm3=None,
         total_item_count=None,
+        item_type_counts={"Sofa": 2, "Lamp": 1},
         delivery_windows=[
             SimpleNamespace(
                 id=2,
@@ -64,6 +65,7 @@ def test_serialize_created_order_includes_costumer_id(monkeypatch):
     serialized = create_module.serialize_created_order(_build_order_instance())
 
     assert serialized["costumer_id"] == 77
+    assert serialized["item_type_counts"] == {"Sofa": 2, "Lamp": 1}
 
 
 def test_serialize_orders_includes_costumer_id(monkeypatch):
@@ -73,6 +75,7 @@ def test_serialize_orders_includes_costumer_id(monkeypatch):
     serialized = list_module.serialize_orders([_build_order_instance()], SimpleNamespace())
 
     assert serialized[0]["costumer_id"] == 77
+    assert serialized[0]["item_type_counts"] == {"Sofa": 2, "Lamp": 1}
 
 
 def test_serializers_include_sorted_delivery_windows(monkeypatch):

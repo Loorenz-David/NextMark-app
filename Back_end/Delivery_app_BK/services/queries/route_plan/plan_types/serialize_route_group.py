@@ -24,6 +24,7 @@ def _serialize_route_group_item(instance: RouteGroup) -> dict:
         "total_volume_cm3": instance.total_volume_cm3,
         "total_weight_grams": instance.total_weight_g,
         "order_state_counts": instance.order_state_counts,
+        "item_type_counts": instance.item_type_counts,
     }
 
 

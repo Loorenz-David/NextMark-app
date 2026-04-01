@@ -15,6 +15,31 @@ def parse_list_route_plans_query(
 ) -> dict[str, Any]:
     normalized = _to_plain_dict(query_params)
 
+    query_mode = normalized.get("mode")
+    query_has_dates = (
+        "start_date" in normalized or
+        "end_date" in normalized
+    )
+
+    if query_mode is not None:
+        if not isinstance(query_mode, str) or query_mode not in ALLOWED_TIME_MODES:
+            raise ValidationFailed("mode must be one of: month, date, range.")
+
+    if query_mode is not None or query_has_dates:
+        start_date = _require_non_empty_string(
+            normalized.get("start_date"),
+            field="start_date",
+        )
+        end_date = _require_non_empty_string(
+            normalized.get("end_date"),
+            field="end_date",
+        )
+        normalized["covers_start"] = start_date
+        normalized["covers_end"] = end_date
+        normalized.pop("start_date", None)
+        normalized.pop("end_date", None)
+        normalized.pop("mode", None)
+
     if incoming_data is None:
         return normalized
 
@@ -44,6 +69,9 @@ def parse_list_route_plans_query(
         # New payload time filter maps to overlap semantics.
         normalized["covers_start"] = start_date
         normalized["covers_end"] = end_date
+        normalized.pop("start_date", None)
+        normalized.pop("end_date", None)
+        normalized.pop("mode", None)
 
     filters = incoming_data.get("filters")
     if filters is not None:

@@ -35,6 +35,7 @@ from .tables.costumer.costumer_address import CostumerAddress
 from .tables.costumer.costumer_phone import CostumerPhone
 from .tables.costumer.costumer_operating_hours import CostumerOperatingHours
 from .tables.route_operations.route_plan.route_plan import RoutePlan
+DeliveryPlan = RoutePlan
 from .tables.route_operations.route_plan.route_plan_event import RoutePlanEvent
 from .tables.route_operations.route_plan.route_plan_event_action import RoutePlanEventAction
 from .tables.route_operations.route_plan.route_group import RouteGroup

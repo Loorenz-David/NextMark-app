@@ -156,6 +156,69 @@ def test_apply_directions_result_expands_grouped_visit_arrivals_and_polylines():
     assert route_solution.end_leg_polyline == "end-leg"
 
 
+def test_apply_directions_result_clamps_grouped_visit_to_strongest_member_window():
+    order_1 = _make_order(101, 57.700001, 11.970001)
+    order_2 = _make_order(102, 57.7000011, 11.9700012)
+    order_3 = _make_order(103, 57.71, 11.98)
+    order_2.delivery_windows = [
+        SimpleNamespace(
+            start_at=datetime(2026, 3, 7, 8, 35, 0, tzinfo=timezone.utc),
+            end_at=datetime(2026, 3, 7, 9, 30, 0, tzinfo=timezone.utc),
+        ),
+    ]
+    orders_by_id = {
+        order_1.id: order_1,
+        order_2.id: order_2,
+        order_3.id: order_3,
+    }
+    stop_1 = _make_stop(1, 101, 1, 10)
+    stop_2 = _make_stop(2, 102, 2, 5)
+    stop_3 = _make_stop(3, 103, 3, 7)
+    stop_1.order = order_1
+    stop_2.order = order_2
+    stop_3.order = order_3
+
+    route_solution = _make_route_solution([stop_1, stop_2, stop_3])
+    build_result = build_directions_request_bundle(
+        route_solution=route_solution,
+        orders_by_id=orders_by_id,
+        recompute_from_position=1,
+    )
+
+    apply_directions_result(
+        route_solution=route_solution,
+        directions_result=DirectionsResult(
+            total_distance_meters=1500,
+            total_duration_seconds=2400,
+            leg_polylines=["start-leg", "between-groups", "end-leg"],
+            start_time=datetime(2026, 3, 7, 8, 0, 0, tzinfo=timezone.utc),
+            end_time=datetime(2026, 3, 7, 8, 52, 0, tzinfo=timezone.utc),
+            stop_results=[
+                DirectionsStopResult(
+                    order_id=101,
+                    arrival_time=datetime(2026, 3, 7, 8, 20, 0, tzinfo=timezone.utc),
+                    travel_duration_seconds=1200,
+                    distance_meters=800,
+                ),
+                DirectionsStopResult(
+                    order_id=103,
+                    arrival_time=datetime(2026, 3, 7, 8, 40, 0, tzinfo=timezone.utc),
+                    travel_duration_seconds=900,
+                    distance_meters=700,
+                ),
+            ],
+        ),
+        orders_by_id=orders_by_id,
+        build_result=build_result,
+    )
+
+    assert stop_1.expected_arrival_time == datetime(2026, 3, 7, 8, 25, 0, tzinfo=timezone.utc)
+    assert stop_2.expected_arrival_time == datetime(2026, 3, 7, 8, 35, 0, tzinfo=timezone.utc)
+    assert stop_3.expected_arrival_time == datetime(2026, 3, 7, 8, 45, 0, tzinfo=timezone.utc)
+    assert route_solution.expected_end_time == datetime(2026, 3, 7, 8, 57, 0, tzinfo=timezone.utc)
+    assert stop_2.has_constraint_violation is False
+
+
 def test_build_directions_request_bundle_treats_set_start_time_as_team_local_wall_clock():
     order = _make_order(101, 57.700001, 11.970001)
     orders_by_id = {order.id: order}

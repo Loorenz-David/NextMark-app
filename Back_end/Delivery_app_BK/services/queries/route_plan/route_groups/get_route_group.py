@@ -34,6 +34,7 @@ def _serialize_route_group_detail(route_group: RouteGroup) -> dict:
             {"id": state.id, "name": state.name} if state is not None else None
         ),
         "total_orders": route_group.total_orders,
+        "item_type_counts": route_group.item_type_counts,
         "zone": (
             {
                 "id": zone.id,

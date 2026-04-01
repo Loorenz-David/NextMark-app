@@ -38,8 +38,10 @@ ORDER_ALLOWED_FIELDS = {
     "delivery_windows",
     "order_state_id",
     "delivery_plan_id",
+    "route_group_id",
     "items",
     "operation_type",
+    "order_notes"
 }
 
 ORDER_FORBIDDEN_FIELDS = {
@@ -148,6 +150,7 @@ class OrderCreateRequest:
     fields: dict
     items: list[ItemCreateRequest]
     delivery_plan_id: int | None
+    route_group_id: int | None
     costumer: OrderCostumerRequest | None
     delivery_windows: list[dict] | None = None
 
@@ -175,6 +178,9 @@ def parse_create_order_request(raw_fields: dict) -> OrderCreateRequest:
     delivery_plan_id = _parse_delivery_plan_id(raw_fields.get("delivery_plan_id"))
     if delivery_plan_id is not None:
         order_fields["delivery_plan_id"] = delivery_plan_id
+    route_group_id = _parse_route_group_id(raw_fields.get("route_group_id"))
+    if route_group_id is not None:
+        order_fields["route_group_id"] = route_group_id
     costumer = _parse_costumer(raw_fields.get("costumer"))
 
     for field in ORDER_OPTIONAL_STRING_FIELDS:
@@ -226,6 +232,7 @@ def parse_create_order_request(raw_fields: dict) -> OrderCreateRequest:
         fields=order_fields,
         items=item_requests,
         delivery_plan_id=delivery_plan_id,
+        route_group_id=route_group_id,
         costumer=costumer,
         delivery_windows=delivery_windows,
     )
@@ -340,9 +347,9 @@ def _parse_order_state_id(value) -> int:
     return parse_required_int(value, field="order_state_id")
 
 
-def _parse_item_state_id(value) -> int:
+def _parse_item_state_id(value) -> int | None:
     if value is None:
-        return ItemStateId.OPEN
+        return None
     return parse_required_int(value, field="item_state_id")
 
 
@@ -350,6 +357,12 @@ def _parse_delivery_plan_id(value) -> int | None:
     if value is None:
         return None
     return parse_required_int(value, field="delivery_plan_id")
+
+
+def _parse_route_group_id(value) -> int | None:
+    if value is None:
+        return None
+    return parse_required_int(value, field="route_group_id")
 
 
 def _parse_costumer_id(value) -> int | None:

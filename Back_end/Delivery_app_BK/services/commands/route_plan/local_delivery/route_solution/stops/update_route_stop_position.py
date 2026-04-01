@@ -148,7 +148,9 @@ def update_route_stop_position(
     
     # Store final positions before updating to temporary values
     # This avoids unique constraint violations when multiple stops change positions
-    final_positions = {stop.id: stop.stop_order for stop in touched_stops}
+    # Use object identity here because cloned optimized-route stops may not have
+    # stable DB ids until after the intermediate flush.
+    final_positions = {id(stop): stop.stop_order for stop in touched_stops}
     
     # Phase 1: Assign temporary negative positions to clear constraint violations
     for idx, stop in enumerate(touched_stops):
@@ -161,7 +163,7 @@ def update_route_stop_position(
     
     # Phase 2: Assign final positions now that temporary positions are in place
     for stop in touched_stops:
-        stop.stop_order = final_positions[stop.id]
+        stop.stop_order = final_positions[id(stop)]
     
     db.session.add_all(_dedupe_and_sort_stops(touched_stops))
     db.session.commit()

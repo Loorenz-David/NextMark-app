@@ -53,6 +53,7 @@ class RouteGroup(db.Model, TeamScopedMixin):
     total_item_count = Column(Integer, nullable=True)
     total_orders = Column(Integer, nullable=True)
     order_state_counts = Column(JSONB().with_variant(JSON, "sqlite"), nullable=True)
+    item_type_counts = Column(JSONB().with_variant(JSON, "sqlite"), nullable=True)
 
     
 

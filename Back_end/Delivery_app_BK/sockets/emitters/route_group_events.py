@@ -32,7 +32,6 @@ def emit_route_group_updated(route_group: RouteGroup, *, payload: dict | None = 
             "route_group_id": route_group_id,
             "route_plan_id": route_plan_id,
             "label": route_plan.label,
-            "plan_type": route_plan.plan_type,
             "route_freshness_updated_at": get_route_freshness_updated_at(route_plan),
             **(payload or {}),
         },

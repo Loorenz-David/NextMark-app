@@ -22,6 +22,7 @@ route_plan_overviews_bp = Blueprint("api_v2_route_plan_overviews_bp", __name__)
 @jwt_required()
 @role_required([ADMIN, ASSISTANT])
 def get_route_group_overview(route_plan_id: int):
+    print(f"Received request for route group overview of plan {route_plan_id}")
     identity = get_jwt()
     ctx = ServiceContext(identity=identity, query_params=dict(request.args))
     outcome = run_service(

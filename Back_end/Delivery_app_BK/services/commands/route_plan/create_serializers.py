@@ -25,6 +25,7 @@ def serialize_created_route_plan(instance: RoutePlan) -> dict:
         "created_at": _to_iso(instance.created_at),
         "updated_at": _to_iso(instance.updated_at),
         "state_id": instance.state_id,
+        "item_type_counts": instance.item_type_counts,
     }
     serialized.update(calculate_plan_metrics(instance))
     return serialized
@@ -46,6 +47,7 @@ def serialize_created_route_group(instance: RouteGroup) -> dict:
         "total_item_count": instance.total_item_count,
         "total_orders": instance.total_orders,
         "order_state_counts": instance.order_state_counts,
+        "item_type_counts": instance.item_type_counts,
     }
 
 

@@ -16,10 +16,11 @@ from Delivery_app_BK.directions.services.refresher import (
 
 
 def _make_route_solution(plan_start: datetime | None, plan_end: datetime | None):
-    delivery_plan = SimpleNamespace(start_date=plan_start, end_date=plan_end)
-    local_delivery_plan = SimpleNamespace(delivery_plan=delivery_plan)
+    route_plan = SimpleNamespace(start_date=plan_start, end_date=plan_end)
+    route_group = SimpleNamespace(route_plan=route_plan)
     return SimpleNamespace(
-        local_delivery_plan=local_delivery_plan,
+        local_delivery_plan=None,
+        route_group=route_group,
         set_end_time=None,
         route_warnings=None,
         has_route_warnings=False,
@@ -156,3 +157,81 @@ def test_apply_directions_result_uses_stop_order_relationship_when_order_map_mis
     assert stop.has_constraint_violation is True
     assert stop.constraint_warnings
     assert stop.constraint_warnings[0]["type"] == "time_window_violation"
+
+
+def test_apply_directions_result_clamps_stop_arrival_to_next_window_and_shifts_route_end():
+    order = _make_order(
+        delivery_windows=[
+            SimpleNamespace(
+                start_at=datetime(2026, 3, 1, 14, 0, 0, tzinfo=timezone.utc),
+                end_at=datetime(2026, 3, 1, 18, 0, 0, tzinfo=timezone.utc),
+            ),
+        ],
+    )
+    order.id = 100
+
+    stop = SimpleNamespace(
+        id=10,
+        order_id=100,
+        stop_order=1,
+        expected_arrival_time=None,
+        expected_departure_time=None,
+        expected_service_duration_seconds=None,
+        eta_status="stale",
+        in_range=False,
+        reason_was_skipped=None,
+        has_constraint_violation=False,
+        constraint_warnings=None,
+        to_next_polyline=None,
+        order=order,
+    )
+
+    route_solution = _make_route_solution(
+        datetime(2026, 3, 1, 0, 0, 0, tzinfo=timezone.utc),
+        datetime(2026, 3, 1, 23, 59, 59, tzinfo=timezone.utc),
+    )
+    route_solution.stops = [stop]
+
+    directions_result = DirectionsResult(
+        total_distance_meters=100,
+        total_duration_seconds=100,
+        leg_polylines=["a", "b"],
+        start_time=datetime(2026, 3, 1, 8, 0, 0, tzinfo=timezone.utc),
+        end_time=datetime(2026, 3, 1, 13, 5, 0, tzinfo=timezone.utc),
+        stop_results=[
+            DirectionsStopResult(
+                order_id=100,
+                arrival_time=datetime(2026, 3, 1, 13, 0, 0, tzinfo=timezone.utc),
+                travel_duration_seconds=100,
+                distance_meters=100,
+            )
+        ],
+    )
+
+    build_result = DirectionsRequestBuildResult(
+        request=DirectionsRequest(
+            origin={"latitude": 1.0, "longitude": 1.0},
+            destination={"latitude": 2.0, "longitude": 2.0},
+            intermediates=[],
+            travel_mode="DRIVING",
+            consider_traffic=True,
+            route_modifiers={},
+            departure_time=datetime(2026, 3, 1, 8, 0, 0, tzinfo=timezone.utc),
+        ),
+        full_recompute=True,
+        effective_start_position=1,
+        anchor_order_id=None,
+        affected_order_ids=[100],
+    )
+
+    apply_directions_result(
+        route_solution=route_solution,
+        directions_result=directions_result,
+        orders_by_id={100: order},
+        build_result=build_result,
+    )
+
+    assert stop.expected_arrival_time == datetime(2026, 3, 1, 14, 0, 0, tzinfo=timezone.utc)
+    assert stop.has_constraint_violation is False
+    assert stop.constraint_warnings is None
+    assert route_solution.expected_end_time == datetime(2026, 3, 1, 14, 5, 0, tzinfo=timezone.utc)

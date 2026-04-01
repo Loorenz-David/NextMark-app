@@ -42,6 +42,15 @@ def _serialize_route_plan_state(route_plan: RoutePlan) -> dict:
 
 
 def build_order_state_update_payload(changed_orders: list) -> dict:
+    return build_state_update_payload(changed_orders=changed_orders)
+
+
+def build_state_update_payload(
+    *,
+    changed_orders: list | None = None,
+    route_groups: list | None = None,
+    route_plans: list | None = None,
+) -> dict:
     changed = list(changed_orders or [])
     route_group_ids: set[int] = set()
     route_plan_ids: set[int] = set()
@@ -73,11 +82,23 @@ def build_order_state_update_payload(changed_orders: list) -> dict:
             }
         )
 
-    route_groups = _load_route_groups_by_ids(route_group_ids)
-    route_plans = _load_route_plans_by_ids(route_plan_ids)
+    explicit_route_groups = list(route_groups or [])
+    for route_group in explicit_route_groups:
+        route_group_id = getattr(route_group, "id", None)
+        if route_group_id is not None:
+            route_group_ids.add(route_group_id)
+
+    explicit_route_plans = list(route_plans or [])
+    for route_plan in explicit_route_plans:
+        route_plan_id = getattr(route_plan, "id", None)
+        if route_plan_id is not None:
+            route_plan_ids.add(route_plan_id)
+
+    loaded_route_groups = _load_route_groups_by_ids(route_group_ids)
+    loaded_route_plans = _load_route_plans_by_ids(route_plan_ids)
 
     return {
         "orders": orders_payload,
-        "route_groups": [_serialize_route_group_state(group) for group in route_groups],
-        "route_plans": [_serialize_route_plan_state(plan) for plan in route_plans],
+        "route_groups": [_serialize_route_group_state(group) for group in loaded_route_groups],
+        "route_plans": [_serialize_route_plan_state(plan) for plan in loaded_route_plans],
     }

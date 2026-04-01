@@ -17,6 +17,9 @@ from Delivery_app_BK.directions.domain.models import (
 from Delivery_app_BK.directions.services.request_builder import (
     _parse_time_string,
 )
+from Delivery_app_BK.directions.services.schedule_clamp import (
+    apply_route_solution_schedule_clamp,
+)
 from Delivery_app_BK.directions.services.time_window_policy import (
     apply_stop_time_window_evaluation,
     build_stop_time_warnings,
@@ -120,6 +123,14 @@ def apply_directions_result(
             visit_groups=resolved_groups,
         )
     )
+
+    clamped_stops, _ = apply_route_solution_schedule_clamp(
+        route_solution=route_solution,
+        grouped_stops=resolved_groups,
+        orders_by_id=orders_by_id,
+        base_end_time=end_time,
+    )
+    changed_stops.extend(clamped_stops)
 
     return _dedupe_stops(changed_stops)
 
@@ -288,7 +299,6 @@ def _mark_stop_stale(stop: RouteSolutionStop) -> None:
     stop.constraint_warnings = None
     stop.in_range = False
     stop.reason_was_skipped = "Route timing unavailable"
-
 
 def _resolve_allowed_end(route_solution: RouteSolution) -> Optional[datetime]:
     route_group = getattr(route_solution, "route_group", None)

@@ -409,7 +409,7 @@ def update_route_plan_state(route_plan_id: int, state_id: int):
     )
 
 
-@route_plans_bp.route("/<int:route_plan_id>/ready", methods=["PATCH"])
+@route_plans_bp.route("/<int:route_plan_id>/route-is-ready", methods=["PATCH"])
 @jwt_required()
 @role_required([ADMIN, ASSISTANT])
 def mark_route_plan_ready(route_plan_id: int):

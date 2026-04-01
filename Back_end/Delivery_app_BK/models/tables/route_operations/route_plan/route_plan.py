@@ -1,7 +1,8 @@
 # Third-party dependecies
 from datetime import date, datetime, time, timezone
 
-from sqlalchemy import Column, Float, ForeignKey, Index, Integer, String, text
+from sqlalchemy import Column, Float, ForeignKey, Index, Integer, String, text, JSON
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import relationship, validates
 
 # Local application imports
@@ -40,6 +41,7 @@ class RoutePlan(db.Model, TeamScopedMixin):
     total_volume_cm3 = Column(Float, nullable=True)
     total_item_count = Column(Integer, nullable=True)
     total_orders     = Column(Integer, nullable=True)
+    item_type_counts = Column(JSONB().with_variant(JSON, "sqlite"), nullable=True)
 
     state = relationship("RoutePlanState", back_populates="route_plans", lazy="selectin")
 

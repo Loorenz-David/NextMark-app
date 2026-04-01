@@ -8,6 +8,23 @@ from .registry import resolve_update_extension_handler
 from .types import OrderUpdateDelta, OrderUpdateExtensionContext, OrderUpdateExtensionResult
 
 
+def _resolve_plan_type(delta: OrderUpdateDelta) -> str | None:
+    delivery_plan = delta.delivery_plan
+    plan_type = getattr(delivery_plan, "plan_type", None)
+    if plan_type:
+        return plan_type
+
+    order = delta.order_instance
+    objective = getattr(order, "order_plan_objective", None)
+    if objective:
+        return objective
+
+    if delivery_plan is not None and getattr(delivery_plan, "route_groups", None) is not None:
+        return "local_delivery"
+
+    return None
+
+
 def apply_order_update_extensions(
     ctx: ServiceContext,
     order_deltas: list[OrderUpdateDelta],
@@ -19,8 +36,7 @@ def apply_order_update_extensions(
 
     grouped_deltas: defaultdict[str, list[OrderUpdateDelta]] = defaultdict(list)
     for delta in order_deltas:
-        delivery_plan = delta.delivery_plan
-        plan_type = getattr(delivery_plan, "plan_type", None)
+        plan_type = _resolve_plan_type(delta)
         if not plan_type:
             continue
         grouped_deltas[plan_type].append(delta)

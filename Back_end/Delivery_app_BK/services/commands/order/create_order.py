@@ -3,6 +3,7 @@ from collections.abc import Callable
 from datetime import datetime, timezone
 
 from sqlalchemy.exc import InvalidRequestError
+from sqlalchemy import or_
 
 from Delivery_app_BK.errors import NotFound, ValidationFailed
 from Delivery_app_BK.services.infra.events.builders.order import (
@@ -17,8 +18,10 @@ from Delivery_app_BK.models import (
     Order,
     OrderDeliveryWindow,
     OrderState,
+    RouteGroup,
     Team,
 )
+from Delivery_app_BK.services.domain.item.item_states import ItemState as ItemStateEntryPoint
 
 from ...context import ServiceContext
 from ...requests.order.create_order import OrderCreateRequest, parse_create_order_request
@@ -49,6 +52,7 @@ def create_order(ctx: ServiceContext):
             "team_id": Team,
             "order_state_id": OrderState,
             "delivery_plan_id": DeliveryPlan,
+            "route_group_id": RouteGroup,
             "item_state_id": ItemState,
             "item_position_id": ItemPosition,
         }
@@ -60,7 +64,9 @@ def create_order(ctx: ServiceContext):
 
     pending_events: list[dict] = []
     created_bundles: list[dict] = []
+    touched_delivery_plans: dict[int, DeliveryPlan] = {}
     def _apply() -> None:
+        default_item_state_id = _resolve_default_item_state_id(ctx)
         team_timezone = resolve_order_delivery_windows_timezone(ctx)
         resolved_costumers = resolve_or_create_costumers(
             ctx,
@@ -107,11 +113,18 @@ def create_order(ctx: ServiceContext):
                 if request.delivery_plan_id is not None
             ],
         )
+        route_groups_by_id = _load_route_groups_by_id(
+            ctx,
+            [
+                request.route_group_id
+                for request in order_requests
+                if request.route_group_id is not None
+            ],
+        )
         order_instances: list[Order] = []
         item_instances: list[Item] = []
         extra_instances: list[object] = []
         post_flush_actions: list[Callable[[], None]] = []
-        touched_delivery_plans: dict[int, DeliveryPlan] = {}
         items_by_order_client_id: dict[str, list[Item]] = defaultdict(list)
         plan_objective_results_by_order_client_id: dict[str, PlanObjectiveCreateResult] = {}
         allocated_scalar_ids = reserve_order_scalar_ids(ctx, len(order_requests))
@@ -137,11 +150,22 @@ def create_order(ctx: ServiceContext):
                 if order_request.delivery_plan_id is not None
                 else None
             )
+            route_group = (
+                route_groups_by_id.get(order_request.route_group_id)
+                if order_request.route_group_id is not None
+                else None
+            )
             resolved_delivery_plan_id = None
             if delivery_plan:
                 resolved_delivery_plan_id = delivery_plan.id
+                delivery_plan_type = getattr(delivery_plan, "plan_type", None)
                 if not order_fields.get("order_plan_objective"):
-                    order_fields["order_plan_objective"] = delivery_plan.plan_type
+                    order_fields["order_plan_objective"] = delivery_plan_type
+            if route_group is not None:
+                if delivery_plan is None:
+                    raise ValidationFailed("delivery_plan_id is required when route_group_id is provided.")
+                if route_group.route_plan_id != delivery_plan.id:
+                    raise ValidationFailed("route_group_id must belong to the selected delivery_plan_id.")
             order_fields.pop("delivery_plan_id", None)
 
             order_instance: Order = create_instance(ctx, Order, order_fields)
@@ -153,6 +177,9 @@ def create_order(ctx: ServiceContext):
                 order_instance.delivery_plan = delivery_plan
                 if delivery_plan is not None:
                     touched_delivery_plans[delivery_plan.id] = delivery_plan
+            if route_group is not None:
+                order_instance.route_group_id = route_group.id
+                order_instance.route_group = route_group
             order_instances.append(order_instance)
 
             # Auto-generate public tracking identifiers (once, on creation).
@@ -172,7 +199,10 @@ def create_order(ctx: ServiceContext):
                     )
             
             for item_request in order_request.items:
-                item_instance: Item = create_instance(ctx, Item, dict(item_request.fields))
+                item_fields = dict(item_request.fields)
+                if item_fields.get("item_state_id") is None:
+                    item_fields["item_state_id"] = default_item_state_id
+                item_instance: Item = create_instance(ctx, Item, item_fields)
                 order_instance.items.append(item_instance)
                 item_instances.append(item_instance)
                 items_by_order_client_id[order_instance.client_id].append(item_instance)
@@ -188,8 +218,8 @@ def create_order(ctx: ServiceContext):
                 objective_result = apply_order_plan_objective(
                     ctx=ctx,
                     order_instance=order_instance,
-                    delivery_plan=delivery_plan,
-                    plan_objective=delivery_plan.plan_type,
+                    route_plan=delivery_plan,
+                    plan_objective=getattr(delivery_plan, "plan_type", None),
                 )
                 extra_instances.extend(objective_result.instances)
                 post_flush_actions.extend(objective_result.post_flush_actions)
@@ -257,6 +287,53 @@ def create_order(ctx: ServiceContext):
     return {"created": created_bundles, "plan_totals": plan_totals}
 
 
+def _resolve_default_item_state_id(ctx: ServiceContext) -> int:
+    query = db.session.query(ItemState)
+    if ctx.team_id is not None:
+        query = query.filter(
+            or_(
+                ItemState.team_id == ctx.team_id,
+                ItemState.is_system.is_(True),
+            )
+        )
+
+    open_entry_point = ItemStateEntryPoint.OPEN.value
+
+    team_open_state = (
+        query.filter(
+            ItemState.team_id == ctx.team_id,
+            ItemState.entry_point == open_entry_point,
+        )
+        .order_by(ItemState.default.desc(), ItemState.id.asc())
+        .first()
+        if ctx.team_id is not None
+        else None
+    )
+    if team_open_state is not None and team_open_state.id is not None:
+        return team_open_state.id
+
+    system_open_state = (
+        query.filter(
+            ItemState.is_system.is_(True),
+            ItemState.entry_point == open_entry_point,
+        )
+        .order_by(ItemState.id.asc())
+        .first()
+    )
+    if system_open_state is not None and system_open_state.id is not None:
+        return system_open_state.id
+
+    fallback_default_state = (
+        query.filter(ItemState.default.is_(True))
+        .order_by(ItemState.is_system.asc(), ItemState.id.asc())
+        .first()
+    )
+    if fallback_default_state is not None and fallback_default_state.id is not None:
+        return fallback_default_state.id
+
+    raise NotFound("No usable item state found for item creation.")
+
+
 def _load_delivery_plans_by_id(
     ctx: ServiceContext,
     plan_ids: list[int],
@@ -276,3 +353,28 @@ def _load_delivery_plans_by_id(
         raise NotFound(f"Delivery plans not found: {missing_ids}")
 
     return plans_by_id
+
+
+def _load_route_groups_by_id(
+    ctx: ServiceContext,
+    route_group_ids: list[int],
+) -> dict[int, RouteGroup]:
+    deduped_route_group_ids = list(dict.fromkeys(route_group_ids))
+    if not deduped_route_group_ids:
+        return {}
+
+    query = db.session.query(RouteGroup).filter(RouteGroup.id.in_(deduped_route_group_ids))
+    if ctx.team_id:
+        query = query.filter(RouteGroup.team_id == ctx.team_id)
+    route_groups = query.all()
+
+    route_groups_by_id = {route_group.id: route_group for route_group in route_groups}
+    missing_ids = [
+        route_group_id
+        for route_group_id in deduped_route_group_ids
+        if route_group_id not in route_groups_by_id
+    ]
+    if missing_ids:
+        raise NotFound(f"Route groups not found: {missing_ids}")
+
+    return route_groups_by_id

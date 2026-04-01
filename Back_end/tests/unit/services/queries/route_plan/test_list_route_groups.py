@@ -38,6 +38,7 @@ def _fake_route_group(route_plan_id: int = 42) -> MagicMock:
     rg.driver_id = None
     rg.route_plan_id = route_plan_id
     rg.total_orders = 3
+    rg.item_type_counts = {"Sofa": 2}
     rg.driver = None
     rg.state = None
     rg.zone = None
@@ -76,6 +77,7 @@ def test_list_route_groups_returns_serialized_route_group():
     assert len(result["route_groups"]) == 1
     assert result["route_groups"][0]["id"] == 10
     assert result["route_groups"][0]["zone_id"] == 7
+    assert result["route_groups"][0]["item_type_counts"] == {"Sofa": 2}
     assert "name" not in result["route_groups"][0]
     assert "zone_geometry_snapshot" not in result["route_groups"][0]
     assert result["route_groups"][0]["zone_snapshot"] == {
