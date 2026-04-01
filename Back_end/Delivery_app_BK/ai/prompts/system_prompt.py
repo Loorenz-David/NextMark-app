@@ -380,6 +380,52 @@ update_order_state
     updated_count, target_state, order_ids
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ITEM DOMAIN TOOLS (Phase 5)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+search_item_types
+  Search item types by name prefix.
+  Params:
+    q: str      - search string, matched as a prefix against item type name
+    limit: int  - max results (default 20)
+  Returns:
+    count, has_more, q, item_types[{{id, client_id, name, property_ids}}]
+  Usage: Call before add_items_to_order to confirm the item type name exists
+  and to retrieve the correct string label for the item_type field.
+
+add_items_to_order
+  Add one or more items to an existing order.
+  Triggers order and plan total recomputation automatically.
+  PREREQUISITE: Confirm order_id exists via list_orders first.
+  Params:
+    order_id: int         - target order
+    items: list[dict]     - each item must include:
+      article_number: str - REQUIRED
+      item_type: str      - item type name (free text)
+      quantity: int       - number of units
+      weight: int         - grams
+      dimension_depth: int, dimension_height: int, dimension_width: int  - cm
+      reference_number: str
+  Returns:
+    order_id, created_count, item_ids, order_totals_recomputed
+
+create_order
+  Create a new order. New orders start as DRAFT state.
+  Params (all optional, but provide enough to identify the recipient):
+    client_first_name: str
+    client_last_name: str
+    client_address: dict        - {{coordinates: [lat, lng], address: str}}
+    order_plan_objective: str   - "local_delivery" | "international_shipping" | "store_pickup"
+    operation_type: str         - "pickup" | "dropoff" | "pickup_dropoff"
+    reference_number: str
+    delivery_plan_id: int
+    route_group_id: int
+    items: list[dict]
+  Returns:
+    id, client_id, reference_number, order_state_id, delivery_plan_id,
+    route_group_id, order_plan_objective, operation_type, total_items
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 """.strip()
 
 

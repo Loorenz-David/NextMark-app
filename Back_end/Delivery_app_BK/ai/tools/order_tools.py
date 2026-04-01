@@ -10,6 +10,7 @@ from __future__ import annotations
 from Delivery_app_BK.ai.prompts.system_prompt import ORDER_STATE_MAP
 from Delivery_app_BK.errors import NotFound
 from Delivery_app_BK.models import RouteGroup
+from Delivery_app_BK.services.commands.order.create_order import create_order
 from Delivery_app_BK.services.commands.order.order_states.update_orders_state import (
     update_orders_state_payload,
 )
@@ -136,8 +137,65 @@ def list_orders_tool(
     }
 
 
-def create_order_tool(ctx: ServiceContext, **kwargs) -> dict:
-    raise NotImplementedError("create_order_tool - Phase 2")
+def create_order_tool(
+    ctx: ServiceContext,
+    client_first_name: str | None = None,
+    client_last_name: str | None = None,
+    client_address: dict | None = None,
+    order_plan_objective: str | None = None,
+    operation_type: str | None = None,
+    reference_number: str | None = None,
+    delivery_plan_id: int | None = None,
+    route_group_id: int | None = None,
+    items: list[dict] | None = None,
+) -> dict:
+    """Create a new order and return a compact summary."""
+    fields: dict = {}
+
+    if client_first_name:
+        fields["client_first_name"] = client_first_name.strip()
+    if client_last_name:
+        fields["client_last_name"] = client_last_name.strip()
+    if client_address and isinstance(client_address, dict):
+        fields["client_address"] = client_address
+    if order_plan_objective:
+        fields["order_plan_objective"] = order_plan_objective
+    if operation_type:
+        fields["operation_type"] = operation_type
+    if reference_number:
+        fields["reference_number"] = reference_number.strip()
+    if delivery_plan_id is not None:
+        fields["delivery_plan_id"] = delivery_plan_id
+    if route_group_id is not None:
+        fields["route_group_id"] = route_group_id
+    if items:
+        fields["items"] = items
+
+    if not fields:
+        return {"error": "At least one order field must be provided"}
+
+    tool_ctx = ServiceContext(
+        incoming_data={"fields": [fields]},
+        identity=ctx.identity,
+    )
+    result = create_order(tool_ctx)
+    created = result.get("created") or []
+    if not created:
+        return {"error": "Order creation returned no result"}
+
+    bundle = created[0]
+    order_data = bundle.get("order") or {}
+    return {
+        "id": order_data.get("id"),
+        "client_id": order_data.get("client_id"),
+        "reference_number": order_data.get("reference_number"),
+        "order_state_id": order_data.get("order_state_id"),
+        "delivery_plan_id": order_data.get("delivery_plan_id"),
+        "route_group_id": order_data.get("route_group_id"),
+        "order_plan_objective": order_data.get("order_plan_objective"),
+        "operation_type": order_data.get("operation_type"),
+        "total_items": order_data.get("total_items"),
+    }
 
 
 def update_order_tool(ctx: ServiceContext, order_id: int, **kwargs) -> dict:

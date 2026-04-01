@@ -123,7 +123,7 @@ Narrative behavior requirements:
 
 ---
 
-## Registered Tools (Phase 4)
+## Registered Tools (Phase 5)
 
 | Tool name | File | Domain service |
 |---|---|---|
@@ -142,6 +142,9 @@ Narrative behavior requirements:
 | `update_order_state` | `tools/order_tools.py` | `commands/order/order_states/update_orders_state.py` -> `update_orders_state_payload` |
 | `create_plan` | `tools/plan_tools.py` | `commands/route_plan/create_plan.py` -> `create_plan` |
 | `materialize_route_groups` | `tools/plan_tools.py` | `commands/route_plan/materialize_route_groups.py` -> `materialize_route_groups` |
+| `search_item_types` | `tools/item_tools.py` | `queries/item_type/list_item_types.py` -> `list_item_types` |
+| `add_items_to_order` | `tools/item_tools.py` | `commands/item/create/create_item.py` -> `create_item` |
+| `create_order` | `tools/order_tools.py` | `commands/order/create_order.py` -> `create_order` |
 
 ---
 
@@ -220,18 +223,19 @@ Handlers status:
 
 ---
 
-## Tool File Status (Phase 4)
+## Tool File Status (Phase 5)
 
 Implemented:
 - tools/narrative_tools.py  (get_plan_snapshot, get_route_group_snapshot, get_operations_dashboard)
 - tools/zone_tools.py       (evaluate_order_route_fit, list_zones, get_zone_snapshot)
 - tools/geocode_tools.py    (geocode_address — pre-existing, registered in Phase 2)
 - tools/geometry_utils.py   (NEW — pure-Python spatial helpers: haversine, centroid, corridor, cheapest_insertion)
-- tools/order_tools.py      (list_orders, assign_orders_to_plan, assign_orders_to_route_group, update_order_state)
+- tools/order_tools.py      (list_orders, create_order, assign_orders_to_plan, assign_orders_to_route_group, update_order_state)
 - tools/plan_tools.py       (list_plans, list_route_groups, create_plan, materialize_route_groups)
+- tools/item_tools.py       (search_item_types, add_items_to_order)
 
 Skeleton (NotImplemented - later phases):
-- tools/item_tools.py
+- tools/order_tools.py      (update_order)
 - tools/plan_execution/local_delivery_handler.py
 
 Stub (returns not_implemented):
@@ -267,9 +271,11 @@ Provider files remain the same:
 
 ### Phase 4 — Mutation Tools ✅ (complete)
 
-### Phase 5 — Item Domain Tools
-- search_item_types — full-text search over item type catalog
-- add_items_to_order — attach items to an order with quantity + weight + volume
+### Phase 5 — Item Domain Tools ✅ (complete)
+
+### Phase 6 — Deferred Mutations
+- update_order (requires update_extensions orchestration)
+- optimize_plan (strategy-specific planning work)
 
 ---
 

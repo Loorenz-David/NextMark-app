@@ -145,6 +145,29 @@ def _summarize_materialize_route_groups(params: dict, result: dict) -> str:
     )
 
 
+def _summarize_search_item_types(params: dict, result: dict) -> str:
+    count = result.get("count", 0)
+    q = result.get("q") or params.get("q", "")
+    q_str = f" matching \"{q}\"" if q else ""
+    return f"Found {count} item type(s){q_str}."
+
+
+def _summarize_add_items_to_order(params: dict, result: dict) -> str:
+    if "error" in result:
+        return f"add_items_to_order failed: {result['error']}"
+    return (
+        f"Added {result.get('created_count', 0)} item(s) to order {result.get('order_id')}."
+    )
+
+
+def _summarize_create_order(params: dict, result: dict) -> str:
+    if "error" in result:
+        return f"create_order failed: {result['error']}"
+    ref = result.get("reference_number")
+    ref_str = f" (ref: {ref})" if ref else ""
+    return f"Created order id={result.get('id')}{ref_str}."
+
+
 # ── Action functions ──────────────────────────────────────────────────────────
 
 def _actions_for_get_plan_snapshot(result: dict) -> list:
@@ -302,6 +325,33 @@ def _actions_for_materialize_route_groups(result: dict) -> list:
     }]
 
 
+def _actions_for_search_item_types(result: dict) -> list:
+    return []
+
+
+def _actions_for_add_items_to_order(result: dict) -> list:
+    return []
+
+
+def _actions_for_create_order(result: dict) -> list:
+    if "error" in result:
+        return []
+    plan_id = result.get("delivery_plan_id")
+    if plan_id:
+        return [{
+            "id": f"navigate_plan_{plan_id}",
+            "type": "navigate",
+            "label": "View Plan",
+            "payload": {"path": f"/plans/{plan_id}"},
+        }]
+    return [{
+        "id": "navigate_orders",
+        "type": "navigate",
+        "label": "View Orders",
+        "payload": {"path": "/"},
+    }]
+
+
 # ── Registries ────────────────────────────────────────────────────────────────
 
 # Registry 1: tool name -> summary function.
@@ -322,6 +372,9 @@ _SUMMARY_REGISTRY: dict[str, Callable[[dict, dict], str]] = {
     "update_order_state":           _summarize_update_order_state,
     "create_plan":                  _summarize_create_plan,
     "materialize_route_groups":     _summarize_materialize_route_groups,
+    "search_item_types":            _summarize_search_item_types,
+    "add_items_to_order":           _summarize_add_items_to_order,
+    "create_order":                 _summarize_create_order,
 }
 
 # Registry 2: tool name -> action generator.
@@ -342,6 +395,9 @@ _ACTION_REGISTRY: dict[str, Callable[[dict], list[AIAction]]] = {
     "update_order_state":           _actions_for_update_order_state,
     "create_plan":                  _actions_for_create_plan,
     "materialize_route_groups":     _actions_for_materialize_route_groups,
+    "search_item_types":            _actions_for_search_item_types,
+    "add_items_to_order":           _actions_for_add_items_to_order,
+    "create_order":                 _actions_for_create_order,
 }
 
 

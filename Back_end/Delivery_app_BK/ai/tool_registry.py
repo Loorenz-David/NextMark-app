@@ -1,6 +1,10 @@
 from __future__ import annotations
 
 from Delivery_app_BK.ai.tools.geocode_tools import geocode_address_tool
+from Delivery_app_BK.ai.tools.item_tools import (
+    add_items_to_order_tool,
+    search_item_types_tool,
+)
 from Delivery_app_BK.ai.tools.narrative_tools import (
     get_operations_dashboard_tool,
     get_plan_snapshot_tool,
@@ -9,6 +13,7 @@ from Delivery_app_BK.ai.tools.narrative_tools import (
 from Delivery_app_BK.ai.tools.order_tools import (
     assign_orders_to_plan_tool,
     assign_orders_to_route_group_tool,
+    create_order_tool,
     list_orders_tool,
     update_order_state_tool,
 )
@@ -47,20 +52,17 @@ TOOLS: dict[str, object] = {
     "create_plan":                  create_plan_tool,
     "materialize_route_groups":     materialize_route_groups_tool,
 
+    # Phase 5: item domain + order creation
+    "search_item_types":            search_item_types_tool,
+    "add_items_to_order":           add_items_to_order_tool,
+    "create_order":                 create_order_tool,
+
     # order domain - later phases
-    # "create_order":         create_order_tool,
     # "update_order":         update_order_tool,
-    # "update_order_state":   update_order_state_tool,
 
     # plan domain - later phases
-    # "create_plan":          create_plan_tool,
     # "optimize_plan":        optimize_plan_tool,
 
     # route group domain - later phases
     # "assign_orders_to_group":    assign_orders_to_group_tool,
-    # "materialize_route_groups":  materialize_route_groups_tool,
-
-    # item domain - later phases
-    # "search_item_types":    search_item_types_tool,
-    # "add_items_to_order":   add_items_to_order_tool,
 }
