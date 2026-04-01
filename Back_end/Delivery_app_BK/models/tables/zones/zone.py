@@ -1,10 +1,11 @@
 from datetime import datetime, timezone
 import json
+import re
 
 from sqlalchemy import Boolean, Column, Enum, Float, Index, Integer, String
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy import JSON
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import relationship, validates
 from geoalchemy2 import Geometry
 from geoalchemy2.elements import WKBElement
 from geoalchemy2.shape import from_shape, to_shape
@@ -44,6 +45,7 @@ class Zone(db.Model):
     )
     city_key = Column(String(255), nullable=False, index=True)
     name = Column(String(255), nullable=False)
+    zone_color = Column(String(7), nullable=True)
     zone_type = Column(
         Enum("bootstrap", "system", "user", name="zone_type_enum"),
         nullable=False,
@@ -137,3 +139,16 @@ class Zone(db.Model):
     @geometry_simplified.setter
     def geometry_simplified(self, value):
         self.geom_simplified = self._encode_geometry(value)
+
+    @validates("zone_color")
+    def validate_zone_color(self, key, value):
+        if value is None:
+            return None
+        if not isinstance(value, str):
+            raise ValueError("zone_color must be a string.")
+        normalized = value.strip()
+        if not normalized:
+            return None
+        if not re.fullmatch(r"#[0-9A-Fa-f]{6}", normalized):
+            raise ValueError("zone_color must be a valid hex color like #A1B2C3.")
+        return normalized

@@ -1,4 +1,4 @@
-"""Update the name of a zone - allowed on both active and inactive versions."""
+"""Update mutable zone presentation fields on both active and inactive versions."""
 from __future__ import annotations
 
 from Delivery_app_BK.errors import NotFound, ValidationFailed
@@ -26,5 +26,7 @@ def update_zone_name(ctx: ServiceContext) -> dict:
         raise ValidationFailed("name must be a non-empty string")
 
     zone.name = name.strip()
+    if "zone_color" in ctx.incoming_data:
+        zone.zone_color = ctx.incoming_data.get("zone_color")
     db.session.commit()
     return serialize_zone(zone)

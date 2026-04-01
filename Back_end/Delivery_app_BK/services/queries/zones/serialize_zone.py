@@ -8,6 +8,7 @@ def serialize_zone(zone: Zone) -> dict:
         "zone_version_id": zone.zone_version_id,
         "city_key": zone.city_key,
         "name": zone.name,
+        "zone_color": zone.zone_color,
         "zone_type": zone.zone_type,
         "centroid_lat": zone.centroid_lat,
         "centroid_lng": zone.centroid_lng,

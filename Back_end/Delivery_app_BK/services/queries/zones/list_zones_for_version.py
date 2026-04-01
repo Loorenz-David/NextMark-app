@@ -53,6 +53,7 @@ def list_zones_for_version(ctx: ServiceContext) -> list[dict]:
             "max_lng": z.max_lng,
             "is_active": z.is_active,
             "template": templates_by_zone_id.get(z.id),
+            "zone_color": z.zone_color,
             "created_at": z.created_at.isoformat() if z.created_at else None,
         }
         for z in zones

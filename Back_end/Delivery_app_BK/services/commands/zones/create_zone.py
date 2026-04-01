@@ -16,6 +16,7 @@ def create_zone(ctx: ServiceContext) -> dict:
     """Create a new Zone record under the specified zone version."""
     version_id = ctx.incoming_data.get("version_id")
     name = ctx.incoming_data.get("name")
+    zone_color = ctx.incoming_data.get("zone_color")
     zone_type = ctx.incoming_data.get("zone_type", "user")
 
     if not version_id:
@@ -34,6 +35,7 @@ def create_zone(ctx: ServiceContext) -> dict:
         zone_version_id=version_id,
         city_key=version.city_key,
         name=name,
+        zone_color=zone_color,
         zone_type=zone_type,
         centroid_lat=ctx.incoming_data.get("centroid_lat"),
         centroid_lng=ctx.incoming_data.get("centroid_lng"),
