@@ -3,7 +3,10 @@ import { useMemo } from 'react'
 
 import type { StackComponentProps } from '@/shared/stack-manager/types'
 import { ResourcesManagerProvider } from '@/shared/resource-manager/ResourceManagerContext'
-import { AdminNotificationsActiveViewBridge } from '@/realtime/notifications'
+import {
+  AdminNotificationClickBridge,
+  AdminNotificationsActiveViewBridge,
+} from '@/realtime/notifications'
 import { StackActionManager } from '@/shared/stack-manager/StackActionManager'
 
 import { homePopupRegistry } from '@/features/home-route-operations/registry/homePopups'
@@ -46,6 +49,7 @@ export function HomeAppManagersProvider({ children }: { children: ReactNode }) {
       }}
     >
       <AdminNotificationsActiveViewBridge />
+      <AdminNotificationClickBridge />
       {children}
     </ResourcesManagerProvider>
   )

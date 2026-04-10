@@ -1,5 +1,8 @@
 from types import SimpleNamespace
 
+import pytest
+
+from Delivery_app_BK.errors import ValidationFailed
 from Delivery_app_BK.services.commands.order.order_states import (
     update_orders_state as module,
 )
@@ -71,6 +74,107 @@ def test_update_orders_state_skips_unchanged_without_emitting(monkeypatch):
 
     assert updated_orders == []
     assert emitted == []
+
+
+def test_update_orders_state_appends_failure_note_when_target_state_is_fail(monkeypatch):
+    state_instance = SimpleNamespace(id=8, name="Fail")
+    order = SimpleNamespace(
+        id=11,
+        team_id=7,
+        order_state_id=2,
+        order_notes=[{"type": "GENERAL", "content": "g"}],
+        route_group=SimpleNamespace(id=9, route_solutions=[], orders=[], state_id=1),
+        route_group_id=9,
+        route_plan=None,
+        delivery_plan=None,
+    )
+
+    monkeypatch.setattr(module, "get_instance", lambda ctx, model, value: state_instance)
+    monkeypatch.setattr(module, "_resolve_orders", lambda ctx, orders: [order])
+    monkeypatch.setattr(module.db.session, "begin", lambda: _DummyTransaction())
+    monkeypatch.setattr(module, "emit_order_events", lambda ctx, events: None)
+
+    module.update_orders_state(
+        ctx=SimpleNamespace(
+            incoming_data={
+                "order_notes": {
+                    "type": "FAILURE",
+                    "content": "delivery attempt failed",
+                }
+            }
+        ),
+        orders=11,
+        state_id=8,
+    )
+
+    assert len(order.order_notes) == 2
+    assert order.order_notes[0] == {"type": "GENERAL", "content": "g"}
+    assert order.order_notes[1]["type"] == "FAILURE"
+    assert order.order_notes[1]["content"] == "delivery attempt failed"
+    assert isinstance(order.order_notes[1]["creation_date"], str)
+
+
+def test_update_orders_state_rejects_non_failure_note_type_in_payload(monkeypatch):
+    state_instance = SimpleNamespace(id=8, name="Fail")
+    order = SimpleNamespace(id=11, team_id=7, order_state_id=2)
+
+    monkeypatch.setattr(module, "get_instance", lambda ctx, model, value: state_instance)
+    monkeypatch.setattr(module, "_resolve_orders", lambda ctx, orders: [order])
+    monkeypatch.setattr(module.db.session, "begin", lambda: _DummyTransaction())
+    monkeypatch.setattr(module, "emit_order_events", lambda ctx, events: None)
+
+    with pytest.raises(ValidationFailed):
+        module.update_orders_state(
+            ctx=SimpleNamespace(
+                incoming_data={
+                    "order_notes": {
+                        "type": "GENERAL",
+                        "content": "not allowed here",
+                    }
+                }
+            ),
+            orders=11,
+            state_id=8,
+        )
+
+
+def test_update_orders_state_appends_failure_note_from_fields_payload(monkeypatch):
+    state_instance = SimpleNamespace(id=8, name="Fail")
+    order = SimpleNamespace(
+        id=11,
+        team_id=7,
+        order_state_id=2,
+        order_notes=[],
+        route_group=SimpleNamespace(id=9, route_solutions=[], orders=[], state_id=1),
+        route_group_id=9,
+        route_plan=None,
+        delivery_plan=None,
+    )
+
+    monkeypatch.setattr(module, "get_instance", lambda ctx, model, value: state_instance)
+    monkeypatch.setattr(module, "_resolve_orders", lambda ctx, orders: [order])
+    monkeypatch.setattr(module.db.session, "begin", lambda: _DummyTransaction())
+    monkeypatch.setattr(module, "emit_order_events", lambda ctx, events: None)
+
+    module.update_orders_state(
+        ctx=SimpleNamespace(
+            incoming_data={
+                "fields": {
+                    "order_notes": {
+                        "type": "FAILURE",
+                        "content": "Vehicle breakdown delayed delivery.",
+                    }
+                }
+            }
+        ),
+        orders=11,
+        state_id=8,
+    )
+
+    assert len(order.order_notes) == 1
+    assert order.order_notes[0]["type"] == "FAILURE"
+    assert order.order_notes[0]["content"] == "Vehicle breakdown delayed delivery."
+    assert isinstance(order.order_notes[0]["creation_date"], str)
 
 
 def test_recompute_and_auto_complete_plans_runs_group_and_plan_sync(monkeypatch):

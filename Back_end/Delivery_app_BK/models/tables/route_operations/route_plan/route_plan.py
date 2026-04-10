@@ -81,7 +81,10 @@ class RoutePlan(db.Model, TeamScopedMixin):
     def validate_start_date(self, key, value):
         normalized = self._normalize_start_of_day(value)
         if getattr(self, "date_strategy", "single") == "single":
-            self.end_date = self._normalize_end_of_day(normalized)
+            # Write directly to avoid chaining into validate_end_date, which would
+            # compare the new end against the still-old self.start_date mid-assignment.
+            # The auto-set value is always valid: end-of-day of the incoming start.
+            self.__dict__["end_date"] = self._normalize_end_of_day(normalized)
         return normalized
 
     @validates("end_date")

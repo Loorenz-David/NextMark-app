@@ -3,6 +3,7 @@ Routers for the client-form-link feature.
 
   Authenticated (admin):
     POST /api/v2/orders/<order_id>/client-form-link  → generate / regenerate token
+        POST /api/v2/orders/<order_id>/client-form-link/send → generate / regenerate and send token
 
   Public (no auth — token acts as the credential):
     GET  /api/v2/public/client-form/<token>           → fetch safe order data for the form
@@ -23,6 +24,7 @@ from Delivery_app_BK.errors.client_form import (
 from Delivery_app_BK.routers.http.response import Response
 from Delivery_app_BK.services.commands.order.client_form.generate_token import generate_client_form_token
 from Delivery_app_BK.services.commands.order.client_form.get_client_form import get_client_form_data
+from Delivery_app_BK.services.commands.order.client_form.send_link import send_client_form_link
 from Delivery_app_BK.services.commands.order.client_form.submit_client_form import submit_client_form
 
 
@@ -48,6 +50,33 @@ def generate_client_form_link(order_id: int):
         return response.build_successful_response({
             "form_url": form_url,
             "expires_at": result["expires_at"].isoformat(),
+        })
+    except DomainError as e:
+        return response.build_unsuccessful_response(e)
+
+
+@client_form_bp.route("/orders/<int:order_id>/client-form-link/send", methods=["POST"])
+@jwt_required()
+def send_client_form_link_route(order_id: int):
+    """Generate (or regenerate) and send the secure client-form link for the given order."""
+    identity = get_jwt()
+    team_id = identity.get("active_team_id") or identity.get("team_id")
+    payload = request.get_json(silent=True) or {}
+
+    response = Response()
+    try:
+        result = send_client_form_link(
+            order_id=order_id,
+            team_id=team_id,
+            base_url=CLIENT_FORM_BASE_URL,
+            identity=identity,
+            payload=payload,
+        )
+        return response.build_successful_response({
+            "form_url": result["form_url"],
+            "expires_at": result["expires_at"].isoformat(),
+            "reused": result["reused"],
+            "send_results": result["send_results"],
         })
     except DomainError as e:
         return response.build_unsuccessful_response(e)

@@ -1,3 +1,4 @@
+import { hasExternalFormPhoneNumber } from "./externalFormPhone";
 import type { ExternalFormData } from './externalForm.types'
 
 export const validateClientInfo = (data: ExternalFormData) => {
@@ -5,7 +6,7 @@ export const validateClientInfo = (data: ExternalFormData) => {
 }
 
 export const validateContactInfo = (data: ExternalFormData) => {
-  return Boolean(data.client_primary_phone && data.client_email)
+  return Boolean(hasExternalFormPhoneNumber(data.client_primary_phone) && data.client_email)
 }
 
 export const validateDeliveryAddress = (data: ExternalFormData) => {

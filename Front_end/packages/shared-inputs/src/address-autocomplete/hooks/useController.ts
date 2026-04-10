@@ -18,6 +18,7 @@ type PropsuseController = {
   intentKey?: string
   onInputValueChange?: (value: string) => void
   storageNamespace?: string
+  onCurrentLocationLoadingChange?: (isLoading: boolean) => void
 }
 
 export const useControllers = ({
@@ -31,11 +32,14 @@ export const useControllers = ({
   intentKey,
   onInputValueChange,
   storageNamespace,
+  onCurrentLocationLoadingChange,
 }: PropsuseController) => {
   const debounceMs = 500
   const debounceTimeoutRef = useRef<number | null>(null)
   const [inputValue, setInputValue] = useState('')
   const [isOpen, setIsOpen] = useState(false)
+  const [isWaitingForPredictions, setIsWaitingForPredictions] = useState(false)
+  const [isResolvingCurrentLocation, setIsResolvingCurrentLocation] = useState(false)
   const [savedLocationsRevision, setSavedLocationsRevision] = useState(0)
 
   const maybeRecordSavedLocation = (value: address) => {
@@ -50,11 +54,15 @@ export const useControllers = ({
     }
 
     if (!value.trim()) {
+      setIsWaitingForPredictions(false)
       resetPredictions()
       return
     }
 
+    setIsWaitingForPredictions(true)
+
     debounceTimeoutRef.current = window.setTimeout(() => {
+      setIsWaitingForPredictions(false)
       fetchPredictions(value)
       if (selectedAddress) {
         onSelectedAddress(null)
@@ -85,18 +93,23 @@ export const useControllers = ({
   }
 
   async function handleUseCurrentLocation() {
+    onCurrentLocationLoadingChange?.(true)
+    setIsResolvingCurrentLocation(true)
     try {
       requestAnimationFrame(() => {
         (document.activeElement as HTMLElement | null)?.blur()
       })
+      handleToogle({ value: false })
       const addressDetails = await getCurrentLocationAddress(storageNamespace)
       setInputValue(CURRENT_LOCATION_INPUT_LABEL)
       onInputValueChange?.(CURRENT_LOCATION_INPUT_LABEL)
       onSelectedAddress(addressDetails)
       maybeRecordSavedLocation(addressDetails)
-      handleToogle({ value: false })
     } catch {
       // Keep input usable when geolocation/reverse-geocode fails.
+    } finally {
+      onCurrentLocationLoadingChange?.(false)
+      setIsResolvingCurrentLocation(false)
     }
   }
 
@@ -156,6 +169,8 @@ export const useControllers = ({
     onQuery,
     handleToogle,
     isOpen,
+    isWaitingForPredictions,
+    isResolvingCurrentLocation,
     savedLocationsRevision,
     selectedAddress,
     onSelectedAddress,

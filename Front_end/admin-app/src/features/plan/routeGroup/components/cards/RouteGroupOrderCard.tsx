@@ -43,7 +43,6 @@ export const RouteGroupOrderCard = ({
         ? stop.stop_order
         : null;
   const orderState = useOrderStateByServerId(order.order_state_id ?? 1);
-
   const openOrder = () => {
     mapManager.selectOrder(order.client_id);
     openOrderDetail(
@@ -52,6 +51,7 @@ export const RouteGroupOrderCard = ({
         clientId: order.client_id,
         routeGroupId: routeGroupId ?? order.route_group_id ?? null,
         planStartDate: planStartDate ?? null,
+        headerBehavior: "order-main-context",
       },
       { borderLeft: "rgb(var(--color-light-blue-r),0.7)" },
     );

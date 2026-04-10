@@ -7,6 +7,7 @@ def serialize_route_solution_short(route_solution: RouteSolution) -> dict:
         "client_id": route_solution.client_id,
         "label":route_solution.label,
         "is_optimized": route_solution.is_optimized,
+        "eta_message_tolerance": route_solution.eta_message_tolerance if route_solution.eta_message_tolerance is not None else 1800,
         "start_leg_polyline": route_solution.start_leg_polyline,
         "end_leg_polyline": route_solution.end_leg_polyline,
         "_representation": "summary",

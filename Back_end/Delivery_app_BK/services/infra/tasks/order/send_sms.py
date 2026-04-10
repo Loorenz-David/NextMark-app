@@ -4,7 +4,9 @@ from datetime import datetime, timezone
 from typing import Any
 
 from Delivery_app_BK.models import OrderEventAction, db
+from Delivery_app_BK.services.commands.order.client_form.generate_token import get_existing_client_form_url
 from Delivery_app_BK.services.domain.messaging import SCHEDULE_ANCHOR_FUTURE_BUSINESS_TIME
+from Delivery_app_BK.services.infra.events.realtime_refresh import notify_order_event_history_changed
 from Delivery_app_BK.services.infra.messaging import MessageRenderContext
 from Delivery_app_BK.services.infra.messaging import resolve_sms_template
 from Delivery_app_BK.services.infra.messaging.action_scheduling import resolve_current_order_future_anchor
@@ -21,6 +23,7 @@ def _mark_action_failed(action: OrderEventAction, error_message: str) -> None:
     action.status = OrderEventAction.STATUS_FAILED
     action.last_error = _truncate_error(error_message)
     db.session.commit()
+    notify_order_event_history_changed(action.event_id)
 
 
 def _mark_action_success(action: OrderEventAction) -> None:
@@ -28,6 +31,7 @@ def _mark_action_success(action: OrderEventAction) -> None:
     action.last_error = None
     action.processed_at = datetime.now(timezone.utc)
     db.session.commit()
+    notify_order_event_history_changed(action.event_id)
 
 
 def _mark_action_skipped(action: OrderEventAction, reason: str) -> None:
@@ -35,6 +39,7 @@ def _mark_action_skipped(action: OrderEventAction, reason: str) -> None:
     action.last_error = _truncate_error(reason)
     action.processed_at = datetime.now(timezone.utc)
     db.session.commit()
+    notify_order_event_history_changed(action.event_id)
 
 
 def _extract_phone_value(source: Any) -> str | None:
@@ -106,6 +111,19 @@ def _resolve_recipient_phone(order) -> str | None:
     return None
 
 
+def _extract_sms_override(action: OrderEventAction) -> str | None:
+    event_payload = getattr(action.event, "payload", None)
+    if not isinstance(event_payload, dict):
+        return None
+
+    recipients = event_payload.get("recipients")
+    if not isinstance(recipients, dict):
+        return None
+
+    recipient = recipients.get("sms")
+    return _extract_phone_value(recipient)
+
+
 # Synchronous for now. This can be wrapped by Celery workers later.
 def send_sms(action_id: int) -> None:
     action = db.session.get(OrderEventAction, action_id)
@@ -144,15 +162,22 @@ def send_sms(action_id: int) -> None:
                 return
 
         order = action.event.order
-        recipient_phone = _resolve_recipient_phone(order)
+        recipient_phone = _extract_sms_override(action) or _resolve_recipient_phone(order)
         if not recipient_phone:
             _mark_action_failed(action, "Order has no valid recipient phone number")
             return
+
+        extra_context: dict[str, str] = {}
+        form_url = get_existing_client_form_url(order)
+        if form_url:
+            extra_context["client_form_link"] = form_url
 
         render_context = MessageRenderContext(
             order=order,
             order_event=action.event,
             team_id=team_id,
+            team_time_zone=getattr(getattr(order, "team", None), "time_zone", None),
+            extra_context=extra_context,
         )
 
         send_sms_message(

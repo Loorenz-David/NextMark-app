@@ -46,10 +46,10 @@ def build_request(context: OptimizationContext) -> OptimizationRequest:
     incoming_data = context.incoming_data
     route_group = getattr(context, "route_group", None)
     if route_group is None:
-        raise ValidationFailed("Optimization context is missing route_group.")
+        route_group = context.local_delivery_plan
     route_plan = getattr(context, "route_plan", None)
     if route_plan is None:
-        raise ValidationFailed("Optimization context is missing route_plan.")
+        route_plan = context.delivery_plan
 
     start_location = (
         incoming_data.get("start_location")
@@ -122,6 +122,8 @@ def build_request(context: OptimizationContext) -> OptimizationRequest:
     return OptimizationRequest(
         route_plan_id=route_plan.id,
         route_group_id=route_group.id,
+        delivery_plan_id=route_plan.id,
+        local_delivery_plan_id=route_group.id,
         route_solution_id=context.route_solution.id,
         shipments=shipments,
         start_location=start_location,
@@ -333,7 +335,7 @@ def _build_injected_routes(
 
     return [
         {
-            "vehicle_label": f"vehicle-{context.route_group.id}",
+            "vehicle_label": f"vehicle-{context.local_delivery_plan.id}",
             "visits": visits,
         }
     ]
@@ -360,7 +362,7 @@ def _build_date_range_windows(
 
  
     # ---- Resolve date range ----
-    range_start = earliest or _coerce_datetime(context.route_plan.start_date)
+    range_start = earliest or _coerce_datetime(context.delivery_plan.start_date)
     range_end = latest or (range_start + timedelta(days=max_windows - 1))
 
     tz = range_start.tzinfo
@@ -622,13 +624,13 @@ def _resolve_global_time_bounds(
     global_end = _coerce_datetime(incoming_data.get("global_end_time"))
     request_timezone = resolve_request_timezone(
         context.ctx,
-        context.route_group,
+        context.local_delivery_plan,
         identity=context.identity,
     )
 
     if global_start is None:
         global_start = _merge_plan_date_with_route_time(
-            context.route_plan.start_date,
+            context.delivery_plan.start_date,
             context.route_solution.set_start_time,
             request_timezone=request_timezone,
             use_now_if_today=True,
@@ -636,7 +638,7 @@ def _resolve_global_time_bounds(
 
     if global_end is None:
         global_end = _merge_plan_date_with_route_time(
-            context.route_plan.end_date,
+            context.delivery_plan.end_date,
             context.route_solution.set_end_time,
             request_timezone=request_timezone,
             use_now_if_today=False,

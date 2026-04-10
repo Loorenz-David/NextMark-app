@@ -51,8 +51,7 @@ export function clampFloatingPoint(
 /**
  * Computes where the panel should open relative to the launcher.
  * Prefers to open above (panel bottom = launcher top); falls back to below if not enough space.
- * Prefers opening to the launcher's right side; falls back to left when needed.
- * Result is always clamped to the viewport.
+ * Right-aligns panel with launcher. Result is always clamped to the viewport.
  */
 export function computePanelOpenPosition(
   launcherPosition: FloatingPoint,
@@ -64,13 +63,8 @@ export function computePanelOpenPosition(
   const openAboveY = launcherPosition.y - panelSize.height
   const openBelowY = launcherPosition.y + launcherSize.height
   const y = openAboveY >= margin ? openAboveY : openBelowY
-
-  const rightPreferredX = launcherPosition.x
-  const rightEdgeIfPreferred = rightPreferredX + panelSize.width
-  const canOpenRight = rightEdgeIfPreferred <= viewport.width - margin
-  const leftFallbackX = launcherPosition.x + launcherSize.width - panelSize.width
-  const x = canOpenRight ? rightPreferredX : leftFallbackX
-
+  // Right-align panel with launcher
+  const x = launcherPosition.x + launcherSize.width - panelSize.width
   return clampFloatingPoint({ x, y }, panelSize, viewport, margin)
 }
 

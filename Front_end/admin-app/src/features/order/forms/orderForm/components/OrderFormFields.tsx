@@ -1,50 +1,51 @@
-import { useState } from 'react'
+import { useState } from "react";
 
-import { BasicButton } from '@/shared/buttons/BasicButton'
-import { Field } from '@/shared/inputs/FieldContainer'
-import { InputField, PLAIN_INPUT_CLASS, PLAIN_INPUT_CONTAINER_CLASS } from '@/shared/inputs/InputField'
-import { OptionPopoverSelect } from '@/shared/inputs/OptionPopoverSelect'
-import { PhoneField } from '@/shared/inputs/PhoneField'
-import { AddressAutocomplete } from '@/shared/inputs/address-autocomplete/AddressAutocomplete'
+import { BasicButton } from "@/shared/buttons/BasicButton";
+import { Field } from "@/shared/inputs/FieldContainer";
+import {
+  InputField,
+  PLAIN_INPUT_CLASS,
+  PLAIN_INPUT_CONTAINER_CLASS,
+} from "@/shared/inputs/InputField";
+import { OptionPopoverSelect } from "@/shared/inputs/OptionPopoverSelect";
+import { PhoneField } from "@/shared/inputs/PhoneField";
+import { AddressAutocomplete } from "@/shared/inputs/address-autocomplete/AddressAutocomplete";
 
 import {
   ORDER_PLAN_OBJECTIVE_OPTIONS,
   type OrderFormLayoutModel,
-} from '../OrderForm.layout.model'
-import { OrderFormDeliveryWindowCalendar } from './DeliveryWindowCalendar'
-import { Cell, SplitRow } from '@/shared/layout/cells'
-import { ORDER_PLAN_OBJECTIVE_INFO } from '../info/orderPlanObjective.info'
+} from "../OrderForm.layout.model";
+import { OrderFormDeliveryWindowCalendar } from "./DeliveryWindowCalendar";
+import { Cell, SplitRow } from "@/shared/layout/cells";
+import { ORDER_PLAN_OBJECTIVE_INFO } from "../info/orderPlanObjective.info";
 
 type OrderFormFieldsProps = {
-  model: OrderFormLayoutModel
-  compact?: boolean
-}
+  model: OrderFormLayoutModel;
+  compact?: boolean;
+};
 
+export const OrderFormFields = ({
+  model,
+  compact = false,
+}: OrderFormFieldsProps) => {
+  const { formState, warnings, formSetters } = model;
 
+  const [showMore, setShowMore] = useState(false);
 
-
-
-
-
-export const OrderFormFields = ({ model, compact = false }: OrderFormFieldsProps) => {
-  const {
-    formState,
-    warnings,
-    formSetters,
-  } = model
-
-  const [showMore, setShowMore] = useState(false)
-
- 
   return (
     <form
       className={`flex min-h-0 flex-1 flex-col overflow-y-auto overflow-x-hidden px-4 pt-4 scroll-thin bg-[var(--color-ligth-bg)] ${
-        compact ? 'pb-5' : 'h-full pb-[100px]'
+        compact ? "pb-5" : "h-full pb-[100px]"
       }`}
     >
       <div className=" rounded-2xl border border-[var(--color-border-accent)] bg-[var(--color-page)] shadow-sm">
         <Cell>
-          <Field  warningPlacement ='besidesLabel' label="Email:" required={true} warningController={warnings.emailWarning}>
+          <Field
+            warningPlacement="besidesLabel"
+            label="Email:"
+            required={true}
+            warningController={warnings.emailWarning}
+          >
             <InputField
               value={formState.client_email}
               onChange={formSetters.handleEmail}
@@ -55,9 +56,14 @@ export const OrderFormFields = ({ model, compact = false }: OrderFormFieldsProps
           </Field>
         </Cell>
 
-        <SplitRow splitRowClass={'grid grid-cols-2 divide-x divide-[var(--color-border-accent)]'}>
+        <SplitRow
+          splitRowClass={
+            "grid grid-cols-2 divide-x divide-[var(--color-border-accent)]"
+          }
+        >
           <Cell>
-            <Field  warningPlacement ='besidesLabel'
+            <Field
+              warningPlacement="besidesLabel"
               label="Phone:"
               required={true}
               warning={warnings.primaryPhoneWarning.warning}
@@ -70,7 +76,7 @@ export const OrderFormFields = ({ model, compact = false }: OrderFormFieldsProps
           </Cell>
 
           <Cell>
-            <Field  warningPlacement ='besidesLabel' label="Secondary Phone:">
+            <Field warningPlacement="besidesLabel" label="Secondary Phone:">
               <PhoneField
                 phoneNumber={formState.client_secondary_phone}
                 onChange={formSetters.handleSecondaryPhone}
@@ -79,9 +85,14 @@ export const OrderFormFields = ({ model, compact = false }: OrderFormFieldsProps
           </Cell>
         </SplitRow>
 
-        <SplitRow splitRowClass={'grid grid-cols-2 divide-x divide-[var(--color-border-accent)]'}>
+        <SplitRow
+          splitRowClass={
+            "grid grid-cols-2 divide-x divide-[var(--color-border-accent)]"
+          }
+        >
           <Cell>
-            <Field  warningPlacement ='besidesLabel'
+            <Field
+              warningPlacement="besidesLabel"
               label="Name:"
               required={true}
               warningController={warnings.firstNameWarning}
@@ -97,7 +108,8 @@ export const OrderFormFields = ({ model, compact = false }: OrderFormFieldsProps
           </Cell>
 
           <Cell>
-            <Field  warningPlacement ='besidesLabel'
+            <Field
+              warningPlacement="besidesLabel"
               label="Last Name:"
               required={true}
               warningController={warnings.lastNameWarning}
@@ -113,15 +125,22 @@ export const OrderFormFields = ({ model, compact = false }: OrderFormFieldsProps
           </Cell>
         </SplitRow>
 
-        <div className={`border-t border-[var(--color-border-accent)] cell-default`}>
-          <Field  warningPlacement ='besidesLabel' label="Address:" required={true} warning={warnings.addressWarning.warning}>
+        <div
+          className={`border-t border-[var(--color-border-accent)] cell-default`}
+        >
+          <Field
+            warningPlacement="besidesLabel"
+            label="Address:"
+            required={true}
+            warning={warnings.addressWarning.warning}
+          >
             <AddressAutocomplete
               onSelectedAddress={formSetters.handleAddress}
               selectedAddress={formState.client_address}
-              fieldClassName={' flex w-full items-center'}
-              containerClassName={' px-4 py-2  gap-2'}
-              inputClassName={'text-sm w-full '}
-              intentKey={'order-form-delivery-address'}
+              fieldClassName={" flex w-full items-center"}
+              containerClassName={" px-4 py-2  gap-2"}
+              inputClassName={"text-sm w-full "}
+              intentKey={"order-form-delivery-address"}
               enableCurrentLocation
               enableSavedLocations
             />
@@ -130,14 +149,33 @@ export const OrderFormFields = ({ model, compact = false }: OrderFormFieldsProps
 
         {showMore ? (
           <>
-            <div className={`border-t border-[var(--color-border-accent)] cell-default`}>
-              <Field  warningPlacement ='besidesLabel'
+            <div
+              className={`border-t border-[var(--color-border-accent)] cell-default`}
+            >
+              <Field
+                warningPlacement="besidesLabel"
+                label="Note:"
+                info="Short note visible to the driver."
+              >
+                <InputField
+                  value={formState.order_note}
+                  onChange={formSetters.handleOrderNote}
+                  fieldClassName={PLAIN_INPUT_CONTAINER_CLASS}
+                  inputClassName={PLAIN_INPUT_CLASS}
+                />
+              </Field>
+            </div>
+            <div
+              className={`border-t border-[var(--color-border-accent)] cell-default`}
+            >
+              <Field
+                warningPlacement="besidesLabel"
                 label="Reference number:"
                 required={true}
                 warningController={warnings.referenceWarning}
               >
                 <InputField
-                  value={formState.reference_number ?? ''}
+                  value={formState.reference_number ?? ""}
                   onChange={formSetters.handleReference}
                   warningController={warnings.referenceWarning}
                   fieldClassName={PLAIN_INPUT_CONTAINER_CLASS}
@@ -146,8 +184,10 @@ export const OrderFormFields = ({ model, compact = false }: OrderFormFieldsProps
               </Field>
             </div>
 
-            <div className={`border-t border-[var(--color-border-accent)] px-3 py-2`}>
-              <Field  warningPlacement ='besidesLabel' label="External source:">
+            <div
+              className={`border-t border-[var(--color-border-accent)] px-3 py-2`}
+            >
+              <Field warningPlacement="besidesLabel" label="External source:">
                 <InputField
                   value={formState.external_source}
                   onChange={formSetters.handleExternalSource}
@@ -157,9 +197,17 @@ export const OrderFormFields = ({ model, compact = false }: OrderFormFieldsProps
               </Field>
             </div>
 
-            <SplitRow splitRowClass={'grid grid-cols-2 divide-x divide-[var(--color-border-accent)]'}>
+            <SplitRow
+              splitRowClass={
+                "grid grid-cols-2 divide-x divide-[var(--color-border-accent)]"
+              }
+            >
               <Cell>
-                <Field warningPlacement='besidesLabel' label="Ext. tracking #:" info="Tracking number provided by Shopify or third-party courier.">
+                <Field
+                  warningPlacement="besidesLabel"
+                  label="Ext. tracking #:"
+                  info="Tracking number provided by Shopify or third-party courier."
+                >
                   <InputField
                     value={formState.external_tracking_number}
                     onChange={formSetters.handleExternalTrackingNumber}
@@ -169,7 +217,11 @@ export const OrderFormFields = ({ model, compact = false }: OrderFormFieldsProps
                 </Field>
               </Cell>
               <Cell>
-                <Field warningPlacement='besidesLabel' label="Ext. tracking link:" info="Tracking URL provided by Shopify or third-party courier.">
+                <Field
+                  warningPlacement="besidesLabel"
+                  label="Ext. tracking link:"
+                  info="Tracking URL provided by Shopify or third-party courier."
+                >
                   <InputField
                     value={formState.external_tracking_link}
                     onChange={formSetters.handleExternalTrackingLink}
@@ -180,21 +232,12 @@ export const OrderFormFields = ({ model, compact = false }: OrderFormFieldsProps
               </Cell>
             </SplitRow>
 
-            <div className={`border-t border-[var(--color-border-accent)] cell-default`}>
-              <Field warningPlacement='besidesLabel' label="Note:" info="Short note visible to the driver.">
-                <InputField
-                  value={formState.order_note}
-                  onChange={formSetters.handleOrderNote}
-                  fieldClassName={PLAIN_INPUT_CONTAINER_CLASS}
-                  inputClassName={PLAIN_INPUT_CLASS}
-                />
-              </Field>
-            </div>
-
             {formState.delivery_plan_id == null ? (
-              <div className={`border-t border-[var(--color-border-accent)] px-3 py-2`}>
+              <div
+                className={`border-t border-[var(--color-border-accent)] px-3 py-2`}
+              >
                 <Field
-                  warningPlacement ='besidesLabel'
+                  warningPlacement="besidesLabel"
                   label="Order plan objective:"
                   info={ORDER_PLAN_OBJECTIVE_INFO}
                 >
@@ -209,8 +252,6 @@ export const OrderFormFields = ({ model, compact = false }: OrderFormFieldsProps
                 </Field>
               </div>
             ) : null}
-
-           
           </>
         ) : null}
       </div>
@@ -218,20 +259,20 @@ export const OrderFormFields = ({ model, compact = false }: OrderFormFieldsProps
       <div className="flex justify-end py-2 pr-3">
         <BasicButton
           params={{
-            variant: 'text',
+            variant: "text",
             onClick: () => setShowMore((prev) => !prev),
-            className: 'px-0 py-0 text-[10px] text-[var(--color-muted)]',
-            ariaLabel: showMore ? 'Show less fields' : 'Show more fields',
+            className: "px-0 py-0 text-[10px] text-[var(--color-muted)]",
+            ariaLabel: showMore ? "Show less fields" : "Show more fields",
           }}
         >
-          {showMore ? 'less' : 'more'}
+          {showMore ? "less" : "more"}
         </BasicButton>
       </div>
-      
-     
-      <OrderFormDeliveryWindowCalendar compact={compact} sizePreset={"desktopPopup550"}  />
 
-
+      <OrderFormDeliveryWindowCalendar
+        compact={compact}
+        sizePreset={"desktopPopup550"}
+      />
     </form>
-  )
-}
+  );
+};

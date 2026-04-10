@@ -52,6 +52,7 @@ class RouteSolutionPatchRequest:
     set_start_time: str | None = None
     set_end_time: str | None = None
     eta_tolerance_seconds: int = 0
+    eta_message_tolerance: int | None = None
     route_end_strategy: str | None = None
     driver_id: int | None = None
     vehicle_id: int | None = None
@@ -61,6 +62,7 @@ class RouteSolutionPatchRequest:
     has_set_start_time: bool = False
     has_set_end_time: bool = False
     has_eta_tolerance_seconds: bool = False
+    has_eta_message_tolerance: bool = False
     has_route_end_strategy: bool = False
     has_driver_id: bool = False
     has_vehicle_id: bool = False
@@ -207,6 +209,13 @@ def _parse_route_solution_patch(
             field="route_solution.eta_tolerance_minutes",
         )
 
+    if "eta_message_tolerance" in route_solution_raw:
+        patch.has_eta_message_tolerance = True
+        patch.eta_message_tolerance = _validate_eta_tolerance_seconds(
+            route_solution_raw.get("eta_message_tolerance"),
+            field="route_solution.eta_message_tolerance",
+        )
+
     if "route_end_strategy" in route_solution_raw:
         patch.has_route_end_strategy = True
         value = route_solution_raw.get("route_end_strategy")
@@ -276,6 +285,16 @@ def _validate_eta_tolerance_seconds_from_minutes(value, *, field: str) -> int:
     if seconds < 0 or seconds > 7200:
         raise ValidationFailed(f"{field} must be between 0 and 120 minutes.")
     return seconds
+
+
+def _validate_eta_tolerance_seconds(value, *, field: str) -> int:
+    if value is None:
+        return 1800
+    if not isinstance(value, int) or isinstance(value, bool):
+        raise ValidationFailed(f"{field} must be an integer.")
+    if value < 0 or value > 7200:
+        raise ValidationFailed(f"{field} must be between 0 and 7200.")
+    return value
 
 
 def _validate_nullable_datetime(value, *, field: str) -> datetime | None:

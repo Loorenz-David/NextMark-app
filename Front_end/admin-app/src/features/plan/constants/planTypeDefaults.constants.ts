@@ -1,6 +1,7 @@
 export const PLAN_DEFAULT_SET_START_TIME_KEY = 'set_start_time'
 export const PLAN_DEFAULT_SET_END_TIME_KEY = 'set_end_time'
 export const PLAN_DEFAULT_ETA_TOLERANCE_SECONDS_KEY = 'eta_tolerance_seconds'
+export const PLAN_DEFAULT_ETA_MESSAGE_TOLERANCE_KEY = 'eta_message_tolerance'
 export const PLAN_DEFAULT_ROUTE_END_STRATEGY_KEY = 'route_end_strategy'
 export const PLAN_DEFAULT_START_LOCATION_KEY = 'start_location'
 export const PLAN_DEFAULT_END_LOCATION_KEY = 'end_location'

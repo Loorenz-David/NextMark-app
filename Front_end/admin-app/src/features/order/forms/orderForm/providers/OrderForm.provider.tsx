@@ -95,9 +95,12 @@ export const OrderFormProvider = ({
   children: ReactNode;
 }) => {
   const { isMobile } = useMobile();
-  const mode = payload?.mode ?? "create";
+  const [mode, setMode] = useState<OrderFormMode>(payload?.mode ?? "create");
+  const [activeClientId, setActiveClientId] = useState<string | null>(
+    payload?.clientId ?? null,
+  );
   const payloadCostumerId = payload?.costumer_id ?? null;
-  const order = useOrderByClientId(payload?.clientId ?? null);
+  const order = useOrderByClientId(activeClientId);
   const orderServerId = order?.id ?? null;
   const creationDate = formatIsoDate(order?.creation_date) ?? "";
 
@@ -123,7 +126,7 @@ export const OrderFormProvider = ({
     useOrderFormBootstrapState({
       mode,
       order,
-      payloadClientId: payload?.clientId ?? null,
+      payloadClientId: activeClientId,
       payloadDeliveryPlanId: payload?.deliveryPlanId ?? null,
       payloadRouteGroupId: payload?.routeGroupId ?? null,
       payloadRestoreFormState: payload?.restoreFormState ?? null,
@@ -352,6 +355,10 @@ export const OrderFormProvider = ({
     },
     itemInitialByClientId,
     selectedCostumer,
+    onPromoteCreatedOrderToEdit: (clientId) => {
+      setActiveClientId(clientId);
+      setMode("edit");
+    },
   });
 
   const hasUnsavedChanges = useMemo(

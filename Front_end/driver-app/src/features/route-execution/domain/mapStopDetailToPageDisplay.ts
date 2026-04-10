@@ -3,6 +3,7 @@ import { formatIsoToTeamTime } from '@/app/utils/teamTimeZone'
 import type { DriverOrderStateIds } from '@/features/order-states'
 import type { StopDetailPageDisplay } from './stopDetailDisplay.types'
 import { buildStopPhoneCallOptions } from './buildStopPhoneCallOptions'
+import { mapStopOrderNotes } from './mapStopRowOrderNote'
 
 
 
@@ -16,7 +17,6 @@ type StopDetailPageDisplayDependencies = {
   callOrderPhone: () => void
   completeStop: () => void
   undoTerminal: () => void
-  openOrderNotes: (() => void) | null
   activeCasesCount: number
   orderStateIds: DriverOrderStateIds
 }
@@ -56,6 +56,9 @@ export function mapStopDetailToPageDisplay(
 ): StopDetailPageDisplay {
   const stopOrderLabel = stop.stopOrder != null ? String(stop.stopOrder) : '—'
   const totalStopsLabel = route.totalStops > 0 ? String(route.totalStops) : '—'
+  const orderScalarLabel = typeof stop.order?.order_scalar_id === 'number'
+    ? `# ${stop.order.order_scalar_id}`
+    : null
   const orderStateId = stop.order?.order_state_id ?? null
   const isCompleted = orderStateId != null && orderStateId === deps.orderStateIds.completedId
   const isFailed = orderStateId != null && orderStateId === deps.orderStateIds.failId
@@ -70,7 +73,11 @@ export function mapStopDetailToPageDisplay(
   return {
     header: {
       streetAddress: getStreetAddress(stop),
-      stopMeta: `${stopOrderLabel} / ${totalStopsLabel} • ${formatExpectedArrivalTime(stop.expectedArrivalTime)}`,
+      stopMeta: [
+        `${stopOrderLabel} / ${totalStopsLabel}`,
+        formatExpectedArrivalTime(stop.expectedArrivalTime),
+      ].filter((value): value is string => Boolean(value)).join(' • '),
+      orderScalarLabel,
     },
     headerMode: isTerminal ? 'terminal-status' : 'primary-actions',
     primaryActions: [
@@ -84,6 +91,7 @@ export function mapStopDetailToPageDisplay(
           onUndo: deps.undoTerminal,
         }
       : null,
+    orderNotes: mapStopOrderNotes(stop.order?.order_notes ?? null),
     infoRows: [
       {
         id: 'order-phone',
@@ -116,14 +124,5 @@ export function mapStopDetailToPageDisplay(
         onPress: deps.openOrderCases,
       },
     ],
-    orderNoteCard: (() => {
-      const notes = stop.order?.order_notes
-      if (!notes || notes.length === 0) return null
-      return {
-        firstNote: notes[0],
-        allNotes: notes,
-        onPress: notes.length > 1 ? deps.openOrderNotes : null,
-      }
-    })(),
   }
 }

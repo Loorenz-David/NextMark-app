@@ -10,6 +10,8 @@ Raises:
 import hashlib
 from datetime import datetime, timezone
 
+from sqlalchemy.orm import joinedload
+
 from Delivery_app_BK.models import db, Order
 from Delivery_app_BK.errors import TokenInvalidError, TokenExpiredError, TokenAlreadyUsedError
 
@@ -24,6 +26,7 @@ def validate_and_get_order(token: str) -> Order:
 
     order: Order | None = (
         db.session.query(Order)
+        .options(joinedload(Order.delivery_plan))
         .filter(Order.client_form_token_hash == token_hash)
         .first()
     )

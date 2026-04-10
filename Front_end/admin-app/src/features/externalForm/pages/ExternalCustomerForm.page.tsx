@@ -1,18 +1,18 @@
-import type { ReactNode } from 'react'
-import { AnimatePresence, motion } from 'framer-motion'
-import { CheckMarkIcon } from '@/assets/icons'
+import type { ReactNode } from "react";
+import { AnimatePresence, motion } from "framer-motion";
+import { CheckMarkIcon } from "@/assets/icons";
 
-import { ClientInfoStep } from '../components/ClientInfoStep'
-import { ContactInfoStep } from '../components/ContactInfoStep'
-import { DeliveryAddressStep } from '../components/DeliveryAddressStep'
-import { StepIndicator } from '../components/StepIndicator'
-import { StepLayout } from '../components/StepLayout'
-import { ExternalFormProvider } from '../context/ExternalForm.provider'
-import { useExternalForm } from '../context'
+import { ClientInfoStep } from "../components/ClientInfoStep";
+import { ContactInfoStep } from "../components/ContactInfoStep";
+import { DeliveryAddressStep } from "../components/DeliveryAddressStep";
+import { StepIndicator } from "../components/StepIndicator";
+import { StepLayout } from "../components/StepLayout";
+import { ExternalFormProvider } from "../context/ExternalForm.provider";
+import { useExternalForm } from "../context";
 
 type PageLayoutProps = {
-  children: ReactNode
-}
+  children: ReactNode;
+};
 
 const PageLayout = ({ children }: PageLayoutProps) => {
   return (
@@ -41,29 +41,29 @@ const PageLayout = ({ children }: PageLayoutProps) => {
         {children}
       </main>
     </div>
-  )
-}
+  );
+};
 
 const ExternalCustomerFormContent = () => {
-  const { currentStep, isFormVisible, hasSubmitted } = useExternalForm()
+  const { currentStep, isFormVisible, hasSubmitted } = useExternalForm();
 
   return (
     <PageLayout>
       <AnimatePresence mode="wait">
-        {isFormVisible ? (
+        {!isFormVisible ? (
           <motion.div
             key="external-form"
             initial={{ y: -26, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: -32, opacity: 0 }}
-            transition={{ duration: 0.32, ease: 'easeOut' }}
+            transition={{ duration: 0.32, ease: "easeOut" }}
             className="space-y-6"
           >
             <StepIndicator />
             <StepLayout>
-              {currentStep === 'client_info' && <ClientInfoStep />}
-              {currentStep === 'contact_info' && <ContactInfoStep />}
-              {currentStep === 'delivery_address' && <DeliveryAddressStep />}
+              {currentStep === "client_info" && <ClientInfoStep />}
+              {currentStep === "contact_info" && <ContactInfoStep />}
+              {currentStep === "delivery_address" && <DeliveryAddressStep />}
             </StepLayout>
           </motion.div>
         ) : hasSubmitted ? (
@@ -72,7 +72,7 @@ const ExternalCustomerFormContent = () => {
             initial={{ y: -14, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: -14, opacity: 0 }}
-            transition={{ duration: 0.28, ease: 'easeOut' }}
+            transition={{ duration: 0.28, ease: "easeOut" }}
             className="relative overflow-hidden rounded-[28px] border border-white/10 bg-white/[0.08] p-8 text-center shadow-[0_24px_80px_rgba(0,0,0,0.40)] backdrop-blur-2xl"
           >
             <div className="pointer-events-none absolute inset-0 rounded-[28px] bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.10),transparent_52%)]" />
@@ -80,8 +80,12 @@ const ExternalCustomerFormContent = () => {
               <div className="flex h-16 w-16 items-center justify-center rounded-full border border-[#83ccb9]/30 bg-[#83ccb9]/15 text-[#83ccb9] shadow-[0_0_28px_rgba(131,204,185,0.30)]">
                 <CheckMarkIcon className="h-8 w-8" />
               </div>
-              <p className="text-xl font-semibold text-white/92">Form submitted</p>
-              <p className="text-sm text-white/46">Waiting for a new form request...</p>
+              <p className="text-xl font-semibold text-white/92">
+                Form submitted
+              </p>
+              <p className="text-sm text-white/46">
+                Waiting for a new form request...
+              </p>
             </div>
           </motion.section>
         ) : (
@@ -90,22 +94,24 @@ const ExternalCustomerFormContent = () => {
             initial={{ y: -14, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: -14, opacity: 0 }}
-            transition={{ duration: 0.28, ease: 'easeOut' }}
+            transition={{ duration: 0.28, ease: "easeOut" }}
             className="relative overflow-hidden rounded-[28px] border border-white/10 bg-white/[0.08] p-8 text-center shadow-[0_24px_80px_rgba(0,0,0,0.40)] backdrop-blur-2xl"
           >
             <div className="pointer-events-none absolute inset-0 rounded-[28px] bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.10),transparent_52%)]" />
-            <div className="relative py-10 text-sm text-white/46">Waiting for form request...</div>
+            <div className="relative py-10 text-sm text-white/46">
+              Waiting for form request...
+            </div>
           </motion.section>
         )}
       </AnimatePresence>
     </PageLayout>
-  )
-}
+  );
+};
 
 export const ExternalCustomerFormPage = () => {
   return (
     <ExternalFormProvider>
       <ExternalCustomerFormContent />
     </ExternalFormProvider>
-  )
-}
+  );
+};

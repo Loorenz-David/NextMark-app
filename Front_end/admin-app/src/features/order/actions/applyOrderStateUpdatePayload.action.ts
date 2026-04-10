@@ -2,7 +2,7 @@ import type { DeliveryPlan } from "@/features/plan/types/plan";
 import type { RouteGroup } from "@/features/plan/routeGroup/types/routeGroup";
 
 import type { Order } from "../types/order";
-import { setOrder } from "../store/order.store";
+import { upsertOrder } from "../store/order.store";
 import { upsertRouteGroup } from "@/features/plan/routeGroup/store/routeGroup.slice";
 import { upsertRoutePlan } from "@/features/plan/store/routePlan.slice";
 import type { OrderStateUpdatePayload } from "../api/orderState.api";
@@ -15,7 +15,7 @@ export const applyOrderStateUpdatePayload = (
   const updatedOrders = Array.isArray(payload.orders) ? payload.orders : [];
   updatedOrders.forEach((order) => {
     if (order?.client_id) {
-      setOrder(order as Order);
+      upsertOrder(order as Order);
     }
   });
 

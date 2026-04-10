@@ -1,9 +1,11 @@
 from datetime import datetime, timezone
 from uuid import uuid4
 
-from Delivery_app_BK.models import db, RoutePlan, Team, RoutePlanState
+from Delivery_app_BK.models import db, Order, RoutePlan, Team, RoutePlanState
 from Delivery_app_BK.sockets.notifications import notify_delivery_planning_event
 from Delivery_app_BK.services.domain.route_operations.plan.route_freshness import touch_route_freshness
+from Delivery_app_BK.services.infra.events.builders.order import build_delivery_rescheduled_event
+from Delivery_app_BK.services.infra.events.emiters.order import emit_order_events
 from Delivery_app_BK.services.requests.common.datetime import validate_time_range
 from Delivery_app_BK.services.requests.route_plan.plan.local_delivery.update_settings import (
     RoutePlanPatchRequest,
@@ -57,6 +59,7 @@ def update_plan(ctx: ServiceContext):
 
     updated_plans: list[RoutePlan] = []
     updated_ids: list[int] = []
+    pending_order_events: list[dict] = []
 
     for target in extract_targets(ctx):
         fields = dict(target["fields"] or {})
@@ -66,12 +69,39 @@ def update_plan(ctx: ServiceContext):
         fields.pop("international_shipping", None)
         fields.pop("store_pickup", None)
 
+        previous_instance = db.session.get(RoutePlan, target["target_id"])
+        previous_start = getattr(previous_instance, "start_date", None)
+        previous_end = getattr(previous_instance, "end_date", None)
+
         instance: RoutePlan = update_instance(ctx, RoutePlan, fields, target["target_id"])
         touch_route_freshness(instance)
+
+        if (previous_start, previous_end) != (instance.start_date, instance.end_date):
+            plan_orders = (
+                db.session.query(Order)
+                .filter(Order.route_plan_id == instance.id)
+                .filter(Order.team_id == ctx.team_id)
+                .all()
+            )
+            for order in plan_orders:
+                pending_order_events.append(
+                    build_delivery_rescheduled_event(
+                        order,
+                        old_plan_start=previous_start,
+                        old_plan_end=previous_end,
+                        new_plan_start=instance.start_date,
+                        new_plan_end=instance.end_date,
+                        reason="plan_window_changed",
+                    )
+                )
+
         updated_plans.append(instance)
         updated_ids.append(instance.id)
 
     db.session.commit()
+
+    if pending_order_events:
+        emit_order_events(ctx, pending_order_events)
 
     for instance in updated_plans:
         notify_delivery_planning_event(

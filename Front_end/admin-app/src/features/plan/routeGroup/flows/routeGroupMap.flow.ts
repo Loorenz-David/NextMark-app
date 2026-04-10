@@ -103,7 +103,8 @@ export const useRouteGroupMapFlow = ({
   const handleClickMarker = useCallback((order: Order) => {
     sectionManager.open({
         key:"order.details",
-        payload:{mode:"edit", clientId:order.client_id, parentParams:{borderLeft:'rgb(var(--color-light-blue-r),0.7)'}}
+        payload:{mode:"edit", clientId:order.client_id, headerBehavior:"order-main-context"},
+        parentParams:{borderLeft:'rgb(var(--color-light-blue-r),0.7)'}
     })
   }, [sectionManager])
   useEffect(() => {

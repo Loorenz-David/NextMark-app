@@ -52,13 +52,13 @@ def adjust_driver_route_dates_to_today(ctx: ServiceContext, route_id: int):
 
     request = RouteGroupSettingsRequest(
         route_group_id=route_group.id,
-        delivery_plan=RoutePlanPatchRequest(
+        route_plan=RoutePlanPatchRequest(
             start_date=new_start,
             end_date=new_end,
             has_start_date=True,
             has_end_date=True,
         ),
-        local_delivery_plan=RouteGroupPatchRequest(),
+        route_group=RouteGroupPatchRequest(),
         route_solution=RouteSolutionPatchRequest(route_solution_id=route_solution.id),
         create_variant_on_save=False,
         time_zone=effective_zone_name,

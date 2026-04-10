@@ -98,8 +98,11 @@ export const usePhoneFieldControllers = ({
   )
 
   const handleInputFocus = useCallback(() => {
+    if (!isOpen) {
+      setInputValue('')
+    }
     setIsOpen(true)
-  }, [])
+  }, [isOpen])
 
   const handleInputChange = useCallback((event: ChangeEvent<HTMLInputElement>) => {
     const value = event.target.value

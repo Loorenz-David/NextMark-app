@@ -2,6 +2,7 @@ from datetime import datetime, timezone
 
 from Delivery_app_BK.models import db, OrderEventAction, OrderEvent
 from Delivery_app_BK.services.infra.events.action_dispatch import enqueue_order_action
+from Delivery_app_BK.services.infra.events.realtime_refresh import notify_order_event_history_changed
 from Delivery_app_BK.services.infra.messaging.action_scheduling import resolve_order_action_schedule
 
 
@@ -70,6 +71,7 @@ def run_action(order_event, action_name: str, _runner) -> None:
         resolved_schedule=resolved_schedule,
     )
     db.session.commit()
+    notify_order_event_history_changed(order_event.id)
     if action.status == OrderEventAction.STATUS_SKIPPED:
         return
 
@@ -83,3 +85,4 @@ def run_action(order_event, action_name: str, _runner) -> None:
         failed_action.status = OrderEventAction.STATUS_FAILED
         failed_action.last_error = str(exc)
         db.session.commit()
+        notify_order_event_history_changed(failed_action.event_id)

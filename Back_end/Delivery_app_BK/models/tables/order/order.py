@@ -2,7 +2,7 @@
 
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy import Index, text, JSON, UniqueConstraint
-from sqlalchemy.orm import relationship, synonym, validates
+from sqlalchemy.orm import relationship, validates
 from sqlalchemy import Column, Integer, String, Boolean, ForeignKey, Float
 
 from datetime import datetime, timezone
@@ -77,24 +77,15 @@ class Order(
     total_weight_g = Column(Float, nullable=True)
     total_volume_cm3 = Column(Float, nullable=True)
     total_item_count = Column(Integer, nullable=True)
-    item_type_counts = Column(JSONB().with_variant(JSON, "sqlite"), nullable=True)
 
     order_state_id = Column(
         Integer,
         ForeignKey("order_state.id", ondelete="SET NULL")
     )
     
-    route_plan_id = Column(
-        Integer,
-        ForeignKey("route_plan.id", ondelete="SET NULL"),
-        index=True,
-    )
-    delivery_plan_id = synonym("route_plan_id")
-    route_group_id = Column(
-        Integer,
-        ForeignKey("route_group.id", ondelete="SET NULL"),
-        nullable=True,
-        index=True,
+    delivery_plan_id = Column(
+        Integer, 
+        ForeignKey("delivery_plan.id", ondelete="SET NULL"), 
     )
     costumer_id = Column(
         Integer,
@@ -152,18 +143,9 @@ class Order(
         passive_deletes=True
     )
 
-    route_plan = relationship(
-        "RoutePlan",
-        back_populates="orders",
-        foreign_keys=[route_plan_id],
-    )
-    delivery_plan = synonym("route_plan")
-
-    route_group = relationship(
-        "RouteGroup",
-        back_populates="orders",
-        foreign_keys=[route_group_id],
-        lazy="selectin",
+    delivery_plan = relationship(
+        "DeliveryPlan",
+        back_populates = "orders" 
     )
 
     costumer = relationship(

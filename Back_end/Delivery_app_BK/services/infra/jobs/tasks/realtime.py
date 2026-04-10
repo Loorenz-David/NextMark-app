@@ -32,7 +32,6 @@ def relay_order_event_job(event_row_id: int) -> None:
         # Mark as relayed for idempotency
         event_row.relayed_at = datetime.now(timezone.utc)
         db.session.commit()
-        current_app.logger.debug("Event relayed successfully: %d", event_row_id)
     except Exception as exc:
         current_app.logger.error(
             "Failed to relay OrderEvent %d: %s",
@@ -59,7 +58,6 @@ def relay_app_event_job(event_row_id: int) -> None:
         # Mark as relayed for idempotency
         event_row.relayed_at = datetime.now(timezone.utc)
         db.session.commit()
-        current_app.logger.debug("Event relayed successfully: %d", event_row_id)
     except Exception as exc:
         current_app.logger.error(
             "Failed to relay AppEventOutbox %d: %s",

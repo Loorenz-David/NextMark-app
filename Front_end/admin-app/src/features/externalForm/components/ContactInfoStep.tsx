@@ -1,31 +1,43 @@
-import { Field } from '@/shared/inputs/FieldContainer'
-import { InputField } from '@/shared/inputs/InputField'
-import { PhoneField } from '@/shared/inputs/PhoneField/PhoneField'
-import type { Phone } from '@/types/phone'
+import { useMemo } from "react";
 
-import { useExternalForm } from '../context'
-import { StepButton } from './StepButton'
+import { useDefaultPhonePrefix } from "@shared-inputs";
+import { Field } from "@/shared/inputs/FieldContainer";
+import { InputField } from "@/shared/inputs/InputField";
+import { PhoneField } from "@/shared/inputs/PhoneField/PhoneField";
+import type { Phone } from "@/types/phone";
 
-const emptyPhone: Phone = {
-  prefix: '+1',
-  number: '',
-}
+import { useExternalForm } from "../context";
+import { StepButton } from "./StepButton";
 
-const normalizePhone = (value: Phone): Phone | null => {
-  return value.number.trim() ? value : null
-}
+const EXTERNAL_FORM_PHONE_STORAGE_NAMESPACE = "external-form-phone";
 
 const phoneFieldContainerClassName =
-  'rounded-[1.45rem] border border-white/10 bg-white/[0.04] px-4 py-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]'
+  "rounded-[1.45rem] border border-white/10  bg-white/[0.04] px-4 py-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]";
 
 export const ContactInfoStep = () => {
-  const { form, setters, next, warnings } = useExternalForm()
+  const { form, setters, next, warnings } = useExternalForm();
+  const defaultPrefix = useDefaultPhonePrefix(
+    null,
+    EXTERNAL_FORM_PHONE_STORAGE_NAMESPACE,
+  );
+
+  const emptyPhone = useMemo<Phone>(
+    () => ({
+      prefix: defaultPrefix,
+      number: "",
+    }),
+    [defaultPrefix],
+  );
 
   return (
     <div className="space-y-5">
       <div>
-        <h2 className="text-xl font-semibold text-white">Contact Information</h2>
-        <p className="mt-1 text-sm text-white/46">Add reachable phone numbers and an email.</p>
+        <h2 className="text-xl font-semibold text-white">
+          Contact Information
+        </h2>
+        <p className="mt-1 text-sm text-white/46">
+          Add reachable phone numbers and an email.
+        </p>
       </div>
 
       <Field
@@ -36,20 +48,20 @@ export const ContactInfoStep = () => {
         <PhoneField
           phoneNumber={form.client_primary_phone ?? emptyPhone}
           containerClassName={phoneFieldContainerClassName}
+          storageNamespace={EXTERNAL_FORM_PHONE_STORAGE_NAMESPACE}
           onChange={(value) => {
-            setters.setPrimaryPhone(normalizePhone(value))
+            setters.setPrimaryPhone(value);
           }}
         />
       </Field>
 
-      <Field
-        label="Secondary phone:"
-      >
+      <Field label="Secondary phone:">
         <PhoneField
           phoneNumber={form.client_secondary_phone ?? emptyPhone}
           containerClassName={phoneFieldContainerClassName}
+          storageNamespace={EXTERNAL_FORM_PHONE_STORAGE_NAMESPACE}
           onChange={(value) => {
-            setters.setSecondaryPhone(normalizePhone(value))
+            setters.setSecondaryPhone(value);
           }}
         />
       </Field>
@@ -64,15 +76,15 @@ export const ContactInfoStep = () => {
           placeholder="customer@email.com"
           value={form.client_email}
           onChange={(event) => {
-            setters.setEmail(event.target.value)
+            setters.setEmail(event.target.value);
           }}
           warningController={warnings.contactWarning}
         />
       </Field>
 
-      <div className="pt-3">
+      <div className="pt-3 flex justify-end">
         <StepButton label="Next" onClick={next} />
       </div>
     </div>
-  )
-}
+  );
+};

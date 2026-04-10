@@ -2,8 +2,9 @@ import { ArchiveIcon, DocumentIcon, EditIcon } from "@/assets/icons";
 import { BasicButton } from "@/shared/buttons/BasicButton";
 import { DropdownButton } from "@/shared/buttons/DropdownButton";
 import { CounterBadge } from "@/shared/layout/CounterBadge";
-import { toDateOnly } from "@/shared/data-validation/timeValidation";
+import { useOrderDetailHeaderPlanMeta } from "@/features/plan";
 
+import type { OrderDetailHeaderBehavior } from "../../domain/orderDetailPayload.types";
 import { useOrderStateRegistry } from "../../domain/useOrderStateRegistry";
 import type { Order } from "../../types/order";
 import { OrderStateList } from "../lists/OrderStateList";
@@ -22,6 +23,7 @@ type OrderDetailHeaderProps = {
   onAdvanceOrderState: (clientId: string) => Promise<void>;
   onClose: () => void;
   order: Order | null;
+  headerBehavior?: OrderDetailHeaderBehavior | null;
 };
 
 export const OrderDetailHeader = ({
@@ -30,6 +32,7 @@ export const OrderDetailHeader = ({
   onAdvanceOrderState,
   onClose,
   order,
+  headerBehavior = null,
 }: OrderDetailHeaderProps) => {
   const registry = useOrderStateRegistry();
 
@@ -45,11 +48,13 @@ export const OrderDetailHeader = ({
         <div className="pointer-events-none absolute inset-x-0 top-0 h-44 bg-[radial-gradient(circle_at_top_left,rgba(131,204,185,0.18),transparent_70%)]" />
 
         <div className="relative flex items-start justify-between gap-4 px-5 py-4">
-          <div className="flex min-w-0 items-center gap-3.5">
-            <div className="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-[1.1rem] border border-white/12 bg-[color-mix(in_srgb,var(--color-primary)_16%,transparent)] shadow-[0_12px_28px_rgba(131,204,185,0.1)]">
-              <DocumentIcon className="h-[22px] w-[22px] text-[var(--color-primary)]" />
+          <div className="flex flex-col">
+            <div className="flex min-w-0 items-center gap-3.5">
+              <div className="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-[1.1rem] border border-white/12 bg-[color-mix(in_srgb,var(--color-primary)_16%,transparent)] shadow-[0_12px_28px_rgba(131,204,185,0.1)]">
+                <DocumentIcon className="h-[22px] w-[22px] text-[var(--color-primary)]" />
+              </div>
+              <HeaderTitle order={order} headerBehavior={headerBehavior} />
             </div>
-            <HeaderTitle order={order} />
           </div>
 
           <div className="flex shrink-0 flex-col items-end gap-2">
@@ -125,9 +130,7 @@ export const OrderDetailHeader = ({
             <ArchiveIcon className="mr-2 h-4 w-4 stroke-[var(--color-text)]" />
             <div className="flex items-center gap-2">
               <span>Cases</span>
-              {Boolean(
-                order?.open_order_cases && order.open_order_cases > 0,
-              ) ? (
+              {order?.open_order_cases != null && order.open_order_cases > 0 ? (
                 <CounterBadge
                   text={String(order?.open_order_cases)}
                   bgColor="rgba(255, 213, 3, 0.16)"
@@ -142,8 +145,20 @@ export const OrderDetailHeader = ({
   );
 };
 
-const HeaderTitle = ({ order }: { order: Order | null }) => {
+const HeaderTitle = ({
+  order,
+  headerBehavior,
+}: {
+  order: Order | null;
+  headerBehavior?: OrderDetailHeaderBehavior | null;
+}) => {
   const title = `# ${order?.order_scalar_id ?? "reference number missing"}`;
+  const shouldRenderPlanMeta = headerBehavior === "order-main-context";
+  const planMeta = useOrderDetailHeaderPlanMeta({
+    orderId: order?.id ?? null,
+    routePlanId: order?.delivery_plan_id ?? null,
+    routeGroupId: order?.route_group_id ?? null,
+  });
 
   return (
     <div className="flex min-w-0 flex-col">
@@ -157,12 +172,19 @@ const HeaderTitle = ({ order }: { order: Order | null }) => {
           </span>
         ) : null}
       </div>
-      <div className="mt-0.5 flex items-center gap-2 text-[0.72rem] text-[var(--color-muted)]">
-        <span>
-          Created at:{" "}
-          {toDateOnly(order?.creation_date ?? null) ?? "missing creation date"}
-        </span>
-      </div>
+      {shouldRenderPlanMeta ? (
+        <div className="mt-0.5 flex flex-wrap items-center gap-x-3  text-[0.72rem] text-[var(--color-muted)]">
+          <span className="truncate max-w-[150px]">
+            Plan: {planMeta.isUnscheduled ? "Unscheduled" : planMeta.planLabel}
+          </span>
+          {planMeta.planDateLabel ? (
+            <span>Date: {planMeta.planDateLabel}</span>
+          ) : null}
+          {planMeta.arrivalTimeLabel ? (
+            <span>Arrival: {planMeta.arrivalTimeLabel}</span>
+          ) : null}
+        </div>
+      ) : null}
     </div>
   );
 };

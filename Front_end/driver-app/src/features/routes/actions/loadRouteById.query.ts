@@ -1,5 +1,5 @@
 import { getRouteByIdApi } from '../api'
-import type { DriverRouteRecord } from '../domain'
+import { mapRouteDtoToRouteRecord, type DriverRouteRecord } from '../domain'
 import { mapRouteOrdersDtoToOrders, type DriverOrderRecord } from '../orders'
 import { mapRouteStopsDtoToStops, type DriverRouteStopRecord } from '../stops'
 
@@ -9,8 +9,8 @@ export type RouteSnapshotQueryResult = {
   stops: { byClientId: Record<string, DriverRouteStopRecord>; allIds: string[] }
 }
 
-export async function loadRouteByIdQuery(routeId: number): Promise<RouteSnapshotQueryResult> {
-  const response = await getRouteByIdApi(routeId)
+export async function loadRouteByIdQuery(routeSolutionId: number): Promise<RouteSnapshotQueryResult> {
+  const response = await getRouteByIdApi(routeSolutionId)
   const dto = response.data
 
   if (!dto?.route) {
@@ -18,7 +18,7 @@ export async function loadRouteByIdQuery(routeId: number): Promise<RouteSnapshot
   }
 
   return {
-    route: dto.route,
+    route: mapRouteDtoToRouteRecord(dto.route),
     orders: mapRouteOrdersDtoToOrders({ orders: dto.orders ?? { byClientId: {}, allIds: [] } }).orders,
     stops: mapRouteStopsDtoToStops({ stops: dto.stops ?? { byClientId: {}, allIds: [] } }).stops,
   }

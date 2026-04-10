@@ -3,6 +3,7 @@ import {
   LOCAL_DELIVERY_DEFAULT_ROUTE_END_STRATEGY,
   LOCAL_DELIVERY_DEFAULT_START_TIME,
   PLAN_DEFAULT_DRIVER_ID_KEY,
+  PLAN_DEFAULT_ETA_MESSAGE_TOLERANCE_KEY,
   PLAN_DEFAULT_ETA_TOLERANCE_SECONDS_KEY,
   PLAN_DEFAULT_END_LOCATION_KEY,
   PLAN_DEFAULT_ROUTE_END_STRATEGY_KEY,
@@ -48,6 +49,8 @@ export const buildRouteGroupPlanTypeDefaults = async (
           stored.set_end_time ?? LOCAL_DELIVERY_DEFAULT_END_TIME,
         [PLAN_DEFAULT_ETA_TOLERANCE_SECONDS_KEY]:
           (stored.eta_tolerance_minutes ?? 0) * 60,
+        [PLAN_DEFAULT_ETA_MESSAGE_TOLERANCE_KEY]:
+          (stored.eta_message_tolerance_minutes ?? 0) * 60,
         [PLAN_DEFAULT_ROUTE_END_STRATEGY_KEY]: resolvedStrategy,
         [PLAN_DEFAULT_START_LOCATION_KEY]: startLocation,
         [PLAN_DEFAULT_END_LOCATION_KEY]: endLocation,

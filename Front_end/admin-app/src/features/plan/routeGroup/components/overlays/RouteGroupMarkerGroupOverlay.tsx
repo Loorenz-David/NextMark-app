@@ -94,6 +94,7 @@ export const RouteGroupMarkerGroupOverlay = () => {
                         clientId: order.client_id,
                         openSource: 'marker',
                         routeGroupId: order.route_group_id ?? null,
+                        headerBehavior: 'order-main-context',
                       },
                       { borderLeft: 'rgb(var(--color-light-blue-r),0.7)' },
                     )

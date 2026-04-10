@@ -372,6 +372,7 @@ def _build_route_solution_instance(
         expected_start_time=normalized_defaults["expected_start_time"],
         set_end_time=normalized_defaults["set_end_time"],
         eta_tolerance_seconds=normalized_defaults["eta_tolerance_seconds"],
+        eta_message_tolerance=normalized_defaults["eta_message_tolerance"],
         stops_service_time=normalized_defaults["stops_service_time"],
         route_end_strategy=normalized_defaults["route_end_strategy"],
         driver_id=normalized_defaults["driver_id"],

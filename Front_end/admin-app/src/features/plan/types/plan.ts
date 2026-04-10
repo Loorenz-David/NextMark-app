@@ -69,6 +69,7 @@ export type RouteGroupDefaults = {
     driver_id?: number | null;
     vehicle_id?: number | null;
     eta_tolerance_seconds?: number | null;
+    eta_message_tolerance?: number | null;
   };
 };
 

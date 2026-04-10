@@ -103,24 +103,6 @@ def build_effective_windows(
     return [(fallback_start, fallback_end)]
 
 
-def resolve_next_window_start(
-    arrival_time: Optional[datetime],
-    windows: List[Tuple[datetime, datetime]],
-) -> Optional[datetime]:
-    normalized_arrival = ensure_utc(arrival_time)
-    normalized_windows = _normalize_windows(windows)
-    if not normalized_arrival or not normalized_windows:
-        return None
-
-    for window_start, window_end in normalized_windows:
-        if window_start <= normalized_arrival < window_end:
-            return None
-        if normalized_arrival < window_start:
-            return window_start
-
-    return None
-
-
 def _build_windows_from_delivery_windows(order: Order) -> List[Tuple[datetime, datetime]]:
     rows = list(getattr(order, "delivery_windows", None) or [])
     windows: List[Tuple[datetime, datetime]] = []
@@ -152,10 +134,7 @@ def _resolve_plan_window_bounds(
     route_solution: RouteSolution,
 ) -> Tuple[Optional[datetime], Optional[datetime]]:
     plan = None
-    route_group = getattr(route_solution, "route_group", None)
-    if route_group is not None:
-        plan = getattr(route_group, "route_plan", None)
-    if plan is None and getattr(route_solution, "local_delivery_plan", None) is not None:
+    if getattr(route_solution, "local_delivery_plan", None) is not None:
         plan = getattr(route_solution.local_delivery_plan, "delivery_plan", None)
     if not plan:
         return None, None

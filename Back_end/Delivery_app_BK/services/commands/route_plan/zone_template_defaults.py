@@ -47,6 +47,7 @@ def build_zone_template_route_solution_defaults(
 
     if isinstance(template.eta_tolerance_seconds, int):
         defaults["eta_tolerance_seconds"] = template.eta_tolerance_seconds
+        defaults["eta_message_tolerance"] = template.eta_tolerance_seconds
 
     if isinstance(template.operating_window_start, str):
         defaults["set_start_time"] = template.operating_window_start

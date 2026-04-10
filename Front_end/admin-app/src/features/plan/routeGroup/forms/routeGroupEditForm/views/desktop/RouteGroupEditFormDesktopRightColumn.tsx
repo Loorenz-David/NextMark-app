@@ -1,6 +1,7 @@
 import {
   RouteGroupEditFormCreateVariantToggle,
   RouteGroupEditFormDriverField,
+  RouteGroupEditFormEtaMessageToleranceField,
   RouteGroupEditFormEtaToleranceField,
   RouteGroupEditFormPlanLabelField,
   RouteGroupEditFormStopsServiceTimeField,
@@ -14,6 +15,7 @@ export const RouteGroupEditFormDesktopRightColumn = () => {
         <RouteGroupEditFormPlanLabelField />
         <RouteGroupEditFormStopsServiceTimeField />
         <RouteGroupEditFormEtaToleranceField />
+        <RouteGroupEditFormEtaMessageToleranceField />
         <RouteGroupEditFormDriverField />
         <RouteGroupEditFormVehicleField />
         <RouteGroupEditFormCreateVariantToggle />

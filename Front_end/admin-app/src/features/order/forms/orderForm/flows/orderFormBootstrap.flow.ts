@@ -10,7 +10,6 @@ type BuildOrderFormInitialStateParams = {
   mode: OrderFormMode
   order?: Order | null
   payloadDeliveryPlanId?: number | null
-  payloadRouteGroupId?: number | null
   payloadRestoreFormState?: OrderFormState | null
 }
 
@@ -18,7 +17,6 @@ type BuildOrderFormReinitKeyParams = {
   mode: OrderFormMode
   payloadClientId?: string | null
   payloadDeliveryPlanId?: number | null
-  payloadRouteGroupId?: number | null
   orderServerId?: number | null
 }
 
@@ -41,12 +39,10 @@ export const buildInitialOrderForm = ({
   mode,
   order,
   deliveryPlanId,
-  routeGroupId,
 }: {
   mode: OrderFormMode
   order?: Order | null
   deliveryPlanId?: number | null
-  routeGroupId?: number | null
 }): OrderFormState => ({
   client_id: order?.client_id ?? buildClientId('order'),
   order_plan_objective: order?.order_plan_objective ?? null,
@@ -65,7 +61,6 @@ export const buildInitialOrderForm = ({
   client_address: order?.client_address ?? null,
   delivery_windows: sortDeliveryWindowsUtc(order?.delivery_windows ?? []),
   delivery_plan_id: order?.delivery_plan_id ?? deliveryPlanId ?? null,
-  route_group_id: order?.route_group_id ?? routeGroupId ?? null,
   order_note: order?.order_notes?.[0] ?? '',
 })
 
@@ -73,7 +68,6 @@ export const buildOrderFormInitialState = ({
   mode,
   order,
   payloadDeliveryPlanId,
-  payloadRouteGroupId,
   payloadRestoreFormState,
 }: BuildOrderFormInitialStateParams): OrderFormState =>
   payloadRestoreFormState
@@ -87,21 +81,18 @@ export const buildOrderFormInitialState = ({
     mode,
     order,
     deliveryPlanId: payloadDeliveryPlanId ?? null,
-    routeGroupId: payloadRouteGroupId ?? null,
   })
 
 export const buildOrderFormReinitKey = ({
   mode,
   payloadClientId,
   payloadDeliveryPlanId,
-  payloadRouteGroupId,
   orderServerId,
 }: BuildOrderFormReinitKeyParams) =>
   [
     mode,
     toNullableValue(payloadClientId),
     toNullableValue(payloadDeliveryPlanId),
-    toNullableValue(payloadRouteGroupId),
     toNullableValue(orderServerId),
   ].join('::')
 

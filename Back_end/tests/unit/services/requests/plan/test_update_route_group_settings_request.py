@@ -30,6 +30,24 @@ def test_parse_update_local_delivery_settings_request_accepts_canonical_keys():
     assert parsed.route_solution.driver_id == 22
 
 
+def test_parse_update_local_delivery_settings_request_accepts_eta_message_tolerance_seconds():
+    payload = _base_payload()
+    payload["route_solution"]["eta_message_tolerance"] = 2400
+
+    parsed = parse_update_local_delivery_settings_request(payload)
+
+    assert parsed.route_solution.has_eta_message_tolerance is True
+    assert parsed.route_solution.eta_message_tolerance == 2400
+
+
+def test_parse_update_local_delivery_settings_request_rejects_invalid_eta_message_tolerance():
+    payload = _base_payload()
+    payload["route_solution"]["eta_message_tolerance"] = "2400"
+
+    with pytest.raises(ValidationFailed):
+        parse_update_local_delivery_settings_request(payload)
+
+
 def test_parse_update_local_delivery_settings_request_rejects_legacy_top_level_keys():
     payload = _base_payload()
     payload["delivery_plan"] = {"label": "Legacy"}

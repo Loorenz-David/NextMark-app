@@ -6,7 +6,7 @@ export type RouteDtoCollection<T> = {
   allIds: string[]
 }
 
-export type DeliveryPlanDto = {
+export type RoutePlanDto = {
   id: number
   client_id: string
   label: string | null
@@ -17,6 +17,8 @@ export type DeliveryPlanDto = {
   updated_at: string | null
   state_id: number | null
 }
+
+export type DeliveryPlanDto = RoutePlanDto
 
 export type LocalDeliveryPlanDto = {
   id: number
@@ -30,6 +32,8 @@ export type LocalDeliveryPlanDto = {
 
 export type RouteDto = {
   id: number
+  route_solution_id?: number | null
+  route_group_id?: number | null
   client_id: string
   _representation: 'full' | 'partial' | 'summary'
   label?: string | null
@@ -59,7 +63,8 @@ export type RouteDto = {
   local_delivery_plan_id: number
   created_at: string | null
   updated_at: string | null
-  delivery_plan: DeliveryPlanDto | null
+  route_plan?: RoutePlanDto | null
+  delivery_plan?: DeliveryPlanDto | null
   local_delivery_plan?: LocalDeliveryPlanDto | null
 }
 
@@ -74,6 +79,7 @@ export type RouteSnapshotDto = RouteStopsDto & {
 
 export type RouteFreshnessDto = {
   route_id: number
+  route_solution_id?: number | null
   delivery_plan_id: number | null
   route_freshness_updated_at: string | null
 }

@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback } from "react";
 
 import {
   usePopupManager,
@@ -21,18 +21,10 @@ import {
   orderStringFilters,
   resolveConflicts,
 } from "../domain/orderFilterConfig";
+import type { OrderDetailPayload } from "../domain/orderDetailPayload.types";
 import type { Order } from "../types/order";
 import { useOrderController } from "../controllers/order.controller";
 
-type openOrderDetailProps = {
-  clientId?: string;
-  serverId?: number;
-  mode?: "view" | "edit";
-  freshAfter?: string | null;
-  openSource?: "card" | "marker";
-  routeGroupId?: number | null;
-  planStartDate?: string | null;
-};
 type parentParamsProps = {
   borderLeft?: string;
   pageClass?: string;
@@ -80,10 +72,10 @@ export const useOrderActions = () => {
         parentParams: { borderLeft: "rgb(var(--color-turques-r),0.7)" },
       });
     },
-    [],
+    [sectionManager],
   );
   const openOrderDetail = useCallback(
-    (payload: openOrderDetailProps, parentParams: parentParamsProps) => {
+    (payload: OrderDetailPayload, parentParams: parentParamsProps) => {
       const key = "order.details";
 
       const latestOpenEntry = sectionManager
@@ -91,9 +83,7 @@ export const useOrderActions = () => {
         .filter((entry) => entry.key === key && !entry.isClosing)
         .at(-1);
 
-      const openPayload = latestOpenEntry?.payload as
-        | openOrderDetailProps
-        | undefined;
+      const openPayload = latestOpenEntry?.payload as OrderDetailPayload | undefined;
       if (openPayload && openPayload.clientId === payload.clientId) {
         return;
       }
@@ -121,6 +111,59 @@ export const useOrderActions = () => {
     resetQuery();
   }, []);
 
+  const openPopupFilter = useCallback((popupKey: string) => {
+    if (popupKey === "order.filter.order-state") {
+      popupManager.open({
+        key: "order.filter.order-state",
+        payload: {
+          selectedStates: Array.isArray(query.filters.order_state)
+            ? query.filters.order_state
+            : [],
+          onApply: (nextStates: string[]) => {
+            if (nextStates.length === 0) {
+              deleteQueryFilter("order_state");
+              return;
+            }
+
+            updateQueryFilters({ order_state: nextStates });
+          },
+        },
+      });
+      return;
+    }
+
+    if (popupKey === "order.filter.order-schedule-range") {
+      popupManager.open({
+        key: "order.filter.order-schedule-range",
+        payload: {
+          from: typeof query.filters.order_schedule_from === "string"
+            ? query.filters.order_schedule_from
+            : null,
+          to: typeof query.filters.order_schedule_to === "string"
+            ? query.filters.order_schedule_to
+            : null,
+          onApply: (payload: { from: string | null; to: string | null }) => {
+            const nextFilters = resolveConflicts(query.filters, "order_schedule_from");
+
+            if (!payload.from) {
+              delete nextFilters.order_schedule_from;
+            } else {
+              nextFilters.order_schedule_from = payload.from;
+            }
+
+            if (!payload.to) {
+              delete nextFilters.order_schedule_to;
+            } else {
+              nextFilters.order_schedule_to = payload.to;
+            }
+
+            applyFilters(nextFilters as OrderQueryFilters);
+          },
+        },
+      });
+    }
+  }, [applyFilters, popupManager, query.filters]);
+
   const updateFilters = useCallback(
     (key: string, value: unknown) => {
       if (key in filterBehavior) {
@@ -140,7 +183,7 @@ export const useOrderActions = () => {
       }
       updateQueryFilters({ [key]: value } as Partial<OrderQueryFilters>);
     },
-    [query],
+    [applyFilters, query],
   );
   const deleteFilter = useCallback(
     (key: string, value?: unknown) => {
@@ -210,6 +253,7 @@ export const useOrderActions = () => {
     applyFilters,
     resetFilters,
     updateFilters,
+    openPopupFilter,
     deleteFilter,
     openOrderCases,
     handleArchiveOrder,

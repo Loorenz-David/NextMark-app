@@ -65,7 +65,9 @@ const parseCapabilityList = (value: string): ZoneVehicleCapability[] | null => {
 const parseNumberList = (value: string): number[] | null => {
   const parsed = value
     .split(",")
-    .map((entry) => Number(entry.trim()))
+    .map((entry) => entry.trim())
+    .filter((entry) => entry.length > 0)
+    .map((entry) => Number(entry))
     .filter((entry) => Number.isFinite(entry));
 
   return parsed.length > 0 ? parsed : null;
@@ -108,7 +110,7 @@ export const getInitialZoneTemplateFormFields = (
   operating_window_start: template?.operating_window_start ?? "",
   operating_window_end: template?.operating_window_end ?? "",
   eta_tolerance_seconds:
-    template?.eta_tolerance_seconds != null ? String(template.eta_tolerance_seconds) : "",
+    template?.eta_tolerance_seconds != null ? String(template.eta_tolerance_seconds) : "0",
   vehicle_capabilities_required:
     template?.vehicle_capabilities_required?.join(", ") ?? "",
   preferred_vehicle_ids:

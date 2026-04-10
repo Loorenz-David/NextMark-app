@@ -27,6 +27,8 @@ export type DriverLocalDeliveryPlanRecord = {
 
 export type DriverRouteRecord = {
   id: number
+  route_solution_id: number
+  route_group_id: number | null
   client_id: string
   _representation: 'full' | 'partial' | 'summary'
   label?: string | null

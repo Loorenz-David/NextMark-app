@@ -43,7 +43,6 @@ const buildBaseFormState = (): OrderFormState => ({
   },
   delivery_windows: [],
   delivery_plan_id: 10,
-  route_group_id: 44,
   order_note: '',
 })
 
@@ -216,10 +215,6 @@ export const runOrderFormSubmitControllerTests = async () => {
     assert(
       (createPayload as { costumer?: { costumer_id?: number } })?.costumer?.costumer_id === 42,
       'create payload should include selected costumer id',
-    )
-    assert(
-      (createPayload as { route_group_id?: number | null })?.route_group_id === 44,
-      'create payload should include route group id',
     )
   }
 

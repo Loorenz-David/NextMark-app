@@ -91,7 +91,10 @@ export class GoogleMapAdapter implements MapAdapter {
   private zoneOverlayLabelMarkers: google.maps.marker.AdvancedMarkerElement[] =
     [];
   private zoneLayerPolygons = new Map<number, google.maps.Polygon>();
-  private zoneLabelMarkers = new Map<number, google.maps.marker.AdvancedMarkerElement>();
+  private zoneLabelMarkers = new Map<
+    number,
+    google.maps.marker.AdvancedMarkerElement
+  >();
 
   constructor() {
     let routeFitBoundsCallback: (points: Coordinates[]) => void = () =>
@@ -282,10 +285,7 @@ export class GoogleMapAdapter implements MapAdapter {
     this.drawingManagerService.disableZoneCapture();
   }
 
-  enableZonePathEdit(
-    geometry: GeoJSONPolygon,
-    options: ZonePathEditOptions,
-  ) {
+  enableZonePathEdit(geometry: GeoJSONPolygon, options: ZonePathEditOptions) {
     this.drawingManagerService.enableZonePathEdit(geometry, options);
   }
 
@@ -306,7 +306,7 @@ export class GoogleMapAdapter implements MapAdapter {
   }
 
   setMultiSelectedMarkerIds(layerId: string, ids: string[]) {
-    const resolvedIds = this.resolveVisibleMultiSelectedMarkerIds(layerId, ids)
+    const resolvedIds = this.resolveVisibleMultiSelectedMarkerIds(layerId, ids);
     this.markerMultiSelectionManager.setActiveLayer(layerId);
     this.markerMultiSelectionManager.applyMultiSelection(layerId, resolvedIds);
     this.markerMultiSelectionManager.syncLayerStyles(layerId);
@@ -325,36 +325,38 @@ export class GoogleMapAdapter implements MapAdapter {
   }
 
   private resolveVisibleMultiSelectedMarkerIds(layerId: string, ids: string[]) {
-    const selectedLeafIds = new Set(ids)
-    const layer = this.markerLayerManager.getLayer(layerId)
+    const selectedLeafIds = new Set(ids);
+    const layer = this.markerLayerManager.getLayer(layerId);
 
     if (!layer || selectedLeafIds.size === 0) {
-      return ids
+      return ids;
     }
 
-    const resolvedIds: string[] = []
+    const resolvedIds: string[] = [];
 
     layer.markers.forEach((_entry, markerId) => {
       if (selectedLeafIds.has(markerId)) {
-        resolvedIds.push(markerId)
-        return
+        resolvedIds.push(markerId);
+        return;
       }
 
-      if (!markerId.startsWith('cluster_')) {
-        return
+      if (!markerId.startsWith("cluster_")) {
+        return;
       }
 
-      const leafIds = this.clusterLayerManager.expandToLeafIds(layerId, [markerId])
+      const leafIds = this.clusterLayerManager.expandToLeafIds(layerId, [
+        markerId,
+      ]);
       if (leafIds.length === 0) {
-        return
+        return;
       }
 
       if (leafIds.every((leafId) => selectedLeafIds.has(leafId))) {
-        resolvedIds.push(markerId)
+        resolvedIds.push(markerId);
       }
-    })
+    });
 
-    return resolvedIds
+    return resolvedIds;
   }
 
   reframeToVisibleArea() {
@@ -477,14 +479,28 @@ export class GoogleMapAdapter implements MapAdapter {
         new PolygonCtor({
           paths,
           map,
-          fillColor: resolvedZoneColor,
-          fillOpacity: 0.08,
-          strokeColor: resolvedZoneColor,
-          strokeOpacity: 0.7,
+          clickable: false,
+          strokeColor: DEFAULT_ZONE_STROKE_COLOR,
+          strokeOpacity: DEFAULT_ZONE_STROKE_OPACITY,
           strokeWeight: 2,
+          fillColor: DEFAULT_ZONE_FILL_COLOR,
+          fillOpacity: DEFAULT_ZONE_FILL_OPACITY,
+          zIndex: 1,
         });
 
-      polygon.setOptions({
+      (
+        polygon as unknown as {
+          setOptions: (options: {
+            paths: Array<{ lat: number; lng: number }>;
+            map: google.maps.Map;
+            fillColor: string;
+            fillOpacity: number;
+            strokeColor: string;
+            strokeOpacity: number;
+            strokeWeight: number;
+          }) => void;
+        }
+      ).setOptions({
         paths,
         map,
         fillColor: resolvedZoneColor,
@@ -561,15 +577,17 @@ export class GoogleMapAdapter implements MapAdapter {
       }
     });
 
-    Array.from(this.zoneLayerPolygons.entries()).forEach(([zoneId, polygon]) => {
-      if (nextZoneIds.has(zoneId)) {
-        return;
-      }
+    Array.from(this.zoneLayerPolygons.entries()).forEach(
+      ([zoneId, polygon]) => {
+        if (nextZoneIds.has(zoneId)) {
+          return;
+        }
 
-      googleMaps?.event?.clearInstanceListeners?.(polygon);
-      polygon.setMap(null);
-      this.zoneLayerPolygons.delete(zoneId);
-    });
+        googleMaps?.event?.clearInstanceListeners?.(polygon);
+        polygon.setMap(null);
+        this.zoneLayerPolygons.delete(zoneId);
+      },
+    );
 
     Array.from(this.zoneLabelMarkers.entries()).forEach(([zoneId, marker]) => {
       if (nextZoneIds.has(zoneId)) {

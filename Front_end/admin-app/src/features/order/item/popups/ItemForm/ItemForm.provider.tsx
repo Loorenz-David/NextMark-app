@@ -42,13 +42,11 @@ export const ItemFormProvider = ({
   const {
     itemTypeOptions, 
     selectedItemTypeProperties, 
-    setSelectedItemType
   } = useItemConfigurations({ selectedItemTypeName })
 
   const setters = useItemFormSetters({
       setFormState,
       warnings,
-      setSelectedItemType
     })
 
   useEffect(() => {
@@ -91,7 +89,6 @@ export const ItemFormProvider = ({
       formState,
       hasUnsavedChanges,
       itemTypeOptions,
-      onSuccessClose,
       payload,
       selectedItemTypeProperties,
       setters,

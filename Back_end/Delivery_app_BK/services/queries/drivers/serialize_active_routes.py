@@ -65,6 +65,7 @@ def serialize_active_route_summary(instance: RouteSolution, ctx: ServiceContext)
         "is_selected": bool(instance.is_selected),
         "driver_id": instance.driver_id,
         "route_group_id": route_group_id,
+        "route_solution_id": instance.id,
         "created_at": created_at.isoformat() if created_at else None,
         "updated_at": updated_at.isoformat() if updated_at else None,
         "route_plan": _serialize_route_plan_collapsed(route_plan),

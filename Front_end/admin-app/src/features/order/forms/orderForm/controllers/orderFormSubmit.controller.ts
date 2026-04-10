@@ -24,7 +24,11 @@ type ItemDraftControllerApi = Pick<
 >;
 
 export type OrderFormSubmitResult =
-  | { status: "success_create" }
+  | {
+      status: "success_create";
+      createdOrderId: number | null;
+      createdOrderClientId: string | null;
+    }
   | { status: "success_edit" }
   | { status: "no_changes" }
   | { status: "validation_error"; message: string }
@@ -38,6 +42,8 @@ export type OrderFormSubmitCommand = {
   formState: OrderFormState;
   selectedCostumer?: Costumer | null;
   validateForm: () => boolean;
+  validateRequiredFields?: boolean;
+  validatePayloadFields?: boolean;
   initialFormRef: RefObject<OrderFormState | null>;
   itemDraftController: ItemDraftControllerApi;
   itemInitialByClientId: Record<string, Item>;
@@ -51,6 +57,9 @@ type OrderFormSubmitDeps = {
     fields: OrderUpdateFields;
     onRollback?: () => void;
     optimisticImmediate?: boolean;
+    onCreateCommitted?: (
+      createdBundles: Array<{ order?: Order | null }>,
+    ) => void;
   }) => Promise<boolean>;
   createItemApi: (fields: Item[]) => Promise<{ data?: ItemCreateResponse }>;
   updateItemApi: (
@@ -74,6 +83,8 @@ export const executeOrderFormSubmit = async (
     formState,
     selectedCostumer,
     validateForm,
+    validateRequiredFields = true,
+    validatePayloadFields = true,
     initialFormRef,
     itemDraftController,
     itemInitialByClientId,
@@ -89,12 +100,14 @@ export const executeOrderFormSubmit = async (
     validateOrderFields,
   } = deps;
 
-  const isValid = validateForm();
-  if (!isValid) {
-    return {
-      status: "validation_error",
-      message: "Please fix the highlighted fields.",
-    };
+  if (validateRequiredFields) {
+    const isValid = validateForm();
+    if (!isValid) {
+      return {
+        status: "validation_error",
+        message: "Please fix the highlighted fields.",
+      };
+    }
   }
 
   const initialForm = initialFormRef.current;
@@ -144,6 +157,8 @@ export const executeOrderFormSubmit = async (
 
   try {
     if (mode === "create") {
+      let createdOrderId: number | null = null;
+      let createdOrderClientId: string | null = null;
       const createItemsPayload = createdItems.map((item) => {
         const payloadItem = { ...item };
         const { order_id, id, ...fields } = payloadItem;
@@ -156,22 +171,47 @@ export const executeOrderFormSubmit = async (
         ...(costumerPayload ? { costumer: costumerPayload } : {}),
       } as OrderUpdateFields;
 
-      if (!validateOrderFields(createPayload)) {
+      if (validatePayloadFields && !validateOrderFields(createPayload)) {
         return {
           status: "validation_error",
           message: "Please check the form inputs.",
         };
       }
 
-      void saveOrder({
+      const createSucceeded = await saveOrder({
         mode,
         clientId: order?.client_id,
         fields: createPayload,
         onRollback: onOrderRollback,
-        optimisticImmediate: true,
+        optimisticImmediate: false,
+        onCreateCommitted: (createdBundles) => {
+          const resolved =
+            createdBundles.find(
+              (bundle) =>
+                bundle?.order?.client_id &&
+                bundle.order.client_id === normalizedCurrent.client_id,
+            ) ??
+            createdBundles.find((bundle) =>
+              Boolean(bundle?.order?.client_id),
+            ) ??
+            null;
+
+          const resolvedOrder = resolved?.order ?? null;
+          createdOrderId =
+            typeof resolvedOrder?.id === "number" ? resolvedOrder.id : null;
+          createdOrderClientId = resolvedOrder?.client_id ?? null;
+        },
       });
 
-      return { status: "success_create" };
+      if (!createSucceeded) {
+        return { status: "error", message: "Unable to save order and items." };
+      }
+
+      return {
+        status: "success_create",
+        createdOrderId,
+        createdOrderClientId,
+      };
     }
 
     const editPayload = hasCostumerAssociationChange
@@ -179,7 +219,7 @@ export const executeOrderFormSubmit = async (
       : orderChanges;
 
     if (Object.keys(editPayload).length > 0) {
-      if (!validateOrderFields(editPayload)) {
+      if (validatePayloadFields && !validateOrderFields(editPayload)) {
         return {
           status: "validation_error",
           message: "Please check the form inputs.",

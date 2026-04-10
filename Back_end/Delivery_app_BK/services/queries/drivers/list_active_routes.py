@@ -27,7 +27,7 @@ def list_active_routes(ctx: ServiceContext):
         .order_by(RouteSolution.created_at.desc(), RouteSolution.id.desc())
         .all()
     )
-
+    print(route_solutions)
     return {
         "routes": serialize_active_routes(
             instances=route_solutions,

@@ -1,4 +1,5 @@
 import os
+import logging
 
 from Delivery_app_BK import create_app
 from Delivery_app_BK.services.infra.jobs.queues import get_named_queue
@@ -11,7 +12,17 @@ from Delivery_app_BK.services.infra.redis import (
 )
 
 
+def _configure_logging() -> None:
+    log_level_name = os.environ.get("APP_LOG_LEVEL", "INFO").upper()
+    log_level = getattr(logging, log_level_name, logging.INFO)
+    logging.basicConfig(
+        level=log_level,
+        format="%(asctime)s %(levelname)s [%(name)s] %(message)s",
+    )
+
+
 def main() -> None:
+    _configure_logging()
     config_name = os.environ.get("APP_ENV", "development")
     app = create_app(config_name)
 

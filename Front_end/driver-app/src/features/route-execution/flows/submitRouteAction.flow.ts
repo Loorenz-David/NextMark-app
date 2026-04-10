@@ -5,16 +5,6 @@ import type {
   SyncExecutionState,
 } from '@/app/contracts/routeExecution.types'
 import type { DriverWorkspaceContext } from '@/app/contracts/driverSession.types'
-import {
-  buildOptimisticCaseChat,
-  buildOptimisticOrderCase,
-  patchCaseChatByClientId,
-  patchOrderCaseByClientId,
-  removeCaseChatByClientId,
-  removeOrderCaseByClientId,
-  upsertCaseChat,
-  upsertOrderCase,
-} from '@/features/order-case'
 import type { DriverOrderStateIds } from '@/features/order-states'
 import { optimisticTransaction } from '@shared-optimistic'
 import { selectStopsByRouteId, useRoutesStore, useStopsStore } from '@/features/routes'
@@ -67,22 +57,6 @@ function isOrderCommandResult(
   )
 }
 
-function isFailOrderCommandResult(
-  value:
-    | DriverRouteActionResult
-    | CompleteOrderResponseDto
-    | FailOrderResponseDto
-    | UndoTerminalOrderResponseDto
-    | undefined,
-): value is FailOrderResponseDto {
-  return Boolean(
-    value
-    && typeof value === 'object'
-    && 'order_case' in value
-    && 'case_chat' in value,
-  )
-}
-
 export async function submitRouteActionFlow({
   workspace,
   store,
@@ -121,27 +95,6 @@ export async function submitRouteActionFlow({
     | UndoTerminalOrderResponseDto
     | undefined
   let requestError: unknown = null
-  const optimisticOrderCase = (
-    command.type === 'fail-stop'
-    && typeof command.orderId === 'number'
-    && typeof command.orderCaseClientId === 'string'
-    && command.orderCaseClientId
-  )
-    ? buildOptimisticOrderCase(command.orderId, command.orderCaseClientId)
-    : null
-  const optimisticCaseChat = (
-    command.type === 'fail-stop'
-    && optimisticOrderCase
-    && typeof command.caseChatClientId === 'string'
-    && command.caseChatClientId
-    && typeof command.note === 'string'
-  )
-    ? buildOptimisticCaseChat(
-        optimisticOrderCase.id ?? 0,
-        command.caseChatClientId,
-        command.note,
-      )
-    : null
 
   const didSucceed = await optimisticTransaction({
     snapshot: () => {
@@ -156,14 +109,6 @@ export async function submitRouteActionFlow({
         patchOrderStateByServerIds([command.orderId], optimisticOrderStateId)
         patchAssignedRouteOrderStateByServerIds(store, [command.orderId], optimisticOrderStateId)
       }
-
-      if (optimisticOrderCase) {
-        upsertOrderCase(optimisticOrderCase)
-      }
-
-      if (optimisticCaseChat) {
-        upsertCaseChat(optimisticCaseChat)
-      }
     },
     request: async () => {
       result = await submitRouteActionAction(envelope)
@@ -175,31 +120,6 @@ export async function submitRouteActionFlow({
         applyOrderCommandDeltas(mappedOrders)
         applyAssignedRouteOrderCommandDeltas(store, mappedOrders)
       }
-
-      if (
-        command.type === 'fail-stop'
-        && isFailOrderCommandResult(requestResult)
-        && command.orderCaseClientId
-        && typeof requestResult.order_case?.id === 'number'
-      ) {
-        patchOrderCaseByClientId(command.orderCaseClientId, {
-          id: requestResult.order_case.id,
-        })
-      }
-
-      if (
-        command.type === 'fail-stop'
-        && isFailOrderCommandResult(requestResult)
-        && command.caseChatClientId
-        && typeof requestResult.case_chat?.id === 'number'
-      ) {
-        patchCaseChatByClientId(command.caseChatClientId, {
-          id: requestResult.case_chat.id,
-          order_case_id: typeof requestResult.order_case?.id === 'number'
-            ? requestResult.order_case.id
-            : undefined,
-        })
-      }
     },
     rollback: (snapshot) => {
       const optimisticSnapshot = snapshot as {
@@ -208,15 +128,6 @@ export async function submitRouteActionFlow({
       }
       restoreOrdersSnapshot(optimisticSnapshot.sharedOrders)
       restoreAssignedRouteOrdersSnapshot(store, optimisticSnapshot.assignedRouteOrders)
-
-      if (command.type === 'fail-stop') {
-        if (command.orderCaseClientId) {
-          removeOrderCaseByClientId(command.orderCaseClientId)
-        }
-        if (command.caseChatClientId) {
-          removeCaseChatByClientId(command.caseChatClientId)
-        }
-      }
     },
     onError: (error) => {
       requestError = error

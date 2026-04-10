@@ -3,11 +3,11 @@ import { driverApiClient } from '@/app/services/client'
 import type { DriverObservedTimePayloadDto, DriverRouteTimingCommandResponseDto } from './routeTiming.dto'
 
 export function markRouteActualEndTimeLastOrderApi(
-  routeId: number,
+  routeSolutionId: number,
   data?: DriverObservedTimePayloadDto,
 ): Promise<ApiResult<DriverRouteTimingCommandResponseDto>> {
   return driverApiClient.request<DriverRouteTimingCommandResponseDto>({
-    path: `/drivers/routes/${routeId}/actual-end-time/last-order`,
+    path: `/drivers/routes/${routeSolutionId}/actual-end-time/last-order`,
     method: 'POST',
     data,
   })

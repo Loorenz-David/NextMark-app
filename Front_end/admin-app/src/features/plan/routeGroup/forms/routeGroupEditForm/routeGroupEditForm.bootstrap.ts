@@ -23,6 +23,7 @@ export const initialRouteGroupEditForm = (): RouteGroupEditFormState => ({
     set_start_time: '00:00',
     set_end_time: '23:59',
     eta_tolerance_minutes: 0,
+    eta_message_tolerance_minutes: 0,
     stops_service_time: null,
     route_end_strategy: 'round_trip',
     driver_id: null,
@@ -114,6 +115,10 @@ export const buildFormState = (
       set_start_time: normalizeTimeValue(routeSolution.set_start_time) ?? '09:00',
       set_end_time: normalizeTimeValue(routeSolution.set_end_time) ?? '17:00',
       eta_tolerance_minutes: Math.max(0, Math.trunc((routeSolution.eta_tolerance_seconds ?? 0) / 60)),
+      eta_message_tolerance_minutes: Math.max(
+        0,
+        Math.trunc((routeSolution.eta_message_tolerance ?? 0) / 60),
+      ),
       stops_service_time: coerceServiceTime(routeSolution.stops_service_time),
       route_end_strategy: routeSolution.route_end_strategy ??  'round_trip',
       driver_id: routeSolution.driver_id ?? null,

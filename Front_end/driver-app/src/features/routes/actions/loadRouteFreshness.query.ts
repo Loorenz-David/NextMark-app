@@ -10,12 +10,14 @@ export async function loadRouteFreshnessQuery(routeId: number): Promise<RouteFre
   const response = await getRouteFreshnessApi(routeId)
   const dto = response.data
 
-  if (!dto || typeof dto.route_id !== 'number') {
+  const routeSolutionId = dto?.route_solution_id ?? dto?.route_id
+
+  if (!dto || typeof routeSolutionId !== 'number') {
     throw new Error('Route freshness response did not include route data.')
   }
 
   return {
-    routeId: dto.route_id,
+    routeId: routeSolutionId,
     deliveryPlanId: dto.delivery_plan_id ?? null,
     routeFreshnessUpdatedAt: dto.route_freshness_updated_at ?? null,
   }

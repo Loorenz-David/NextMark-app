@@ -8,6 +8,7 @@ import {
 } from '@/features/plan/routeGroup/api/routeGroupSettings.api'
 import {
   saveDriverIdPreference,
+  saveEtaMessageToleranceMinutesPreference,
   saveEtaToleranceMinutesPreference,
   saveEndLocationPreference,
   saveEndTimePreference,
@@ -83,6 +84,9 @@ const applyResponsePayload = (
     saveEtaToleranceMinutesPreference(
       Math.max(0, Math.trunc((persistedSource.eta_tolerance_seconds ?? 0) / 60)),
     )
+    saveEtaMessageToleranceMinutesPreference(
+      Math.max(0, Math.trunc((persistedSource.eta_message_tolerance ?? 0) / 60)),
+    )
     saveStopsServiceTimePreference(
       serviceTimeSecondsToMinutes(persistedSource.stops_service_time ?? null),
     )
@@ -141,13 +145,21 @@ export function useRouteGroupSettingsMutations() {
         )
         if (solution) {
           snapshots.route = { ...solution }
-          const { eta_tolerance_minutes, ...routePatchRest } = payload.route_solution ?? {}
+          const {
+            eta_tolerance_minutes,
+            eta_message_tolerance,
+            ...routePatchRest
+          } = payload.route_solution ?? {}
           const nextRoutePatch = {
             ...routePatchRest,
             eta_tolerance_seconds:
               typeof eta_tolerance_minutes === 'number'
                 ? eta_tolerance_minutes * 60
                 : solution.eta_tolerance_seconds,
+            eta_message_tolerance:
+              typeof eta_message_tolerance === 'number'
+                ? eta_message_tolerance
+                : solution.eta_message_tolerance,
             stops_service_time:
               payload.route_solution?.stops_service_time != null
                 ? payload.route_solution.stops_service_time

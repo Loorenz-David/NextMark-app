@@ -5,6 +5,7 @@ import { BasicButton } from '@/shared/buttons/BasicButton'
 import { ArchiveIcon } from '@/assets/icons'
 import { useOrderCaseActions } from '@/features/orderCase/actions/orderCase.actions'
 import { useHomeApp } from '@/features/home-app/providers/HomeAppProvider'
+import { AdminNotificationWorkspaceBridge } from '@/realtime/notifications'
 
 import { HomeOverlays } from '../components/HomeOverlays'
 import { HomeDesktopView } from '../views/HomeDesktopView'
@@ -15,6 +16,7 @@ import { HomeRouteOperationsManagersProvider } from '../providers/HomeRouteOpera
 export const HomeRouteOperationsPage = () => {
   return (
     <HomeRouteOperationsManagersProvider>
+      <AdminNotificationWorkspaceBridge />
       <RouteOperationsHeaderActionsRegistrar />
       <HomeRouteOperationsContent />
     </HomeRouteOperationsManagersProvider>

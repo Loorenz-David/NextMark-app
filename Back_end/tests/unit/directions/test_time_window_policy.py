@@ -6,15 +6,13 @@ from types import SimpleNamespace
 from Delivery_app_BK.directions.services.time_window_policy import (
     apply_stop_time_window_evaluation,
     build_stop_time_warnings,
-    build_effective_windows,
-    resolve_next_window_start,
 )
 
 
 def _route_solution(plan_start: datetime | None = None, plan_end: datetime | None = None):
-    route_plan = SimpleNamespace(start_date=plan_start, end_date=plan_end)
-    route_group = SimpleNamespace(route_plan=route_plan)
-    return SimpleNamespace(route_group=route_group, local_delivery_plan=None)
+    delivery_plan = SimpleNamespace(start_date=plan_start, end_date=plan_end)
+    local_delivery_plan = SimpleNamespace(delivery_plan=delivery_plan)
+    return SimpleNamespace(local_delivery_plan=local_delivery_plan)
 
 
 def test_delivery_windows_are_authoritative_over_legacy_fields():
@@ -92,50 +90,3 @@ def test_apply_evaluation_keeps_non_time_warnings():
     assert changed is False
     assert stop.has_constraint_violation is True
     assert stop.constraint_warnings == [{"type": "capacity_exceeded", "severity": "error"}]
-
-
-def test_build_effective_windows_falls_back_to_current_route_plan_relation():
-    route_solution = _route_solution(
-        datetime(2026, 3, 2, 0, 0, 0, tzinfo=timezone.utc),
-        datetime(2026, 3, 2, 23, 59, 59, tzinfo=timezone.utc),
-    )
-    order = SimpleNamespace(delivery_windows=[])
-
-    windows = build_effective_windows(order, route_solution)
-
-    assert windows == [
-        (
-            datetime(2026, 3, 2, 0, 0, 0, tzinfo=timezone.utc),
-            datetime(2026, 3, 2, 23, 59, 59, tzinfo=timezone.utc),
-        )
-    ]
-
-
-def test_resolve_next_window_start_returns_next_future_start_only():
-    windows = [
-        (
-            datetime(2026, 3, 2, 9, 0, 0, tzinfo=timezone.utc),
-            datetime(2026, 3, 2, 10, 0, 0, tzinfo=timezone.utc),
-        ),
-        (
-            datetime(2026, 3, 2, 14, 0, 0, tzinfo=timezone.utc),
-            datetime(2026, 3, 2, 15, 0, 0, tzinfo=timezone.utc),
-        ),
-    ]
-
-    before_first = resolve_next_window_start(
-        datetime(2026, 3, 2, 8, 30, 0, tzinfo=timezone.utc),
-        windows,
-    )
-    inside_window = resolve_next_window_start(
-        datetime(2026, 3, 2, 9, 30, 0, tzinfo=timezone.utc),
-        windows,
-    )
-    after_all = resolve_next_window_start(
-        datetime(2026, 3, 2, 16, 0, 0, tzinfo=timezone.utc),
-        windows,
-    )
-
-    assert before_first == datetime(2026, 3, 2, 9, 0, 0, tzinfo=timezone.utc)
-    assert inside_window is None
-    assert after_all is None

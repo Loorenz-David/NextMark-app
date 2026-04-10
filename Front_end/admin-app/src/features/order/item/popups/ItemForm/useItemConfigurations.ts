@@ -1,6 +1,6 @@
 
 import type { ItemType } from "@/features/itemConfigurations/types/itemType"
-import { useEffect, useMemo, useState } from "react"
+import { useMemo } from "react"
 
 import type { ItemProperty } from "@/features/itemConfigurations/types/itemProperty"
 import { useItemTypesOrFetch } from "@/features/itemConfigurations/hooks/useItemConfigSelectors"
@@ -18,8 +18,6 @@ export const useItemConfigurations = ({
 }: {
   selectedItemTypeName?: string | null
 }) => {
-    const [ selectedItemType, setSelectedItemType ] = useState<ItemType | null>(null)
-    
     const itemTypes = useItemTypesOrFetch()
     const itemTypeProperties = useItemPropertiesOrFetch()
 
@@ -31,6 +29,15 @@ export const useItemConfigurations = ({
         })),
       [itemTypes],
     )
+
+    const selectedItemType = useMemo(() => {
+      const normalizedName = selectedItemTypeName?.trim()
+      if (!normalizedName) {
+        return null
+      }
+
+      return itemTypes.find((itemType) => itemType.name.trim() === normalizedName) ?? null
+    }, [itemTypes, selectedItemTypeName])
     
     const selectedItemTypeProperties = useMemo(() => {
       const propertyIds = selectedItemType?.properties 
@@ -40,36 +47,11 @@ export const useItemConfigurations = ({
         propertyIds.includes(property.id ?? -1),
       )
     }, [selectedItemType, itemTypeProperties])
-
-    useEffect(() => {
-      const normalizedName = selectedItemTypeName?.trim()
-      if (!normalizedName) {
-        if (selectedItemType !== null) {
-          setSelectedItemType(null)
-        }
-        return
-      }
-
-      const matchedItemType =
-        itemTypes.find((itemType) => itemType.name === normalizedName) ?? null
-
-      if (!matchedItemType) {
-        if (selectedItemType !== null) {
-          setSelectedItemType(null)
-        }
-        return
-      }
-
-      if (selectedItemType?.id !== matchedItemType.id) {
-        setSelectedItemType(matchedItemType)
-      }
-    }, [itemTypes, selectedItemType, selectedItemTypeName])
   
    
   return {
     itemTypeOptions,
     selectedItemTypeProperties,
     selectedItemType,
-    setSelectedItemType,
   }
 }

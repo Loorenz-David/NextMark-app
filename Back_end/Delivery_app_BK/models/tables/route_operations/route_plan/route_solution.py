@@ -77,6 +77,7 @@ class RouteSolution(
     set_end_time = Column( String )
     # Arrival tolerance around expected arrival time, in seconds.
     eta_tolerance_seconds = Column(Integer, nullable=False, default=0)
+    eta_message_tolerance = Column(Integer, nullable=True, default=1800)
     stops_service_time = Column(JSONB().with_variant(JSON, "sqlite"), nullable=True)
 
     created_at = Column(
@@ -180,6 +181,16 @@ class RouteSolution(
             raise ValueError("eta_tolerance_seconds must be between 0 and 7200.")
         return value
 
+    @validates("eta_message_tolerance")
+    def validate_eta_message_tolerance(self, key, value):
+        if value is None:
+            return None
+        if not isinstance(value, int) or isinstance(value, bool):
+            raise ValueError("eta_message_tolerance must be an integer.")
+        if value < 0 or value > 7200:
+            raise ValueError("eta_message_tolerance must be between 0 and 7200.")
+        return value
+
     @validates("actual_end_time_source")
     def validate_actual_end_time_source(self, key, value):
         if value is None:
@@ -196,4 +207,3 @@ class RouteSolution(
             raise ValueError(
                 f"actual_end_time_source must be one of {RouteActualEndTimeSource.values()}."
             ) from error
-

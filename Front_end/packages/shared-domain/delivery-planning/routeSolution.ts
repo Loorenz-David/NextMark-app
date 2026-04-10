@@ -74,6 +74,7 @@ export type RouteSolution = {
   set_start_time?: ISODateTime | null
   set_end_time?: ISODateTime | null
   eta_tolerance_seconds?: number | null
+  eta_message_tolerance?: number | null
   stops_service_time?: ServiceTime | null
   driver_id?: number | null
   vehicle_id?: number | null

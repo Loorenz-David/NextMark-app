@@ -1,6 +1,7 @@
 export type {
   ClientIdMap,
   Order,
+  OrderNote,
   OrderCreateBundle,
   OrderCreatePayload,
   OrderCreateResponse,

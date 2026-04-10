@@ -85,7 +85,7 @@ export const ActiveFilterPills = ({
           >
             <span className="whitespace-nowrap">
               {type === 'array'
-                ? renderPillLabel(itemKey, value)
+                ? renderPillLabel(parentKey === 's' ? itemKey : parentKey, value)
                 : renderPillLabel(parentKey, value)}
             </span>
 

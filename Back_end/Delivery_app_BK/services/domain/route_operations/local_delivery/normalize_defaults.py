@@ -61,6 +61,10 @@ def normalize_local_delivery_route_solution_defaults(
     if not isinstance(eta_tolerance_seconds, int) or isinstance(eta_tolerance_seconds, bool):
         eta_tolerance_seconds = 0
 
+    eta_message_tolerance = route_solution_defaults.get("eta_message_tolerance")
+    if not isinstance(eta_message_tolerance, int) or isinstance(eta_message_tolerance, bool):
+        eta_message_tolerance = 1800
+
     return {
         "start_location": start_location,
         "end_location": end_location,
@@ -71,6 +75,7 @@ def normalize_local_delivery_route_solution_defaults(
         "driver_id": driver_id,
         "start_facility_id": start_facility_id,
         "eta_tolerance_seconds": max(0, min(7200, eta_tolerance_seconds)),
+        "eta_message_tolerance": max(0, min(7200, eta_message_tolerance)),
         "stops_service_time": normalize_service_time_payload(
             route_solution_defaults.get("stops_service_time")
         ),

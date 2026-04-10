@@ -1,9 +1,9 @@
 import { useMemo, useState } from 'react'
 import { useMessageHandler } from '@shared-message-handler'
 import { CloseIcon } from '@/assets/icons'
-import { buildCaseChatClientId, buildOrderCaseClientId } from '@/features/order-case'
 import { useDriverAppShell } from '@/app/shell/providers/driverAppShell.context'
 import { useOpenRouteStopDetail } from '../controllers/useOpenRouteStopDetail.controller'
+import { FailureReasonComposer } from '../components/FailureReasonComposer'
 import { useRouteExecutionShell } from '../providers/routeExecutionShell.context'
 import { useSelectedAssignedRoute } from '../controllers/useSelectedAssignedRoute.controller'
 import { resolveNextPendingStopClientId } from '../domain/resolveNextPendingStopClientId'
@@ -56,8 +56,6 @@ export function StopFailureFormPage({
       stopClientId,
       orderId,
       note: description.trim(),
-      orderCaseClientId: buildOrderCaseClientId(),
-      caseChatClientId: buildCaseChatClientId(),
     })
 
     setIsSubmitting(false)
@@ -83,7 +81,7 @@ export function StopFailureFormPage({
       <header className="flex items-center justify-between gap-3 border-b border-white/8 px-5 py-4">
         <div className="min-w-0">
           <h2 className="truncate text-base font-semibold">{stop?.title ?? 'Failure reason'}</h2>
-          <p className="mt-1 text-sm text-white/60">Describe why this order failed.</p>
+          <p className="mt-1 text-sm text-white/60">Choose a failure reason or write a custom note.</p>
         </div>
 
         <button
@@ -97,15 +95,13 @@ export function StopFailureFormPage({
       </header>
 
       <div className="flex flex-1 flex-col gap-4 px-5 py-5">
-        <label className="flex flex-col gap-2">
+        <div className="flex flex-col gap-2">
           <span className="text-sm font-medium text-white/80">Failure description</span>
-          <textarea
-            className="min-h-32 rounded-2xl border border-white/12 bg-white/6 px-4 py-3 text-sm text-white outline-none placeholder:text-white/35"
-            onChange={(event) => setDescription(event.target.value)}
-            placeholder="Explain what happened."
+          <FailureReasonComposer
             value={description}
+            onValueChange={setDescription}
           />
-        </label>
+        </div>
 
         {error ? <p className="text-sm text-red-300">{error}</p> : null}
 

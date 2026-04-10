@@ -8,7 +8,7 @@ interface Props {
 function formatDeliveryWindow(
   start_at: string,
   end_at: string,
-  timezone: string | null
+  timezone: string | null,
 ): string {
   try {
     const tz = timezone ?? undefined;
@@ -61,17 +61,14 @@ export function TrackingSummaryCard({ data }: Props) {
   } = data;
 
   const showReference =
-    reference_number &&
-    reference_number !== tracking_number;
+    reference_number && reference_number !== tracking_number;
 
-  const latestEntry = timeline.length > 0 ? timeline[timeline.length - 1] : null;
+  const latestEntry =
+    timeline.length > 0 ? timeline[timeline.length - 1] : null;
 
   return (
     <div className="backdrop-blur-2xl bg-white/[0.06] border border-white/10 rounded-[28px] p-6 space-y-4">
       {/* Team name */}
-      <p className="text-[0.68rem] font-semibold uppercase tracking-[0.3em] text-white/42">
-        {team_name}
-      </p>
 
       {/* Tracking number */}
       <div className="space-y-1">
@@ -121,7 +118,7 @@ export function TrackingSummaryCard({ data }: Props) {
             {formatDeliveryWindow(
               delivery_window_summary.start_at,
               delivery_window_summary.end_at,
-              team_timezone
+              team_timezone,
             )}
           </p>
         </div>

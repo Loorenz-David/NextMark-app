@@ -17,6 +17,7 @@ export const normalizeRouteGroupEditFormToSettingsPayload = (
     set_start_time: formState.route_solution.set_start_time,
     set_end_time: formState.route_solution.set_end_time,
     eta_tolerance_minutes: formState.route_solution.eta_tolerance_minutes,
+    eta_message_tolerance: formState.route_solution.eta_message_tolerance_minutes * 60,
     stops_service_time: serviceTimeMinutesToSeconds(formState.route_solution.stops_service_time),
     start_location: formState.route_solution.start_location,
     end_location: formState.route_solution.end_location,

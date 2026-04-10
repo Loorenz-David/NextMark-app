@@ -15,12 +15,10 @@ def _load_blueprints():
     from .bootstrap import bootstrap_bp
     from .client_form import client_form_bp, public_client_form_bp
     from .costumer import costumer_bp
-    from .route_plan.local_delivery_plans import route_groups_bp as local_delivery_plans_bp
-    from .route_plan.plan import route_plans_bp as plan_bp
-    from .route_plan.plan_overviews import (
-        route_plan_overviews_bp as plan_overviews_bp,
-    )
-    from .route_plan.route_operations import route_operations_bp
+    from .delivery_plan.local_delivery_plans import local_delivery_plans_bp
+    from .delivery_plan.plan import plan_bp
+    from .delivery_plan.plan_overviews import plan_overviews_bp
+    from .delivery_plan.route_operations import route_operations_bp
     from .drivers import drivers_bp
     from .external_integration import external_integration_bp
     from .infrastructure import infrastructure_bp
@@ -144,10 +142,10 @@ def register_v2_blueprints(app):
     app.register_blueprint(bp["item_property_bp"], url_prefix="/api_v2/item_properties")
     app.register_blueprint(bp["item_position_bp"], url_prefix="/api_v2/item_positions")
     app.register_blueprint(bp["item_state_bp"], url_prefix="/api_v2/item_states")
-    app.register_blueprint(bp["local_delivery_plans_bp"], url_prefix="/api_v2/route_groups")
+    app.register_blueprint(bp["local_delivery_plans_bp"], url_prefix="/api_v2/local_delivery_plans")
     app.register_blueprint(bp["label_template_bp"], url_prefix="/api_v2/label_templates")
     app.register_blueprint(bp["message_template_bp"], url_prefix="/api_v2/message_templates")
-    app.register_blueprint(bp["plan_bp"], url_prefix="/api_v2/route_plans")
+    app.register_blueprint(bp["plan_bp"], url_prefix="/api_v2/plans")
     app.register_blueprint(bp["order_bp"], url_prefix="/api_v2/orders")
     app.register_blueprint(bp["order_assignment_bp"], url_prefix="/api_v2/order_assignments")
     app.register_blueprint(bp["infrastructure_bp"], url_prefix="/api_v2/infrastructures")
@@ -167,7 +165,7 @@ def register_v2_blueprints(app):
     app.register_blueprint(bp["twilio_bp"], url_prefix="/api_v2/twilio")
     app.register_blueprint(bp["email_bp"], url_prefix="/api_v2/email")
     app.register_blueprint(bp["route_operations_bp"], url_prefix="/api_v2/route_operations")
-    app.register_blueprint(bp["plan_overviews_bp"], url_prefix="/api_v2/route_plan_overviews")
+    app.register_blueprint(bp["plan_overviews_bp"], url_prefix="/api_v2/plan_overviews")
     app.register_blueprint(bp["costumer_bp"], url_prefix="/api_v2/costumers")
     app.register_blueprint(bp["drivers_bp"], url_prefix="/api_v2/drivers")
     app.register_blueprint(bp["client_form_bp"], url_prefix="/api_v2")

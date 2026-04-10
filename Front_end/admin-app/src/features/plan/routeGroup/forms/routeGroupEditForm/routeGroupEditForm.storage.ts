@@ -8,6 +8,7 @@ export type RouteGroupEditFormPreferences = {
   set_start_time: string | null
   set_end_time: string | null
   eta_tolerance_minutes: number
+  eta_message_tolerance_minutes: number
   route_end_strategy: RouteEndStrategy
   start_location: address | null
   end_location: address | null
@@ -23,6 +24,7 @@ const DEFAULT_PREFERENCES: RouteGroupEditFormPreferences = {
   set_start_time: null,
   set_end_time: null,
   eta_tolerance_minutes: 0,
+  eta_message_tolerance_minutes: 0,
   route_end_strategy: 'round_trip',
   start_location: null,
   end_location: null,
@@ -114,6 +116,9 @@ const sanitizePreferences = (raw: unknown): RouteGroupEditFormPreferences => {
     set_start_time: isValidTime(candidate.set_start_time) ? candidate.set_start_time : null,
     set_end_time: isValidTime(candidate.set_end_time) ? candidate.set_end_time : null,
     eta_tolerance_minutes: normalizeEtaToleranceMinutes(candidate.eta_tolerance_minutes),
+    eta_message_tolerance_minutes: normalizeEtaToleranceMinutes(
+      candidate.eta_message_tolerance_minutes,
+    ),
     route_end_strategy: normalizeStrategy(candidate.route_end_strategy),
     start_location: isValidAddress(candidate.start_location) ? candidate.start_location : null,
     end_location: isValidAddress(candidate.end_location) ? candidate.end_location : null,
@@ -173,6 +178,12 @@ export const saveEndTimePreference = (value: string | null): void => {
 export const saveEtaToleranceMinutesPreference = (value: number): void => {
   persistPreferences({
     eta_tolerance_minutes: normalizeEtaToleranceMinutes(value),
+  })
+}
+
+export const saveEtaMessageToleranceMinutesPreference = (value: number): void => {
+  persistPreferences({
+    eta_message_tolerance_minutes: normalizeEtaToleranceMinutes(value),
   })
 }
 

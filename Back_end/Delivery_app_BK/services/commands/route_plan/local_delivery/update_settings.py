@@ -2,7 +2,7 @@ import logging
 from datetime import datetime, timezone
 from uuid import uuid4
 
-from Delivery_app_BK.models import db
+from Delivery_app_BK.models import Order, db
 from Delivery_app_BK.sockets.notifications import notify_delivery_planning_event
 from Delivery_app_BK.services.commands.route_plan.local_delivery.route_solution.update_route_solution_from_plan import (
     update_route_solution_from_plan,
@@ -45,6 +45,9 @@ from Delivery_app_BK.services.domain.state_transitions.plan_state_engine import 
     should_reset_plan_to_open,
 )
 from Delivery_app_BK.services.domain.route_operations.plan.plan_states import PlanStateId
+from Delivery_app_BK.services.domain.order.order_states import OrderStateId
+from Delivery_app_BK.services.infra.events.builders.order import build_delivery_rescheduled_event
+from Delivery_app_BK.services.infra.events.emiters.order import emit_order_events
 
 logger = logging.getLogger(__name__)
 
@@ -82,6 +85,7 @@ def apply_route_group_settings_request(
         route_plan=route_plan,
         patch=request.route_plan,
     )
+    previous_eta_by_order_id = _extract_route_stop_eta_by_order_id(route_solution)
 
     route_updates = _build_route_solution_updates(request.route_solution)
     effective_time_zone = ctx.time_zone or request.time_zone
@@ -151,6 +155,17 @@ def apply_route_group_settings_request(
     if stops_changed:
         db.session.add_all(route_solution.stops or [])
     db.session.commit()
+
+    pending_order_events = _build_order_rescheduled_events_for_route_group_update(
+        ctx=ctx,
+        route_plan=route_plan,
+        previous_plan_start=previous_start,
+        previous_plan_end=previous_end,
+        previous_eta_by_order_id=previous_eta_by_order_id,
+        route_solution=route_solution,
+    )
+    if pending_order_events:
+        emit_order_events(ctx, pending_order_events)
 
     emit_pending_route_plan_events(ctx, pending_plan_events)
 
@@ -226,6 +241,87 @@ def apply_route_group_settings_request(
     )
 
 
+def _extract_route_stop_eta_by_order_id(route_solution) -> dict[int, datetime | None]:
+    eta_by_order_id: dict[int, datetime | None] = {}
+    for stop in list(getattr(route_solution, "stops", None) or []):
+        order_id = getattr(stop, "order_id", None)
+        if order_id is None:
+            continue
+        eta_by_order_id[order_id] = getattr(stop, "expected_arrival_time", None)
+    return eta_by_order_id
+
+
+def _build_order_rescheduled_events_for_route_group_update(
+    *,
+    ctx: ServiceContext,
+    route_plan,
+    previous_plan_start: datetime | None,
+    previous_plan_end: datetime | None,
+    previous_eta_by_order_id: dict[int, datetime | None],
+    route_solution,
+) -> list[dict]:
+    pending_events: list[dict] = []
+    emitted_order_ids: set[int] = set()
+
+    if (previous_plan_start, previous_plan_end) != (
+        getattr(route_plan, "start_date", None),
+        getattr(route_plan, "end_date", None),
+    ):
+        for order in list(getattr(route_plan, "orders", None) or []):
+            if getattr(order, "team_id", None) != ctx.team_id:
+                continue
+            order_id = getattr(order, "id", None)
+            if order_id is None:
+                continue
+            pending_events.append(
+                build_delivery_rescheduled_event(
+                    order,
+                    old_plan_start=previous_plan_start,
+                    old_plan_end=previous_plan_end,
+                    new_plan_start=getattr(route_plan, "start_date", None),
+                    new_plan_end=getattr(route_plan, "end_date", None),
+                    reason="plan_window_changed",
+                )
+            )
+            emitted_order_ids.add(order_id)
+
+    current_eta_by_order_id = _extract_route_stop_eta_by_order_id(route_solution)
+    changed_ready_order_ids: list[int] = []
+    compared_order_ids = set(previous_eta_by_order_id.keys()) | set(current_eta_by_order_id.keys())
+    for order_id in compared_order_ids:
+        if order_id in emitted_order_ids:
+            continue
+        old_eta = previous_eta_by_order_id.get(order_id)
+        new_eta = current_eta_by_order_id.get(order_id)
+        if old_eta != new_eta:
+            changed_ready_order_ids.append(order_id)
+
+    if not changed_ready_order_ids:
+        return pending_events
+
+    ready_orders = (
+        db.session.query(Order)
+        .filter(Order.id.in_(changed_ready_order_ids))
+        .filter(Order.team_id == ctx.team_id)
+        .filter(Order.order_state_id == OrderStateId.READY)
+        .all()
+    )
+    for order in ready_orders:
+        order_id = getattr(order, "id", None)
+        if order_id is None:
+            continue
+        pending_events.append(
+            build_delivery_rescheduled_event(
+                order,
+                old_expected_arrival=previous_eta_by_order_id.get(order_id),
+                new_expected_arrival=current_eta_by_order_id.get(order_id),
+                reason="eta_changed",
+            )
+        )
+
+    return pending_events
+
+
 def apply_local_delivery_settings_request(
     ctx: ServiceContext,
     request: RouteGroupSettingsRequest,
@@ -252,6 +348,8 @@ def _build_route_solution_updates(route_patch: RouteSolutionPatchRequest) -> dic
         updates["set_end_time"] = route_patch.set_end_time
     if getattr(route_patch, "has_eta_tolerance_seconds", False):
         updates["eta_tolerance_seconds"] = route_patch.eta_tolerance_seconds
+    if getattr(route_patch, "has_eta_message_tolerance", False):
+        updates["eta_message_tolerance"] = route_patch.eta_message_tolerance
     if getattr(route_patch, "has_route_end_strategy", False):
         updates["route_end_strategy"] = route_patch.route_end_strategy
     if getattr(route_patch, "has_driver_id", False):
@@ -272,6 +370,7 @@ def _has_route_solution_patch(route_patch: RouteSolutionPatchRequest) -> bool:
             getattr(route_patch, "has_set_start_time", False),
             getattr(route_patch, "has_set_end_time", False),
             getattr(route_patch, "has_eta_tolerance_seconds", False),
+            getattr(route_patch, "has_eta_message_tolerance", False),
             getattr(route_patch, "has_route_end_strategy", False),
             getattr(route_patch, "has_driver_id", False),
             getattr(route_patch, "has_vehicle_id", False),

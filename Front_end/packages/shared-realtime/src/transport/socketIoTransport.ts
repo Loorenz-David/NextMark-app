@@ -3,7 +3,7 @@ import { io, type Socket } from 'socket.io-client'
 type TransportHandler = (payload: unknown) => void
 type ConnectionHandler = (connected: boolean) => void
 
-export type TransportConnectionState = 'idle' | 'connecting' | 'connected' | 'disconnected' | 'reconnecting'
+export type TransportConnectionState = 'idle' | 'connecting' | 'connected' | 'disconnected' | 'reconnecting' | 'auth_failed'
 
 export type TransportDiagnostics = {
   state: TransportConnectionState
@@ -18,6 +18,13 @@ type EnsureConnectionOptions = {
   token: string
 }
 
+const AUTH_REJECTION_MESSAGES = ['connection rejected', 'not authorized', 'unauthorized'] as const
+
+const isAuthRejection = (error: Error): boolean => {
+  const msg = error?.message?.toLowerCase() ?? ''
+  return AUTH_REJECTION_MESSAGES.some((pattern) => msg.includes(pattern))
+}
+
 const MAX_HANDLERS_PER_EVENT = 200
 const BASE_RECONNECT_DELAY_MS = 300
 const MAX_RECONNECT_DELAY_MS = 5000
@@ -29,6 +36,7 @@ export class SocketIoTransport {
   private eventHandlers = new Map<string, Map<TransportHandler, TransportHandler>>()
   private connectionHandlers = new Set<ConnectionHandler>()
   private diagnosticsHandlers = new Set<(diagnostics: TransportDiagnostics) => void>()
+  private authErrorHandlers = new Set<() => void>()
   private reconnectTimer: ReturnType<typeof setTimeout> | null = null
   private diagnostics: TransportDiagnostics = {
     state: 'idle',
@@ -46,6 +54,10 @@ export class SocketIoTransport {
     }
 
     if (!this.socket) {
+      return
+    }
+
+    if (this.diagnostics.state === 'auth_failed') {
       return
     }
 
@@ -145,6 +157,14 @@ export class SocketIoTransport {
     }
   }
 
+  onAuthError(handler: () => void): () => void {
+    this.authErrorHandlers.add(handler)
+
+    return () => {
+      this.authErrorHandlers.delete(handler)
+    }
+  }
+
   private rebuildSocket({ socketUrl, token }: EnsureConnectionOptions): void {
     this.clearReconnectTimer()
 
@@ -190,6 +210,14 @@ export class SocketIoTransport {
       }
     })
     nextSocket.on('connect_error', (error) => {
+      if (isAuthRejection(error)) {
+        this.clearReconnectTimer()
+        this.updateDiagnostics({ state: 'auth_failed', lastError: error?.message ?? 'Auth rejected' })
+        this.emitConnectionChange(false)
+        this.emitAuthError()
+        return
+      }
+
       this.updateDiagnostics({
         state: 'disconnected',
         lastError: error?.message ?? 'Connection error',
@@ -213,6 +241,16 @@ export class SocketIoTransport {
         handler(connected)
       } catch (error) {
         console.error('[shared-realtime] Connection handler failed:', error)
+      }
+    })
+  }
+
+  private emitAuthError(): void {
+    this.authErrorHandlers.forEach((handler) => {
+      try {
+        handler()
+      } catch (error) {
+        console.error('[shared-realtime] Auth error handler failed:', error)
       }
     })
   }
@@ -259,6 +297,10 @@ export class SocketIoTransport {
     this.reconnectTimer = setTimeout(() => {
       this.reconnectTimer = null
       if (!this.socket || this.socket.connected || this.socket.active) {
+        return
+      }
+
+      if (this.diagnostics.state === 'auth_failed') {
         return
       }
 

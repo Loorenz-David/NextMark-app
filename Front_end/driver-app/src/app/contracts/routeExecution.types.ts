@@ -23,8 +23,6 @@ export type DriverRouteActionCommand = {
   stopClientId?: string
   orderId?: number
   note?: string
-  orderCaseClientId?: string
-  caseChatClientId?: string
 }
 
 export type DriverCommandEnvelope<TCommand> = {

@@ -1,3 +1,5 @@
+import type { OrderNote } from '@shared-domain'
+
 export type OrderDtoCollection<T> = {
   byClientId: Record<string, T>
   allIds: string[]
@@ -52,7 +54,7 @@ export type OrderDto = {
     window_type: string | null
   }>
   open_order_cases: number
-  order_notes: string[] | null
+  order_notes: OrderNote | Array<string | OrderNote> | null
   items: OrderDtoCollection<OrderItemDto>
 }
 

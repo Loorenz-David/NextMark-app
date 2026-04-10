@@ -28,6 +28,10 @@ def send_sms_on_order_delivery_plan_changed(order_event) -> None:
     run_action(order_event, "order_delivery_plan_changed_sms", send_sms)
 
 
+def send_sms_on_order_delivery_rescheduled(order_event) -> None:
+    run_action(order_event, "order_delivery_rescheduled_sms", send_sms)
+
+
 
 def send_sms_on_order_cancelled(order_event) -> None:
     run_action(order_event, "order_cancelled_sms", send_sms)
@@ -43,3 +47,7 @@ def send_sms_on_order_processing(order_event) -> None:
 
 def send_sms_on_order_fail(order_event) -> None:
     run_action(order_event, "order_fail_sms", send_sms)
+
+
+def send_sms_on_client_form_link_sent(order_event) -> None:
+    run_action(order_event, "client_form_link_sent_sms", send_sms)

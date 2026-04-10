@@ -3,7 +3,9 @@ from __future__ import annotations
 from datetime import datetime, timezone
 
 from Delivery_app_BK.models import OrderEventAction, db
+from Delivery_app_BK.services.commands.order.client_form.generate_token import get_existing_client_form_url
 from Delivery_app_BK.services.domain.messaging import SCHEDULE_ANCHOR_FUTURE_BUSINESS_TIME
+from Delivery_app_BK.services.infra.events.realtime_refresh import notify_order_event_history_changed
 from Delivery_app_BK.services.infra.messaging import MessageRenderContext
 from Delivery_app_BK.services.infra.messaging import resolve_email_template
 from Delivery_app_BK.services.infra.messaging.action_scheduling import resolve_current_order_future_anchor
@@ -20,6 +22,7 @@ def _mark_action_failed(action: OrderEventAction, error_message: str) -> None:
     action.status = OrderEventAction.STATUS_FAILED
     action.last_error = _truncate_error(error_message)
     db.session.commit()
+    notify_order_event_history_changed(action.event_id)
 
 
 def _mark_action_success(action: OrderEventAction) -> None:
@@ -27,6 +30,7 @@ def _mark_action_success(action: OrderEventAction) -> None:
     action.last_error = None
     action.processed_at = datetime.now(timezone.utc)
     db.session.commit()
+    notify_order_event_history_changed(action.event_id)
 
 
 def _mark_action_skipped(action: OrderEventAction, reason: str) -> None:
@@ -34,10 +38,28 @@ def _mark_action_skipped(action: OrderEventAction, reason: str) -> None:
     action.last_error = _truncate_error(reason)
     action.processed_at = datetime.now(timezone.utc)
     db.session.commit()
+    notify_order_event_history_changed(action.event_id)
+
+
+def _extract_email_override(action: OrderEventAction) -> str | None:
+    event_payload = getattr(action.event, "payload", None)
+    if not isinstance(event_payload, dict):
+        return None
+
+    recipients = event_payload.get("recipients")
+    if not isinstance(recipients, dict):
+        return None
+
+    recipient = recipients.get("email")
+    if isinstance(recipient, str):
+        cleaned = recipient.strip()
+        return cleaned or None
+    return None
 
 
 # Synchronous for now. This can be wrapped by Celery workers later.
 def send_email(action_id: int) -> None:
+
     action = db.session.get(OrderEventAction, action_id)
     if action is None:
         return
@@ -74,15 +96,22 @@ def send_email(action_id: int) -> None:
                 return
 
         order = action.event.order
-        recipient = (order.client_email or "").strip()
+        recipient = _extract_email_override(action) or (order.client_email or "").strip()
         if not recipient:
             _mark_action_failed(action, "Order has no client email")
             return
+
+        extra_context: dict[str, str] = {}
+        form_url = get_existing_client_form_url(order)
+        if form_url:
+            extra_context["client_form_link"] = form_url
 
         render_context = MessageRenderContext(
             order=order,
             order_event=action.event,
             team_id=team_id,
+            team_time_zone=getattr(getattr(order, "team", None), "time_zone", None),
+            extra_context=extra_context,
         )
 
         send_email_message(

@@ -4,6 +4,7 @@ import type { address } from '@/types/address'
 import type { RouteGroupEditFormState, RouteGroupEditFormWarnings } from './RouteGroupEditForm.types'
 import {
   saveDriverIdPreference,
+  saveEtaMessageToleranceMinutesPreference,
   saveEtaToleranceMinutesPreference,
   saveEndLocationPreference,
   saveEndTimePreference,
@@ -177,6 +178,15 @@ export const useRouteGroupEditFormSetters = ({
     }))
   }
 
+  const handleEtaMessageToleranceMinutes = (value: number) => {
+    const normalized = Math.max(0, Math.min(120, Math.trunc(value)))
+    if (isNoZoneGroup) saveEtaMessageToleranceMinutesPreference(normalized)
+    setFormState((prev) => ({
+      ...prev,
+      route_solution: { ...prev.route_solution, eta_message_tolerance_minutes: normalized },
+    }))
+  }
+
   const handleRouteStartLocation = (value: address | null) => {
     if (isNoZoneGroup) saveStartLocationPreference(value)
 
@@ -263,6 +273,7 @@ export const useRouteGroupEditFormSetters = ({
     handleRouteStartTime,
     handleRouteEndTime,
     handleEtaToleranceMinutes,
+    handleEtaMessageToleranceMinutes,
     handleRouteStartLocation,
     handleRouteEndLocation,
     handleRouteEndStrategy,

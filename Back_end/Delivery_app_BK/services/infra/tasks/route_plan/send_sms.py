@@ -231,6 +231,7 @@ def send_sms(action_id: int) -> None:
                 order=order,
                 route_plan_event=action.event,
                 team_id=team_id,
+                team_time_zone=getattr(getattr(order, "team", None), "time_zone", None),
             )
             recipients.append((order_id, recipient_phone, render_context))
 

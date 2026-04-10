@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from email.message import EmailMessage
 import html
+import logging
 from pathlib import Path
 import re
 import smtplib
@@ -21,6 +22,13 @@ HEADER_PLACEHOLDER = "{{HEADER_CONTENT}}"
 BODY_PLACEHOLDER = "{{BODY_CONTENT}}"
 FOOTER_PLACEHOLDER = "{{FOOTER_BUTTONS}}"
 LABEL_PATTERN = re.compile(r"\{\{\s*([a-zA-Z0-9_]+)\s*\}\}")
+logger = logging.getLogger(__name__)
+
+
+def _preview(text: str, max_len: int = 400) -> str:
+    if len(text) <= max_len:
+        return text
+    return f"{text[:max_len]}..."
 
 
 def _load_team_smtp(team_id: int | None) -> EmailSMTP | None:
@@ -163,7 +171,14 @@ def _render_email_html(template_value: Any, render_context: MessageRenderContext
     rendered_header = build_message_body(header_value, render_context, channel="email")
     rendered_body = build_message_body(body_value, render_context, channel="email")
     rendered_buttons = _render_footer_buttons(buttons_value, render_context)
-
+    logger.debug(
+        "Rendered email sections | header_len=%d body_len=%d buttons_len=%d header_preview=%r body_preview=%r",
+        len(rendered_header),
+        len(rendered_body),
+        len(rendered_buttons),
+        _preview(rendered_header),
+        _preview(rendered_body),
+    )
     base_html = _load_base_email_template()
     return (
         base_html
@@ -237,6 +252,15 @@ def send_email_batch(
 
             try:
                 final_html = _render_email_html(template.template, render_context)
+                logger.debug(
+                    "Sending email | team_id=%s order_id=%s recipient=%s event_name=%s subject=%r html_len=%d",
+                    team_id,
+                    order_id,
+                    recipient,
+                    event_name,
+                    subject,
+                    len(final_html),
+                )
                 message = _build_email_message(
                     smtp_username=smtp_config.smtp_username,
                     recipient=recipient,
@@ -246,8 +270,21 @@ def send_email_batch(
                 rejected_recipients = smtp_client.send_message(message)
                 if rejected_recipients:
                     recipient_errors[order_id] = f"SMTP rejected recipients: {rejected_recipients}"
+                    logger.warning(
+                        "SMTP rejected recipients | order_id=%s recipient=%s details=%s",
+                        order_id,
+                        recipient,
+                        rejected_recipients,
+                    )
             except Exception as exc:
                 recipient_errors[order_id] = str(exc)
+                logger.exception(
+                    "Email send failed | team_id=%s order_id=%s recipient=%s event_name=%s",
+                    team_id,
+                    order_id,
+                    recipient,
+                    event_name,
+                )
     finally:
         if smtp_client is not None:
             try:

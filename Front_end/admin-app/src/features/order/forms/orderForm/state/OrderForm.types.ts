@@ -36,7 +36,6 @@ export type OrderFormState = {
   client_address: address | null
   delivery_windows: OrderDeliveryWindow[]
   delivery_plan_id?: number | null
-  route_group_id?: number | null
   order_note: string
 }
 
@@ -45,7 +44,6 @@ export type OrderFormPayload = {
   clientId?: string
   costumer_id?: number
   deliveryPlanId?: number | null
-  routeGroupId?: number | null
   restoreFormState?: OrderFormState
 }
 

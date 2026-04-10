@@ -36,6 +36,48 @@ export type SaveOrderParams = {
   fields: OrderUpdateFields;
   onRollback?: () => void;
   optimisticImmediate?: boolean;
+  onCreateCommitted?: (createdBundles: Array<{ order?: Order | null }>) => void;
+};
+
+const normalizeOrderNotesForOptimistic = (
+  notes: unknown,
+): Order["order_notes"] => {
+  const noteEntries = Array.isArray(notes)
+    ? notes
+    : notes != null
+      ? [notes]
+      : [];
+
+  const nonGeneral: Array<
+    | string
+    | {
+        type?: string | null;
+        content?: string | null;
+        creation_date?: string | null;
+      }
+  > = [];
+  let general: { type: "GENERAL"; content: string } | null = null;
+
+  noteEntries.forEach((note) => {
+    if (typeof note === "string") {
+      general = { type: "GENERAL", content: note };
+      return;
+    }
+
+    if (!note || typeof note !== "object") return;
+
+    const type = String(note.type ?? "").toUpperCase();
+    const content = typeof note.content === "string" ? note.content : "";
+
+    if (type === "GENERAL") {
+      general = { type: "GENERAL", content };
+      return;
+    }
+
+    nonGeneral.push(note);
+  });
+
+  return general ? [...nonGeneral, general] : nonGeneral;
 };
 
 export const useOrderController = () => {
@@ -54,6 +96,7 @@ export const useOrderController = () => {
       fields,
       onRollback,
       optimisticImmediate,
+      onCreateCommitted,
     }: SaveOrderParams) => {
       if (mode === "create") {
         const baseOrder = fields as Order;
@@ -64,7 +107,13 @@ export const useOrderController = () => {
         const runCreate = optimisticTransaction({
           snapshot: createOrderOptimisticSnapshot,
           mutate: () => {
-            setOrder({ ...baseOrder, __optimistic: true });
+            setOrder({
+              ...baseOrder,
+              order_notes: normalizeOrderNotesForOptimistic(
+                baseOrder.order_notes,
+              ),
+              __optimistic: true,
+            });
             addVisibleOrder(baseOrder.client_id);
           },
           request: () => createOrder(baseOrder),
@@ -83,7 +132,12 @@ export const useOrderController = () => {
 
               handlePlanOrderCreation(bundle);
 
-              setOrder(bundle.order);
+              setOrder({
+                ...bundle.order,
+                order_notes: normalizeOrderNotesForOptimistic(
+                  bundle.order.order_notes,
+                ),
+              });
               addVisibleOrder(bundle.order.client_id);
             });
 
@@ -93,10 +147,21 @@ export const useOrderController = () => {
             if (!hasBaseOrder) {
               const fallback = createdBundles[0]?.order;
               if (fallback?.client_id) {
-                setOrder({ ...baseOrder, ...fallback });
+                setOrder({
+                  ...baseOrder,
+                  ...fallback,
+                  order_notes: normalizeOrderNotesForOptimistic(
+                    (fallback.order_notes ??
+                      baseOrder.order_notes) as Order["order_notes"],
+                  ),
+                });
                 addVisibleOrder(fallback.client_id);
               }
             }
+
+            onCreateCommitted?.(
+              createdBundles as Array<{ order?: Order | null }>,
+            );
 
             // Server-authoritative plan totals after order creation
             response.data?.plan_totals?.forEach((p) => {
@@ -142,6 +207,9 @@ export const useOrderController = () => {
           updateOrderByClientId(clientId, (order) => ({
             ...order,
             ...fields,
+            order_notes: normalizeOrderNotesForOptimistic(
+              (fields.order_notes ?? order.order_notes) as Order["order_notes"],
+            ),
             __optimistic: true,
           }));
         },
@@ -155,7 +223,13 @@ export const useOrderController = () => {
           if (updatedBundles.length > 0) {
             updatedBundles.forEach((bundle) => {
               if (bundle?.order?.client_id) {
-                setOrder({ ...bundle.order, __optimistic: undefined });
+                setOrder({
+                  ...bundle.order,
+                  order_notes: normalizeOrderNotesForOptimistic(
+                    bundle.order.order_notes,
+                  ),
+                  __optimistic: undefined,
+                });
               }
               handlePlanOrderUpdate(bundle);
             });

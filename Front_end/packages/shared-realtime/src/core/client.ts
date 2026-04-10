@@ -14,6 +14,7 @@ type SessionSource = SessionAccessor & {
 type RealtimeClientConfig = {
   baseUrl: string
   sessionAccessor: SessionSource
+  onAuthError?: () => void | Promise<void>
 }
 
 export type RealtimeSubscriptionStatus = 'pending' | 'active' | 'releasing'
@@ -97,6 +98,12 @@ export class SharedRealtimeClient {
     this.removeTransportDiagnosticsListener = this.transport.onDiagnosticsChange(() => {
       this.emitDiagnosticsChange()
     })
+
+    if (typeof config.onAuthError === 'function') {
+      this.transport.onAuthError(() => {
+        void config.onAuthError!()
+      })
+    }
 
     if (typeof this.sessionAccessor.subscribe === 'function') {
       this.removeSessionListener = this.sessionAccessor.subscribe((session) => {

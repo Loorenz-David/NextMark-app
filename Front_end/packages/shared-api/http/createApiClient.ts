@@ -183,6 +183,10 @@ export class HttpApiClient {
     }
   }
 
+  async refreshTokens(): Promise<boolean> {
+    return this.tryRefresh()
+  }
+
   replaceTokens(
     nextAccessToken: string,
     nextRefreshToken: string,

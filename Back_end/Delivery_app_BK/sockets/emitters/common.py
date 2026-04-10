@@ -6,6 +6,7 @@ from pydantic import ValidationError, BaseModel
 
 from Delivery_app_BK.services.domain.user import ADMIN_APP_SCOPE, DRIVER_APP_SCOPE
 from Delivery_app_BK.socketio_instance import socketio
+from Delivery_app_BK.sockets.notifications import build_realtime_notification_preview
 from Delivery_app_BK.sockets.contracts.realtime import (
     DEFAULT_EVENT_VERSION,
     SERVER_EVENT_REALTIME_EVENT,
@@ -67,6 +68,22 @@ def build_business_event_envelope(
 def emit_business_event(*, room: str, envelope: dict) -> None:
     """Emit event to room via Socket.IO with validation."""
     try:
+        payload = envelope.get("payload")
+        if isinstance(payload, dict) and "notification_preview" not in payload:
+            payload = {
+                **payload,
+                "notification_preview": build_realtime_notification_preview(
+                    event_name=str(envelope.get("event_name") or ""),
+                    entity_type=str(envelope.get("entity_type") or ""),
+                    entity_id=envelope.get("entity_id") if isinstance(envelope.get("entity_id"), int) else None,
+                    payload=payload,
+                ),
+            }
+            envelope = {
+                **envelope,
+                "payload": payload,
+            }
+
         socketio.emit(SERVER_EVENT_REALTIME_EVENT, envelope, room=room)
         current_app.logger.debug(
             "Event emitted to room: room=%s, event=%s, entity=%s:%s",

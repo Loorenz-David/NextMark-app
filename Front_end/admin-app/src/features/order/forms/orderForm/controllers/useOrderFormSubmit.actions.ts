@@ -25,6 +25,7 @@ import type { OrderFormMode, OrderFormState } from "../state/OrderForm.types";
 import { executeOrderFormSubmit } from "./orderFormSubmit.controller";
 import { presentOrderFormSubmitOutcome } from "./orderFormSubmitFeedback.presenter";
 import type { Costumer } from "@/features/costumer";
+import type { OrderFormSubmitResult } from "./orderFormSubmit.controller";
 
 type ItemDraftControllerApi = Pick<
   ReturnType<typeof useOrderItemDraftController>,
@@ -74,6 +75,7 @@ export const useOrderFormActions = ({
   itemDraftController,
   itemInitialByClientId,
   selectedCostumer,
+  onPromoteCreatedOrderToEdit,
 }: {
   mode: OrderFormMode;
   order: Order | null;
@@ -84,6 +86,7 @@ export const useOrderFormActions = ({
   itemDraftController: ItemDraftControllerApi;
   itemInitialByClientId: Record<string, Item>;
   selectedCostumer: Costumer | null;
+  onPromoteCreatedOrderToEdit?: (clientId: string) => void;
 }) => {
   const { showMessage } = useMessageHandler();
   const { deleteOrderByServerId, saveOrder } = useOrderController();
@@ -179,5 +182,47 @@ export const useOrderFormActions = ({
   return {
     handleSave,
     handleDelete,
+    handlePrepareOrderForCustomerSend:
+      async (): Promise<OrderFormSubmitResult> => {
+        const result = await executeOrderFormSubmit(
+          {
+            saveOrder,
+            createItemApi,
+            updateItemApi,
+            deleteItemApi,
+            loadItemsByOrderId,
+            validateOrderFields: validation.validateOrderFields,
+          },
+          {
+            mode,
+            order,
+            orderServerId,
+            formState,
+            validateForm,
+            validateRequiredFields: false,
+            validatePayloadFields: false,
+            initialFormRef,
+            itemDraftController,
+            itemInitialByClientId,
+            selectedCostumer,
+            onOrderRollback: () =>
+              reopenOrderFormOnRollback({
+                popupManager,
+                mode,
+                order,
+                formState,
+              }),
+          },
+        );
+
+        if (
+          result.status === "success_create" &&
+          typeof result.createdOrderClientId === "string"
+        ) {
+          onPromoteCreatedOrderToEdit?.(result.createdOrderClientId);
+        }
+
+        return result;
+      },
   };
 };

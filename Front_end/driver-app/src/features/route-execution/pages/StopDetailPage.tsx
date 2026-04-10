@@ -58,7 +58,7 @@ export function StopDetailPage({ stopClientId, onBack }: StopDetailPageProps) {
             primaryActions={controller.pageDisplay.primaryActions}
             terminalStatus={controller.pageDisplay.terminalStatus}
           />
-          <StopDetailBody rows={controller.pageDisplay.infoRows} orderNoteCard={controller.pageDisplay.orderNoteCard} />
+          <StopDetailBody rows={controller.pageDisplay.infoRows} orderNotes={controller.pageDisplay.orderNotes} />
         </motion.div>
       </AnimatePresence>
     </section>

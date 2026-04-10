@@ -8,7 +8,10 @@ import { useBootstrap } from '@/features/bootstrap/bootstrap.hook'
 import { AdminAiPanelProvider } from '@/features/ai'
 import { AdminBusinessRealtimeProvider } from '@/realtime/business'
 import { DriverLiveRealtimeProvider } from '@/realtime/driverLive'
-import { AdminNotificationsProvider } from '@/realtime/notifications'
+import {
+  AdminNotificationsProvider,
+  AdminNotificationsPushProvider,
+} from '@/realtime/notifications'
 
 function ApiAuthBridge() {
   const navigate = useNavigate()
@@ -40,14 +43,16 @@ export function AppProviders({ children }: PropsWithChildren) {
           maxMessages={2}
         >
           <AdminAiPanelProvider>
-            <AdminNotificationsProvider>
-              <AdminBusinessRealtimeProvider>
-                <DriverLiveRealtimeProvider>
-                  <ApiAuthBridge />
-                  {children}
-                </DriverLiveRealtimeProvider>
-              </AdminBusinessRealtimeProvider>
-            </AdminNotificationsProvider>
+            <AdminNotificationsPushProvider>
+              <AdminNotificationsProvider>
+                <AdminBusinessRealtimeProvider>
+                  <DriverLiveRealtimeProvider>
+                    <ApiAuthBridge />
+                    {children}
+                  </DriverLiveRealtimeProvider>
+                </AdminBusinessRealtimeProvider>
+              </AdminNotificationsProvider>
+            </AdminNotificationsPushProvider>
           </AdminAiPanelProvider>
         </MessageHandlerProvider>
       </MobileProvider>

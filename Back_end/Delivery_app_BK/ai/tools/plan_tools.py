@@ -1,268 +1,212 @@
-"""
-Plan-domain tools.
-Implements: list_plans, get_plan_summary, create_plan, optimize_plan,
-            get_plan_execution_status, list_route_groups, materialize_route_groups.
-
-Status: SKELETON - implementations added in Phase 2.
-"""
 from __future__ import annotations
+import logging
+from datetime import datetime, timezone
 
-from Delivery_app_BK.ai.prompts.system_prompt import PLAN_STATE_MAP
-from Delivery_app_BK.services.commands.route_plan.create_plan import create_plan
-from Delivery_app_BK.services.commands.route_plan.materialize_route_groups import (
-    materialize_route_groups,
-)
+from Delivery_app_BK.models import db, RouteSolution
+from Delivery_app_BK.models.tables.delivery_plan.delivery_plan import DeliveryPlan
 from Delivery_app_BK.errors import NotFound
-from Delivery_app_BK.models import RouteGroup, RoutePlan
+from Delivery_app_BK.route_optimization.orchestrator import optimize_local_delivery_plan
 from Delivery_app_BK.services.context import ServiceContext
-from Delivery_app_BK.services.queries.route_plan.find_plans import find_plans
-from Delivery_app_BK.services.queries.route_plan.route_groups.list_route_groups import (
-    list_route_groups,
+from Delivery_app_BK.services.queries.plan.get_plan import get_plan as get_plan_service
+from Delivery_app_BK.services.queries.plan.list_delivery_plans import (
+    list_delivery_plans as list_delivery_plans_service,
 )
-from Delivery_app_BK.services.queries.route_plan.serialize_plan import serialize_plans
+from Delivery_app_BK.services.commands.plan.create_plan import (
+    create_plan as create_plan_service,
+)
+from Delivery_app_BK.services.queries.route_solutions.serialize_route_solutions import (
+    serialize_route_solution,
+)
+from Delivery_app_BK.services.utils import inject_team_id, model_requires_team
+from Delivery_app_BK.ai.tools.plan_execution import get_handler
 
-_PLAN_STATE_NAME_TO_ID: dict[str, int] = PLAN_STATE_MAP
-_PLAN_STATE_ID_TO_NAME: dict[int, str] = {v: k for k, v in PLAN_STATE_MAP.items()}
-
-AI_PLAN_LIMIT = 20
+logger = logging.getLogger(__name__)
 
 
-# -- list_plans ----------------------------------------------------------------
+def optimize_plan_tool(ctx: ServiceContext, local_delivery_plan_id: int) -> dict:
+    """Run route optimization for a local delivery plan."""
+    ctx.incoming_data["local_delivery_plan_id"] = local_delivery_plan_id
+    outcome = optimize_local_delivery_plan(ctx)
+    if outcome.error:
+        raise outcome.error
+    return outcome.data or {"status": "optimized"}
+
+
+def get_plan_summary_tool(ctx: ServiceContext, plan_id: int) -> dict:
+    """Get details of a delivery plan by ID."""
+    return get_plan_service(plan_id, ctx)
+
+
 def list_plans_tool(
     ctx: ServiceContext,
     label: str | None = None,
-    state: str | None = None,
-    covers_date: str | None = None,
-    covers_start: str | None = None,
-    covers_end: str | None = None,
+    plan_type: str | None = None,
     start_date: str | None = None,
     end_date: str | None = None,
-    min_orders: int | None = None,
+    covers_start: str | None = None,
+    covers_end: str | None = None,
+    plan_state_id: int | None = None,
     max_orders: int | None = None,
-    limit: int = AI_PLAN_LIMIT,
-    sort: str = "date_desc",
+    min_orders: int | None = None,
+    limit: int | None = None,
 ) -> dict:
-    """List plans with optional filters. Returns plan summaries with route group counts."""
-    params: dict = {
-        "limit": min(int(limit), AI_PLAN_LIMIT),
-        "sort": sort,
-    }
-
-    if label:
-        params["label"] = label.strip()
-
-    if state is not None:
-        sid = _PLAN_STATE_NAME_TO_ID.get(state)
-        if sid is None:
-            return {
-                "error": f"Unknown plan state: {state!r}. "
-                f"Valid states: {list(_PLAN_STATE_NAME_TO_ID.keys())}"
-            }
-        params["state_id"] = sid
-
-    if covers_date:
-        params["covers_start"] = covers_date
-        params["covers_end"] = covers_date
-    else:
-        if covers_start:
-            params["covers_start"] = covers_start
-        if covers_end:
-            params["covers_end"] = covers_end
-
-    if start_date:
-        params["start_date"] = start_date
-    if end_date:
-        params["end_date"] = end_date
-    if min_orders is not None:
-        params["min_orders"] = int(min_orders)
+    """List delivery plans with optional filters."""
+    filters = {}
+    if label is not None:
+        filters["label"] = label
+    if plan_type is not None:
+        filters["plan_type"] = plan_type
+    if start_date is not None:
+        filters["start_date"] = start_date
+    if end_date is not None:
+        filters["end_date"] = end_date
+    if covers_start is not None:
+        filters["covers_start"] = covers_start
+    if covers_end is not None:
+        filters["covers_end"] = covers_end
+    if plan_state_id is not None:
+        filters["plan_state_id"] = plan_state_id
     if max_orders is not None:
-        params["max_orders"] = int(max_orders)
-
-    if ctx.team_id:
-        params["team_id"] = ctx.team_id
-
-    tool_ctx = ServiceContext(query_params=params, identity=ctx.identity)
-
-    from sqlalchemy.orm import selectinload
-
-    query = find_plans(params, tool_ctx).options(
-        selectinload(RoutePlan.route_groups).selectinload(RouteGroup.state)
-    )
-    plans = query.limit(AI_PLAN_LIMIT + 1).all()
-    has_more = len(plans) > AI_PLAN_LIMIT
-    page = plans[:AI_PLAN_LIMIT]
-
-    serialized = serialize_plans(page, tool_ctx, include_route_groups_summary=True)
-    if not isinstance(serialized, list):
-        serialized = [serialized] if serialized else []
-
-    result_plans = []
-    for p in serialized:
-        state_id = p.get("state_id")
-        result_plans.append({
-            "id": p.get("id"),
-            "label": p.get("label"),
-            "state": _PLAN_STATE_ID_TO_NAME.get(state_id, str(state_id)),
-            "date_strategy": p.get("date_strategy"),
-            "start_date": p.get("start_date"),
-            "end_date": p.get("end_date"),
-            "total_orders": p.get("total_orders"),
-            "total_items": p.get("total_items"),
-            "group_count": p.get("route_groups_count"),
-            "route_groups": [
-                {
-                    "id": g.get("id"),
-                    "name": g.get("name"),
-                    "zone_id": g.get("zone_id"),
-                    "total_orders": g.get("total_orders"),
-                    "state": _PLAN_STATE_ID_TO_NAME.get(
-                        (g.get("state") or {}).get("id"), "Unknown"
-                    ),
-                }
-                for g in (p.get("route_groups") or [])
-            ],
-        })
-
-    return {
-        "count": len(result_plans),
-        "has_more": has_more,
-        "plans": result_plans,
-        "filters_applied": {
-            k: v for k, v in {
-                "label": label,
-                "state": state,
-                "covers_date": covers_date,
-                "covers_start": covers_start,
-                "covers_end": covers_end,
-                "min_orders": min_orders,
-                "max_orders": max_orders,
-            }.items() if v is not None
-        },
-    }
+        filters["max_orders"] = max_orders
+    if min_orders is not None:
+        filters["min_orders"] = min_orders
+    if limit is not None:
+        filters["limit"] = limit
+    ctx.query_params = {**ctx.query_params, **filters}
+    return list_delivery_plans_service(ctx)
 
 
-# -- get_plan_summary ------------------------------------------------------------
-def get_plan_summary_tool(ctx: ServiceContext, plan_id: int) -> dict:
-    raise NotImplementedError("get_plan_summary_tool - Phase 2")
-
-
-# -- create_plan -----------------------------------------------------------------
 def create_plan_tool(
     ctx: ServiceContext,
     label: str,
     start_date: str,
-    end_date: str | None = None,
-    date_strategy: str = "single",
-    zone_ids: list[int] | None = None,
-    order_ids: list[int] | None = None,
+    end_date: str,
+    plan_type: str = "local_delivery",
 ) -> dict:
-    """Create a new route plan."""
-    if not label or not isinstance(label, str):
-        return {"error": "label is required and must be a non-empty string"}
-    if not start_date or not isinstance(start_date, str):
-        return {"error": "start_date is required (ISO date string YYYY-MM-DD)"}
-
-    fields: dict = {
-        "label": label.strip(),
-        "start_date": start_date,
-        "date_strategy": date_strategy,
+    """
+    Create a new delivery plan.
+    Returns the created plan with its ID — use the ID immediately to assign orders.
+    """
+    ctx.incoming_data = {
+        "fields": {
+            "label": label,
+            "plan_type": plan_type,
+            "start_date": start_date,
+            "end_date": end_date,
+        }
     }
-    if end_date:
-        fields["end_date"] = end_date
-    if zone_ids:
-        fields["zone_ids"] = zone_ids
-    if order_ids:
-        fields["order_ids"] = order_ids
-
-    tool_ctx = ServiceContext(
-        incoming_data={"fields": [fields]},
-        identity=ctx.identity,
-        on_query_return="list",
-    )
-    result = create_plan(tool_ctx)
-    created = result.get("created") or []
-    if not created:
-        return {"error": "Plan creation returned no result"}
-
-    bundle = created[0]
-    plan_data = bundle.get("delivery_plan") or {}
-    return {
-        "id": plan_data.get("id"),
-        "label": plan_data.get("label"),
-        "date_strategy": plan_data.get("date_strategy"),
-        "start_date": plan_data.get("start_date"),
-        "end_date": plan_data.get("end_date"),
-        "state_id": plan_data.get("state_id"),
-        "route_groups_created": len(bundle.get("route_groups") or []),
-        "route_solutions_created": len(bundle.get("route_solutions") or []),
-    }
+    result = create_plan_service(ctx)
+    # result is {"created": [bundles]}; extract the first plan's data
+    bundles = result.get("created", []) if isinstance(result, dict) else result
+    if isinstance(bundles, list) and bundles:
+        bundle = bundles[0]
+        plan = bundle.get("delivery_plan") or {}
+        return {
+            "plan_id": plan.get("id"),
+            "label": plan.get("label"),
+            "plan_type": plan.get("plan_type"),
+            "start_date": plan.get("start_date"),
+            "end_date": plan.get("end_date"),
+        }
+    return {"status": "created", "result": result}
 
 
-# -- optimize_plan ----------------------------------------------------------------
-def optimize_plan_tool(ctx: ServiceContext, plan_id: int) -> dict:
-    raise NotImplementedError("optimize_plan_tool - Phase 2")
+# ---------------------------------------------------------------------------
+# Route / driver visibility tools
+# ---------------------------------------------------------------------------
 
-
-# -- get_plan_execution_status ----------------------------------------------------
 def get_plan_execution_status_tool(ctx: ServiceContext, plan_id: int) -> dict:
-    raise NotImplementedError("get_plan_execution_status_tool - Phase 2")
+    """
+    Return the execution status for any delivery plan.
+    Delegates to a plan-type-specific handler via the strategy registry.
+    Adding support for a new plan type = add one handler file + one registry entry.
+    """
+    plan = db.session.query(DeliveryPlan).filter(DeliveryPlan.id == plan_id).first()
+    if not plan:
+        raise NotFound(f"Plan {plan_id} not found.")
+
+    handler = get_handler(plan.plan_type)
+    if handler is None:
+        return {
+            "status": "unknown_plan_type",
+            "plan_id": plan_id,
+            "plan_type": plan.plan_type,
+        }
+
+    return handler(ctx, plan)
 
 
-# -- list_route_groups ------------------------------------------------------------
-def list_route_groups_tool(ctx: ServiceContext, plan_id: int) -> dict:
-    """Returns all route groups for a plan, with zone info and active route summary."""
-    try:
-        result = list_route_groups(plan_id, ctx)
-    except NotFound as exc:
-        return {"error": str(exc)}
-
-    groups = result.get("route_groups", [])
-
-    return {
-        "plan_id": plan_id,
-        "count": len(groups),
-        "route_groups": [
-            {
-                "id": g.get("id"),
-                "name": (g.get("zone_snapshot") or {}).get("name") or "No Zone",
-                "zone_id": g.get("zone_id"),
-                "state": (g.get("state") or {}).get("name"),
-                "total_orders": g.get("total_orders"),
-                "item_type_counts": g.get("item_type_counts"),
-                "has_active_route": g.get("active_route_solution") is not None,
-                "is_optimized": (g.get("active_route_solution") or {}).get("is_optimized"),
-                "stop_count": (g.get("active_route_solution") or {}).get("stop_count"),
-            }
-            for g in groups
-        ],
-    }
-
-
-# -- materialize_route_groups -----------------------------------------------------
-def materialize_route_groups_tool(
-    ctx: ServiceContext, plan_id: int, zone_ids: list[int]
+def list_routes_tool(
+    ctx: ServiceContext,
+    plan_id: int | None = None,
+    date: str | None = None,
+    expected_start_after: str | None = None,
+    expected_start_before: str | None = None,
+    driver_id: int | None = None,
+    is_selected: bool = True,
+    limit: int = 20,
 ) -> dict:
-    """Create one route group per zone for an existing plan."""
-    if not isinstance(plan_id, int) or plan_id <= 0:
-        return {"error": "plan_id must be a positive integer"}
-    if not zone_ids or not isinstance(zone_ids, list):
-        return {"error": "zone_ids must be a non-empty list of integers"}
+    """
+    Search RouteSolutions with flexible filters.
+    Use this to answer questions like "what route starts at 18:00?" or
+    "show me tomorrow's routes".
 
-    tool_ctx = ServiceContext(
-        incoming_data={"route_plan_id": plan_id, "zone_ids": zone_ids},
-        identity=ctx.identity,
-        on_query_return="list",
-    )
-    result = materialize_route_groups(tool_ctx)
+    Parameters:
+      plan_id: filter to a specific plan
+      date: ISO date (e.g. "2026-03-20") — returns routes whose expected window covers this date
+      expected_start_after: ISO datetime — routes starting at or after this time
+      expected_start_before: ISO datetime — routes starting at or before this time
+      driver_id: filter by assigned driver
+      is_selected: default True — only return the selected/active route per plan
+      limit: max results (default 20)
+
+    Tip: to find "routes starting at 18:00 on March 20", combine:
+      date="2026-03-20", expected_start_after="2026-03-20T17:55:00",
+      expected_start_before="2026-03-20T18:05:00"
+    """
+    query = db.session.query(RouteSolution).filter(RouteSolution.is_selected.is_(is_selected))
+
+    # Team scope
+    if model_requires_team(RouteSolution) and ctx.inject_team_id:
+        params: dict = {}
+        params = inject_team_id(params, ctx)
+        if "team_id" in params:
+            query = query.filter(RouteSolution.team_id == params["team_id"])
+
+    if plan_id is not None:
+        query = query.filter(RouteSolution.local_delivery_plan_id == plan_id)
+
+    if driver_id is not None:
+        query = query.filter(RouteSolution.driver_id == driver_id)
+
+    if date is not None:
+        try:
+            d = datetime.fromisoformat(date).replace(tzinfo=timezone.utc)
+            query = query.filter(
+                RouteSolution.expected_start_time <= d,
+                RouteSolution.expected_end_time >= d,
+            )
+        except ValueError:
+            pass
+
+    if expected_start_after is not None:
+        try:
+            dt = datetime.fromisoformat(expected_start_after).replace(tzinfo=timezone.utc)
+            query = query.filter(RouteSolution.expected_start_time >= dt)
+        except ValueError:
+            pass
+
+    if expected_start_before is not None:
+        try:
+            dt = datetime.fromisoformat(expected_start_before).replace(tzinfo=timezone.utc)
+            query = query.filter(RouteSolution.expected_start_time <= dt)
+        except ValueError:
+            pass
+
+    query = query.order_by(RouteSolution.expected_start_time.asc())
+    results = query.limit(limit).all()
+
     return {
-        "plan_id": plan_id,
-        "created_or_existing_count": len(result),
-        "route_groups": [
-            {
-                "id": g.get("id"),
-                "name": g.get("zone_snapshot", {}).get("name"),
-                "zone_id": g.get("zone_id"),
-            }
-            for g in result
-        ],
+        "routes": [serialize_route_solution(r) for r in results],
+        "count": len(results),
     }

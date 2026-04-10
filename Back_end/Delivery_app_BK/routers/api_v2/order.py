@@ -18,6 +18,9 @@ from Delivery_app_BK.services.queries.order.list_order_markers import (
 from Delivery_app_BK.services.queries.order.get_order import (
     get_order as get_order_service,
 )
+from Delivery_app_BK.services.queries.order.get_order_event_history import (
+    get_order_event_history as get_order_event_history_service,
+)
 from Delivery_app_BK.services.queries.order_states.list_order_states import (
     list_order_states as list_order_states_service,
 )
@@ -27,6 +30,9 @@ from Delivery_app_BK.services.commands.order import (
 )
 from Delivery_app_BK.services.commands.order.update_order import (
     update_order as update_order_service,
+)
+from Delivery_app_BK.services.commands.order.update_order_notes import (
+    update_order_notes as update_order_notes_service,
 )
 from Delivery_app_BK.services.commands.order.delete_order import (
     delete_order as delete_order_service,
@@ -166,6 +172,50 @@ def update_order():
     )
 
 
+@order_bp.route("/notes/", methods=["PATCH"])
+@jwt_required()
+@role_required([ADMIN, ASSISTANT])
+def update_order_notes():
+    identity = get_jwt()
+    incoming_data = request.get_json(silent=True) or {}
+    ctx = ServiceContext(
+        incoming_data=incoming_data,
+        identity=identity,
+    )
+    outcome = run_service(lambda c: update_order_notes_service(c, "update"), ctx)
+    response = Response()
+
+    if outcome.error:
+        return response.build_unsuccessful_response(outcome.error)
+
+    return response.build_successful_response(
+        outcome.data or {},
+        warnings=ctx.warnings,
+    )
+
+
+@order_bp.route("/notes/", methods=["DELETE"])
+@jwt_required()
+@role_required([ADMIN, ASSISTANT])
+def delete_order_notes():
+    identity = get_jwt()
+    incoming_data = request.get_json(silent=True) or {}
+    ctx = ServiceContext(
+        incoming_data=incoming_data,
+        identity=identity,
+    )
+    outcome = run_service(lambda c: update_order_notes_service(c, "delete"), ctx)
+    response = Response()
+
+    if outcome.error:
+        return response.build_unsuccessful_response(outcome.error)
+
+    return response.build_successful_response(
+        outcome.data or {},
+        warnings=ctx.warnings,
+    )
+
+
 @order_bp.route("/", methods=["DELETE"])
 @jwt_required()
 @role_required([ADMIN, ASSISTANT])
@@ -199,6 +249,27 @@ def get_order(order_id: int):
         identity=identity,
     )
     outcome = run_service(lambda c: get_order_service(order_id, c), ctx)
+    response = Response()
+
+    if outcome.error:
+        return response.build_unsuccessful_response(outcome.error)
+
+    return response.build_successful_response(
+        outcome.data,
+        warnings=ctx.warnings,
+    )
+
+
+@order_bp.route("/<int:order_id>/events/", methods=["GET"])
+@jwt_required()
+@role_required([ADMIN, ASSISTANT])
+def get_order_event_history(order_id: int):
+    identity = get_jwt()
+    ctx = ServiceContext(
+        query_params=request.args.to_dict(),
+        identity=identity,
+    )
+    outcome = run_service(lambda c: get_order_event_history_service(order_id, c), ctx)
     response = Response()
 
     if outcome.error:

@@ -18,6 +18,7 @@ from Delivery_app_BK.models import (
     db,
 )
 from Delivery_app_BK.services.domain.user import ADMIN_APP_SCOPE, DRIVER_APP_SCOPE
+from Delivery_app_BK.services.domain.order.order_states import OrderState as OrderStateDomain, OrderStateId
 from Delivery_app_BK.services.infra.redis import (
     add_unread_notification,
     get_unread_count,
@@ -51,6 +52,27 @@ SUPPRESSED_DUPLICATE_ORDER_NOTIFICATION_EVENT_NAMES = {
     "order_completed",
     "order_failed",
     "order_cancelled",
+}
+
+ORDER_STATE_NAME_BY_ID = {
+    OrderStateId.DRAFT: OrderStateDomain.DRAFT.value,
+    OrderStateId.CONFIRMED: OrderStateDomain.CONFIRMED.value,
+    OrderStateId.PREPARING: OrderStateDomain.PREPARING.value,
+    OrderStateId.READY: OrderStateDomain.READY.value,
+    OrderStateId.PROCESSING: OrderStateDomain.PROCESSING.value,
+    OrderStateId.COMPLETED: OrderStateDomain.COMPLETED.value,
+    OrderStateId.FAIL: OrderStateDomain.FAIL.value,
+    OrderStateId.CANCELLED: OrderStateDomain.CANCELLED.value,
+}
+ORDER_STATE_NAME_BY_ORIGINAL_EVENT = {
+    "order_created": OrderStateDomain.DRAFT.value,
+    "order_confirmed": OrderStateDomain.CONFIRMED.value,
+    "order_preparing": OrderStateDomain.PREPARING.value,
+    "order_ready": OrderStateDomain.READY.value,
+    "order_processing": OrderStateDomain.PROCESSING.value,
+    "order_completed": OrderStateDomain.COMPLETED.value,
+    "order_failed": OrderStateDomain.FAIL.value,
+    "order_cancelled": OrderStateDomain.CANCELLED.value,
 }
 
 
@@ -162,6 +184,31 @@ def notify_order_event(
             related_ids=_build_related_ids(payload=payload, order_id=order_id),
         )
         _store_and_emit_notification(recipient["user_id"], recipient["app_scope"], notification)
+
+
+def build_realtime_notification_preview(
+    *,
+    event_name: str,
+    entity_type: str,
+    entity_id: int | None,
+    payload: dict | None,
+) -> dict:
+    resolved_payload = payload if isinstance(payload, dict) else {}
+    order = _resolve_preview_order(
+        event_name=event_name,
+        entity_type=entity_type,
+        entity_id=entity_id,
+        payload=resolved_payload,
+    )
+    return {
+        "kind": event_name,
+        "title": _build_notification_title(event_name),
+        "description": _build_notification_description(
+            event_name=event_name,
+            order=order,
+            payload=resolved_payload,
+        ),
+    }
 
     effective_driver_event_name = driver_event_name or event_name
 
@@ -570,6 +617,12 @@ def _build_notification_description(*, event_name: str, order: Order | None, pay
     if event_name == "order.updated":
         return _build_order_updated_description(order_label=order_label, payload=payload)
     if event_name == "order.state_changed":
+        old_state_name = _resolve_old_order_state_name(payload=payload)
+        new_state_name = _resolve_new_order_state_name(payload=payload, order=order)
+        if old_state_name and new_state_name and old_state_name != new_state_name:
+            return f"{order_label} moved from {old_state_name} to {new_state_name}."
+        if new_state_name:
+            return f"{order_label} moved to {new_state_name}."
         return f"{order_label} changed state."
     if event_name == "order_case.created":
         return f"A new case was created for {order_label}."
@@ -651,6 +704,23 @@ def _build_order_label(order: Order | None) -> str:
         return f"Order #{order.id}"
 
     return "Order"
+
+
+def _resolve_preview_order(
+    *,
+    event_name: str,
+    entity_type: str,
+    entity_id: int | None,
+    payload: dict,
+) -> Order | None:
+    order_id = _parse_int(payload.get("order_id"))
+    if order_id is None and entity_type == "order" and isinstance(entity_id, int):
+        order_id = entity_id
+    if order_id is None and event_name.startswith("order.") and isinstance(entity_id, int):
+        order_id = entity_id
+    if order_id is None:
+        return None
+    return db.session.get(Order, order_id)
 
 
 def _should_suppress_order_notification(payload: dict) -> bool:
@@ -772,6 +842,53 @@ def _build_notification_target(
                 "orderCaseClientId": order_case_client_id,
             },
         }
+
+    return None
+
+
+def _resolve_old_order_state_name(*, payload: dict) -> str | None:
+    explicit_name = payload.get("old_order_state_name")
+    if isinstance(explicit_name, str) and explicit_name.strip():
+        return explicit_name.strip()
+
+    old_state_id = _parse_int(payload.get("old_order_state_id"))
+    if old_state_id is not None:
+        return ORDER_STATE_NAME_BY_ID.get(old_state_id)
+
+    return None
+
+
+def _resolve_new_order_state_name(*, payload: dict, order: Order | None) -> str | None:
+    explicit_name = payload.get("new_order_state_name")
+    if isinstance(explicit_name, str) and explicit_name.strip():
+        return explicit_name.strip()
+
+    state_name = payload.get("state_name")
+    if isinstance(state_name, str) and state_name.strip():
+        return state_name.strip()
+
+    new_state_id = _parse_int(payload.get("new_order_state_id"))
+    if new_state_id is not None:
+        resolved = ORDER_STATE_NAME_BY_ID.get(new_state_id)
+        if resolved:
+            return resolved
+
+    state_id = _parse_int(payload.get("order_state_id"))
+    if state_id is not None:
+        resolved = ORDER_STATE_NAME_BY_ID.get(state_id)
+        if resolved:
+            return resolved
+
+    original_event_name = payload.get("original_event_name")
+    if isinstance(original_event_name, str):
+        resolved = ORDER_STATE_NAME_BY_ORIGINAL_EVENT.get(original_event_name.strip())
+        if resolved:
+            return resolved
+
+    state = getattr(order, "state", None)
+    state_model_name = getattr(state, "name", None)
+    if isinstance(state_model_name, str) and state_model_name.strip():
+        return state_model_name.strip()
 
     return None
 

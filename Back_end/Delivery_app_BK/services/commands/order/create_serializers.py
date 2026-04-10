@@ -17,7 +17,6 @@ def _order_totals(instance: Order) -> dict:
             "total_weight": instance.total_weight_g,
             "total_volume": instance.total_volume_cm3,
             "total_items": instance.total_item_count,
-            "item_type_counts": instance.item_type_counts,
         }
     return calculate_order_metrics(instance)
 
@@ -69,7 +68,6 @@ def serialize_created_order(instance: Order) -> dict:
         ],
         "open_order_cases": _count_open_order_cases(instance),
         "archive_at": archive_at.isoformat() if archive_at else None,
-        "item_type_counts": getattr(instance, "item_type_counts", None),
         **metrics,
     }
 

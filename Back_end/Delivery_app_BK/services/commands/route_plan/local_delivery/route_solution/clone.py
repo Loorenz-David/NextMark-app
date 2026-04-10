@@ -39,6 +39,7 @@ def clone_route_solution(
         set_start_time=route_solution.set_start_time,
         set_end_time=route_solution.set_end_time,
         eta_tolerance_seconds=route_solution.eta_tolerance_seconds,
+        eta_message_tolerance=route_solution.eta_message_tolerance,
         stops_service_time=route_solution.stops_service_time,
         is_selected=True,
         is_optimized=IS_OPTIMIZED_PARTIAL,

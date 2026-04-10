@@ -40,20 +40,7 @@ export async function submitRouteActionAction(
       throw new Error('fail-stop requires a failure description')
     }
 
-    if (!command.orderCaseClientId?.trim()) {
-      throw new Error('fail-stop requires orderCaseClientId')
-    }
-
-    if (!command.caseChatClientId?.trim()) {
-      throw new Error('fail-stop requires caseChatClientId')
-    }
-
-    const response = await failOrderApi(
-      command.orderId,
-      command.note.trim(),
-      command.orderCaseClientId,
-      command.caseChatClientId,
-    )
+    const response = await failOrderApi(command.orderId, command.note.trim())
     return response.data
   }
 

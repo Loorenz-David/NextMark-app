@@ -63,12 +63,12 @@ export const useOrderFormWarnings = () => {
     return isValid
   })
 
-  const deliveryWindowsWarning = useInputWarning('', (value, setMessage) => {
+  const deliveryWindowsWarning = useInputWarning('At least one delivery window is required.', (value, setMessage) => {
     const candidate = value as OrderDeliveryWindow[] | null | undefined
 
     if (!Array.isArray(candidate) || candidate.length === 0) {
-      setMessage('')
-      return true
+      setMessage('At least one delivery window is required.')
+      return false
     }
 
     const overlapValidation = validateNonOverlappingUtcDeliveryWindows(candidate)
@@ -90,4 +90,5 @@ export const useOrderFormWarnings = () => {
     deliveryWindowsWarning,
   }
 }
+
 

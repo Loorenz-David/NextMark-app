@@ -146,3 +146,32 @@ def test_parse_create_order_preserves_delivery_windows_payload():
 def test_parse_create_order_delivery_windows_null_means_explicit_clear():
     parsed = parse_create_order_request({"delivery_windows": None})
     assert parsed.delivery_windows == []
+
+
+def test_parse_create_order_normalizes_general_order_note_and_injects_creation_date():
+    parsed = parse_create_order_request(
+        {
+            "order_notes": {
+                "type": "GENERAL",
+            }
+        }
+    )
+
+    notes = parsed.fields["order_notes"]
+    assert isinstance(notes, list)
+    assert len(notes) == 1
+    assert notes[0]["type"] == "GENERAL"
+    assert notes[0]["content"] == ""
+    assert isinstance(notes[0]["creation_date"], str)
+
+
+def test_parse_create_order_rejects_non_general_order_note_type():
+    with pytest.raises(ValidationFailed):
+        parse_create_order_request(
+            {
+                "order_notes": {
+                    "type": "FAILURE",
+                    "content": "x",
+                }
+            }
+        )

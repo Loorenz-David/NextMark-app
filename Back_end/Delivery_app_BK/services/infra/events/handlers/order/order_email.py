@@ -29,6 +29,10 @@ def send_email_on_order_delivery_plan_changed(order_event) -> None:
     run_action(order_event, "order_delivery_plan_changed_email", send_email)
 
 
+def send_email_on_order_delivery_rescheduled(order_event) -> None:
+    run_action(order_event, "order_delivery_rescheduled_email", send_email)
+
+
 
 def send_email_on_order_cancelled(order_event) -> None:
     run_action(order_event, "order_cancelled_email", send_email)
@@ -44,3 +48,7 @@ def send_email_on_order_completed(order_event) -> None:
 
 def send_email_on_order_fail(order_event) -> None:
     run_action(order_event, "order_fail_email", send_email)
+
+
+def send_email_on_client_form_link_sent(order_event) -> None:
+    run_action(order_event, "client_form_link_sent_email", send_email)

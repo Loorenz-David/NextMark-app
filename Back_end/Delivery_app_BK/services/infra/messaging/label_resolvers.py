@@ -1,9 +1,10 @@
 from __future__ import annotations
 
 from datetime import datetime
+from zoneinfo import ZoneInfo
 from typing import TYPE_CHECKING, Callable
 
-from Delivery_app_BK.models import RouteSolution, RouteSolutionStop, db
+from Delivery_app_BK.models import RouteSolution, RouteSolutionStop, Team, db
 
 if TYPE_CHECKING:
     from Delivery_app_BK.models import RoutePlanEvent, Order, OrderEvent
@@ -15,14 +16,22 @@ class MessageRenderContext:
         order: "Order",
         order_event: "OrderEvent | None" = None,
         team_id: int | None = None,
+        team_time_zone: str | None = None,
         route_plan_event: "RoutePlanEvent | None" = None,
+        extra_context: dict[str, object] | None = None,
     ) -> None:
         self.order = order
         self.order_event = order_event
         self.route_plan_event = route_plan_event
         self.team_id = team_id
+        self.team_time_zone = team_time_zone
+        self.extra_context = extra_context or {}
         self._selected_route_stop_loaded = False
         self._selected_route_stop: RouteSolutionStop | None = None
+        self._selected_route_solution_loaded = False
+        self._selected_route_solution: RouteSolution | None = None
+        self._resolved_team_time_zone_loaded = False
+        self._resolved_team_time_zone: str | None = None
 
     def get_selected_route_stop(self) -> RouteSolutionStop | None:
         if self._selected_route_stop_loaded:
@@ -47,6 +56,47 @@ class MessageRenderContext:
         self._selected_route_stop = query.first()
         self._selected_route_stop_loaded = True
         return self._selected_route_stop
+
+    def get_selected_route_solution(self) -> RouteSolution | None:
+        if self._selected_route_solution_loaded:
+            return self._selected_route_solution
+
+        stop = self.get_selected_route_stop()
+        if stop is None:
+            self._selected_route_solution_loaded = True
+            return None
+
+        route_solution_id = getattr(stop, "route_solution_id", None)
+        if route_solution_id is None:
+            self._selected_route_solution_loaded = True
+            return None
+
+        query = db.session.query(RouteSolution).filter(RouteSolution.id == route_solution_id)
+        if self.team_id is not None:
+            query = query.filter(RouteSolution.team_id == self.team_id)
+
+        self._selected_route_solution = query.first()
+        self._selected_route_solution_loaded = True
+        return self._selected_route_solution
+
+    def get_team_time_zone(self) -> str:
+        if self._resolved_team_time_zone_loaded:
+            return self._resolved_team_time_zone or "UTC"
+
+        candidate = self.team_time_zone
+        if not isinstance(candidate, str) or not candidate.strip():
+            candidate = None
+
+        if candidate is None and self.team_id is not None:
+            team = db.session.get(Team, self.team_id)
+            candidate = getattr(team, "time_zone", None) if team is not None else None
+
+        if not isinstance(candidate, str) or not candidate.strip():
+            candidate = "UTC"
+
+        self._resolved_team_time_zone = candidate
+        self._resolved_team_time_zone_loaded = True
+        return candidate
 
 
 LabelResolver = Callable[[MessageRenderContext, str], str]
@@ -103,7 +153,12 @@ def _resolve_expected_arrival_time(context: MessageRenderContext, channel: str, 
     arrival_time = getattr(stop, "expected_arrival_time", None)
     if not isinstance(arrival_time, datetime):
         return ""
-    
+
+    try:
+        arrival_time = arrival_time.astimezone(ZoneInfo(context.get_team_time_zone()))
+    except Exception:
+        arrival_time = arrival_time.astimezone(ZoneInfo("UTC"))
+
     # Round to nearest 30 minutes
     from datetime import timedelta
 
@@ -129,8 +184,24 @@ def _resolve_expected_arrival_time(context: MessageRenderContext, channel: str, 
         )
     return arrival_time.strftime("%Y-%m-%d") + " " + arrival_time.strftime("%H:%M")
 
+
+def _resolve_expected_arrival_time_costumer(context: MessageRenderContext, channel: str) -> str:
+    route_solution = context.get_selected_route_solution()
+    tolerance_seconds = getattr(route_solution, "eta_message_tolerance", None)
+    if not isinstance(tolerance_seconds, int) or isinstance(tolerance_seconds, bool):
+        tolerance_seconds = 1800
+    return _resolve_expected_arrival_time(
+        context,
+        channel,
+        range_minutes=max(0, tolerance_seconds // 60),
+    )
+
 def _resolve_tracking_link(context: MessageRenderContext, channel: str) -> str:
     return _to_string(getattr(context.order, "tracking_link", None))
+
+
+def _resolve_client_form_link(context: MessageRenderContext, channel: str) -> str:
+    return _to_string(context.extra_context.get("client_form_link"))
 
 
 def phone_to_string(phone_data: object) -> str:
@@ -190,14 +261,17 @@ LABEL_RESOLVER_REGISTRY: dict[str, LabelResolver] = {
     "client_last_name": _resolve_client_last_name,
     "tracking_number": _resolve_tracking_number,
     "tracking_link": _resolve_tracking_link,
+    "client_form_link": _resolve_client_form_link,
 
-    "expected_arrival_time_with_range_30": lambda context, channel: _resolve_expected_arrival_time(context, channel, 30),
+    "expected_arrival_time_costumer": _resolve_expected_arrival_time_costumer,
     "expected_arrival_time": _resolve_expected_arrival_time,
     "client_phone_number": _resolve_client_phone_number,
     "client_phone_number_secondary": lambda context, channel: _resolve_client_phone_number(context, channel, is_secondary=True),
     "client_address": _resolve_client_address,
     "plan_delivery_date_display":_resolve_plan_delivery_date_display,
 }
+
+
 
 
 def resolve_label(label_key: str, context: MessageRenderContext, channel: str) -> str:

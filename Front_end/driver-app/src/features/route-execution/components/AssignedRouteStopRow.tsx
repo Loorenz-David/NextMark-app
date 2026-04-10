@@ -1,10 +1,10 @@
-import { ItemIcon } from '@/assets/icons'
-import type { AssignedRouteStopRowDisplay } from '../domain/assignedRouteDisplay.types'
+import { ItemIcon } from "@/assets/icons";
+import type { AssignedRouteStopRowDisplay } from "../domain/assignedRouteDisplay.types";
 
 type AssignedRouteStopRowProps = {
-  stop: AssignedRouteStopRowDisplay
-  onOpenStopDetail: (stopClientId: string) => void
-}
+  stop: AssignedRouteStopRowDisplay;
+  onOpenStopDetail: (stopClientId: string) => void;
+};
 
 function DurationChip({ label }: { label: string }) {
   return (
@@ -25,19 +25,18 @@ function DurationChip({ label }: { label: string }) {
       </svg>
       <span>{label}</span>
     </span>
-  )
+  );
 }
 
 export function AssignedRouteStopRow({
   stop,
   onOpenStopDetail,
 }: AssignedRouteStopRowProps) {
-
   return (
     <button
       className={`grid w-full grid-cols-[4rem_minmax(0,1fr)_5.5rem] gap-2 text-left transition active:scale-[0.995] ${
-        stop.isActive ? 'bg-black/20' : ''
-      } ${stop.isCompleted ? 'opacity-85' : ''}`}
+        stop.isActive ? "bg-black/20" : ""
+      } ${stop.isCompleted ? "opacity-85" : ""}`}
       onClick={() => onOpenStopDetail(stop.stopClientId)}
       type="button"
     >
@@ -45,28 +44,36 @@ export function AssignedRouteStopRow({
         <span
           aria-hidden="true"
           className="w-[3px] -mb-px self-stretch"
-          style={{ backgroundColor: 'var(--timeline-accent)' }}
+          style={{ backgroundColor: "var(--timeline-accent)" }}
         />
         <div className="flex flex-col items-center justify-start pt-2 pb-2">
           {stop.stopIndexLabel ? (
-            <span className="text-sm font-semibold leading-none">{stop.stopIndexLabel}</span>
+            <span className="text-sm font-semibold leading-none">
+              {stop.stopIndexLabel}
+            </span>
           ) : null}
           {stop.timeLabel ? (
-            <span className="mt-1 text-xs font-semibold leading-none">{stop.timeLabel}</span>
+            <span className="mt-1 text-xs font-semibold leading-none">
+              {stop.timeLabel}
+            </span>
           ) : null}
         </div>
         <span
           aria-hidden="true"
           className="w-[3px] -mt-px self-stretch"
-          style={{ backgroundColor: 'var(--timeline-accent)' }}
+          style={{ backgroundColor: "var(--timeline-accent)" }}
         />
       </div>
 
       <div className="min-w-0 py-4 pr-2">
-        <p className="line-clamp-2 text-sm font-semibold leading-tight text-white">{stop.title}</p>
+        <p className="line-clamp-2 text-sm font-semibold leading-tight text-white">
+          {stop.title}
+        </p>
 
         {stop.addressLine ? (
-          <p className="mt-1 line-clamp-2 text-xs leading-snug text-white/70">{stop.addressLine}</p>
+          <p className="mt-1 line-clamp-2 text-xs leading-snug text-white/70">
+            {stop.addressLine}
+          </p>
         ) : null}
 
         {stop.durationLabel ? (
@@ -77,7 +84,10 @@ export function AssignedRouteStopRow({
 
         {stop.itemCountLabel ? (
           <div className="mt-5 flex items-center gap-2 text-sm leading-snug text-white/80">
-            <ItemIcon aria-hidden="true" className="h-4 w-4 shrink-0 text-white/72" />
+            <ItemIcon
+              aria-hidden="true"
+              className="h-4 w-4 shrink-0 text-white/72"
+            />
             <p className="font-medium text-white/88">{stop.itemCountLabel}</p>
           </div>
         ) : null}
@@ -88,23 +98,35 @@ export function AssignedRouteStopRow({
           </p>
         ) : null}
 
-        {stop.orderNotes && stop.orderNotes.length > 0 ? (
-          <div className="mt-3 rounded-md border border-yellow-400/70 bg-yellow-400/15 px-2 py-1.5">
-            <p className="line-clamp-2 text-xs font-medium text-yellow-300">{stop.orderNotes[0]}</p>
+        {stop.orderNotes.map((note, index) => (
+          <div
+            key={note.id}
+            className={`${index === 0 ? "mt-3" : "mt-2"} rounded-[20px] border px-3 py-2 text-sm ${note.containerClassName}`}
+          >
+            <p
+              className={`truncate text-[8px] font-medium uppercase tracking-[0.2em] ${note.labelClassName}`}
+            >
+              {note.label}
+            </p>
+            <p
+              className={`truncate text-xs leading-5 ${note.contentClassName}`}
+            >
+              {note.content}
+            </p>
           </div>
-        ) : null}
+        ))}
       </div>
 
       <div className="flex min-w-0 justify-end items-start py-4 pr-2 pt-3">
         {stop.badgeLabel ? (
           <span
             className="inline-flex  items-center justify-center rounded-md px-2 py-[2px] text-xs font-semibold text-white"
-            style={{ backgroundColor: 'rgba(124, 163, 255, 0.70)' }}
+            style={{ backgroundColor: "rgba(124, 163, 255, 0.70)" }}
           >
             {stop.badgeLabel}
           </span>
         ) : null}
       </div>
     </button>
-  )
+  );
 }

@@ -2,9 +2,9 @@ import type { ApiResult } from '@shared-api'
 import { driverApiClient } from '@/app/services/client'
 import type { RouteFreshnessDto } from './routes.dto'
 
-export function getRouteFreshnessApi(routeId: number): Promise<ApiResult<RouteFreshnessDto>> {
+export function getRouteFreshnessApi(routeSolutionId: number): Promise<ApiResult<RouteFreshnessDto>> {
   return driverApiClient.request<RouteFreshnessDto>({
-    path: `/drivers/routes/${routeId}/freshness`,
+    path: `/drivers/routes/${routeSolutionId}/freshness`,
     method: 'GET',
   })
 }

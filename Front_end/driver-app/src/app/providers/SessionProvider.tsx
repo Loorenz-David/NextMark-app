@@ -15,12 +15,27 @@ export function SessionProvider({ children }: PropsWithChildren) {
   )
   const [error, setError] = useState<string>()
 
+  const handleUnauthenticatedSession = useCallback(() => {
+    driverApiClient.clearSession()
+    setSession(null)
+    setSessionState('anonymous')
+    setError('Session expired. Please sign in again.')
+  }, [])
+
   useEffect(() => {
     return sessionStorage.subscribe((nextSession) => {
       setSession(nextSession)
       setSessionState(nextSession ? 'authenticated' : 'anonymous')
     })
   }, [])
+
+  useEffect(() => {
+    driverApiClient.setUnauthenticatedHandler(handleUnauthenticatedSession)
+
+    return () => {
+      driverApiClient.setUnauthenticatedHandler(undefined)
+    }
+  }, [handleUnauthenticatedSession])
 
   const applyTokenResponse = useCallback((payload: LoginResponse) => {
     driverApiClient.setSession({

@@ -1,4 +1,5 @@
 from typing import List
+from datetime import datetime, timezone
 
 from sqlalchemy.exc import InvalidRequestError
 from sqlalchemy.orm.exc import NoResultFound
@@ -52,6 +53,11 @@ def update_orders_state(
         except NoResultFound as exc:
             raise NotFound(str(exc)) from exc
 
+        failure_note_payload = _parse_failure_note_payload(
+            _extract_incoming_order_note(getattr(ctx, "incoming_data", None))
+        )
+        is_fail_transition_target = str(getattr(state_instance, "name", "")).strip().casefold() == "fail"
+
         order_instances: list[Order] = _resolve_orders(ctx, orders)
         if not order_instances:
             return []
@@ -64,6 +70,14 @@ def update_orders_state(
                 continue
 
             order_instance.order_state_id = state_instance.id
+            if is_fail_transition_target and failure_note_payload is not None:
+                current_notes = (
+                    list(order_instance.order_notes)
+                    if isinstance(getattr(order_instance, "order_notes", None), list)
+                    else []
+                )
+                current_notes.append(dict(failure_note_payload))
+                order_instance.order_notes = current_notes
             changed_orders.append(order_instance)
             pending_events.extend(
                 build_order_state_transition_events(
@@ -235,3 +249,41 @@ def _resolve_order_instances(ctx: ServiceContext, orders: list[Order]) -> list[O
         deduped_orders.append(order)
 
     return deduped_orders
+
+
+def _parse_failure_note_payload(raw_note: object) -> dict | None:
+    if raw_note is None:
+        return None
+    if not isinstance(raw_note, dict):
+        raise ValidationFailed("order_notes must be a note object with keys: type, content")
+
+    note_type = raw_note.get("type")
+    if note_type != "FAILURE":
+        raise ValidationFailed("order_notes.type must be 'FAILURE' for state-failure notes")
+
+    content = raw_note.get("content", "")
+    if content is None:
+        content = ""
+    if not isinstance(content, str):
+        raise ValidationFailed("order_notes.content must be a string when provided")
+
+    return {
+        "type": "FAILURE",
+        "content": content,
+        "creation_date": datetime.now(timezone.utc).isoformat(),
+    }
+
+
+def _extract_incoming_order_note(incoming_data: object) -> object:
+    if not isinstance(incoming_data, dict):
+        return None
+
+    direct_note = incoming_data.get("order_notes")
+    if direct_note is not None:
+        return direct_note
+
+    fields = incoming_data.get("fields")
+    if isinstance(fields, dict):
+        return fields.get("order_notes")
+
+    return None

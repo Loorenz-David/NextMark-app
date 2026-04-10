@@ -1,4 +1,5 @@
 import type { ExternalFormData, ExternalFormStep } from '../domain/externalForm.types'
+import { sanitizeExternalFormPhone } from "../domain/externalFormPhone";
 import {
   validateClientInfo,
   validateContactInfo,
@@ -25,10 +26,16 @@ export const createExternalFormController = () => {
       return
     }
 
-    console.log('External Form Submitted:', form)
+    const sanitizedForm: ExternalFormData = {
+      ...form,
+      client_primary_phone: sanitizeExternalFormPhone(form.client_primary_phone),
+      client_secondary_phone: sanitizeExternalFormPhone(form.client_secondary_phone),
+    }
+
+    console.log('External Form Submitted:', sanitizedForm)
     emitExternalFormSubmit({
       user_id: targetUserId,
-      form_data: form,
+      form_data: sanitizedForm,
     })
   }
 

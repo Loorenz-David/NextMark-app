@@ -28,6 +28,24 @@ export const runZoneTemplateFormDomainTests = () => {
   assert(payload?.default_route_end_strategy === "end_at_last_stop", "last_stop should normalize");
   assert(payload?.preferred_vehicle_ids?.length === 2, "preferred vehicle ids should parse");
 
+  const emptyVehiclePayload = buildZoneTemplatePayload({
+    template_name: "No Preferred Vehicles",
+    default_facility_id: "",
+    max_orders_per_route: "",
+    max_vehicles: "",
+    operating_window_start: "",
+    operating_window_end: "",
+    eta_tolerance_seconds: "",
+    vehicle_capabilities_required: "",
+    preferred_vehicle_ids: "",
+    default_route_end_strategy: "",
+  });
+  assert(emptyVehiclePayload, "payload should still be created with template name only");
+  assert(
+    emptyVehiclePayload?.preferred_vehicle_ids == null,
+    "preferred vehicle ids should normalize to null when empty",
+  );
+
   const invalidTimeWindow = validateZoneTemplatePayload({
     name: "Invalid",
     operating_window_start: "18:00",

@@ -7,7 +7,11 @@ interface Props {
   currentStatusLabel: string | null;
 }
 
-export function TrackingTimeline({ timeline, teamTimezone, currentStatusLabel: _currentStatusLabel }: Props) {
+export function TrackingTimeline({
+  timeline,
+  teamTimezone,
+  currentStatusLabel: _currentStatusLabel,
+}: Props) {
   if (timeline.length === 0) {
     return (
       <div className="py-4 text-center text-sm text-white/40">
@@ -15,6 +19,11 @@ export function TrackingTimeline({ timeline, teamTimezone, currentStatusLabel: _
       </div>
     );
   }
+
+  const timelineMostRecentFirst = [...timeline].sort(
+    (a, b) =>
+      new Date(b.occurred_at).getTime() - new Date(a.occurred_at).getTime(),
+  );
 
   return (
     <section>
@@ -24,8 +33,8 @@ export function TrackingTimeline({ timeline, teamTimezone, currentStatusLabel: _
 
       {/* Vertical timeline container */}
       <div className="relative border-l-2 border-white/10 pl-4">
-        {timeline.map((entry, index) => {
-          const isCurrent = index === timeline.length - 1;
+        {timelineMostRecentFirst.map((entry, index) => {
+          const isCurrent = index === 0;
           return (
             <TrackingTimelineEntry
               key={`${entry.event_name}-${entry.occurred_at}-${index}`}

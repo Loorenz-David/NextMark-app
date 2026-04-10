@@ -1,3 +1,4 @@
+import type { OrderNote } from '@shared-domain'
 import type { ClientIdCollection } from '../../domain'
 
 export type DriverOrderItemRecord = {
@@ -49,7 +50,7 @@ export type DriverOrderRecord = {
     window_type: string | null
   }>
   open_order_cases: number
-  order_notes: string[] | null
+  order_notes: OrderNote | Array<string | OrderNote> | null
   items: ClientIdCollection<DriverOrderItemRecord>
 }
 

@@ -43,6 +43,7 @@ def serialize_optimizations(instances: Type[Model], ctx: ServiceContext):
             "actual_start_time": _serialize_datetime(instance.actual_start_time),
             "actual_end_time": _serialize_datetime(instance.actual_end_time),
             "eta_tolerance_seconds": instance.eta_tolerance_seconds,
+            "eta_message_tolerance": instance.eta_message_tolerance if instance.eta_message_tolerance is not None else 1800,
             "team_id": instance.team_id,
             "stops": stops_by_order,
         }

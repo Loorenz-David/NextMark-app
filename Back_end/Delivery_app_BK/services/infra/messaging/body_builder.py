@@ -54,4 +54,5 @@ def build_message_body(template_value: Any, context: MessageRenderContext, chann
         return ""
 
     rendered_blocks = [_render_node(block, context, channel) for block in template_value]
+
     return "\n".join(rendered_blocks).strip("\n")

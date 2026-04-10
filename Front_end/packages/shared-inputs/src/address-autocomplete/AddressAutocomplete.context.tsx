@@ -10,6 +10,7 @@ export type AddressAutocompleteContextValue =
   & ReturnType<typeof useControllers>
   & {
     isLoading: boolean
+    isResolvingCurrentLocation: boolean
     suggestions: PlaceSuggestion []
     enableCurrentLocation: boolean
     enableSavedLocations: boolean

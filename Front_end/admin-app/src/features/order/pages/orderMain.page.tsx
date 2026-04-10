@@ -78,7 +78,12 @@ const OrderMainContent = ({
 
   const handleOpenOrder = (order: Order) => {
     orderActions.openOrderDetail(
-      { clientId: order.client_id, mode: "view", openSource: "card" },
+      {
+        clientId: order.client_id,
+        mode: "view",
+        openSource: "card",
+        headerBehavior: "order-main-context",
+      },
       {
         pageClass: "bg-[var(--color-muted)]/10 ",
         borderLeft: "rgb(var(--color-light-blue-r),0.7)",
@@ -97,6 +102,7 @@ const OrderMainContent = ({
         isSelectionMode={isSelectionMode}
         applySearch={orderActions.applySearch}
         applyFilters={orderActions.applyFilters}
+        openPopupFilter={orderActions.openPopupFilter}
         query={query}
         updateFilters={orderActions.updateFilters}
         deleteFilter={orderActions.deleteFilter}

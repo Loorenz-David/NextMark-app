@@ -15,3 +15,4 @@ from .order_sms import (
     send_sms_on_order_fail,
     send_sms_on_order_processing,
     )
+from .order_shopify import sync_shopify_fulfillment_on_order_completed

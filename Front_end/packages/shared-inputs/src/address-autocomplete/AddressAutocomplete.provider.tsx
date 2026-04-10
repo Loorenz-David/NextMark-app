@@ -18,6 +18,7 @@ type AddressAutocompleteProviderProps = {
   intentKey?: string
   onInputValueChange?: (value: string) => void
   storageNamespace?: string
+  onCurrentLocationLoadingChange?: (isLoading: boolean) => void
 }
 
 export const AddressAutocompleteProvider = ({
@@ -31,6 +32,7 @@ export const AddressAutocompleteProvider = ({
   intentKey,
   onInputValueChange,
   storageNamespace,
+  onCurrentLocationLoadingChange,
 }: AddressAutocompleteProviderProps) => {
   const initializedRef = useRef(false)
 
@@ -47,6 +49,7 @@ export const AddressAutocompleteProvider = ({
     intentKey,
     onInputValueChange,
     storageNamespace,
+    onCurrentLocationLoadingChange,
   })
 
   useEffect(() => {
@@ -67,7 +70,7 @@ export const AddressAutocompleteProvider = ({
   }, [defaultToCurrentLocation, enableSavedLocations, googleAutoComplete, intentKey, onSelectedAddress, storageNamespace])
 
   const value = {
-    isLoading: predictions.isLoading,
+    isLoading: controllers.isWaitingForPredictions || predictions.isLoading,
     suggestions: predictions.suggestions,
     enableCurrentLocation,
     enableSavedLocations,

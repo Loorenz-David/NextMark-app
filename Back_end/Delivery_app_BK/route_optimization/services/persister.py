@@ -235,6 +235,7 @@ def _build_route_solution_payload(route_solution:RouteSolution) -> Dict[str, Any
         "end_location": route_solution.end_location,
         "set_start_time": route_solution.set_start_time,
         "set_end_time": route_solution.set_end_time,
+        "eta_message_tolerance": route_solution.eta_message_tolerance if route_solution.eta_message_tolerance is not None else 1800,
         "stops_service_time": route_solution.stops_service_time,
         "driver_id": route_solution.driver_id,
         "route_group_id": route_solution.route_group_id,

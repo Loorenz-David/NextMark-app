@@ -23,6 +23,7 @@ from Delivery_app_BK.services.commands.route_plan.local_delivery.route_solution.
     remove_orders_stops_for_local_delivery,
 )
 from Delivery_app_BK.services.infra.events.builders.order import (
+    build_delivery_rescheduled_event,
     build_route_plan_changed_event,
 )
 from Delivery_app_BK.services.infra.events.emiters.order import emit_order_events
@@ -178,6 +179,21 @@ def apply_orders_route_plan_change(
         plan_change_result_by_order_id[order_instance.id] = change_result
         extra_instances.extend(change_result.instances)
         post_flush_actions.extend(change_result.post_flush_actions)
+
+        if old_plan is not None and (
+            (getattr(old_plan, "start_date", None), getattr(old_plan, "end_date", None))
+            != (getattr(new_plan, "start_date", None), getattr(new_plan, "end_date", None))
+        ):
+            pending_events.append(
+                build_delivery_rescheduled_event(
+                    order_instance,
+                    old_plan_start=getattr(old_plan, "start_date", None),
+                    old_plan_end=getattr(old_plan, "end_date", None),
+                    new_plan_start=getattr(new_plan, "start_date", None),
+                    new_plan_end=getattr(new_plan, "end_date", None),
+                    reason="plan_move_date_changed",
+                )
+            )
 
         pending_events.append(
             build_route_plan_changed_event(order_instance, old_plan_id, new_plan)

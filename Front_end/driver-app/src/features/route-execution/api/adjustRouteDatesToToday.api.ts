@@ -10,11 +10,11 @@ type AdjustRouteDatesToTodayResponseDto = {
 }
 
 export function adjustRouteDatesToTodayApi(
-  routeId: number,
+  routeSolutionId: number,
   data: AdjustRouteDatesToTodayPayloadDto,
 ): Promise<ApiResult<AdjustRouteDatesToTodayResponseDto>> {
   return driverApiClient.request<AdjustRouteDatesToTodayResponseDto>({
-    path: `/drivers/routes/${routeId}/adjust-dates-to-today`,
+    path: `/drivers/routes/${routeSolutionId}/adjust-dates-to-today`,
     method: 'PATCH',
     data,
   })

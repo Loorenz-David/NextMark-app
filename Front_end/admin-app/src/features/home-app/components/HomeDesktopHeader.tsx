@@ -1,7 +1,10 @@
 import { useNavigate } from 'react-router-dom'
 import { BasicButton } from '@/shared/buttons/BasicButton'
 import { SettingIcon } from '@/assets/icons'
-import { AdminNotificationsTrigger } from '@/realtime/notifications'
+import {
+  AdminNotificationsPushCta,
+  AdminNotificationsTrigger,
+} from '@/realtime/notifications'
 import { useHomeApp } from '../providers/HomeAppProvider'
 import { HOME_WORKSPACE_OPTIONS } from '../domain/homeWorkspace.types'
 import type { HomeWorkspaceType } from '../domain/homeWorkspace.types'
@@ -30,6 +33,7 @@ export function HomeDesktopHeader() {
       {/* Right — actions */}
       <div className="flex shrink-0 items-center gap-2 rounded-[1.15rem]">
         {headerActions}
+        <AdminNotificationsPushCta />
         <div className="pr-2">
           <AdminNotificationsTrigger />
         </div>

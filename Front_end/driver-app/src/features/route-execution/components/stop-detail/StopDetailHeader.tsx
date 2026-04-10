@@ -1,20 +1,20 @@
-import { CloseIcon } from '@/assets/icons'
+import { CloseIcon } from "@/assets/icons";
 import type {
   StopDetailHeaderDisplay,
   StopDetailPrimaryActionDisplay,
   StopDetailTerminalStatusDisplay,
-} from '../../domain/stopDetailDisplay.types'
-import { StopDetailHeaderTitle } from './StopDetailHeaderTitle'
-import { StopDetailPrimaryActions } from './StopDetailPrimaryActions'
-import { StopDetailTerminalStatus } from './StopDetailTerminalStatus'
+} from "../../domain/stopDetailDisplay.types";
+import { StopDetailHeaderTitle } from "./StopDetailHeaderTitle";
+import { StopDetailPrimaryActions } from "./StopDetailPrimaryActions";
+import { StopDetailTerminalStatus } from "./StopDetailTerminalStatus";
 
 type StopDetailHeaderProps = {
-  header: StopDetailHeaderDisplay
-  headerMode: 'primary-actions' | 'terminal-status'
-  primaryActions: StopDetailPrimaryActionDisplay[]
-  terminalStatus: StopDetailTerminalStatusDisplay | null
-  onClose: () => void
-}
+  header: StopDetailHeaderDisplay;
+  headerMode: "primary-actions" | "terminal-status";
+  primaryActions: StopDetailPrimaryActionDisplay[];
+  terminalStatus: StopDetailTerminalStatusDisplay | null;
+  onClose: () => void;
+};
 
 export function StopDetailHeader({
   header,
@@ -27,6 +27,7 @@ export function StopDetailHeader({
     <header className="space-y-4 px-5 pb-4 pt-2">
       <div className="flex items-start justify-between gap-3">
         <StopDetailHeaderTitle
+          orderScalarLabel={header.orderScalarLabel}
           stopMeta={header.stopMeta}
           streetAddress={header.streetAddress}
         />
@@ -41,11 +42,11 @@ export function StopDetailHeader({
         </button>
       </div>
 
-      {headerMode === 'terminal-status' && terminalStatus ? (
+      {headerMode === "terminal-status" && terminalStatus ? (
         <StopDetailTerminalStatus status={terminalStatus} />
       ) : (
         <StopDetailPrimaryActions actions={primaryActions} />
       )}
     </header>
-  )
+  );
 }

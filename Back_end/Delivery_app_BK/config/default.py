@@ -25,6 +25,7 @@ class Config:
     AI_CONTEXT_PACKING_ENABLED = os.environ.get("AI_CONTEXT_PACKING_ENABLED", "true").lower() == "true"
     AI_ROUTING_CONFIDENCE_ENABLED = os.environ.get("AI_ROUTING_CONFIDENCE_ENABLED", "true").lower() == "true"
     AI_ROUTING_DEFAULT_CAPABILITY = os.environ.get("AI_ROUTING_DEFAULT_CAPABILITY", "logistics")
+    AI_CAPABILITY_MODE_ENABLED = os.environ.get("AI_CAPABILITY_MODE_ENABLED", "true").lower() == "true"
     AI_ROUTING_CONFIDENCE_FLOOR = float(os.environ.get("AI_ROUTING_CONFIDENCE_FLOOR", "0.50"))
     AI_ROUTING_ENABLE_STREAK_INFERENCE = os.environ.get("AI_ROUTING_ENABLE_STREAK_INFERENCE", "true").lower() == "true"
     AI_ROUTING_ENABLE_TOOL_INFERENCE = os.environ.get("AI_ROUTING_ENABLE_TOOL_INFERENCE", "true").lower() == "true"

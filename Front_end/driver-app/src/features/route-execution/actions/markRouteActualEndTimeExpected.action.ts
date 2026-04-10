@@ -1,8 +1,8 @@
 import { patchRouteTimingByClientId } from '@/features/routes'
 import { markRouteActualEndTimeExpectedApi } from '../api'
 
-export async function markRouteActualEndTimeExpectedAction(routeId: number, observedTime?: string | null) {
-  const response = await markRouteActualEndTimeExpectedApi(routeId, { observed_time: observedTime ?? null })
+export async function markRouteActualEndTimeExpectedAction(routeSolutionId: number, observedTime?: string | null) {
+  const response = await markRouteActualEndTimeExpectedApi(routeSolutionId, { observed_time: observedTime ?? null })
   const payload = response.data
 
   if (payload?.route) {

@@ -28,6 +28,7 @@ export type RouteGroupEditFormState = {
     set_start_time: string | null
     set_end_time: string | null
     eta_tolerance_minutes: number
+    eta_message_tolerance_minutes: number
     stops_service_time: ServiceTime | null
     route_end_strategy: 'round_trip' | 'custom_end_address' | 'end_at_last_stop'
     driver_id: number | null

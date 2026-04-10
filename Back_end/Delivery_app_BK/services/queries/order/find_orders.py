@@ -1,7 +1,7 @@
 from typing import Dict, Any
 from sqlalchemy.orm import Query
 
-from Delivery_app_BK.models import db, Order, Item, RoutePlan, OrderDeliveryWindow, OrderZoneAssignment
+from Delivery_app_BK.models import db, Order, Item, DeliveryPlan, OrderDeliveryWindow
 from Delivery_app_BK.services.utils import inject_team_id, model_requires_team
 from Delivery_app_BK.services.queries.utils  import parsed_string_to_list
 from sqlalchemy import func, String, or_
@@ -86,14 +86,12 @@ def find_orders (
         },
         # ---------------- DELIVERY PLAN ----------------
         "plan_label": {
-            "column": RoutePlan.label,
-            "join": Order.route_plan,
+            "column": DeliveryPlan.label,
+            "join": Order.delivery_plan,
         },
         "plan_type": {
-            # RoutePlan no longer stores a direct plan_type column.
-            # Order.order_plan_objective is the closest stable search field.
-            "column": Order.order_plan_objective,
-            "join": None,
+            "column": DeliveryPlan.plan_type,
+            "join": Order.delivery_plan,
         },
     }
 
@@ -155,9 +153,9 @@ def find_orders (
 
 
     if "schedule_order" in params:
-        query = query.filter(Order.route_plan_id.isnot(None))
+        query = query.filter(Order.delivery_plan_id.isnot(None))
     if "unschedule_order" in params:
-        query = query.filter(Order.route_plan_id.is_(None))
+        query = query.filter(Order.delivery_plan_id.is_(None))
             
 
     if "earliest_delivery_date" in params:
@@ -198,27 +196,6 @@ def find_orders (
             order_state_ids = [ order_state_ids ] 
             
         query = query.filter( Order.order_state_id.in_( order_state_ids ) )
-
-    # NEW: operation_type filter
-    if "operation_type" in params:
-        query = query.filter(Order.operation_type == params["operation_type"])
-
-    # NEW: order_plan_objective filter
-    if "order_plan_objective" in params:
-        query = query.filter(Order.order_plan_objective == params["order_plan_objective"])
-
-    # NEW: zone_id filter (via OrderZoneAssignment join)
-    if "zone_id" in params:
-        if OrderZoneAssignment not in joined_relations:
-            query = query.join(
-                OrderZoneAssignment,
-                OrderZoneAssignment.order_id == Order.id,
-            )
-            joined_relations.add(OrderZoneAssignment)
-        query = query.filter(
-            OrderZoneAssignment.zone_id == int(params["zone_id"]),
-            OrderZoneAssignment.is_unassigned.is_(False),
-        )
 
 
     #----------------------------------------------------

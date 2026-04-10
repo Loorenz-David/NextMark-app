@@ -109,9 +109,6 @@ function OrderTrackingContent({ data }: ReadyContentProps) {
       <main className="relative z-10 mx-auto flex w-full max-w-lg flex-col gap-6 px-4 py-10 sm:px-6">
         {/* Page header */}
         <header className="space-y-1 text-center">
-          <p className="text-[0.68rem] font-semibold uppercase tracking-[0.3em] text-white/42">
-            {data.team_name}
-          </p>
           <h1 className="text-3xl font-semibold tracking-[-0.03em] text-white">
             Order Status
           </h1>

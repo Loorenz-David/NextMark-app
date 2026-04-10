@@ -60,6 +60,12 @@ function mapOrder(order: DriverOrderRecord | null): Order | null {
     return null
   }
 
+  const orderNotes = Array.isArray(order.order_notes)
+    ? order.order_notes
+    : order.order_notes != null
+      ? [order.order_notes]
+      : null
+
   return {
     id: order.id,
     client_id: order.client_id,
@@ -89,7 +95,7 @@ function mapOrder(order: DriverOrderRecord | null): Order | null {
     delivery_plan_id: order.delivery_plan_id,
     costumer_id: order.costumer_id,
     open_order_cases: order.open_order_cases,
-    order_notes: Array.isArray(order.order_notes) ? order.order_notes : null,
+    order_notes: orderNotes,
   }
 }
 

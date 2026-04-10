@@ -1,3 +1,5 @@
+import type { DriverStopRowNoteDisplay } from './mapStopRowOrderNote'
+
 export type AssignedRouteSummaryDisplay = {
   routeTitle: string
   finishTimeLabel: string | null
@@ -21,7 +23,7 @@ export type AssignedRouteStopRowDisplay = {
   itemSummary: string | null
   itemCountLabel: string | null
   phoneLine: string | null
-  orderNotes: string[] | null
+  orderNotes: DriverStopRowNoteDisplay[]
   badgeLabel: string | null
   isActive: boolean
   isCompleted: boolean

@@ -79,23 +79,6 @@ WINDOW_FIELDS = {
 DETAIL_FIELDS = MUTABLE_FIELDS.difference(WINDOW_FIELDS)
 
 
-def _resolve_plan_type_for_order_update(delta: OrderUpdateDelta) -> str | None:
-    delivery_plan = delta.delivery_plan
-    plan_type = getattr(delivery_plan, "plan_type", None)
-    if plan_type:
-        return plan_type
-
-    order = delta.order_instance
-    objective = getattr(order, "order_plan_objective", None)
-    if objective:
-        return objective
-
-    if delivery_plan is not None and getattr(delivery_plan, "route_groups", None) is not None:
-        return "local_delivery"
-
-    return None
-
-
 def update_order(ctx: ServiceContext):
     ctx.set_relationship_map({})
     targets = extract_targets(ctx)
@@ -125,7 +108,7 @@ def update_order(ctx: ServiceContext):
             for delta in order_deltas
             if (
                 delta.delivery_plan is not None
-                and _resolve_plan_type_for_order_update(delta) == "local_delivery"
+                and getattr(delta.delivery_plan, "plan_type", None) == "local_delivery"
                 and bool(delta.changed_sections)
             )
         ]
@@ -232,7 +215,7 @@ def apply_order_updates(
                     )
                 )
 
-        flags = _build_change_flags(old_values, new_values, raw_fields)
+        flags = _build_change_flags(old_values, new_values, fields_to_apply)
         order_deltas.append(
             OrderUpdateDelta(
                 order_instance=existing,
@@ -251,10 +234,10 @@ def apply_order_updates(
 def _build_change_flags(
     old_values: dict[str, Any],
     new_values: dict[str, Any],
-    submitted_fields: dict[str, Any],
+    applied_fields: dict[str, Any],
 ) -> OrderUpdateChangeFlags:
-    touched_address = ADDRESS_FIELDS.intersection(submitted_fields.keys())
-    touched_window = WINDOW_FIELDS.intersection(submitted_fields.keys())
+    touched_address = ADDRESS_FIELDS.intersection(applied_fields.keys())
+    touched_window = WINDOW_FIELDS.intersection(applied_fields.keys())
 
     # Intent-driven flags: if these fields are submitted, run their extension flows.
     # This keeps route sync / warning recompute deterministic with PATCH payload intent.
